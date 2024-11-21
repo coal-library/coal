@@ -69,6 +69,20 @@ One can observe that GJK-based approaches largely outperform solutions based on 
 - [Jiminy](https://github.com/duburcqa/jiminy) A simulator based on Pinocchio.
 - [ocs2](https://github.com/leggedrobotics/ocs2) A toolbox for Optimal Control for Switched Systems (OCS2)
 
+## Installation
+
+### Conda
+
+Coal can be installed from the [conda-forge channel](https://anaconda.org/conda-forge/coal):
+
+```bash
+conda install coal -c conda-forge
+```
+
+## Build
+
+You can find build instruction [here](./development/build.md).
+
 ## C++ example
 Both the C++ library and the python bindings can be installed as simply as `conda -c conda-forge install coal`.
 The `.so` library, include files and python bindings will then be installed under `$CONDA_PREFIX/lib`, `$CONDA_PREFIX/include` and `$CONDA_PREFIX/lib/python3.XX/site-packages`.
