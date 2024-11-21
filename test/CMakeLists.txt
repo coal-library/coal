@@ -6,6 +6,7 @@ config_files(fcl_resources/config.h)
 function(add_coal_test test_name source)
   set(target_name ${PROJECT_NAME}-${test_name})
   ADD_UNIT_TEST(${target_name} ${source})
+  SET_STANDARD_OUTPUT_DIRECTORY(${target_name})
   target_link_libraries(${target_name}
     PUBLIC
     ${LIBRARY_NAME}
@@ -24,6 +25,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(utility_target ${PROJECT_NAME}-utility)
 add_library(${utility_target} STATIC utility.cpp)
+SET_STANDARD_OUTPUT_DIRECTORY(${utility_target})
 target_link_libraries(${utility_target} PUBLIC ${PROJECT_NAME})
 
 add_coal_test(math math.cpp)
@@ -77,6 +79,7 @@ add_coal_test(broadphase_collision_2 broadphase_collision_2.cpp)
 ## Benchmark
 set(test_benchmark_target ${PROJECT_NAME}-test-benchmark)
 add_executable(${test_benchmark_target} benchmark.cpp)
+SET_STANDARD_OUTPUT_DIRECTORY(${test_benchmark_target})
 target_link_libraries(${test_benchmark_target}
   PUBLIC
   ${utility_target}

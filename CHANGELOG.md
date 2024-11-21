@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Remove CMake CMP0167 warnings ([#630](https://github.com/coal-library/coal/pull/630))
+- Allow to run test in the build directory on Windows ([#630](https://github.com/coal-library/coal/pull/630))
+
+### Added
+- Add Pixi support ([#629](https://github.com/coal-library/coal/pull/629))
+
 ## [3.0.0] - 2024-11-20
 
 ### Added
