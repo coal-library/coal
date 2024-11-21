@@ -1,0 +1,140 @@
+[project]
+name = "coal"
+version = "3.0.0"
+description = "An extension of the Flexible Collision Library"
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+channels = ["conda-forge"]
+license = "BSD-3-Clause"
+license-file = "LICENSE"
+
+[build-dependencies]
+ccache = ">=4.9.1"
+cmake = ">=3.10"
+cxx-compiler = ">=1.7.0"
+ninja = ">=1.11"
+pkg-config = ">=0.29.2"
+git = ">=2.47.0"
+
+[dependencies]
+libboost-devel = ">=1.80.0"
+libboost-python-devel = ">=1.80.0"
+eigen = ">=3.4.0"
+assimp = ">=5.4"
+numpy = ">=1.22.0"
+python = ">=3.9.0"
+eigenpy = ">=3.7.0"
+doxygen = "<1.9.8|>=1.11"
+lxml = ">=5.3"
+pylatexenc = ">=2.10"
+
+[activation]
+scripts = ["development/scripts/pixi/activation.sh"]
+
+[target.win-64.activation]
+scripts = ["development/scripts/pixi/activation.bat"]
+
+[tasks]
+# We must avoid to set CMAKE_CXX_FLAGS because of WIN32
+# https://discourse.cmake.org/t/strictly-appending-to-cmake-lang-flags/6478
+configure = { cmd = [
+  "CXXFLAGS=$COAL_CXX_FLAGS",
+  "cmake",
+  "-G",
+  "Ninja",
+  "-B",
+  "build",
+  "-S",
+  ".",
+  "-DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX",
+  "-DCMAKE_BUILD_TYPE=$COAL_BUILD_TYPE",
+  "-DGENERATE_PYTHON_STUBS=$COAL_PYTHON_STUBS",
+  "-DCOAL_HAS_QHULL=$COAL_HAS_QHULL",
+] }
+build = { cmd = "cmake --build build --target all", depends_on = ["configure"] }
+clean = { cmd = "rm -rf build" }
+test = { cmd = "ctest --test-dir build --output-on-failure", depends_on = [
+  "build",
+] }
+
+[feature.lint]
+dependencies = { pre-commit = ">=3.6.2" }
+tasks = { lint = { cmd = "pre-commit run --all" } }
+
+# Increment the version number with COAL_VERSION variable
+[feature.new-version.dependencies]
+tomlkit = ">=0.13.2"
+
+[feature.new-version.tasks]
+configure_new_version = { cmd = [
+  "CXXFLAGS=$COAL_CXX_FLAGS",
+  "cmake",
+  "-G",
+  "Ninja",
+  "-B",
+  "build_new_version",
+  "-S",
+  ".",
+  "-DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX",
+  "-DCMAKE_BUILD_TYPE=$COAL_BUILD_TYPE",
+  "-DGENERATE_PYTHON_STUBS=ON",
+  "-DCOAL_HAS_QHULL=ON",
+] }
+release_new_version = { cmd = "VERSION=$COAL_VERSION cmake --build build_new_version --target release", depends-on = [
+  "configure_new_version",
+] }
+
+# QHull support
+[feature.qhull.target.win]
+dependencies = { qhull = ">=2020.2" }
+activation = { env = { COAL_HAS_QHULL = "ON" } }
+[feature.qhull.target.unix]
+dependencies = { qhull = ">=2020.2", qhull-static = ">=2020.2" }
+activation = { env = { COAL_HAS_QHULL = "ON" } }
+
+# Octomap support
+[feature.octomap]
+dependencies = { octomap = ">=1.10" }
+
+[feature.py312.dependencies]
+python = "3.12.*"
+
+[feature.py39.dependencies]
+python = "3.9.*"
+
+# Use clang-cl on Windows.
+# We must use scripts instead of env to setup CC and CXX
+# to avoid cxx-compiler to overwrite them.
+[feature.clang-cl]
+platforms = ["win-64"]
+activation = { scripts = ["development/scripts/pixi/activation_clang_cl.bat"] }
+
+# Use clang on GNU/Linux.
+# We must use scripts instead of env to setup CC and CXX
+# to avoid cxx-compiler to overwrite them.
+[feature.clang]
+platforms = ["linux-64"]
+activation = { scripts = ["development/scripts/pixi/activation_clang.sh"] }
+dependencies = { clangxx = "*" }
+
+[environments]
+default = { features = ["py312"], solve-group = "py312" }
+clang = { features = ["clang", "py312"] }
+lint = { features = ["lint"], solve-group = "py312" }
+qhull = { features = ["qhull", "py312"], solve-group = "py312" }
+octomap = { features = ["octomap", "py312"], solve-group = "py312" }
+py39 = { features = ["py39"], solve-group = "py39" }
+all = { features = ["qhull", "octomap", "py312"], solve-group = "py312" }
+all-py39 = { features = ["qhull", "octomap", "py39"], solve-group = "py39" }
+all-clang-cl = { features = [
+  "qhull",
+  "octomap",
+  "clang-cl",
+  "py312",
+], solve-group = "py312" }
+# Release a new software version
+new-version = { features = [
+  "new-version",
+  "qhull",
+  "octomap",
+  "py312",
+], solve-group = "py312" }

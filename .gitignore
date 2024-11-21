@@ -3,3 +3,7 @@ Xcode/*
 *~
 *.pyc
 
+
+# pixi environments
+.pixi
+*.egg-info
