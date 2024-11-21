@@ -1,0 +1,101 @@
+name: CI - MacOS/Linux/Windows via Pixi
+
+on:
+  push:
+    paths-ignore:
+      - .gitlab-ci.yml
+      - .gitignore
+      - '*.md'
+      - CITATION.*
+      - LICENSE
+      - colcon.pkg
+      - .pre-commit-config.yaml
+      - CHANGELOG.md
+      - development/*.md
+  pull_request:
+    paths-ignore:
+      - .gitlab-ci.yml
+      - .gitignore
+      - '*.md'
+      - CITATION.*
+      - LICENSE
+      - colcon.pkg
+      - .pre-commit-config.yaml
+      - CHANGELOG.md
+      - development/*.md
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coal-pixi:
+    name: ${{ matrix.os }} - Env ${{ matrix.environment }} ${{ matrix.build_type }} ${{ matrix.cxx_options }}
+    runs-on: ${{ matrix.os }}
+    env:
+      CCACHE_BASEDIR: "${GITHUB_WORKSPACE}"
+      CCACHE_DIR: "${GITHUB_WORKSPACE}/.ccache"
+      CCACHE_COMPRESS: true
+      CCACHE_COMPRESSLEVEL: 6
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, macos-13]
+        environment: [all, all-py39]
+        build_type: [Release, Debug]
+        cxx_options: ['', '-mavx2']
+        exclude:
+          - os: macos-latest
+            cxx_options: '-mavx2'
+          - os: macos-13
+            cxx_options: '-mavx2'
+
+        include:
+          - os: windows-latest
+            environment: all
+            cxx_options: ''
+            build_type: Release
+          - os: windows-latest
+            environment: all-clang-cl
+            cxx_options: ''
+            build_type: Release
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - uses: actions/cache@v4
+      with:
+        path: .ccache
+        key: ccache-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.cxx_options }}-${{ matrix.environment }}-${{ github.sha }}
+        restore-keys: ccache-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.cxx_options }}-${{ matrix.environment }}-
+
+    - uses: prefix-dev/setup-pixi@v0.8.1
+      with:
+        pixi-version: v0.37.0
+        cache: true
+        environments: ${{ matrix.environment }}
+
+    - name: Build Coal [MacOS/Linux/Windows]
+      env:
+        CMAKE_BUILD_PARALLEL_LEVEL: 2
+        COAL_BUILD_TYPE: ${{ matrix.build_type }}
+        COAL_CXX_FLAGS: ${{ matrix.cxx_options }}
+      run: |
+        pixi run -e ${{ matrix.environment }} test
+
+  check:
+    if: always()
+    name: check-macos-linux-windows-pixi
+
+    needs:
+    - coal-pixi
+
+    runs-on: Ubuntu-latest
+
+    steps:
+    - name: Decide whether the needed jobs succeeded or failed
+      uses: re-actors/alls-green@release/v1
+      with:
+        jobs: ${{ toJSON(needs) }}
