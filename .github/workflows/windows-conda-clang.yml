@@ -65,7 +65,7 @@ jobs:
         if errorlevel 1 exit 1
 
         :: Build and Install
-        cmake --build . --config Release --target install
+        cmake --build . --config Release --target all
         if errorlevel 1 exit 1
 
         :: Testing
@@ -73,8 +73,7 @@ jobs:
         if errorlevel 1 exit 1
 
         :: Test Python import
-        cd ..
-        python -c "import coal"
+        cmake -E env PYTHONPATH=%cd%\python python -c "import coal"
         if errorlevel 1 exit 1
 
   check:
