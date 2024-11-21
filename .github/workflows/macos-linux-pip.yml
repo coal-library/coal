@@ -1,6 +1,31 @@
-name: Build Coal for Mac OS X/Linux via pip
+name: CI - MacOS/Linux via pip
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - .gitlab-ci.yml
+      - .gitignore
+      - '*.md'
+      - CITATION.*
+      - LICENSE
+      - colcon.pkg
+      - .pre-commit-config.yaml
+      - CHANGELOG.md
+      - development/*.md
+  pull_request:
+    paths-ignore:
+      - .gitlab-ci.yml
+      - .gitignore
+      - '*.md'
+      - CITATION.*
+      - LICENSE
+      - colcon.pkg
+      - .pre-commit-config.yaml
+      - CHANGELOG.md
+      - development/*.md
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
     CTEST_OUTPUT_ON_FAILURE: 1
