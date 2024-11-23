@@ -3,9 +3,9 @@
 
   inputs = {
     flake-parts.url = "github:hercules-ci/flake-parts";
-    #nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    # use gepetto fork until https://github.com/NixOS/nixpkgs/pull/337549
-    nixpkgs.url = "github:gepetto/nixpkgs";
+    # TODO: switch back to nixos-unstable after
+    # https://github.com/NixOS/nixpkgs/pull/357705
+    nixpkgs.url = "github:NixOS/nixpkgs/refs/pull/357705/head";
   };
 
   outputs =
@@ -21,8 +21,8 @@
           };
           devShells.default = pkgs.mkShell { inputsFrom = [ self'.packages.default ]; };
           packages = {
-            default = self'.packages.hpp-fcl;
-            hpp-fcl = pkgs.python3Packages.hpp-fcl.overrideAttrs (_: {
+            default = self'.packages.coal;
+            coal = pkgs.python3Packages.coal.overrideAttrs (_: {
               src = pkgs.lib.fileset.toSource {
                 root = ./.;
                 fileset = pkgs.lib.fileset.unions [
