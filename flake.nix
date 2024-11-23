@@ -28,6 +28,7 @@
                 fileset = pkgs.lib.fileset.unions [
                   ./CMakeLists.txt
                   ./doc
+                  ./hpp-fclConfig.cmake
                   ./include
                   ./package.xml
                   ./python
