@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Updated nix flake from `hpp-fcl` to `coal` ([#632](https://github.com/coal-library/coal/pull/632)
+
 ## [3.0.0] - 2024-11-20
 
 ### Added
