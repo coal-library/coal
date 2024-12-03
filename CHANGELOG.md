@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove CMake CMP0167 warnings ([#630](https://github.com/coal-library/coal/pull/630))
 - Allow to run test in the build directory on Windows ([#630](https://github.com/coal-library/coal/pull/630))
 - Updated nix flake from `hpp-fcl` to `coal` ([#632](https://github.com/coal-library/coal/pull/632)
+- Fix hpp-fclConfig.cmake on Windows ([#633](https://github.com/coal-library/coal/pull/633))
 
 ### Added
 - Add Pixi support ([#629](https://github.com/coal-library/coal/pull/629))
