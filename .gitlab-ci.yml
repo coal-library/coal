@@ -1,1 +1,1 @@
-include: https://rainboard.laas.fr/project/hpp-fcl/.gitlab-ci.yml
+include: https://rainboard.laas.fr/project/coal/.gitlab-ci.yml
