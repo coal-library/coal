@@ -13,9 +13,8 @@ function(add_coal_test test_name source)
     Boost::filesystem
     ${utility_target}
     )
-  IF(NOT WIN32)
-    target_compile_options(${target_name} PRIVATE "-Wno-c99-extensions")
-  ENDIF()
+  cxx_flags_by_compiler_frontend(GNU "-Wno-c99-extensions" OUTPUT PRIVATE_OPTIONS)
+  target_compile_options(${target_name} PRIVATE ${PRIVATE_OPTIONS})
   if(COAL_HAS_QHULL)
     target_compile_options(${target_name} PRIVATE -DCOAL_HAS_QHULL)
   endif()

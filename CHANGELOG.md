@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - Add Pixi support ([#629](https://github.com/coal-library/coal/pull/629))
 
+### Changed
+- Set NOMINMAX as a public definitions on Windows ([#640](https://github.com/coal-library/coal/pull/640))
+
 ## [3.0.0] - 2024-11-20
 
 ### Added

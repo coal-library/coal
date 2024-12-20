@@ -200,9 +200,14 @@ if(UNIX)
   set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "${${PROJECT_NAME}_INSTALL_RPATH}")
 endif()
 
-IF(MSVC)
-  target_compile_options(${PROJECT_NAME} PUBLIC "/bigobj")
-ENDIF()
+cxx_flags_by_compiler_frontend(
+  MSVC "/bigobj"
+  OUTPUT PUBLIC_OPTIONS
+  FILTER)
+target_compile_options(${PROJECT_NAME} PUBLIC ${PUBLIC_OPTIONS})
+
+cxx_flags_by_compiler_frontend(MSVC "NOMINMAX" OUTPUT PUBLIC_DEFINITIONS)
+target_compile_definitions(${PROJECT_NAME} INTERFACE ${PUBLIC_DEFINITIONS})
 
 # IDE sources and headers sorting
 ADD_SOURCE_GROUP(${LIBRARY_NAME}_SOURCES)

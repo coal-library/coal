@@ -59,6 +59,10 @@ jobs:
             environment: all-clang-cl
             cxx_options: ''
             build_type: Release
+          - os: windows-latest
+            environment: default
+            cxx_options: ''
+            build_type: Debug
 
     steps:
     - uses: actions/checkout@v4
