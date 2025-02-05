@@ -29,7 +29,7 @@ upstream = "https://github.com/coal-library/coal"
 
 [tool.cmeel]
 build-number = 0
-configure-args = ["-DCOALL_HAS_QHULL=ON", "-DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL=ON"]
+configure-args = ["-DCOAL_HAS_QHULL=ON", "-DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL=ON"]
 
 [tool.tomlsort]
 all = true
