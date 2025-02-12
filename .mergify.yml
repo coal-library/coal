@@ -1,0 +1,36 @@
+pull_request_rules:
+  - name: merge automatically when CI passes and PR is approved
+    conditions:
+      - check-success = "Build cp310 macos-13"
+      - check-success = "Build cp310 macos-14"
+      - check-success = "Build cp310 ubuntu-24.04"
+      - check-success = "Build cp310 ubuntu-24.04-arm"
+      - check-success = "Build cp311 macos-13"
+      - check-success = "Build cp311 macos-14"
+      - check-success = "Build cp311 ubuntu-24.04"
+      - check-success = "Build cp311 ubuntu-24.04-arm"
+      - check-success = "Build cp312 macos-13"
+      - check-success = "Build cp312 macos-14"
+      - check-success = "Build cp312 ubuntu-24.04"
+      - check-success = "Build cp312 ubuntu-24.04-arm"
+      - check-success = "Build cp313 macos-13"
+      - check-success = "Build cp313 macos-14"
+      - check-success = "Build cp313 ubuntu-24.04"
+      - check-success = "Build cp313 ubuntu-24.04-arm"
+      - check-success = "Build cp38 macos-13"
+      - check-success = "Build cp38 ubuntu-24.04"
+      - check-success = "Build cp38 ubuntu-24.04-arm"
+      - check-success = "Build cp39 macos-13"
+      - check-success = "Build cp39 macos-14"
+      - check-success = "Build cp39 ubuntu-24.04"
+      - check-success = "Build cp39 ubuntu-24.04-arm"
+      - check-success = "sdist"
+      - check-success = "pre-commit.ci - pr"
+      - or:
+        - approved-reviews-by = nim65s
+        - author = nim65s
+        - author = dependabot[bot]
+        - author = github-actions[bot]
+        - author = pre-commit-ci[bot]
+    actions:
+      merge:
