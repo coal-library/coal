@@ -188,6 +188,7 @@ add_library(${LIBRARY_NAME}
   ${${LIBRARY_NAME}_SOURCES}
   )
 add_library(${LIBRARY_NAME}::${LIBRARY_NAME} ALIAS ${LIBRARY_NAME})
+SET_STANDARD_OUTPUT_DIRECTORY(${LIBRARY_NAME})
 
 if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
   add_library(hpp-fcl ALIAS ${LIBRARY_NAME})
@@ -198,10 +199,16 @@ if(UNIX)
   get_relative_rpath(${CMAKE_INSTALL_LIBDIR} ${PROJECT_NAME}_INSTALL_RPATH)
   set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "${${PROJECT_NAME}_INSTALL_RPATH}")
 endif()
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 
-IF(MSVC)
-  target_compile_options(${PROJECT_NAME} PUBLIC "/bigobj")
-ENDIF()
+cxx_flags_by_compiler_frontend(
+  MSVC "/bigobj"
+  OUTPUT PUBLIC_OPTIONS
+  FILTER)
+target_compile_options(${PROJECT_NAME} PUBLIC ${PUBLIC_OPTIONS})
+
+cxx_flags_by_compiler_frontend(MSVC "NOMINMAX" OUTPUT PUBLIC_DEFINITIONS)
+target_compile_definitions(${PROJECT_NAME} INTERFACE ${PUBLIC_DEFINITIONS})
 
 # IDE sources and headers sorting
 ADD_SOURCE_GROUP(${LIBRARY_NAME}_SOURCES)

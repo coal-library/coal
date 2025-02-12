@@ -1,7 +1,7 @@
 #
 # Software License Agreement (BSD License)
 #
-#  Copyright (c) 2014-2023 CNRS-LAAS, INRIA
+#  Copyright (c) 2014-2025 CNRS-LAAS, INRIA
 #  Author: Florent Lamiraux, Joseph Mirabel
 #  All rights reserved.
 #
@@ -36,9 +36,11 @@ cmake_minimum_required(VERSION 3.10)
 set(CXX_DISABLE_WERROR TRUE)
 
 set(PROJECT_NAME coal)
+set(PROJECT_ORG "coal-library")
 set(PROJECT_DESCRIPTION
   "Coal, The Collision Detection Library. Previously known as HPP-FCL, fork of FCL -- The Flexible Collision Library"
   )
+set(PROJECT_URL "https://github.com/coal-library/coal")
 SET(PROJECT_USE_CMAKE_EXPORT TRUE)
 SET(PROJECT_COMPATIBILITY_VERSION AnyNewerVersion)
 # To enable jrl-cmakemodules compatibility with workspace we must define the two
@@ -89,9 +91,24 @@ else()
   endif()
 endif()
 
+# Use BoostConfig module distributed by boost library instead of using FindBoost module distributed
+# by CMake.
+# There is one unresolved issue with FindBoost and clang-cl so we deactivate it in this case.
+IF(NOT WIN32 OR NOT ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+  IF(POLICY CMP0167)
+    CMAKE_POLICY(SET CMP0167 NEW)
+    # Set a default value to this policy to avoid issue with find_dependency
+    # macro redefinition with different policy in some modules.
+    SET(CMAKE_POLICY_DEFAULT_CMP0167 NEW)
+  ENDIF()
+ENDIF()
+
+include("${JRL_CMAKE_MODULES}/base.cmake")
+COMPUTE_PROJECT_ARGS(PROJECT_ARGS LANGUAGES CXX)
+PROJECT(${PROJECT_NAME} ${PROJECT_ARGS})
+
 include("${JRL_CMAKE_MODULES}/boost.cmake")
 include("${JRL_CMAKE_MODULES}/python.cmake")
-include("${JRL_CMAKE_MODULES}/hpp.cmake")
 include("${JRL_CMAKE_MODULES}/apple.cmake")
 include("${JRL_CMAKE_MODULES}/ide.cmake")
 include(CMakeDependentOption)
@@ -100,29 +117,23 @@ SET(CMAKE_MODULE_PATH
   ${JRL_CMAKE_MODULES}/find-external/assimp/
   ${CMAKE_MODULE_PATH})
 
+FUNCTION(set_standard_output_directory target)
+  SET_TARGET_PROPERTIES(
+    ${target}
+    PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
+      ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
+  )
+ENDFUNCTION()
+
 set_default_cmake_build_type("RelWithDebInfo")
 
 # If needed, fix CMake policy for APPLE systems
 APPLY_DEFAULT_APPLE_CONFIGURATION()
 
-COMPUTE_PROJECT_ARGS(PROJECT_ARGS LANGUAGES CXX)
-PROJECT(${PROJECT_NAME} ${PROJECT_ARGS})
-
 OPTION(BUILD_PYTHON_INTERFACE "Build the python bindings" ON)
 CMAKE_DEPENDENT_OPTION(GENERATE_PYTHON_STUBS "Generate the Python stubs associated to the Python library" OFF BUILD_PYTHON_INTERFACE OFF)
-
-#IF(WIN32)
-#  # Set default Windows build paths
-#  SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY
-#    ${PROJECT_BINARY_DIR}/Bin
-#    CACHE PATH "Single directory for all libraries")
-#  SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY
-#    ${PROJECT_BINARY_DIR}/Bin
-#    CACHE PATH "Single directory for all executables")
-#  SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
-#    ${PROJECT_BINARY_DIR}/Bin
-#    CACHE PATH "Sing$le directory for all archives")
-#ENDIF(WIN32)
 
 ADD_PROJECT_DEPENDENCY(Eigen3 REQUIRED PKG_CONFIG_REQUIRES "eigen3 >= 3.0.0")
 
@@ -474,13 +485,6 @@ ENDIF(COAL_HAS_OCTOMAP)
 
 # Install catkin package.xml
 INSTALL(FILES package.xml DESTINATION share/${PROJECT_NAME})
-# Allows Colcon to find non-Ament packages when using workspace underlays
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/share/ament_index/resource_index/packages/${PROJECT_NAME} "")
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/share/ament_index/resource_index/packages/${PROJECT_NAME} DESTINATION share/ament_index/resource_index/packages)
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/share/${PROJECT_NAME}/hook/ament_prefix_path.dsv "prepend-non-duplicate;AMENT_PREFIX_PATH;")
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/share/${PROJECT_NAME}/hook/ament_prefix_path.dsv DESTINATION share/${PROJECT_NAME}/hook)
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/share/${PROJECT_NAME}/hook/python_path.dsv "prepend-non-duplicate;PYTHONPATH;${PYTHON_SITELIB}")
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/share/${PROJECT_NAME}/hook/python_path.dsv DESTINATION share/${PROJECT_NAME}/hook)
 
 if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
   include(CMakePackageConfigHelpers)

@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [3.0.1] - 2025-02-12
+
+### Fixed
+- Remove CMake CMP0167 warnings ([#630](https://github.com/coal-library/coal/pull/630))
+- Allow to run test in the build directory on Windows ([#630](https://github.com/coal-library/coal/pull/630))
+- Updated nix flake from `hpp-fcl` to `coal` ([#632](https://github.com/coal-library/coal/pull/632)
+- Fix hpp-fclConfig.cmake on Windows ([#633](https://github.com/coal-library/coal/pull/633))
+- Fix install version ([#651](https://github.com/coal-library/coal/pull/651))
+
+### Added
+- Add Pixi support ([#629](https://github.com/coal-library/coal/pull/629))
+
+### Changed
+- Set NOMINMAX as a public definitions on Windows ([#640](https://github.com/coal-library/coal/pull/640))
+
 ## [3.0.0] - 2024-11-20
 
 ### Added
@@ -527,7 +542,8 @@ Now Eigen is at the heart of linear algebra computations.
 First release
 
 
-[Unreleased]: https://github.com/humanoid-path-planner/hpp-fcl/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/humanoid-path-planner/hpp-fcl/compare/v3.0.1...HEAD
+[3.0.1]: https://github.com/humanoid-path-planner/hpp-fcl/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/humanoid-path-planner/hpp-fcl/compare/v2.4.5...v3.0.0
 [2.4.5]: https://github.com/humanoid-path-planner/hpp-fcl/compare/v2.4.4...v2.4.5
 [2.4.4]: https://github.com/humanoid-path-planner/hpp-fcl/compare/v2.4.3...v2.4.4

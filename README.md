@@ -12,17 +12,17 @@
 </p>
 
 [FCL](https://github.com/flexible-collision-library/fcl) was forked in 2015, creating a new project called HPP-FCL.
-Since then, a large part of the code has been rewritten or removed (for the unused and untested part), and new features have been developped (see below).
+Since then, a large part of the code has been rewritten or removed (unused and untested code), and new features have been introduced (see below).
 Due to these major changes, it was decided in 2024 to rename the HPP-FCL project to **Coal**.
 
-If you use **Coal** in your projects and research papers, we would appreciate it if you'd [cite it](https://raw.githubusercontent.com/coal-library/coal/devel/CITATION.bib).
+If you use **Coal** in your projects and research papers, we would appreciate it if you would [cite it](https://raw.githubusercontent.com/coal-library/coal/devel/CITATION.bib).
 
 ## New features
 
 Compared to the original [FCL](https://github.com/flexible-collision-library/fcl) library, the main new features are:
 - dedicated and efficient implementations of the GJK and the EPA algorithms (we do not rely on [libccd](https://github.com/danfis/libccd))
 - the support of safety margins for collision detection
-- an accelerated version of collision detection *à la Nesterov*, which leads to increased performances (up to a factor of 2). More details are available in this [paper](https://hal.archives-ouvertes.fr/hal-03662157/)
+- an accelerated version of collision detection *à la Nesterov*, which leads to increased performance (up to a factor of 2). More details are available in this [paper](https://hal.archives-ouvertes.fr/hal-03662157/)
 - the computation of a lower bound of the distance between two objects when collision checking is performed, and no collision is found
 - the implementation of Python bindings for easy code prototyping
 - the support of new geometries such as height fields, capsules, ellipsoids, etc.
@@ -32,13 +32,14 @@ Compared to the original [FCL](https://github.com/flexible-collision-library/fcl
 
 Note: the broad phase was reintroduced by [Justin Carpentier](https://github.com/jcarpent) in 2022, based on the FCL version 0.7.0.
 
-This project is now used in many robotics frameworks such as [Pinocchio](https://github.com/stack-of-tasks/pinocchio), an open-source software that implements efficient and versatile rigid body dynamics algorithms, the [Humanoid Path Planner](https://humanoid-path-planner.github.io/hpp-doc), an open-source software for Motion and Manipulation Planning. **Coal** has also been recently used to develop [Simple](https://github.com/Simple-Robotics/Simple), a new (differentiable) and efficient simulator for robotics and beyond.
+This project is now used in several robotics frameworks such as [Pinocchio](https://github.com/stack-of-tasks/pinocchio), an open-source library which implements efficient and versatile rigid-body dynamics algorithms, the [Humanoid Path Planner](https://humanoid-path-planner.github.io/hpp-doc), an open-source library for Motion and Manipulation Planning. **Coal** has recently also been used to develop [Simple](https://github.com/Simple-Robotics/Simple), a new (differentiable) and efficient simulator for robotics and beyond.
 
 ## A high-performance library
 
-Unlike the original FCL library, Coal implements the well-established [GJK algorithm](https://en.wikipedia.org/wiki/Gilbert%E2%80%93Johnson%E2%80%93Keerthi_distance_algorithm) and [its variants](https://hal.archives-ouvertes.fr/hal-03662157/) for collision detection and distance computation. These implementations lead to state-of-the-art performances, as depicted by the figures below.
+Unlike the original FCL library, Coal implements the well-established [GJK algorithm](https://en.wikipedia.org/wiki/Gilbert%E2%80%93Johnson%E2%80%93Keerthi_distance_algorithm) and [its variants](https://hal.archives-ouvertes.fr/hal-03662157/) for collision detection and distance computation. These implementations lead to state-of-the-art performance, as shown in the figures below.
 
-On the one hand, we have benchmarked Coal against major software alternatives of the state of the art:
+On the one hand, we have benchmarked Coal against major state-of-the-art software alternatives:
+
 1. the [Bullet simulator](https://github.com/bulletphysics/bullet3),
 2. the original [FCL library](https://github.com/flexible-collision-library/fcl) (used in the [Drake framework]()),
 3. the [libccd library](https://github.com/danfis/libccd) (used in [MuJoCo](http://mujoco.org/)).
@@ -67,6 +68,20 @@ One can observe that GJK-based approaches largely outperform solutions based on 
 - [HPP](https://humanoid-path-planner.github.io/hpp-doc/) A SDK that implements motion planners for humanoids and other robots.
 - [Jiminy](https://github.com/duburcqa/jiminy) A simulator based on Pinocchio.
 - [ocs2](https://github.com/leggedrobotics/ocs2) A toolbox for Optimal Control for Switched Systems (OCS2)
+
+## Installation
+
+### Conda
+
+Coal can be installed from the [conda-forge channel](https://anaconda.org/conda-forge/coal):
+
+```bash
+conda install coal -c conda-forge
+```
+
+## Build
+
+You can find build instruction [here](./development/build.md).
 
 ## C++ example
 Both the C++ library and the python bindings can be installed as simply as `conda -c conda-forge install coal`.
@@ -213,4 +228,4 @@ if __name__ == "__main__":
 
 ## Acknowledgments
 
-The development of **Coal** is actively supported by the [Gepetto team](http://projects.laas.fr/gepetto/) [@LAAS-CNRS](http://www.laas.fr), the [Willow team](https://www.di.ens.fr/willow/) [@INRIA](http://www.inria.fr) and, to some extend, [Eureka Robotics](https://eurekarobotics.com/).
+The development of **Coal** is actively supported by the [Gepetto team](http://projects.laas.fr/gepetto/) [@LAAS-CNRS](http://www.laas.fr), the [Willow team](https://www.di.ens.fr/willow/) [@INRIA](http://www.inria.fr) and, to some extent, [Eureka Robotics](https://eurekarobotics.com/).
