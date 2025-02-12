@@ -20,7 +20,7 @@ dependencies = [
 description = "An extension of the Flexible Collision Library"
 license = "BSD-3-Clause"
 name = "coal-library"
-version = "3.0.0"
+version = "3.0.1"
 
 [project.urls]
 changelog = "https://github.com/coal-library/coal/blob/master/CHANGELOG.md"
@@ -28,7 +28,6 @@ homepage = "https://github.com/cmake-wheel/coal"
 upstream = "https://github.com/coal-library/coal"
 
 [tool.cmeel]
-build-number = 0
 configure-args = ["-DCOAL_HAS_QHULL=ON", "-DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL=ON"]
 
 [tool.tomlsort]
