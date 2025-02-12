@@ -5,11 +5,11 @@
         "nixpkgs-lib": "nixpkgs-lib"
       },
       "locked": {
-        "lastModified": 1722555600,
-        "narHash": "sha256-XOQkdLafnb/p9ij77byFQjDf5m5QYl9b2REiVClC+x4=",
+        "lastModified": 1738453229,
+        "narHash": "sha256-7H9XgNiGLKN1G1CgRh0vUL4AheZSYzPm+zmZ7vxbJdo=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "8471fe90ad337a8074e957b69ca4d0089218391d",
+        "rev": "32ea77a06711b758da0ad9bd6a844c5740a87abd",
         "type": "github"
       },
       "original": {
@@ -20,29 +20,30 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1724857063,
-        "narHash": "sha256-Hr4qs3NQLP6JDUPpItJOztUzsr3IjC9WAWM47ob03GU=",
-        "owner": "gepetto",
+        "lastModified": 1734122394,
+        "narHash": "sha256-TmVqB5V9ZIn66jlyPcp4yzsC6uF46YQLH00MSBio42c=",
+        "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "b953c287a7ed9e5d33917ec4c838e1b5de9713e0",
+        "rev": "eb1b38d147a53360c11f0d033196f94d844bd86c",
         "type": "github"
       },
       "original": {
-        "owner": "gepetto",
+        "owner": "NixOS",
+        "ref": "refs/pull/357705/head",
         "repo": "nixpkgs",
         "type": "github"
       }
     },
     "nixpkgs-lib": {
       "locked": {
-        "lastModified": 1722555339,
-        "narHash": "sha256-uFf2QeW7eAHlYXuDktm9c25OxOyCoUOQmh5SZ9amE5Q=",
+        "lastModified": 1738452942,
+        "narHash": "sha256-vJzFZGaCpnmo7I6i416HaBLpC+hvcURh/BQwROcGIp8=",
         "type": "tarball",
-        "url": "https://github.com/NixOS/nixpkgs/archive/a5d394176e64ab29c852d03346c1fc9b0b7d33eb.tar.gz"
+        "url": "https://github.com/NixOS/nixpkgs/archive/072a6db25e947df2f31aab9eccd0ab75d5b2da11.tar.gz"
       },
       "original": {
         "type": "tarball",
-        "url": "https://github.com/NixOS/nixpkgs/archive/a5d394176e64ab29c852d03346c1fc9b0b7d33eb.tar.gz"
+        "url": "https://github.com/NixOS/nixpkgs/archive/072a6db25e947df2f31aab9eccd0ab75d5b2da11.tar.gz"
       }
     },
     "root": {

@@ -2,6 +2,19 @@ name: "CI - Nix"
 
 on:
   push:
+    paths-ignore:
+      - .gitlab-ci.yml
+      - .gitignore
+      - '*.md'
+      - CITATION.*
+      - LICENSE
+      - colcon.pkg
+      - .pre-commit-config.yaml
+      - CHANGELOG.md
+      - development/*.md
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   nix:
