@@ -42,7 +42,9 @@ set(
   "Coal, The Collision Detection Library. Previously known as HPP-FCL, fork of FCL -- The Flexible Collision Library"
 )
 set(PROJECT_URL "https://github.com/coal-library/coal")
-set(PROJECT_USE_CMAKE_EXPORT TRUE)
+if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
+  set(PROJECT_USE_CMAKE_EXPORT TRUE)
+endif()
 set(PROJECT_COMPATIBILITY_VERSION AnyNewerVersion)
 # To enable jrl-cmakemodules compatibility with workspace we must define the two
 # following lines
@@ -141,7 +143,6 @@ SET_DEFAULT_CMAKE_BUILD_TYPE("RelWithDebInfo")
 # If needed, fix CMake policy for APPLE systems
 APPLY_DEFAULT_APPLE_CONFIGURATION()
 
-option(BUILD_PYTHON_INTERFACE "Build the python bindings" ON)
 cmake_dependent_option(
   GENERATE_PYTHON_STUBS
   "Generate the Python stubs associated to the Python library"
@@ -328,7 +329,10 @@ set(
   include/coal/timings.h
 )
 
-if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
+if(
+  COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL
+  AND NOT BUILD_STANDALONE_PYTHON_INTERFACE
+)
   set(
     HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS
     include/hpp/fcl/broadphase/broadphase_bruteforce.h
@@ -458,10 +462,12 @@ if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
     include/hpp/fcl/warning.hh
   )
   list(APPEND ${PROJECT_NAME}_HEADERS ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS})
-  HEADER_INSTALL(
-    COMPONENT hpp-fcl-compatibility
-    ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS}
-  )
+  if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
+    HEADER_INSTALL(
+      COMPONENT hpp-fcl-compatibility
+      ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS}
+    )
+  endif()
 endif()
 
 if(COAL_HAS_OCTOMAP)
@@ -475,9 +481,30 @@ if(COAL_HAS_OCTOMAP)
 endif(COAL_HAS_OCTOMAP)
 
 add_subdirectory(doc)
-add_subdirectory(src)
+if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
+  add_subdirectory(src)
+endif()
 if(BUILD_PYTHON_INTERFACE)
-  add_subdirectory(python)
+  if(BUILD_STANDALONE_PYTHON_INTERFACE)
+    ADD_PROJECT_DEPENDENCY(${PROJECT_NAME} REQUIRED CONFIG)
+  endif()
+  add_custom_target(${PROJECT_NAME}_python)
+  set_target_properties(
+    ${PROJECT_NAME}_python
+    PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD True
+  )
+  if(COAL_PYTHON_NANOBIND)
+    find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+    # jrl-cmakemodules use PYTHON_EXECUTABLE defined in FINDPYTHON macro.
+    # Since we doesn't call it in this branch, we must redefine it.
+    set(PYTHON_EXECUTABLE ${Python_EXECUTABLE})
+    add_subdirectory(python-nb)
+  else()
+    set(PYTHON_COMPONENTS Interpreter Development NumPy)
+    FINDPYTHON(REQUIRED)
+    ADD_PROJECT_PRIVATE_DEPENDENCY(eigenpy 2.9.2 REQUIRED)
+    add_subdirectory(python)
+  endif()
 endif()
 if(BUILD_TESTING)
   add_subdirectory(test)
@@ -485,13 +512,16 @@ endif(BUILD_TESTING)
 
 PKG_CONFIG_APPEND_LIBS("coal")
 if(COAL_HAS_OCTOMAP)
-  # FCL_HAVE_OCTOMAP kept for backward compatibility reasons.
+  # FCL_HAVE_OCTOMAP kept for backward compatibility reasons.
   PKG_CONFIG_APPEND_CFLAGS(
     "-DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DFCL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=${OCTOMAP_MAJOR_VERSION} -DOCTOMAP_MINOR_VERSION=${OCTOMAP_MINOR_VERSION} -DOCTOMAP_PATCH_VERSION=${OCTOMAP_PATCH_VERSION}"
   )
 endif(COAL_HAS_OCTOMAP)
 
-if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
+if(
+  COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL
+  AND NOT BUILD_STANDALONE_PYTHON_INTERFACE
+)
   include(CMakePackageConfigHelpers)
   write_basic_package_version_file(
     hpp-fclConfigVersion.cmake
