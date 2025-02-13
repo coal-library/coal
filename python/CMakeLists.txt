@@ -174,7 +174,7 @@ endif()
 
 target_link_libraries(
   ${PYTHON_LIB_NAME}
-  PUBLIC ${PROJECT_NAME} eigenpy::eigenpy Boost::system
+  PUBLIC ${PROJECT_NAME}::${PROJECT_NAME} eigenpy::eigenpy Boost::system
 )
 
 set_target_properties(
