@@ -194,7 +194,7 @@ else()
 endif()
 
 # Optional dependencies
-ADD_PROJECT_DEPENDENCY(octomap PKG_CONFIG_REQUIRES "octomap >= 1.6")
+ADD_PROJECT_DEPENDENCY(octomap 1.8.0 PKG_CONFIG_REQUIRES "octomap >= 1.8")
 if(octomap_FOUND)
   set(COAL_HAS_OCTOMAP TRUE)
   string(REPLACE "." ";" VERSION_LIST ${octomap_VERSION})
