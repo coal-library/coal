@@ -84,6 +84,24 @@ release_new_version = { cmd = "VERSION=$COAL_VERSION cmake --build build_new_ver
   "configure_new_version",
 ] }
 
+[feature.python-only.build-dependencies]
+ccache = ">=4.9.1"
+cmake = ">=3.10"
+cxx-compiler = ">=1.7.0"
+ninja = ">=1.11"
+pkg-config = ">=0.29.2"
+git = ">=2.47.0"
+
+[feature.python-only.dependencies]
+libboost-devel = ">=1.80.0"
+libboost-python-devel = ">=1.80.0"
+libcoal = "*"
+eigenpy = ">=3.7.0"
+# XML generation seem to be broken in some doxygen version
+doxygen = "<1.9.8|>=1.11,<1.13"
+lxml = ">=5.3"
+pylatexenc = ">=2.10"
+
 # QHull support
 [feature.qhull.target.win]
 dependencies = { qhull = ">=2020.2" }
@@ -150,3 +168,7 @@ new-version = { features = [
   "octomap",
   "python-latest",
 ], solve-group = "python-latest" }
+python-only = { features = [
+  "python-only",
+  "python-latest",
+], no-default-feature = true}
