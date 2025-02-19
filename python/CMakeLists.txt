@@ -32,6 +32,105 @@
 #  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #  POSSIBILITY OF SUCH DAMAGE.
 
+cmake_minimum_required(VERSION 3.10)
+set(CXX_DISABLE_WERROR TRUE)
+
+set(PROJECT_NAME coal-python)
+set(PROJECT_ORG "coal-library")
+set(
+  PROJECT_DESCRIPTION
+  "Coal Python bindings"
+)
+set(PROJECT_URL "https://github.com/coal-library/coal")
+set(PROJECT_USE_CMAKE_EXPORT TRUE)
+set(PROJECT_COMPATIBILITY_VERSION AnyNewerVersion)
+# To enable jrl-cmakemodules compatibility with workspace we must define the two
+# following lines
+set(PROJECT_AUTO_RUN_FINALIZE FALSE)
+set(PROJECT_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
+
+# Check if the submodule cmake have been initialized
+set(JRL_CMAKE_MODULES "${CMAKE_CURRENT_LIST_DIR}/../cmake")
+if(EXISTS "${JRL_CMAKE_MODULES}/base.cmake")
+  message(STATUS "JRL cmakemodules found in 'cmake/' git submodule")
+else()
+  find_package(jrl-cmakemodules QUIET CONFIG)
+  if(jrl-cmakemodules_FOUND)
+    get_property(
+      JRL_CMAKE_MODULES
+      TARGET jrl-cmakemodules::jrl-cmakemodules
+      PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+    )
+    message(STATUS "JRL cmakemodules found on system at ${JRL_CMAKE_MODULES}")
+  elseif(${CMAKE_VERSION} VERSION_LESS "3.14.0")
+    message(
+      FATAL_ERROR
+      "\nCan't find jrl-cmakemodules. Please either:\n"
+      "  - use git submodule: 'git submodule update --init'\n"
+      "  - or install https://github.com/jrl-umi3218/jrl-cmakemodules\n"
+      "  - or upgrade your CMake version to >= 3.14 to allow automatic fetching\n"
+    )
+  else()
+    message(STATUS "JRL cmakemodules not found. Let's fetch it.")
+    include(FetchContent)
+    FetchContent_Declare(
+      "jrl-cmakemodules"
+      GIT_REPOSITORY "https://github.com/jrl-umi3218/jrl-cmakemodules.git"
+    )
+    FetchContent_MakeAvailable("jrl-cmakemodules")
+    FetchContent_GetProperties("jrl-cmakemodules" SOURCE_DIR JRL_CMAKE_MODULES)
+  endif()
+endif()
+
+# Use BoostConfig module distributed by boost library instead of using FindBoost module distributed
+# by CMake.
+# There is one unresolved issue with FindBoost and clang-cl so we deactivate it in this case.
+if(NOT WIN32 OR NOT ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+  if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 NEW)
+    # Set a default value to this policy to avoid issue with find_dependency
+    # macro redefinition with different policy in some modules.
+    set(CMAKE_POLICY_DEFAULT_CMP0167 NEW)
+  endif()
+endif()
+
+include("${JRL_CMAKE_MODULES}/base.cmake")
+COMPUTE_PROJECT_ARGS(PROJECT_ARGS LANGUAGES CXX)
+project(${PROJECT_NAME} ${PROJECT_ARGS})
+
+include("${JRL_CMAKE_MODULES}/boost.cmake")
+include("${JRL_CMAKE_MODULES}/python.cmake")
+include("${JRL_CMAKE_MODULES}/apple.cmake")
+include("${JRL_CMAKE_MODULES}/ide.cmake")
+include(CMakeDependentOption)
+
+SET_DEFAULT_CMAKE_BUILD_TYPE("RelWithDebInfo")
+
+# If needed, fix CMake policy for APPLE systems
+APPLY_DEFAULT_APPLE_CONFIGURATION()
+
+option(
+  GENERATE_PYTHON_STUBS
+  "Generate the Python stubs associated to the Python library"
+  OFF
+)
+
+set(PYTHON_COMPONENTS Interpreter Development NumPy)
+FINDPYTHON(REQUIRED)
+if(NOT TARGET coal::coal)
+  ADD_PROJECT_PRIVATE_DEPENDENCY(coal REQUIRED)
+endif()
+ADD_PROJECT_PRIVATE_DEPENDENCY(eigenpy 2.9.2 REQUIRED)
+ADD_PROJECT_PRIVATE_DEPENDENCY(Boost REQUIRED system)
+
+if(Boost_VERSION_STRING VERSION_LESS 1.81)
+  # Default C++ version should be C++11
+  CHECK_MINIMAL_CXX_STANDARD(11 ENFORCE)
+else()
+  # Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)
+  CHECK_MINIMAL_CXX_STANDARD(14 ENFORCE)
+endif()
+
 include(${JRL_CMAKE_MODULES}/python-helpers.cmake)
 include(${JRL_CMAKE_MODULES}/stubs.cmake)
 
@@ -162,6 +261,8 @@ add_library(
   ${${PYTHON_LIB_NAME}_SOURCES}
   ${${PYTHON_LIB_NAME}_HEADERS}
 )
+add_library(
+  coal_pywrap ALIAS ${PYTHON_LIB_NAME})
 target_include_directories(
   ${PYTHON_LIB_NAME}
   SYSTEM
@@ -169,7 +270,7 @@ target_include_directories(
 )
 target_include_directories(
   ${PYTHON_LIB_NAME}
-  PRIVATE "${PROJECT_SOURCE_DIR}/src" "${CMAKE_CURRENT_BINARY_DIR}"
+  PRIVATE "${CMAKE_CURRENT_BINARY_DIR}"
 )
 if(WIN32)
   target_link_libraries(${PYTHON_LIB_NAME} PUBLIC ${PYTHON_LIBRARY})
@@ -188,7 +289,7 @@ endif()
 
 target_link_libraries(
   ${PYTHON_LIB_NAME}
-  PUBLIC ${PROJECT_NAME} eigenpy::eigenpy Boost::system
+  PUBLIC coal::coal eigenpy::eigenpy Boost::system
 )
 
 set_target_properties(
@@ -196,10 +297,10 @@ set_target_properties(
   PROPERTIES
     PREFIX ""
     SUFFIX "${PYTHON_EXT_SUFFIX}"
-    OUTPUT_NAME "${PYTHON_LIB_NAME}"
-    LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/python/${PROJECT_NAME}"
+    OUTPUT_NAME "coal_pywrap"
+    LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/coal"
     # On Windows, shared library are treat as binary
-    RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/python/${PROJECT_NAME}"
+    RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/coal"
 )
 
 if(IS_ABSOLUTE ${PYTHON_SITELIB})
@@ -207,7 +308,7 @@ if(IS_ABSOLUTE ${PYTHON_SITELIB})
 else()
   set(ABSOLUTE_PYTHON_SITELIB ${CMAKE_INSTALL_PREFIX}/${PYTHON_SITELIB})
 endif()
-set(${PYTHON_LIB_NAME}_INSTALL_DIR ${ABSOLUTE_PYTHON_SITELIB}/${PROJECT_NAME})
+set(${PYTHON_LIB_NAME}_INSTALL_DIR ${ABSOLUTE_PYTHON_SITELIB}/coal)
 if(UNIX)
   GET_RELATIVE_RPATH(
     ${${PYTHON_LIB_NAME}_INSTALL_DIR}
@@ -230,10 +331,9 @@ if(GENERATE_PYTHON_STUBS)
   LOAD_STUBGEN()
   GENERATE_STUBS(
     ${CMAKE_CURRENT_BINARY_DIR}
-    ${PROJECT_NAME}
+    coal
     ${ABSOLUTE_PYTHON_SITELIB}
     ${PYTHON_LIB_NAME}
-    ${PROJECT_NAME}
   )
 endif(GENERATE_PYTHON_STUBS)
 
@@ -241,9 +341,9 @@ endif(GENERATE_PYTHON_STUBS)
 set(PYTHON_FILES __init__.py viewer.py windows_dll_manager.py)
 
 foreach(python ${PYTHON_FILES})
-  PYTHON_BUILD(${PROJECT_NAME} ${python})
+  PYTHON_BUILD(coal ${python})
   install(
-    FILES "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/${python}"
+    FILES "${CMAKE_CURRENT_SOURCE_DIR}/coal/${python}"
     DESTINATION ${${PYTHON_LIB_NAME}_INSTALL_DIR}
   )
 endforeach(python)
@@ -252,3 +352,5 @@ if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
   PYTHON_INSTALL_ON_SITE(hppfcl __init__.py COMPONENT hpp-fcl-compatibility)
   PYTHON_INSTALL_ON_SITE(hppfcl viewer.py COMPONENT hpp-fcl-compatibility)
 endif()
+
+SETUP_PROJECT_FINALIZE()
