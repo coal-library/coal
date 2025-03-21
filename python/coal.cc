@@ -48,8 +48,8 @@
 #include "doxygen_autodoc/coal/mesh_loader/loader.h"
 #endif
 
-#include "../doc/python/doxygen.hh"
-#include "../doc/python/doxygen-boost.hh"
+#include "doc/autodoc/doxygen.hh"
+#include "doc/autodoc/doxygen-boost.hh"
 
 using namespace coal;
 namespace dv = doxygen::visitor;

@@ -37,10 +37,7 @@ set(CXX_DISABLE_WERROR TRUE)
 
 set(PROJECT_NAME coal-python)
 set(PROJECT_ORG "coal-library")
-set(
-  PROJECT_DESCRIPTION
-  "Coal Python bindings"
-)
+set(PROJECT_DESCRIPTION "Coal Python bindings")
 set(PROJECT_URL "https://github.com/coal-library/coal")
 set(PROJECT_USE_CMAKE_EXPORT TRUE)
 set(PROJECT_COMPATIBILITY_VERSION AnyNewerVersion)
@@ -163,9 +160,16 @@ set(
   "Enable automatic documentation of Python bindings from Doxygen documentation"
 )
 
+# By default don't build the XML doxygen output
+set(INSTALL_DOCUMENTATION OFF)
+set(BUILD_DOCUMENTATION OFF)
+add_subdirectory(doc)
+
 if(NOT ENABLE_PYTHON_DOXYGEN_AUTODOC OR NOT DOXYGEN_FOUND)
   set(ENABLE_DOXYGEN_AUTODOC FALSE)
 else()
+  # Autodoc need doxygen xml output
+  set(BUILD_DOCUMENTATION ON)
   set(ENABLE_DOXYGEN_AUTODOC TRUE)
 
   if(
@@ -220,7 +224,7 @@ if(ENABLE_DOXYGEN_AUTODOC)
     generate_doxygen_cpp_doc
     COMMAND
       ${PYTHON_EXECUTABLE}
-      ${PROJECT_SOURCE_DIR}/doc/python/doxygen_xml_parser.py
+      ${PROJECT_SOURCE_DIR}/doc/autodoc/doxygen_xml_parser.py
       ${PROJECT_BINARY_DIR}/doc/doxygen-xml/index.xml
       ${CMAKE_CURRENT_BINARY_DIR}/doxygen_autodoc >
       ${CMAKE_CURRENT_BINARY_DIR}/doxygen_autodoc.log
@@ -261,8 +265,7 @@ add_library(
   ${${PYTHON_LIB_NAME}_SOURCES}
   ${${PYTHON_LIB_NAME}_HEADERS}
 )
-add_library(
-  coal_pywrap ALIAS ${PYTHON_LIB_NAME})
+add_library(coal_pywrap ALIAS ${PYTHON_LIB_NAME})
 target_include_directories(
   ${PYTHON_LIB_NAME}
   SYSTEM

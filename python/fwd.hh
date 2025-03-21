@@ -20,8 +20,8 @@ using coal::shared_ptr;
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #undef BOOST_BIND_GLOBAL_PLACEHOLDERS
 
-#include "../doc/python/doxygen.hh"
-#include "../doc/python/doxygen-boost.hh"
+#include "doc/autodoc/doxygen.hh"
+#include "doc/autodoc/doxygen-boost.hh"
 
 namespace bp = boost::python;
 namespace dv = doxygen::visitor;

@@ -47,8 +47,8 @@
 #include "doxygen_autodoc/coal/collision_data.h"
 #endif
 
-#include "../doc/python/doxygen.hh"
-#include "../doc/python/doxygen-boost.hh"
+#include "doc/autodoc/doxygen.hh"
+#include "doc/autodoc/doxygen-boost.hh"
 
 using namespace boost::python;
 using namespace coal;
