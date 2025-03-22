@@ -42,7 +42,7 @@ jobs:
           name: "artifact-${{ matrix.os }}-${{ matrix.python }}"
           path: wheelhouse
 
-  test:
+  test-wheel:
     needs: ["wheel"]
     name: "Test ${{ matrix.python }} ${{ matrix.os }}"
     runs-on: "${{ matrix.os }}"
@@ -92,8 +92,27 @@ jobs:
           name: artifact-sdist
           path: dist
 
+  test-sdist:
+    runs-on: ubuntu-24.04
+    needs: ["sdist"]
+    name: "Test sdist"
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: "artifact-sdist"
+          path: dist
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+      - name: setup
+        run: |
+          python -m pip install -U pip
+          python -m pip install build cmeel[build] cmeel-boost cmeel-eigen cmeel-assimp cmeel-octomap cmeel-qhull eigenpy[build] scipy
+      - name: install sdist
+        run: python -m pip install dist/coal*.tar.gz
+
   release:
-    needs: ["test", "sdist"]
+    needs: ["test-wheel", "test-sdist"]
     if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     runs-on: ubuntu-24.04
     environment: release
