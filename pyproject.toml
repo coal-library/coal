@@ -19,7 +19,7 @@ dependencies = [
 ]
 description = "An extension of the Flexible Collision Library"
 license = "BSD-3-Clause"
-name = "coal-library"
+name = "coal"
 version = "3.0.1"
 
 [project.urls]
