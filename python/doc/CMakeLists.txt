@@ -15,7 +15,7 @@ set(DOXYGEN_EXCLUDE "${coal_INCLUDE_DIRS}/include/hpp/")
 # We must not document octree if Octomap is not setup.
 # This create a build issue when building the bindings because doxygen-autodoc will
 # include octree.h that will include octomap.h.
-if(NOT TARGET octomap)
+if(NOT COAL_HAS_OCTOMAP)
   set(DOXYGEN_EXCLUDE "${DOXYGEN_EXCLUDE} ${coal_INCLUDE_DIRS}/coal/octree.h")
   set(
     DOXYGEN_EXCLUDE
