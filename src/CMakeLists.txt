@@ -115,67 +115,6 @@ if(COAL_HAS_OCTOMAP)
   list(APPEND ${LIBRARY_NAME}_SOURCES octree.cpp)
 endif(COAL_HAS_OCTOMAP)
 
-if(COAL_HAS_QHULL AND NOT COAL_USE_SYSTEM_QHULL)
-  set(
-    libqhullcpp_HEADERS
-    ${Qhullcpp_PREFIX}/libqhullcpp/Coordinates.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/functionObjects.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/PointCoordinates.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/Qhull.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullError.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullFacet.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullFacetList.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullFacetSet.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullHyperplane.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullIterator.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullLinkedList.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullPoint.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullPoints.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullPointSet.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullQh.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullRidge.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullSet.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullSets.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullStat.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullVertex.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullVertexSet.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/RboxPoints.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/RoadError.h
-    ${Qhullcpp_PREFIX}/libqhullcpp/RoadLogEvent.h
-  )
-
-  set(
-    libqhullcpp_SOURCES
-    ${Qhullcpp_PREFIX}/libqhullcpp/Coordinates.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/PointCoordinates.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/Qhull.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullFacet.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullFacetList.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullFacetSet.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullHyperplane.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullPoint.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullPointSet.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullPoints.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullQh.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullRidge.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullSet.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullStat.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullVertex.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/QhullVertexSet.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/RboxPoints.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/RoadError.cpp
-    ${Qhullcpp_PREFIX}/libqhullcpp/RoadLogEvent.cpp
-    ${libqhullcpp_HEADERS}
-  )
-
-  # TODO We compile qhullcpp because it is not provided in the binary package while
-  # the other parts of Qhull are released.
-  # Compile Qhull package as found on github leads to a link error (because it generates
-  # only a static library). One should be careful that the version of the qhull submodule
-  # of this git repo matches the version of qhull provided by the system.
-  list(APPEND ${LIBRARY_NAME}_SOURCES ${libqhullcpp_SOURCES})
-endif()
-
 set(PROJECT_HEADERS_FULL_PATH)
 foreach(header ${${PROJECT_NAME}_HEADERS})
   list(APPEND PROJECT_HEADERS_FULL_PATH ${PROJECT_SOURCE_DIR}/${header})
@@ -279,19 +218,7 @@ endif()
 
 if(COAL_HAS_QHULL)
   target_compile_definitions(${LIBRARY_NAME} PRIVATE -DCOAL_HAS_QHULL)
-  if(COAL_USE_SYSTEM_QHULL)
-    target_link_libraries(
-      ${LIBRARY_NAME}
-      PRIVATE Qhull::qhull_r Qhull::qhullcpp
-    )
-  else()
-    target_include_directories(
-      ${LIBRARY_NAME}
-      SYSTEM
-      PRIVATE ${Qhull_r_INCLUDE_DIR} ${Qhullcpp_PREFIX}
-    )
-    target_link_libraries(${LIBRARY_NAME} PRIVATE "${Qhull_r_LIBRARY}")
-  endif()
+  target_link_libraries(${LIBRARY_NAME} PRIVATE Qhull::qhull_r Qhull::qhullcpp)
 endif()
 
 MODERNIZE_TARGET_LINK_LIBRARIES(

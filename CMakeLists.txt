@@ -209,36 +209,7 @@ endif()
 
 option(COAL_HAS_QHULL "use qhull library to compute convex hulls." FALSE)
 if(COAL_HAS_QHULL)
-  find_package(Qhull COMPONENTS qhull_r qhullcpp)
-  if(Qhull_FOUND)
-    set(COAL_USE_SYSTEM_QHULL TRUE)
-    message(STATUS "COAL uses system Qhull")
-  else()
-    message(
-      STATUS
-      "Qhullcpp not found: it will be build from sources, if Qhull_r is found"
-    )
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/third-parties)
-    execute_process(
-      COMMAND
-        ${CMAKE_COMMAND} -E create_symlink
-        ${PROJECT_SOURCE_DIR}/third-parties/qhull/src/libqhullcpp
-        ${PROJECT_BINARY_DIR}/third-parties/libqhullcpp
-    )
-    set(Qhullcpp_PREFIX ${PROJECT_BINARY_DIR}/third-parties)
-    find_path(
-      Qhull_r_INCLUDE_DIR
-      NAMES libqhull_r/libqhull_r.h
-      PATHS ${Qhull_PREFIX}
-    )
-    find_library(Qhull_r_LIBRARY NAMES libqhull_r.so PATHS ${Qhull_PREFIX})
-    if(NOT Qhull_r_LIBRARY)
-      message(
-        FATAL_ERROR
-        "Qhull_r not found, please install it or turn COAL_HAS_QHULL OFF"
-      )
-    endif()
-  endif()
+  find_package(Qhull REQUIRED COMPONENTS qhull_r qhullcpp)
 endif()
 
 find_package(assimp REQUIRED)
