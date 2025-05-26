@@ -182,7 +182,7 @@ if(ENABLE_DOXYGEN_AUTODOC)
   add_dependencies(${PYTHON_LIB_NAME} generate_doxygen_cpp_doc)
   target_compile_definitions(
     ${PYTHON_LIB_NAME}
-    PRIVATE -DCOAL_HAS_DOXYGEN_AUTODOC
+    PRIVATE COAL_HAS_DOXYGEN_AUTODOC
   )
 endif()
 

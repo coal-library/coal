@@ -17,7 +17,7 @@ function(add_coal_test test_name source)
   )
   target_compile_options(${target_name} PRIVATE ${PRIVATE_OPTIONS})
   if(COAL_HAS_QHULL)
-    target_compile_options(${target_name} PRIVATE -DCOAL_HAS_QHULL)
+    target_compile_definitions(${target_name} PRIVATE COAL_HAS_QHULL)
   endif()
 endfunction()
 
