@@ -1,8 +1,10 @@
 # This file provide bacward compatiblity for `find_package(hpp-fcl)`.
 
 if(NOT COAL_DISABLE_HPP_FCL_WARNINGS)
-  message(WARNING "Please update your CMake from 'hpp-fcl' to 'coal',\n"
-"or define COAL_DISABLE_HPP_FCL_WARNINGS")
+  message(
+    WARNING
+      "Please update your CMake from 'hpp-fcl' to 'coal', or define COAL_DISABLE_HPP_FCL_WARNINGS"
+  )
 endif()
 
 find_package(coal REQUIRED)
