@@ -3,7 +3,7 @@
 if(NOT COAL_DISABLE_HPP_FCL_WARNINGS)
   message(
     WARNING
-      "Please update your CMake from 'hpp-fcl' to 'coal', or define COAL_DISABLE_HPP_FCL_WARNINGS"
+    "Please update your CMake from 'hpp-fcl' to 'coal', or define COAL_DISABLE_HPP_FCL_WARNINGS"
   )
 endif()
 
