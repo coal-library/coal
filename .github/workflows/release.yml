@@ -12,6 +12,7 @@ on:
 
 env:
   CMEEL_LOG_LEVEL: DEBUG
+  DEPS: numpy cmeel-boost~=1.87.0 cmeel-eigen cmeel-assimp cmeel-octomap cmeel-qhull eigenpy[build]
 
 jobs:
   wheel:
@@ -68,9 +69,9 @@ jobs:
           python -m pip install wheel simple503
           python -m simple503 --base-url ${{ github.workspace }}/wheelhouse ${{ github.workspace }}/wheelhouse
       - name: install deps
-        run: python -m pip install cmeel numpy cmeel-boost cmeel-eigen cmeel-assimp cmeel-octomap cmeel-qhull eigenpy[build]
+        run: python -m pip install cmeel $DEPS
       - name: install wheel
-        run: python -m pip install -i "file://${{ github.workspace }}/wheelhouse" cmeel-boost
+        run: python -m pip install -i "file://${{ github.workspace }}/wheelhouse" coal
 
   sdist:
     runs-on: ubuntu-24.04
@@ -84,7 +85,7 @@ jobs:
       - name: setup
         run: |
           python -m pip install -U pip
-          python -m pip install build cmeel[build] cmeel-boost cmeel-eigen cmeel-assimp cmeel-octomap cmeel-qhull eigenpy[build] scipy
+          python -m pip install build cmeel[build] $DEPS
       - name: build sdist
         run: python -m build -nso dist .
       - uses: actions/upload-artifact@v4
@@ -107,7 +108,7 @@ jobs:
       - name: setup
         run: |
           python -m pip install -U pip
-          python -m pip install build cmeel[build] cmeel-boost cmeel-eigen cmeel-assimp cmeel-octomap cmeel-qhull eigenpy[build] scipy
+          python -m pip install build cmeel[build] $DEPS
       - name: install sdist
         run: python -m pip install dist/coal*.tar.gz
 
