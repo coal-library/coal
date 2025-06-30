@@ -364,7 +364,10 @@ set(
   include/coal/timings.h
 )
 
-if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
+if(
+  COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL
+  AND NOT BUILD_STANDALONE_PYTHON_INTERFACE
+)
   set(
     HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS
     include/hpp/fcl/broadphase/broadphase_bruteforce.h
