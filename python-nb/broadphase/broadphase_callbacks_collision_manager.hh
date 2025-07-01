@@ -9,6 +9,7 @@
 
 #include "../fwd.h"
 #include <nanobind/trampoline.h>
+#include <nanobind/stl/function.h>
 
 namespace coal {
 
@@ -19,10 +20,7 @@ struct CollisionCallBackBaseWrapper : CollisionCallBackBase {
   void init() override { NB_OVERRIDE_PURE(init); }
 
   bool collide(CollisionObject *o1, CollisionObject *o2) override {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
     NB_OVERRIDE_PURE(collide, o1, o2);
-#pragma GCC diagnostic pop
   }
 
   static void expose(nb::module_ &m) {
@@ -48,10 +46,7 @@ struct DistanceCallBackBaseWrapper : DistanceCallBackBase {
 
   bool distance(CollisionObject *o1, CollisionObject *o2,
                 Scalar &dist) override {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
     NB_OVERRIDE_PURE(distance, o1, o2, dist);
-#pragma GCC diagnostic pop
   }
 
   static void expose(nb::module_ &m) {
@@ -92,10 +87,7 @@ struct BroadPhaseCollisionManagerWrapper : BroadPhaseCollisionManager {
   void clear() override { NB_OVERRIDE_PURE(clear); }
 
   std::vector<CollisionObject *> getObjects() const override {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
     NB_OVERRIDE_PURE(getObjects);
-#pragma GCC diagnostic pop
   }
 
   void collide(CollisionCallBackBase *callback) const override {
@@ -122,18 +114,8 @@ struct BroadPhaseCollisionManagerWrapper : BroadPhaseCollisionManager {
     NB_OVERRIDE_PURE(distance, other_manager, callback);
   }
 
-  bool empty() const override {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-    NB_OVERRIDE_PURE(empty);
-#pragma GCC diagnostic pop
-  }
-  size_t size() const override {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-    NB_OVERRIDE_PURE(size);
-#pragma GCC diagnostic pop
-  }
+  bool empty() const override { NB_OVERRIDE_PURE(empty); }
+  size_t size() const override { NB_OVERRIDE_PURE(size); }
 
   static void expose(nb::module_ &m) {
     nb::class_<BroadPhaseCollisionManager, BroadPhaseCollisionManagerWrapper>(
@@ -172,6 +154,21 @@ struct BroadPhaseCollisionManagerWrapper : BroadPhaseCollisionManager {
                self.collide(manager, callback);
              })
 
+        .def("collide",
+             [](const Base &self, const CollisionCallBackFunctor &callback) {
+               self.collide(callback);
+             })
+        .def("collide",
+             [](const Base &self, CollisionObject *obj,
+                const CollisionCallBackFunctor &callback) {
+               self.collide(obj, callback);
+             })
+        .def("collide",
+             [](const Base &self, BroadPhaseCollisionManager *manager,
+                const CollisionCallBackFunctor &callback) {
+               self.collide(manager, callback);
+             })
+
         .def("distance",
              [](const Base &self, DistanceCallBackBase *callback) {
                self.distance(callback);
@@ -184,6 +181,21 @@ struct BroadPhaseCollisionManagerWrapper : BroadPhaseCollisionManager {
         .def("distance",
              [](const Base &self, BroadPhaseCollisionManager *manager,
                 DistanceCallBackBase *callback) {
+               self.distance(manager, callback);
+             })
+
+        .def("distance",
+             [](const Base &self, const DistanceCallBackFunctor &callback) {
+               self.distance(callback);
+             })
+        .def("distance",
+             [](const Base &self, CollisionObject *obj,
+                const DistanceCallBackFunctor &callback) {
+               self.distance(obj, callback);
+             })
+        .def("distance",
+             [](const Base &self, BroadPhaseCollisionManager *manager,
+                const DistanceCallBackFunctor &callback) {
                self.distance(manager, callback);
              });
   }

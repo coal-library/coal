@@ -110,8 +110,7 @@ class COAL_DLLAPI BroadPhaseCollisionManager {
                         DistanceCallBackBase* callback) const = 0;
 
   /// @copybrief distance(CollisionObject*, DistanceCallBackBase*)
-  void distance(CollisionObject* obj,
-                const DistanceCallBackFunctor& callback) const;
+  void distance(CollisionObject* obj, const DistanceCallBackFunctor& fn) const;
 
   /// @brief perform collision test for the objects belonging to the manager
   /// (i.e., N^2 self collision)
@@ -125,7 +124,7 @@ class COAL_DLLAPI BroadPhaseCollisionManager {
   virtual void distance(DistanceCallBackBase* callback) const = 0;
 
   /// @copybrief distance(DistanceCallBackBase*)
-  void distance(const DistanceCallBackFunctor& callback) const;
+  void distance(const DistanceCallBackFunctor& fn) const;
 
   /// @brief perform collision test with objects belonging to another manager
   virtual void collide(BroadPhaseCollisionManager* other_manager,
