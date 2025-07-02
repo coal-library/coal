@@ -164,7 +164,7 @@ option(BUILD_PYTHON_INTERFACE "Build the python bindings" ON)
 cmake_dependent_option(
   COAL_PYTHON_NANOBIND
   "Build the nanobind-based bindings."
-  ON
+  OFF
   BUILD_PYTHON_INTERFACE
   OFF
 )
@@ -519,12 +519,7 @@ if(BUILD_PYTHON_INTERFACE)
     PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD True
   )
   if(COAL_PYTHON_NANOBIND)
-    if(CMAKE_VERSION VERSION_LESS 3.18)
-      set(DEV_MODULE Development)
-    else()
-      set(DEV_MODULE Development.Module)
-    endif()
-    find_package(Python REQUIRED COMPONENTS Interpreter ${DEV_MODULE})
+    find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
     # jrl-cmakemodules use PYTHON_EXECUTABLE defined in FINDPYTHON macro.
     # Since we doesn't call it in this branch, we must redefine it.
     set(PYTHON_EXECUTABLE ${Python_EXECUTABLE})
