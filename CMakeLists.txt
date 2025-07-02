@@ -172,8 +172,7 @@ cmake_dependent_option(
 if(NOT COAL_PYTHON_NANOBIND)
   cmake_dependent_option(
     GENERATE_PYTHON_STUBS
-    "Generate the Python stubs for the Python bindings"
-    " (only for legacy Boost.Python bindings)"
+    "Generate the Python stubs for the Python bindings (only for legacy Boost.Python bindings)"
     OFF
     BUILD_PYTHON_INTERFACE
     OFF
