@@ -42,7 +42,9 @@ set(
   "Coal, The Collision Detection Library. Previously known as HPP-FCL, fork of FCL -- The Flexible Collision Library"
 )
 set(PROJECT_URL "https://github.com/coal-library/coal")
-set(PROJECT_USE_CMAKE_EXPORT TRUE)
+if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
+  set(PROJECT_USE_CMAKE_EXPORT TRUE)
+endif()
 set(PROJECT_COMPATIBILITY_VERSION AnyNewerVersion)
 # To enable jrl-cmakemodules compatibility with workspace we must define the two
 # following lines
@@ -160,7 +162,6 @@ SET_DEFAULT_CMAKE_BUILD_TYPE("RelWithDebInfo")
 # If needed, fix CMake policy for APPLE systems
 APPLY_DEFAULT_APPLE_CONFIGURATION()
 
-option(BUILD_PYTHON_INTERFACE "Build the python bindings" ON)
 cmake_dependent_option(
   COAL_PYTHON_NANOBIND
   "Build the nanobind-based bindings."
@@ -361,7 +362,10 @@ set(
   include/coal/timings.h
 )
 
-if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
+if(
+  COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL
+  AND NOT BUILD_STANDALONE_PYTHON_INTERFACE
+)
   set(
     HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS
     include/hpp/fcl/broadphase/broadphase_bruteforce.h
@@ -494,10 +498,12 @@ if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
     include/hpp/fcl/warning.hh
   )
   list(APPEND ${PROJECT_NAME}_HEADERS ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS})
-  HEADER_INSTALL(
-    COMPONENT hpp-fcl-compatibility
-    ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS}
-  )
+  if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
+    HEADER_INSTALL(
+      COMPONENT hpp-fcl-compatibility
+      ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS}
+    )
+  endif()
 endif()
 
 if(COAL_HAS_OCTOMAP)
@@ -511,8 +517,13 @@ if(COAL_HAS_OCTOMAP)
 endif(COAL_HAS_OCTOMAP)
 
 add_subdirectory(doc)
-add_subdirectory(src)
+if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
+  add_subdirectory(src)
+endif()
 if(BUILD_PYTHON_INTERFACE)
+  if(BUILD_STANDALONE_PYTHON_INTERFACE)
+    ADD_PROJECT_DEPENDENCY(${PROJECT_NAME} REQUIRED CONFIG)
+  endif()
   add_custom_target(${PROJECT_NAME}_python)
   set_target_properties(
     ${PROJECT_NAME}_python
@@ -537,16 +548,16 @@ endif(BUILD_TESTING)
 
 PKG_CONFIG_APPEND_LIBS("coal")
 if(COAL_HAS_OCTOMAP)
-  # FCL_HAVE_OCTOMAP kept for backward compatibility reasons.
+  # FCL_HAVE_OCTOMAP kept for backward compatibility reasons.
   PKG_CONFIG_APPEND_CFLAGS(
     "-DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DFCL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=${OCTOMAP_MAJOR_VERSION} -DOCTOMAP_MINOR_VERSION=${OCTOMAP_MINOR_VERSION} -DOCTOMAP_PATCH_VERSION=${OCTOMAP_PATCH_VERSION}"
   )
 endif(COAL_HAS_OCTOMAP)
 
-# Install catkin package.xml
-install(FILES package.xml DESTINATION share/${PROJECT_NAME})
-
-if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
+if(
+  COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL
+  AND NOT BUILD_STANDALONE_PYTHON_INTERFACE
+)
   include(CMakePackageConfigHelpers)
   write_basic_package_version_file(
     hpp-fclConfigVersion.cmake
