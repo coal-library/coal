@@ -3,9 +3,7 @@
 
   inputs = {
     flake-parts.url = "github:hercules-ci/flake-parts";
-    # TODO: switch back to nixos-unstable after
-    # https://github.com/NixOS/nixpkgs/pull/395016
-    nixpkgs.url = "github:NixOS/nixpkgs/refs/pull/395016/head";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
   outputs =
@@ -21,8 +19,31 @@
           };
           devShells.default = pkgs.mkShell { inputsFrom = [ self'.packages.default ]; };
           packages = {
-            default = self'.packages.coal;
-            coal = pkgs.python3Packages.coal.overrideAttrs (super: {
+            default = self'.packages.coal-bp;
+            coal-bp = pkgs.python3Packages.coal.overrideAttrs (super: {
+              pname = "coal-bp";
+              cmakeFlags = super.cmakeFlags ++ [
+                "-DCOAL_PYTHON_NANOBIND=OFF"
+                "-DGENERATE_PYTHON_STUBS=OFF"
+              ];
+              src = pkgs.lib.fileset.toSource {
+                root = ./.;
+                fileset = pkgs.lib.fileset.unions [
+                  ./CMakeLists.txt
+                  ./doc
+                  ./hpp-fclConfig.cmake
+                  ./include
+                  ./package.xml
+                  ./python
+                  # ./python-nb
+                  ./src
+                  ./test
+                ];
+              };
+            });
+            coal-nb = pkgs.python3Packages.coal.overrideAttrs (super: {
+              pname = "coal-nb";
+              cmakeFlags = super.cmakeFlags ++ [ "-DCOAL_PYTHON_NANOBIND=ON" ];
               postPatch = ''
                 substituteInPlace python-nb/CMakeLists.txt --replace-fail \
                   "$""{Python_SITELIB}" \
@@ -41,7 +62,7 @@
                   ./hpp-fclConfig.cmake
                   ./include
                   ./package.xml
-                  ./python
+                  # ./python
                   ./python-nb
                   ./src
                   ./test

@@ -18,6 +18,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu, macos]
+        py: [bp, nb]
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
@@ -25,7 +26,7 @@ jobs:
         with:
           name: gepetto
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-      - run: nix build -L
+      - run: nix build -L .#coal-${{ matrix.py }}
 
   check:
     if: always()
