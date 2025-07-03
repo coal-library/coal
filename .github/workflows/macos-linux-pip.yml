@@ -50,6 +50,6 @@ jobs:
       - run: python -m pip install -U pip
       - run: python -m pip install cmeel-assimp cmeel-octomap cmeel-qhull eigenpy[build]
       - run: echo "CMAKE_PREFIX_PATH=$(cmeel cmake)" >> $GITHUB_ENV
-      - run: cmake -B build -S . -DCOAL_HAS_QHULL=ON
+      - run: cmake -B build -S . -DPython_EXECUTABLE=$(which python) -DCOAL_HAS_QHULL=ON -DCOAL_PYTHON_NANOBIND=OFF
       - run: cmake --build build -j 4
       - run: cmake --build build -t test

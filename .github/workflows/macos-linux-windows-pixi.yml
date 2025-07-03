@@ -37,7 +37,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, macos-13]
-        environment: [all, all-python-oldest]
+        environment: [all, all-python-oldest, all-boost-python]
         build_type: [Release, Debug]
         cxx_options: ['', '-mavx2']
         exclude:

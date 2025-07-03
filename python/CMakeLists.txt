@@ -31,15 +31,11 @@
 #  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 #  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #  POSSIBILITY OF SUCH DAMAGE.
+find_package(Boost REQUIRED COMPONENTS system)
 
-include(${JRL_CMAKE_MODULES}/python-helpers.cmake)
-include(${JRL_CMAKE_MODULES}/stubs.cmake)
-
-add_custom_target(${PROJECT_NAME}_python)
-set_target_properties(
-  ${PROJECT_NAME}_python
-  PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD True
-)
+if(GENERATE_PYTHON_STUBS)
+  include(${JRL_CMAKE_MODULES}/stubs.cmake)
+endif(GENERATE_PYTHON_STUBS)
 
 # Name of the Python library
 set(PYTHON_LIB_NAME ${PROJECT_NAME}_pywrap)

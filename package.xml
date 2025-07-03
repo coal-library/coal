@@ -32,6 +32,8 @@
   <depend>assimp</depend>
   <depend>liboctomap-dev</depend>
   <depend>eigenpy</depend>
+  <depend>nanobind-dev</depend>
+  <depend>nanoeigenpy</depend>
 
   <!-- The following tag is recommended by REP-136 -->
   <exec_depend condition="$ROS_VERSION == 1">catkin</exec_depend>

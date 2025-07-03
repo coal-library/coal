@@ -1,4 +1,4 @@
-[project]
+[workspace]
 name = "coal"
 version = "3.0.1"
 description = "An extension of the Flexible Collision Library"
@@ -9,24 +9,24 @@ license-file = "LICENSE"
 
 [build-dependencies]
 ccache = ">=4.9.1"
-cmake = ">=3.10"
+cmake = ">=3.15"
 cxx-compiler = ">=1.7.0"
 ninja = ">=1.11"
 pkg-config = ">=0.29.2"
 git = ">=2.47.0"
+nanobind = ">=2.5.0,<3"
 
 [dependencies]
 libboost-devel = ">=1.80.0"
-libboost-python-devel = ">=1.80.0"
 eigen = ">=3.4.0"
 assimp = ">=5.4"
 numpy = ">=1.22.0"
 python = ">=3.9.0"
-eigenpy = ">=3.7.0"
 # XML generation seem to be broken in some doxygen version
 doxygen = ">=1.8"
 lxml = ">=5.3"
 pylatexenc = ">=2.10"
+nanoeigenpy = ">=0.3.0"
 
 [activation]
 scripts = ["development/scripts/pixi/activation.sh"]
@@ -46,10 +46,12 @@ configure = { cmd = [
   "build",
   "-S",
   ".",
+  "-DPython_EXECUTABLE=$PYTHON_EXECUTABLE",
   "-DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX",
   "-DCMAKE_BUILD_TYPE=$COAL_BUILD_TYPE",
   "-DGENERATE_PYTHON_STUBS=$COAL_PYTHON_STUBS",
   "-DCOAL_HAS_QHULL=$COAL_HAS_QHULL",
+  "-DCOAL_PYTHON_NANOBIND=$COAL_PYTHON_NANOBIND",
 ] }
 build = { cmd = "cmake --build build --target all", depends-on = ["configure"] }
 clean = { cmd = "rm -rf build" }
@@ -92,6 +94,11 @@ activation = { env = { COAL_HAS_QHULL = "ON" } }
 dependencies = { qhull = ">=2020.2", qhull-static = ">=2020.2" }
 activation = { env = { COAL_HAS_QHULL = "ON" } }
 
+# Legacy Python bindings
+[feature.boost-python]
+dependencies = { libboost-python-devel = ">=1.80.0", eigenpy = ">=3.7.0" }
+activation.env = { COAL_PYTHON_NANOBIND = "OFF" }
+
 # Octomap support
 [feature.octomap]
 dependencies = { octomap = ">=1.10" }
@@ -101,6 +108,7 @@ python = "3.13.*"
 
 [feature.python-oldest.dependencies]
 python = "3.9.*"
+typing_extensions = ">=4.13.2,<5"
 
 # Use clang-cl on Windows.
 # We must use scripts instead of env to setup CC and CXX
@@ -132,6 +140,13 @@ all = { features = [
   "octomap",
   "python-latest",
 ], solve-group = "python-latest" }
+# No solve-group, because boost.python will be legacy
+all-boost-python = { features = [
+  "qhull",
+  "octomap",
+  "python-latest",
+  "boost-python",
+]}
 all-python-oldest = { features = [
   "qhull",
   "octomap",

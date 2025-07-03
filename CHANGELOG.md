@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove qhull submodule, as ubuntu 20.04 is EoL ([#704](https://github.com/coal-library/coal/pull/704))
 - Removed support for octomap < 1.8 ([#727](https://github.com/coal-library/coal/pull/727))
 
+### Added
+- Added a second set of Python bindings based on nanobind ([#659](https://github.com/coal-library/coal/pull/659))
+
 ### Changed
 - Formatted all CMake listfiles using gersemi, add gersemi to pre-commit configuration ([#657](https://github.com/coal-library/coal/pull/657/files))
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))

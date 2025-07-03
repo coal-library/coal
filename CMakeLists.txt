@@ -162,12 +162,22 @@ APPLY_DEFAULT_APPLE_CONFIGURATION()
 
 option(BUILD_PYTHON_INTERFACE "Build the python bindings" ON)
 cmake_dependent_option(
-  GENERATE_PYTHON_STUBS
-  "Generate the Python stubs associated to the Python library"
+  COAL_PYTHON_NANOBIND
+  "Build the nanobind-based bindings."
   OFF
   BUILD_PYTHON_INTERFACE
   OFF
 )
+# Stubs only optional for legacy Boost.Python bindings
+if(NOT COAL_PYTHON_NANOBIND)
+  cmake_dependent_option(
+    GENERATE_PYTHON_STUBS
+    "Generate the Python stubs for the Python bindings (only for legacy Boost.Python bindings)"
+    OFF
+    BUILD_PYTHON_INTERFACE
+    OFF
+  )
+endif()
 
 ADD_PROJECT_DEPENDENCY(Eigen3 REQUIRED PKG_CONFIG_REQUIRES "eigen3 >= 3.0.0")
 
@@ -180,12 +190,6 @@ if(COAL_BUILD_WITH_TRACY)
     PROPERTIES POSITION_INDEPENDENT_CODE True
   )
 endif(COAL_BUILD_WITH_TRACY)
-
-if(BUILD_PYTHON_INTERFACE)
-  set(PYTHON_COMPONENTS Interpreter Development NumPy)
-  FINDPYTHON(REQUIRED)
-  ADD_PROJECT_PRIVATE_DEPENDENCY(eigenpy 2.9.2 REQUIRED)
-endif()
 
 # Required dependencies
 SET_BOOST_DEFAULT_OPTIONS()
@@ -202,9 +206,6 @@ ADD_PROJECT_DEPENDENCY(
 if(COAL_ENABLE_LOGGING)
   ADD_PROJECT_DEPENDENCY(Boost REQUIRED log)
 endif()
-if(BUILD_PYTHON_INTERFACE)
-  find_package(Boost REQUIRED COMPONENTS system)
-endif(BUILD_PYTHON_INTERFACE)
 
 if(Boost_VERSION_STRING VERSION_LESS 1.81)
   # Default C++ version should be C++11
@@ -512,7 +513,23 @@ endif(COAL_HAS_OCTOMAP)
 add_subdirectory(doc)
 add_subdirectory(src)
 if(BUILD_PYTHON_INTERFACE)
-  add_subdirectory(python)
+  add_custom_target(${PROJECT_NAME}_python)
+  set_target_properties(
+    ${PROJECT_NAME}_python
+    PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD True
+  )
+  if(COAL_PYTHON_NANOBIND)
+    find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+    # jrl-cmakemodules use PYTHON_EXECUTABLE defined in FINDPYTHON macro.
+    # Since we doesn't call it in this branch, we must redefine it.
+    set(PYTHON_EXECUTABLE ${Python_EXECUTABLE})
+    add_subdirectory(python-nb)
+  else()
+    set(PYTHON_COMPONENTS Interpreter Development NumPy)
+    FINDPYTHON(REQUIRED)
+    ADD_PROJECT_PRIVATE_DEPENDENCY(eigenpy 2.9.2 REQUIRED)
+    add_subdirectory(python)
+  endif()
 endif()
 if(BUILD_TESTING)
   add_subdirectory(test)
