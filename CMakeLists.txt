@@ -499,9 +499,6 @@ if(COAL_HAS_OCTOMAP)
   )
 endif(COAL_HAS_OCTOMAP)
 
-# Install catkin package.xml
-install(FILES package.xml DESTINATION share/${PROJECT_NAME})
-
 if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
   include(CMakePackageConfigHelpers)
   write_basic_package_version_file(
