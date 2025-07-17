@@ -96,14 +96,6 @@ else()
       PROPERTY INTERFACE_INCLUDE_DIRECTORIES
     )
     message(STATUS "JRL cmakemodules found on system at ${JRL_CMAKE_MODULES}")
-  elseif(${CMAKE_VERSION} VERSION_LESS "3.14.0")
-    message(
-      FATAL_ERROR
-      "\nCan't find jrl-cmakemodules. Please either:\n"
-      "  - use git submodule: 'git submodule update --init'\n"
-      "  - or install https://github.com/jrl-umi3218/jrl-cmakemodules\n"
-      "  - or upgrade your CMake version to >= 3.14 to allow automatic fetching\n"
-    )
   else()
     message(STATUS "JRL cmakemodules not found. Let's fetch it.")
     include(FetchContent)
@@ -542,9 +534,6 @@ if(COAL_HAS_OCTOMAP)
     "-DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DFCL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=${OCTOMAP_MAJOR_VERSION} -DOCTOMAP_MINOR_VERSION=${OCTOMAP_MINOR_VERSION} -DOCTOMAP_PATCH_VERSION=${OCTOMAP_PATCH_VERSION}"
   )
 endif(COAL_HAS_OCTOMAP)
-
-# Install catkin package.xml
-install(FILES package.xml DESTINATION share/${PROJECT_NAME})
 
 if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
   include(CMakePackageConfigHelpers)
