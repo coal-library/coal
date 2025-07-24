@@ -1,36 +1,31 @@
 #
 # Software License Agreement (BSD License)
 #
-#  Copyright (c) 2014-2025 CNRS-LAAS, INRIA
-#  Author: Florent Lamiraux, Joseph Mirabel
-#  All rights reserved.
+# Copyright (c) 2014-2025 CNRS-LAAS, INRIA Author: Florent Lamiraux, Joseph
+# Mirabel All rights reserved.
 #
-#  Redistribution and use in source and binary forms, with or without
-#  modification, are permitted provided that the following conditions
-#  are met:
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
 #
-#   * Redistributions of source code must retain the above copyright
-#     notice, this list of conditions and the following disclaimer.
-#   * Redistributions in binary form must reproduce the above
-#     copyright notice, this list of conditions and the following
-#     disclaimer in the documentation and/or other materials provided
-#     with the distribution.
-#   * Neither the name of CNRS-LAAS. nor the names of its
-#     contributors may be used to endorse or promote products derived
-#     from this software without specific prior written permission.
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+# * Neither the name of CNRS-LAAS. nor the names of its contributors may be used
+#   to endorse or promote products derived from this software without specific
+#   prior written permission.
 #
-#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-#  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-#  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-#  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-#  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-#  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-#  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-#  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-#  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-#  POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 cmake_minimum_required(VERSION 3.22)
 set(CXX_DISABLE_WERROR TRUE)
@@ -42,7 +37,9 @@ set(
   "Coal, The Collision Detection Library. Previously known as HPP-FCL, fork of FCL -- The Flexible Collision Library"
 )
 set(PROJECT_URL "https://github.com/coal-library/coal")
-set(PROJECT_USE_CMAKE_EXPORT TRUE)
+if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
+  set(PROJECT_USE_CMAKE_EXPORT TRUE)
+endif()
 set(PROJECT_COMPATIBILITY_VERSION AnyNewerVersion)
 # To enable jrl-cmakemodules compatibility with workspace we must define the two
 # following lines
@@ -108,9 +105,9 @@ else()
   endif()
 endif()
 
-# Use BoostConfig module distributed by boost library instead of using FindBoost module distributed
-# by CMake.
-# There is one unresolved issue with FindBoost and clang-cl so we deactivate it in this case.
+# Use BoostConfig module distributed by boost library instead of using FindBoost
+# module distributed by CMake. There is one unresolved issue with FindBoost and
+# clang-cl so we deactivate it in this case.
 if(NOT WIN32 OR NOT ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
   if(POLICY CMP0167)
     cmake_policy(SET CMP0167 NEW)
@@ -152,7 +149,6 @@ SET_DEFAULT_CMAKE_BUILD_TYPE("RelWithDebInfo")
 # If needed, fix CMake policy for APPLE systems
 APPLY_DEFAULT_APPLE_CONFIGURATION()
 
-option(BUILD_PYTHON_INTERFACE "Build the python bindings" ON)
 cmake_dependent_option(
   COAL_PYTHON_NANOBIND
   "Build the nanobind-based bindings."
@@ -353,7 +349,10 @@ set(
   include/coal/timings.h
 )
 
-if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
+if(
+  COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL
+  AND NOT BUILD_STANDALONE_PYTHON_INTERFACE
+)
   set(
     HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS
     include/hpp/fcl/broadphase/broadphase_bruteforce.h
@@ -503,8 +502,13 @@ if(COAL_HAS_OCTOMAP)
 endif(COAL_HAS_OCTOMAP)
 
 add_subdirectory(doc)
-add_subdirectory(src)
+if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
+  add_subdirectory(src)
+endif()
 if(BUILD_PYTHON_INTERFACE)
+  if(BUILD_STANDALONE_PYTHON_INTERFACE)
+    ADD_PROJECT_DEPENDENCY(${PROJECT_NAME} REQUIRED CONFIG)
+  endif()
   add_custom_target(${PROJECT_NAME}_python)
   set_target_properties(
     ${PROJECT_NAME}_python
@@ -512,8 +516,8 @@ if(BUILD_PYTHON_INTERFACE)
   )
   if(COAL_PYTHON_NANOBIND)
     find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
-    # jrl-cmakemodules use PYTHON_EXECUTABLE defined in FINDPYTHON macro.
-    # Since we doesn't call it in this branch, we must redefine it.
+    # jrl-cmakemodules use PYTHON_EXECUTABLE defined in FINDPYTHON macro. Since
+    # we doesn't call it in this branch, we must redefine it.
     set(PYTHON_EXECUTABLE ${Python_EXECUTABLE})
     add_subdirectory(python-nb)
   else()
@@ -529,13 +533,16 @@ endif(BUILD_TESTING)
 
 PKG_CONFIG_APPEND_LIBS("coal")
 if(COAL_HAS_OCTOMAP)
-  # FCL_HAVE_OCTOMAP kept for backward compatibility reasons.
+  # FCL_HAVE_OCTOMAP kept for backward compatibility reasons.
   PKG_CONFIG_APPEND_CFLAGS(
     "-DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DFCL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=${OCTOMAP_MAJOR_VERSION} -DOCTOMAP_MINOR_VERSION=${OCTOMAP_MINOR_VERSION} -DOCTOMAP_PATCH_VERSION=${OCTOMAP_PATCH_VERSION}"
   )
 endif(COAL_HAS_OCTOMAP)
 
-if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
+if(
+  COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL
+  AND NOT BUILD_STANDALONE_PYTHON_INTERFACE
+)
   include(CMakePackageConfigHelpers)
   write_basic_package_version_file(
     hpp-fclConfigVersion.cmake
