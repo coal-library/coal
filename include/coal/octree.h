@@ -40,6 +40,7 @@
 #define COAL_OCTREE_H
 
 #include <algorithm>
+#include <limits>
 
 #include <octomap/octomap.h>
 #include "coal/fwd.hh"
@@ -113,10 +114,13 @@ class COAL_DLLAPI OcTree : public CollisionGeometry {
     if (it == end) return;
 
     {
-      const octomap::point3d& coord =
-          it.getCoordinate();  // getCoordinate returns a copy
-      max_extent = min_extent = Eigen::Map<const Vec3float>(&coord.x());
-      for (++it; it != end; ++it) {
+      max_extent = Vec3float(std::numeric_limits<float>::lowest(),
+                             std::numeric_limits<float>::lowest(),
+                             std::numeric_limits<float>::lowest());
+      min_extent = Vec3float(std::numeric_limits<float>::max(),
+                             std::numeric_limits<float>::max(),
+                             std::numeric_limits<float>::max());
+      for (; it != end; ++it) {
         const octomap::point3d& coord = it.getCoordinate();
         const Vec3float pos = Eigen::Map<const Vec3float>(&coord.x());
         // Account for the size of the box.
