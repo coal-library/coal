@@ -119,15 +119,13 @@ class COAL_DLLAPI OcTree : public CollisionGeometry {
       for (++it; it != end; ++it) {
         const octomap::point3d& coord = it.getCoordinate();
         const Vec3float pos = Eigen::Map<const Vec3float>(&coord.x());
-        max_extent = max_extent.array().max(pos.array());
-        min_extent = min_extent.array().min(pos.array());
+        // Account for the size of the box.
+        auto max_pos = pos.array() + float(it.getSize() / 2.);
+        auto min_pos = pos.array() - float(it.getSize() / 2.);
+        max_extent = max_extent.array().max(max_pos.array());
+        min_extent = min_extent.array().min(min_pos.array());
       }
     }
-
-    // Account for the size of the boxes.
-    const Scalar resolution = Scalar(tree->getResolution());
-    max_extent.array() += float(resolution / 2.);
-    min_extent.array() -= float(resolution / 2.);
 
     aabb_local = AABB(min_extent.cast<Scalar>(), max_extent.cast<Scalar>());
     aabb_center = aabb_local.center();
