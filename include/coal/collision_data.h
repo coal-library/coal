@@ -916,6 +916,19 @@ struct COAL_DLLAPI ContactPatchResult {
 
   /// @brief Set up a `ContactPatchResult` from a `ContactPatchRequest`
   void set(const ContactPatchRequest& request) {
+    // In practice there may be better constants, and coal may have one. But for
+    // contact points, this should suffice for memory limits on most systems.
+    const size_t max_reasonable_patches = 100000;
+
+    // Check if the request exceeds reasonable limits before attempting resize
+    if (request.max_num_patch > max_reasonable_patches) {
+      COAL_THROW_PRETTY(
+          "Requested too many contact patches: " +
+              std::to_string(request.max_num_patch) +
+              ". Maximum supported: " + std::to_string(max_reasonable_patches),
+          std::invalid_argument);
+    }
+
     if (this->m_contact_patches_data.size() < request.max_num_patch) {
       this->m_contact_patches_data.resize(request.max_num_patch);
     }

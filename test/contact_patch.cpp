@@ -1022,3 +1022,44 @@ BOOST_AUTO_TEST_CASE(edge_case_segment_face) {
     }
   }
 }
+
+BOOST_AUTO_TEST_CASE(contact_path_excessive_requests) {
+  // This test handles contact patch requests with excessively large sizes, to
+  // ensure that the program gracefully handles them above some set threshold
+
+  // This should not throw
+  {
+    CollisionRequest reasonable_req(CONTACT, 1000);
+    ContactPatchRequest patch_req(reasonable_req);
+    ContactPatchResult patch_res(patch_req);
+  }
+
+  // This should throw a clear error, not get to the point where std::vector
+  // needs to throw a std::length_error with an unclear message
+  {
+    const size_t excessive_contacts = 1000000;
+    CollisionRequest excessive_req(CONTACT, excessive_contacts);
+    ContactPatchRequest patch_req(excessive_req);
+
+    BOOST_CHECK_THROW(ContactPatchResult patch_res(patch_req),
+                      std::invalid_argument);
+  }
+
+  // Test the specific error message content
+  {
+    const size_t excessive_contacts = std::numeric_limits<size_t>::max();
+    CollisionRequest excessive_req(CONTACT, excessive_contacts);
+    ContactPatchRequest patch_req(excessive_req);
+
+    try {
+      ContactPatchResult patch_res(patch_req);
+      BOOST_FAIL("Should have thrown an exception");
+    } catch (const std::invalid_argument &e) {
+      std::string error_msg(e.what());
+      BOOST_CHECK(error_msg.find("Requested too many contact patches") !=
+                  std::string::npos);
+      BOOST_CHECK(error_msg.find("Maximum supported: 100000") !=
+                  std::string::npos);
+    }
+  }
+}
