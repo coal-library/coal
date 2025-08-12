@@ -31,7 +31,7 @@
 #  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 #  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #  POSSIBILITY OF SUCH DAMAGE.
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
 
 if(GENERATE_PYTHON_STUBS)
   include(${JRL_CMAKE_MODULES}/stubs.cmake)
@@ -170,7 +170,7 @@ endif()
 
 target_link_libraries(
   ${PYTHON_LIB_NAME}
-  PUBLIC ${PROJECT_NAME}::${PROJECT_NAME} eigenpy::eigenpy Boost::system
+  PUBLIC ${PROJECT_NAME}::${PROJECT_NAME} eigenpy::eigenpy Boost::boost
 )
 
 set_target_properties(

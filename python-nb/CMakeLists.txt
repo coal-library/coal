@@ -11,7 +11,7 @@ cmake_policy(PUSH)
 cmake_policy(SET CMP0074 NEW)
 find_package(nanobind CONFIG REQUIRED)
 cmake_policy(POP)
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
 
 # Nanoeigenpy
 find_package(nanoeigenpy CONFIG REQUIRED)
@@ -51,7 +51,7 @@ endif(COAL_HAS_OCTOMAP)
 nanobind_add_module(${PYTHON_LIB_NAME_V2} NB_STATIC LTO NB_SUPPRESS_WARNINGS ${PYTHON_LIB_SOURCES})
 target_link_libraries(
   ${PYTHON_LIB_NAME_V2}
-  PRIVATE ${PROJECT_NAME}::${PROJECT_NAME} Boost::system
+  PRIVATE ${PROJECT_NAME}::${PROJECT_NAME} Boost::boost
 )
 target_compile_definitions(
   ${PYTHON_LIB_NAME_V2}
