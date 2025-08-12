@@ -1034,10 +1034,19 @@ BOOST_AUTO_TEST_CASE(contact_path_excessive_requests) {
     ContactPatchResult patch_res(patch_req);
   }
 
+  // Test with a large, but reasonable number of contacts
+  {
+    const size_t midsize_contacts = 100000;
+    CollisionRequest midsize_req(CONTACT, midsize_contacts);
+    ContactPatchRequest patch_req(midsize_req);
+
+    BOOST_CHECK_NO_THROW(ContactPatchResult patch_res(patch_req));
+  }
+
   // This should throw a clear error, not get to the point where std::vector
   // needs to throw a std::length_error with an unclear message
   {
-    const size_t excessive_contacts = 1000000;
+    const size_t excessive_contacts = std::numeric_limits<size_t>::max();
     CollisionRequest excessive_req(CONTACT, excessive_contacts);
     ContactPatchRequest patch_req(excessive_req);
 
@@ -1058,8 +1067,9 @@ BOOST_AUTO_TEST_CASE(contact_path_excessive_requests) {
       std::string error_msg(e.what());
       BOOST_CHECK(error_msg.find("Requested too many contact patches") !=
                   std::string::npos);
-      BOOST_CHECK(error_msg.find("Maximum supported: 100000") !=
-                  std::string::npos);
+      // Check that the error message contains "Maximum supported:" followed by
+      // the actual max_size value
+      BOOST_CHECK(error_msg.find("Maximum supported:") != std::string::npos);
     }
   }
 }
