@@ -182,12 +182,7 @@ endif(COAL_BUILD_WITH_TRACY)
 # Required dependencies
 SET_BOOST_DEFAULT_OPTIONS()
 EXPORT_BOOST_DEFAULT_OPTIONS()
-ADD_PROJECT_DEPENDENCY(
-  Boost
-  REQUIRED
-  serialization
-  filesystem
-)
+ADD_PROJECT_DEPENDENCY(Boost REQUIRED serialization filesystem)
 if(COAL_ENABLE_LOGGING)
   ADD_PROJECT_DEPENDENCY(Boost REQUIRED log)
 endif()
