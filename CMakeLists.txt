@@ -185,9 +185,6 @@ EXPORT_BOOST_DEFAULT_OPTIONS()
 ADD_PROJECT_DEPENDENCY(
   Boost
   REQUIRED
-  chrono
-  thread
-  date_time
   serialization
   filesystem
 )
