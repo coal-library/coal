@@ -116,13 +116,15 @@ class COAL_DLLAPI OcTree : public CollisionGeometry {
     {
       max_extent.fill(std::numeric_limits<float>::lowest());
       min_extent.fill(std::numeric_limits<float>::max());
-     
+
       for (; it != end; ++it) {
         const octomap::point3d& coord = it.getCoordinate();
         const Vec3float pos = Eigen::Map<const Vec3float>(&coord.x());
         // Account for the size of the box.
-        const Vec3float max_pos = pos + Vec3float::Constant(float(it.getSize() / 2.));
-        const Vec3float min_pos = pos - Vec3float::Constant(float(it.getSize() / 2.));
+        const Vec3float max_pos =
+            pos + Vec3float::Constant(float(it.getSize() / 2.));
+        const Vec3float min_pos =
+            pos - Vec3float::Constant(float(it.getSize() / 2.));
         max_extent.array() = max_extent.array().max(max_pos.array());
         min_extent.array() = min_extent.array().min(min_pos.array());
       }
