@@ -40,6 +40,7 @@
 #define COAL_OCTREE_H
 
 #include <algorithm>
+#include <limits>
 
 #include <octomap/octomap.h>
 #include "coal/fwd.hh"
@@ -113,21 +114,21 @@ class COAL_DLLAPI OcTree : public CollisionGeometry {
     if (it == end) return;
 
     {
-      const octomap::point3d& coord =
-          it.getCoordinate();  // getCoordinate returns a copy
-      max_extent = min_extent = Eigen::Map<const Vec3float>(&coord.x());
-      for (++it; it != end; ++it) {
+      max_extent.fill(std::numeric_limits<float>::lowest());
+      min_extent.fill(std::numeric_limits<float>::max());
+
+      for (; it != end; ++it) {
         const octomap::point3d& coord = it.getCoordinate();
         const Vec3float pos = Eigen::Map<const Vec3float>(&coord.x());
-        max_extent = max_extent.array().max(pos.array());
-        min_extent = min_extent.array().min(pos.array());
+        // Account for the size of the box.
+        const Vec3float max_pos =
+            pos + Vec3float::Constant(float(it.getSize() / 2.));
+        const Vec3float min_pos =
+            pos - Vec3float::Constant(float(it.getSize() / 2.));
+        max_extent.array() = max_extent.array().max(max_pos.array());
+        min_extent.array() = min_extent.array().min(min_pos.array());
       }
     }
-
-    // Account for the size of the boxes.
-    const Scalar resolution = Scalar(tree->getResolution());
-    max_extent.array() += float(resolution / 2.);
-    min_extent.array() -= float(resolution / 2.);
 
     aabb_local = AABB(min_extent.cast<Scalar>(), max_extent.cast<Scalar>());
     aabb_center = aabb_local.center();
