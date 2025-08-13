@@ -103,6 +103,51 @@ coal::OcTree makeOctree(const BVHModel<OBBRSS>& mesh,
   return OcTree(octree);
 }
 
+BOOST_AUTO_TEST_CASE(octree_aabb) {
+  // Create a simple octree with 8 nodes arranged in a 2x2x2 cube
+  Scalar resolution = 1.0;
+  octomap::OcTreePtr_t octree_ptr(new octomap::OcTree(resolution));
+  std::vector<octomap::point3d> points = {
+      octomap::point3d(0.5, 0.5, 0.5), octomap::point3d(1.5, 0.5, 0.5),
+      octomap::point3d(0.5, 1.5, 0.5), octomap::point3d(1.5, 1.5, 0.5),
+      octomap::point3d(0.5, 0.5, 1.5), octomap::point3d(1.5, 0.5, 1.5),
+      octomap::point3d(0.5, 1.5, 1.5), octomap::point3d(1.5, 1.5, 1.5)};
+  for (const auto& point : points) {
+    octree_ptr->updateNode(point, true);
+  }
+  octree_ptr->updateInnerOccupancy();
+  // Make sure the octree is not pruned
+  octree_ptr->expand();
+  // Check initial size
+  BOOST_CHECK_EQUAL(octree_ptr->getNumLeafNodes(), 8);
+
+  // Create coal::OcTree and compute AABB
+  coal::OcTree octree(octree_ptr);
+  octree.computeLocalAABB();
+
+  // The AABB should encompass the 2x2x2 cube from (0,0,0) to (2,2,2)
+  BOOST_CHECK(octree.aabb_local.min_.isApprox(Vec3s(0, 0, 0), 1e-6));
+  BOOST_CHECK(octree.aabb_local.max_.isApprox(Vec3s(2, 2, 2), 1e-6));
+
+  // Create a copy and prune it
+  octomap::OcTreePtr_t octree_pruned_ptr(new octomap::OcTree(*octree_ptr));
+  octree_pruned_ptr->prune();
+  // Check pruned size, the 8 leaf nodes should have been merged into 1
+  BOOST_CHECK_EQUAL(octree_pruned_ptr->getNumLeafNodes(), 1);
+
+  // Create coal::OcTree and compute AABB
+  coal::OcTree octree_pruned(octree_pruned_ptr);
+  octree_pruned.computeLocalAABB();
+
+  // The AABB should encompass the 2x2x2 cube from (0,0,0) to (2,2,2)
+  BOOST_CHECK(octree_pruned.aabb_local.min_.isApprox(Vec3s(0, 0, 0), 1e-6));
+  BOOST_CHECK(octree_pruned.aabb_local.max_.isApprox(Vec3s(2, 2, 2), 1e-6));
+
+  // The AABB should remain the same after pruning
+  BOOST_CHECK(octree.aabb_local.min_.isApprox(octree_pruned.aabb_local.min_));
+  BOOST_CHECK(octree.aabb_local.max_.isApprox(octree_pruned.aabb_local.max_));
+}
+
 BOOST_AUTO_TEST_CASE(octree_mesh) {
   Eigen::IOFormat tuple(Eigen::FullPrecision, Eigen::DontAlignCols, "", ", ",
                         "", "", "(", ")");
