@@ -335,8 +335,11 @@ class COAL_DLLAPI OcTreeSolver {
 
       bool contactNotAdded =
           (cresult->numContacts() >= crequest->num_max_contacts);
-      std::size_t ncontact = ShapeShapeCollide<Box, S>(
-          &box, box_tf, &s, tf2, solver, *crequest, *cresult);
+      std::size_t ncontact = cresult->numContacts();
+      // Get the number of new contacts added.
+      ncontact = ShapeShapeCollide<Box, S>(&box, box_tf, &s, tf2, solver,
+                                           *crequest, *cresult) -
+                 ncontact;
       assert(ncontact == 0 || ncontact == 1);
       if (!contactNotAdded && ncontact == 1) {
         // Update contact information.
