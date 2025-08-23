@@ -1,4 +1,4 @@
-name: Release on PyPI
+name: Release on GitHub & PyPI
 
 on:
   push:
@@ -13,6 +13,7 @@ on:
 env:
   CMEEL_LOG_LEVEL: DEBUG
   DEPS: numpy cmeel-boost~=1.87.0 cmeel-eigen cmeel-assimp cmeel-octomap cmeel-qhull eigenpy[build]
+  PROJECT: coal
 
 jobs:
   wheel:
@@ -21,10 +22,7 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-24.04", "ubuntu-24.04-arm", "macos-13", "macos-14"]
-        python: ["cp38", "cp39", "cp310", "cp311", "cp312", "cp313"]
-        exclude:
-          - os: "macos-14"
-            python: "cp38"
+        python: ["cp39", "cp310", "cp311", "cp312", "cp313"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,10 +48,7 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-24.04", "ubuntu-24.04-arm", "macos-13", "macos-14"]
-        python: ["cp38", "cp39", "cp310", "cp311", "cp312", "cp313"]
-        exclude:
-          - os: "macos-14"
-            python: "cp38"
+        python: ["cp39", "cp310", "cp311", "cp312", "cp313"]
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -71,7 +66,7 @@ jobs:
       - name: install deps
         run: python -m pip install cmeel $DEPS
       - name: install wheel
-        run: python -m pip install -i "file://${{ github.workspace }}/wheelhouse" coal
+        run: python -m pip install -i "file://${{ github.workspace }}/wheelhouse" $PROJECT
 
   sdist:
     runs-on: ubuntu-24.04
@@ -110,7 +105,7 @@ jobs:
           python -m pip install -U pip
           python -m pip install build cmeel[build] $DEPS
       - name: install sdist
-        run: python -m pip install dist/coal*.tar.gz
+        run: python -m pip install dist/$(echo "$PROJECT" | tr - _)*.tar.gz
 
   release:
     needs: ["test-wheel", "test-sdist"]
@@ -133,7 +128,27 @@ jobs:
         with:
           merge-multiple: true
           path: dist
+      - run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - run: gh release create -t "Release ${{ env.TAG}}" "${{ env.TAG }}" dist/$(echo $PROJECT | tr - _)*.{whl,tar.gz}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
+
+  check:
+    if: always()
+    name: check-macos-linux
+
+    needs:
+      - test-wheel
+      - test-sdist
+
+    runs-on: Ubuntu-latest
+
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
