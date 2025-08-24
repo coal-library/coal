@@ -24,7 +24,7 @@ jobs:
         os: ["ubuntu-24.04", "ubuntu-24.04-arm", "macos-13", "macos-14"]
         python: ["cp39", "cp310", "cp311", "cp312", "cp313"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: 'true'
       - run: pipx install cibuildwheel
@@ -50,7 +50,7 @@ jobs:
         os: ["ubuntu-24.04", "ubuntu-24.04-arm", "macos-13", "macos-14"]
         python: ["cp39", "cp310", "cp311", "cp312", "cp313"]
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: "artifact-${{ matrix.os }}-${{ matrix.python }}"
           path: wheelhouse
@@ -71,7 +71,7 @@ jobs:
   sdist:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: 'true'
       - uses: actions/setup-python@v5
@@ -93,7 +93,7 @@ jobs:
     needs: ["sdist"]
     name: "Test sdist"
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: "artifact-sdist"
           path: dist
@@ -116,7 +116,7 @@ jobs:
       id-token: write
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.ref_name }}
       - run: curl https://github.com/nim65s.gpg | gpg --import
@@ -124,7 +124,7 @@ jobs:
         run: >
           git verify-tag --raw ${{ github.ref_name }} 2>&1
           | grep -q 'VALIDSIG 9B1A79065D2F2B806C8A5A1C7D2ACDAF4653CF28'
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           merge-multiple: true
           path: dist
