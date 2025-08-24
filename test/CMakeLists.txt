@@ -2,17 +2,17 @@
 if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
   find_package(Boost REQUIRED COMPONENTS unit_test_framework filesystem)
 
-  CONFIG_FILES(fcl_resources/config.h)
+  config_files(fcl_resources/config.h)
 
   function(add_coal_test test_name source)
     set(target_name ${PROJECT_NAME}-${test_name})
-    ADD_UNIT_TEST(${target_name} ${source})
+    add_unit_test(${target_name} ${source})
     set_standard_output_directory(${target_name})
     target_link_libraries(
       ${target_name}
       PUBLIC ${LIBRARY_NAME} Boost::filesystem ${utility_target}
     )
-    CXX_FLAGS_BY_COMPILER_FRONTEND(
+    cxx_flags_by_compiler_frontend(
       GNU "-Wno-c99-extensions"
       OUTPUT PRIVATE_OPTIONS
     )

@@ -118,7 +118,7 @@ if(NOT WIN32 OR NOT ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
 endif()
 
 include("${JRL_CMAKE_MODULES}/base.cmake")
-COMPUTE_PROJECT_ARGS(PROJECT_ARGS LANGUAGES CXX)
+compute_project_args(PROJECT_ARGS LANGUAGES CXX)
 project(${PROJECT_NAME} ${PROJECT_ARGS})
 
 include("${JRL_CMAKE_MODULES}/boost.cmake")
@@ -144,10 +144,10 @@ function(set_standard_output_directory target)
   )
 endfunction()
 
-SET_DEFAULT_CMAKE_BUILD_TYPE("RelWithDebInfo")
+set_default_cmake_build_type("RelWithDebInfo")
 
 # If needed, fix CMake policy for APPLE systems
-APPLY_DEFAULT_APPLE_CONFIGURATION()
+apply_default_apple_configuration()
 
 cmake_dependent_option(
   COAL_PYTHON_NANOBIND
@@ -167,12 +167,12 @@ if(NOT COAL_PYTHON_NANOBIND)
   )
 endif()
 
-ADD_PROJECT_DEPENDENCY(Eigen3 REQUIRED PKG_CONFIG_REQUIRES "eigen3 >= 3.0.0")
+add_project_dependency(Eigen3 REQUIRED PKG_CONFIG_REQUIRES "eigen3 >= 3.0.0")
 
 # -- tracy profiling (optional)
 if(COAL_BUILD_WITH_TRACY)
   # assume it is installed somewhere
-  ADD_PROJECT_DEPENDENCY(Tracy REQUIRED)
+  add_project_dependency(Tracy REQUIRED)
   set_target_properties(
     Tracy::TracyClient
     PROPERTIES POSITION_INDEPENDENT_CODE True
@@ -180,28 +180,28 @@ if(COAL_BUILD_WITH_TRACY)
 endif(COAL_BUILD_WITH_TRACY)
 
 # Required dependencies
-SET_BOOST_DEFAULT_OPTIONS()
-EXPORT_BOOST_DEFAULT_OPTIONS()
-ADD_PROJECT_DEPENDENCY(
+set_boost_default_options()
+export_boost_default_options()
+add_project_dependency(
   Boost
   REQUIRED
   serialization
   filesystem
 )
 if(COAL_ENABLE_LOGGING)
-  ADD_PROJECT_DEPENDENCY(Boost REQUIRED log)
+  add_project_dependency(Boost REQUIRED log)
 endif()
 
 if(Boost_VERSION_STRING VERSION_LESS 1.81)
   # Default C++ version should be C++11
-  CHECK_MINIMAL_CXX_STANDARD(11 ENFORCE)
+  check_minimal_cxx_standard(11 ENFORCE)
 else()
   # Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)
-  CHECK_MINIMAL_CXX_STANDARD(14 ENFORCE)
+  check_minimal_cxx_standard(14 ENFORCE)
 endif()
 
 # Optional dependencies
-ADD_PROJECT_DEPENDENCY(octomap 1.8.0 PKG_CONFIG_REQUIRES "octomap >= 1.8")
+add_project_dependency(octomap 1.8.0 PKG_CONFIG_REQUIRES "octomap >= 1.8")
 if(octomap_FOUND)
   set(COAL_HAS_OCTOMAP TRUE)
   string(REPLACE "." ";" VERSION_LIST ${octomap_VERSION})
@@ -482,7 +482,7 @@ if(
     include/hpp/fcl/warning.hh
   )
   list(APPEND ${PROJECT_NAME}_HEADERS ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS})
-  HEADER_INSTALL(
+  header_install(
     COMPONENT hpp-fcl-compatibility
     ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS}
   )
@@ -504,7 +504,7 @@ if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
 endif()
 if(BUILD_PYTHON_INTERFACE)
   if(BUILD_STANDALONE_PYTHON_INTERFACE)
-    ADD_PROJECT_DEPENDENCY(${PROJECT_NAME} REQUIRED CONFIG)
+    add_project_dependency(${PROJECT_NAME} REQUIRED CONFIG)
   endif()
   add_custom_target(${PROJECT_NAME}_python)
   set_target_properties(
@@ -519,8 +519,8 @@ if(BUILD_PYTHON_INTERFACE)
     add_subdirectory(python-nb)
   else()
     set(PYTHON_COMPONENTS Interpreter Development.Module NumPy)
-    FINDPYTHON(REQUIRED)
-    ADD_PROJECT_PRIVATE_DEPENDENCY(eigenpy 2.9.2 REQUIRED)
+    findpython(REQUIRED)
+    add_project_private_dependency(eigenpy 2.9.2 REQUIRED)
     add_subdirectory(python)
   endif()
 endif()
@@ -528,10 +528,10 @@ if(BUILD_TESTING)
   add_subdirectory(test)
 endif(BUILD_TESTING)
 
-PKG_CONFIG_APPEND_LIBS("coal")
+pkg_config_append_libs("coal")
 if(COAL_HAS_OCTOMAP)
   # FCL_HAVE_OCTOMAP kept for backward compatibility reasons.
-  PKG_CONFIG_APPEND_CFLAGS(
+  pkg_config_append_cflags(
     "-DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DFCL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=${OCTOMAP_MAJOR_VERSION} -DOCTOMAP_MINOR_VERSION=${OCTOMAP_MINOR_VERSION} -DOCTOMAP_PATCH_VERSION=${OCTOMAP_PATCH_VERSION}"
   )
 endif(COAL_HAS_OCTOMAP)
@@ -554,7 +554,7 @@ if(
     COMPONENT hpp-fcl-compatibility
   )
   include("${JRL_CMAKE_MODULES}/install-helpers.cmake")
-  ADD_INSTALL_TARGET(NAME hpp-fcl-compatibility COMPONENT hpp-fcl-compatibility)
+  add_install_target(NAME hpp-fcl-compatibility COMPONENT hpp-fcl-compatibility)
 endif()
 
-SETUP_PROJECT_FINALIZE()
+setup_project_finalize()

@@ -158,8 +158,8 @@ if(WIN32)
 endif(WIN32)
 
 add_dependencies(${PROJECT_NAME}_python ${PYTHON_LIB_NAME})
-ADD_HEADER_GROUP(${PYTHON_LIB_NAME}_HEADERS)
-ADD_SOURCE_GROUP(${PYTHON_LIB_NAME}_SOURCES)
+add_header_group(${PYTHON_LIB_NAME}_HEADERS)
+add_source_group(${PYTHON_LIB_NAME}_SOURCES)
 if(ENABLE_DOXYGEN_AUTODOC)
   add_dependencies(${PYTHON_LIB_NAME} generate_doxygen_cpp_doc)
   target_compile_definitions(
@@ -191,7 +191,7 @@ else()
 endif()
 set(${PYTHON_LIB_NAME}_INSTALL_DIR ${ABSOLUTE_PYTHON_SITELIB}/${PROJECT_NAME})
 if(UNIX)
-  GET_RELATIVE_RPATH(
+  get_relative_rpath(
     ${${PYTHON_LIB_NAME}_INSTALL_DIR}
     ${PYTHON_LIB_NAME}_INSTALL_RPATH
   )
@@ -209,8 +209,8 @@ install(
 
 # --- GENERATE STUBS
 if(GENERATE_PYTHON_STUBS)
-  LOAD_STUBGEN()
-  GENERATE_STUBS(
+  load_stubgen()
+  generate_stubs(
     ${CMAKE_CURRENT_BINARY_DIR}
     ${PROJECT_NAME}
     ${ABSOLUTE_PYTHON_SITELIB}
@@ -223,7 +223,7 @@ endif(GENERATE_PYTHON_STUBS)
 set(PYTHON_FILES __init__.py viewer.py windows_dll_manager.py)
 
 foreach(python ${PYTHON_FILES})
-  PYTHON_BUILD(${PROJECT_NAME} ${python})
+  python_build(${PROJECT_NAME} ${python})
   install(
     FILES "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/${python}"
     DESTINATION ${${PYTHON_LIB_NAME}_INSTALL_DIR}
@@ -231,6 +231,6 @@ foreach(python ${PYTHON_FILES})
 endforeach(python)
 
 if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
-  PYTHON_INSTALL_ON_SITE(hppfcl __init__.py COMPONENT hpp-fcl-compatibility)
-  PYTHON_INSTALL_ON_SITE(hppfcl viewer.py COMPONENT hpp-fcl-compatibility)
+  python_install_on_site(hppfcl __init__.py COMPONENT hpp-fcl-compatibility)
+  python_install_on_site(hppfcl viewer.py COMPONENT hpp-fcl-compatibility)
 endif()
