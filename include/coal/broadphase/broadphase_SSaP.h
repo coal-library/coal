@@ -113,12 +113,12 @@ class COAL_DLLAPI SSaPCollisionManager : public BroadPhaseCollisionManager {
       typename std::vector<CollisionObject*>::const_iterator pos_start,
       typename std::vector<CollisionObject*>::const_iterator pos_end,
       CollisionObject* obj, DistanceCallBackBase* callback,
-      CoalScalar& min_dist) const;
+      Scalar& min_dist) const;
 
   bool collide_(CollisionObject* obj, CollisionCallBackBase* callback) const;
 
   bool distance_(CollisionObject* obj, DistanceCallBackBase* callback,
-                 CoalScalar& min_dist) const;
+                 Scalar& min_dist) const;
 
   static int selectOptimalAxis(
       const std::vector<CollisionObject*>& objs_x,

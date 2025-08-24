@@ -447,26 +447,26 @@ def printOrder(order, indent="", start=True, file=sys.stdout, curTests=[]):
                 + "const Vec3s& {} (current.vertex[{}]->w);".format(v.upper(), v),
                 file=file,
             )
-        print(indent + "const CoalScalar aa = A.squaredNorm();".format(), file=file)
+        print(indent + "const Scalar aa = A.squaredNorm();".format(), file=file)
         for v in "dcb":
             for m in "abcd":
                 if m <= v:
                     print(
                         indent
-                        + "const CoalScalar {0}{1}    = {2}.dot({3});".format(
+                        + "const Scalar {0}{1}    = {2}.dot({3});".format(
                             v, m, v.upper(), m.upper()
                         ),
                         file=file,
                     )
                 else:
                     print(
-                        indent + "const CoalScalar& {0}{1}    = {1}{0};".format(v, m),
+                        indent + "const Scalar& {0}{1}    = {1}{0};".format(v, m),
                         file=file,
                     )
-            print(indent + "const CoalScalar {0}a_aa = {0}a - aa;".format(v), file=file)
+            print(indent + "const Scalar {0}a_aa = {0}a - aa;".format(v), file=file)
         for l0, l1 in zip("bcd", "cdb"):
             print(
-                indent + "const CoalScalar {0}a_{1}a = {0}a - {1}a;".format(l0, l1),
+                indent + "const Scalar {0}a_{1}a = {0}a - {1}a;".format(l0, l1),
                 file=file,
             )
         for v in "bc":

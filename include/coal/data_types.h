@@ -43,6 +43,7 @@
 #include <Eigen/Geometry>
 
 #include "coal/config.hh"
+#include "coal/deprecated.hh"
 
 #ifdef COAL_HAS_OCTOMAP
 #define OCTOMAP_VERSION_AT_LEAST(x, y, z) \
@@ -59,32 +60,41 @@
 #endif  // COAL_HAS_OCTOMAP
 
 namespace coal {
+#ifdef COAL_USE_FLOAT_PRECISION
+COAL_DEPRECATED typedef float CoalScalar;
+typedef float Scalar;
+#else
+COAL_DEPRECATED typedef double CoalScalar;
+typedef double Scalar;
+#endif
+typedef Eigen::Matrix<Scalar, 3, 1> Vec3s;
+typedef Eigen::Matrix<Scalar, 2, 1> Vec2s;
+typedef Eigen::Matrix<Scalar, 6, 1> Vec6s;
+typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VecXs;
+typedef Eigen::Matrix<Scalar, 3, 3> Matrix3s;
+typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 3, Eigen::RowMajor> MatrixX3s;
+typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 2, Eigen::RowMajor> MatrixX2s;
+typedef Eigen::Matrix<Eigen::DenseIndex, Eigen::Dynamic, 3, Eigen::RowMajor>
+    Matrixx3i;
+typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixXs;
+typedef Eigen::Vector2i support_func_guess_t;
+
+typedef double SolverScalar;
+typedef Eigen::Matrix<SolverScalar, 3, 1> Vec3ps;
+
 #ifdef COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL
 // We keep the FCL_REAL typedef and the Vec[..]f typedefs for backward
 // compatibility.
-typedef double FCL_REAL;
-typedef Eigen::Matrix<FCL_REAL, 3, 1> Vec3f;
-typedef Eigen::Matrix<FCL_REAL, 2, 1> Vec2f;
-typedef Eigen::Matrix<FCL_REAL, 6, 1> Vec6f;
-typedef Eigen::Matrix<FCL_REAL, Eigen::Dynamic, 1> VecXf;
-typedef Eigen::Matrix<FCL_REAL, 3, 3> Matrix3f;
-typedef Eigen::Matrix<FCL_REAL, Eigen::Dynamic, 3, Eigen::RowMajor> Matrixx3f;
-typedef Eigen::Matrix<FCL_REAL, Eigen::Dynamic, 2, Eigen::RowMajor> Matrixx2f;
-typedef Eigen::Matrix<FCL_REAL, Eigen::Dynamic, Eigen::Dynamic> MatrixXf;
+typedef Scalar FCL_REAL;
+typedef Vec3s Vec3f;
+typedef Vec2s Vec2f;
+typedef Vec6s Vec6f;
+typedef VecXs VecXf;
+typedef Matrix3s Matrix3f;
+typedef MatrixX3s Matrixx3f;
+typedef MatrixX2s Matrixx2f;
+typedef MatrixXs MatrixXf;
 #endif
-
-typedef double CoalScalar;
-typedef Eigen::Matrix<CoalScalar, 3, 1> Vec3s;
-typedef Eigen::Matrix<CoalScalar, 2, 1> Vec2s;
-typedef Eigen::Matrix<CoalScalar, 6, 1> Vec6s;
-typedef Eigen::Matrix<CoalScalar, Eigen::Dynamic, 1> VecXs;
-typedef Eigen::Matrix<CoalScalar, 3, 3> Matrix3s;
-typedef Eigen::Matrix<CoalScalar, Eigen::Dynamic, 3, Eigen::RowMajor> MatrixX3s;
-typedef Eigen::Matrix<CoalScalar, Eigen::Dynamic, 2, Eigen::RowMajor> MatrixX2s;
-typedef Eigen::Matrix<Eigen::DenseIndex, Eigen::Dynamic, 3, Eigen::RowMajor>
-    Matrixx3i;
-typedef Eigen::Matrix<CoalScalar, Eigen::Dynamic, Eigen::Dynamic> MatrixXs;
-typedef Eigen::Vector2i support_func_guess_t;
 
 /// @brief Initial guess to use for the GJK algorithm
 /// DefaultGuess: Vec3s(1, 0, 0)
@@ -108,64 +118,143 @@ enum GJKConvergenceCriterion { Default, DualityGap, Hybrid };
 enum GJKConvergenceCriterionType { Relative, Absolute };
 
 /// @brief Triangle with 3 indices for points
-class COAL_DLLAPI Triangle {
+template <typename _IndexType>
+class TriangleTpl {
  public:
-  typedef std::size_t index_type;
+  // clang-format off
+  COAL_DEPRECATED_MESSAGE(Use IndexType instead.) typedef _IndexType index_type;
+  // clang-format on
+  typedef _IndexType IndexType;
   typedef int size_type;
 
+  template <typename OtherIndexType>
+  friend class TriangleTpl;
+
   /// @brief Default constructor
-  Triangle() {}
+  TriangleTpl() {}
+
+  /// @brief Copy constructor
+  TriangleTpl(const TriangleTpl& other) { *this = other; }
 
   /// @brief Create a triangle with given vertex indices
-  Triangle(index_type p1, index_type p2, index_type p3) { set(p1, p2, p3); }
+  TriangleTpl(IndexType p1, IndexType p2, IndexType p3) { set(p1, p2, p3); }
+
+  /// @brief Copy constructor from another vertex index type.
+  template <typename OtherIndexType>
+  TriangleTpl(const TriangleTpl<OtherIndexType>& other) {
+    *this = other;
+  }
+
+  /// @brief Copy operator
+  TriangleTpl& operator=(const TriangleTpl& other) {
+    this->set(other.vids[0], other.vids[1], other.vids[2]);
+    return *this;
+  }
+
+  /// @brief Copy operator from another index type.
+  template <typename OtherIndexType>
+  TriangleTpl& operator=(const TriangleTpl<OtherIndexType>& other) {
+    *this = other.template cast<OtherIndexType>();
+    return *this;
+  }
+
+  template <typename OtherIndexType>
+  TriangleTpl<OtherIndexType> cast() const {
+    TriangleTpl<OtherIndexType> res;
+    res.set(OtherIndexType(this->vids[0]), OtherIndexType(this->vids[1]),
+            OtherIndexType(this->vids[2]));
+    return res;
+  }
 
   /// @brief Set the vertex indices of the triangle
-  inline void set(index_type p1, index_type p2, index_type p3) {
+  inline void set(IndexType p1, IndexType p2, IndexType p3) {
     vids[0] = p1;
     vids[1] = p2;
     vids[2] = p3;
   }
 
   /// @brief Access the triangle index
-  inline index_type operator[](index_type i) const { return vids[i]; }
+  inline IndexType operator[](IndexType i) const { return vids[i]; }
 
-  inline index_type& operator[](index_type i) { return vids[i]; }
+  inline IndexType& operator[](IndexType i) { return vids[i]; }
 
   static inline size_type size() { return 3; }
 
-  bool operator==(const Triangle& other) const {
+  bool operator==(const TriangleTpl& other) const {
     return vids[0] == other.vids[0] && vids[1] == other.vids[1] &&
            vids[2] == other.vids[2];
   }
 
-  bool operator!=(const Triangle& other) const { return !(*this == other); }
+  bool operator!=(const TriangleTpl& other) const { return !(*this == other); }
 
   bool isValid() const {
-    return vids[0] != (std::numeric_limits<index_type>::max)() &&
-           vids[1] != (std::numeric_limits<index_type>::max)() &&
-           vids[2] != (std::numeric_limits<index_type>::max)();
+    return vids[0] != (std::numeric_limits<IndexType>::max)() &&
+           vids[1] != (std::numeric_limits<IndexType>::max)() &&
+           vids[2] != (std::numeric_limits<IndexType>::max)();
   }
 
- private:
+ protected:
   /// @brief indices for each vertex of triangle
-  index_type vids[3] = {(std::numeric_limits<index_type>::max)(),
-                        (std::numeric_limits<index_type>::max)(),
-                        (std::numeric_limits<index_type>::max)()};
+  IndexType vids[3] = {(std::numeric_limits<IndexType>::max)(),
+                       (std::numeric_limits<IndexType>::max)(),
+                       (std::numeric_limits<IndexType>::max)()};
 };
 
+typedef TriangleTpl<std::uint16_t> Triangle16;
+//
+typedef TriangleTpl<std::uint32_t> Triangle32;
+//
+COAL_DEPRECATED_MESSAGE(Use Triangle32 instead.)
+typedef Triangle32 Triangle;
+
 /// @brief Quadrilateral with 4 indices for points
-struct COAL_DLLAPI Quadrilateral {
-  typedef std::size_t index_type;
+template <typename _IndexType>
+struct QuadrilateralTpl {
+  // clang-format off
+  COAL_DEPRECATED_MESSAGE(Use IndexType instead.) typedef _IndexType index_type;
+  // clang-format on
+  typedef _IndexType IndexType;
   typedef int size_type;
 
-  Quadrilateral() {}
+  /// @brief Default constructor
+  QuadrilateralTpl() {}
 
-  Quadrilateral(index_type p0, index_type p1, index_type p2, index_type p3) {
+  /// @brief Copy constructor
+  QuadrilateralTpl(const QuadrilateralTpl& other) { *this = other; }
+
+  /// @brief Copy constructor from another vertex index type.
+  template <typename OtherIndexType>
+  QuadrilateralTpl(const QuadrilateralTpl<OtherIndexType>& other) {
+    *this = other;
+  }
+
+  /// @brief Copy operator
+  QuadrilateralTpl& operator=(const QuadrilateralTpl& other) {
+    this->set(other.vids[0], other.vids[1], other.vids[2], other.vids[3]);
+    return *this;
+  }
+
+  /// @brief Copy operator from another index type.
+  template <typename OtherIndexType>
+  QuadrilateralTpl& operator=(const QuadrilateralTpl<OtherIndexType>& other) {
+    *this = other.template cast<OtherIndexType>();
+    return *this;
+  }
+
+  template <typename OtherIndexType>
+  QuadrilateralTpl<OtherIndexType> cast() const {
+    QuadrilateralTpl<OtherIndexType> res;
+    res.set(OtherIndexType(this->vids[0]), OtherIndexType(this->vids[1]),
+            OtherIndexType(this->vids[2]), OtherIndexType(this->vids[3]));
+    return res;
+  }
+
+  QuadrilateralTpl(IndexType p0, IndexType p1, IndexType p2, IndexType p3) {
     set(p0, p1, p2, p3);
   }
 
   /// @brief Set the vertex indices of the quadrilateral
-  inline void set(index_type p0, index_type p1, index_type p2, index_type p3) {
+  inline void set(IndexType p0, IndexType p1, IndexType p2, IndexType p3) {
     vids[0] = p0;
     vids[1] = p1;
     vids[2] = p2;
@@ -173,24 +262,31 @@ struct COAL_DLLAPI Quadrilateral {
   }
 
   /// @access the quadrilateral index
-  inline index_type operator[](index_type i) const { return vids[i]; }
+  inline IndexType operator[](IndexType i) const { return vids[i]; }
 
-  inline index_type& operator[](index_type i) { return vids[i]; }
+  inline IndexType& operator[](IndexType i) { return vids[i]; }
 
   static inline size_type size() { return 4; }
 
-  bool operator==(const Quadrilateral& other) const {
+  bool operator==(const QuadrilateralTpl& other) const {
     return vids[0] == other.vids[0] && vids[1] == other.vids[1] &&
            vids[2] == other.vids[2] && vids[3] == other.vids[3];
   }
 
-  bool operator!=(const Quadrilateral& other) const {
+  bool operator!=(const QuadrilateralTpl& other) const {
     return !(*this == other);
   }
 
- private:
-  index_type vids[4];
+ protected:
+  IndexType vids[4];
 };
+
+typedef QuadrilateralTpl<std::uint16_t> Quadrilateral16;
+//
+typedef QuadrilateralTpl<std::uint32_t> Quadrilateral32;
+//
+COAL_DEPRECATED_MESSAGE(Use Quadrilateral32 instead.)
+typedef Quadrilateral32 Quadrilateral;
 
 }  // namespace coal
 

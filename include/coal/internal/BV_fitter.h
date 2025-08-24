@@ -79,7 +79,7 @@ class COAL_DLLAPI BVFitterTpl {
   virtual ~BVFitterTpl() {}
 
   /// @brief Prepare the geometry primitive data for fitting
-  void set(Vec3s* vertices_, Triangle* tri_indices_, BVHModelType type_) {
+  void set(Vec3s* vertices_, Triangle32* tri_indices_, BVHModelType type_) {
     vertices = vertices_;
     prev_vertices = NULL;
     tri_indices = tri_indices_;
@@ -88,7 +88,7 @@ class COAL_DLLAPI BVFitterTpl {
 
   /// @brief Prepare the geometry primitive data for fitting, for deformable
   /// mesh
-  void set(Vec3s* vertices_, Vec3s* prev_vertices_, Triangle* tri_indices_,
+  void set(Vec3s* vertices_, Vec3s* prev_vertices_, Triangle32* tri_indices_,
            BVHModelType type_) {
     vertices = vertices_;
     prev_vertices = prev_vertices_;
@@ -111,7 +111,7 @@ class COAL_DLLAPI BVFitterTpl {
  protected:
   Vec3s* vertices;
   Vec3s* prev_vertices;
-  Triangle* tri_indices;
+  Triangle32* tri_indices;
   BVHModelType type;
 };
 
@@ -131,7 +131,7 @@ class COAL_DLLAPI BVFitter : public BVFitterTpl<BV> {
     if (type == BVH_MODEL_TRIANGLES)  /// The primitive is triangle
     {
       for (unsigned int i = 0; i < num_primitives; ++i) {
-        Triangle t = tri_indices[primitive_indices[i]];
+        Triangle32 t = tri_indices[primitive_indices[i]];
         bv += vertices[t[0]];
         bv += vertices[t[1]];
         bv += vertices[t[2]];

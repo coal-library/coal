@@ -43,6 +43,8 @@
 #include "coal/contact_patch/contact_patch_solver.h"
 #include "coal/shape/geometric_shapes_traits.h"
 
+#include "coal/tracy.hh"
+
 namespace coal {
 
 /// @brief Shape-shape contact patch computation.
@@ -140,6 +142,9 @@ void computePatchPlaneOrHalfspace(const OtherShapeType& s1,
                     const ContactPatchSolver* csolver,                        \
                     const ContactPatchRequest& request,                       \
                     ContactPatchResult& result) {                             \
+      COAL_TRACY_ZONE_SCOPED_N(                                               \
+          "coal::ComputeShapeShapeContactPatch<OtherShapeType, "              \
+          "PlaneOrHspace>::run");                                             \
       if (!collision_result.isCollision()) {                                  \
         return;                                                               \
       }                                                                       \
@@ -174,6 +179,9 @@ void computePatchPlaneOrHalfspace(const OtherShapeType& s1,
                     const ContactPatchSolver* csolver,                        \
                     const ContactPatchRequest& request,                       \
                     ContactPatchResult& result) {                             \
+      COAL_TRACY_ZONE_SCOPED_N(                                               \
+          "coal::ComputeShapeShapeContactPatch<PlaneOrHspace, "               \
+          "OtherShapeType>::run");                                            \
       if (!collision_result.isCollision()) {                                  \
         return;                                                               \
       }                                                                       \
@@ -255,6 +263,7 @@ void ShapeShapeContactPatch(const CollisionGeometry* o1, const Transform3s& tf1,
                             const ContactPatchSolver* csolver,
                             const ContactPatchRequest& request,
                             ContactPatchResult& result) {
+  COAL_TRACY_ZONE_SCOPED_N("coal::ShapeShapeContactPatch");
   return ComputeShapeShapeContactPatch<ShapeType1, ShapeType2>::run(
       o1, tf1, o2, tf2, collision_result, csolver, request, result);
 }

@@ -1,6 +1,11 @@
 # This file provide bacward compatiblity for `find_package(hpp-fcl)`.
 
-message(WARNING "Please update your CMake from 'hpp-fcl' to 'coal'")
+if(NOT COAL_DISABLE_HPP_FCL_WARNINGS)
+  message(
+    WARNING
+    "Please update your CMake from 'hpp-fcl' to 'coal', or define COAL_DISABLE_HPP_FCL_WARNINGS"
+  )
+endif()
 
 find_package(coal REQUIRED)
 
@@ -19,8 +24,9 @@ if(NOT TARGET hpp-fcl::hpp-fcl)
 
   set_target_properties(
     hpp-fcl::hpp-fcl
-    PROPERTIES INTERFACE_COMPILE_DEFINITIONS
-               "COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL"
-               INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include"
-               INTERFACE_LINK_LIBRARIES "coal::coal")
+    PROPERTIES
+      INTERFACE_COMPILE_DEFINITIONS "COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL"
+      INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include"
+      INTERFACE_LINK_LIBRARIES "coal::coal"
+  )
 endif()

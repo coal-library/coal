@@ -35,6 +35,8 @@
 #include "coal/shape/geometric_shapes.h"
 #include "coal/internal/shape_shape_func.h"
 
+#include "coal/tracy.hh"
+
 // Note that partial specialization of template functions is not allowed.
 // Therefore, two implementations with the default narrow phase solvers are
 // provided. If another narrow phase solver were to be used, the default
@@ -48,7 +50,7 @@ struct GJKSolver;
 
 namespace internal {
 /// Clamp num / denom in [0, 1]
-CoalScalar clamp(const CoalScalar& num, const CoalScalar& denom) {
+Scalar clamp(const Scalar& num, const Scalar& denom) {
   assert(denom >= 0.);
   if (num <= 0.)
     return 0.;
@@ -59,8 +61,8 @@ CoalScalar clamp(const CoalScalar& num, const CoalScalar& denom) {
 }
 
 /// Clamp s=s_n/s_d in [0, 1] and stores a + s * d in a_sd
-void clamped_linear(Vec3s& a_sd, const Vec3s& a, const CoalScalar& s_n,
-                    const CoalScalar& s_d, const Vec3s& d) {
+void clamped_linear(Vec3s& a_sd, const Vec3s& a, const Scalar& s_n,
+                    const Scalar& s_d, const Vec3s& d) {
   assert(s_d >= 0.);
   if (s_n <= 0.)
     a_sd = a;
@@ -77,23 +79,25 @@ void clamped_linear(Vec3s& a_sd, const Vec3s& a, const CoalScalar& s_n,
 /// @param wp1, wp2: witness points on the capsules
 /// @param normal: normal pointing from capsule1 to capsule2
 template <>
-CoalScalar ShapeShapeDistance<Capsule, Capsule>(
+Scalar ShapeShapeDistance<Capsule, Capsule>(
     const CollisionGeometry* o1, const Transform3s& tf1,
     const CollisionGeometry* o2, const Transform3s& tf2, const GJKSolver*,
     const bool, Vec3s& wp1, Vec3s& wp2, Vec3s& normal) {
+  COAL_TRACY_ZONE_SCOPED_N(
+      "coal::internal::ShapeShapeDistance<Capsule, Capsule>");
   const Capsule* capsule1 = static_cast<const Capsule*>(o1);
   const Capsule* capsule2 = static_cast<const Capsule*>(o2);
 
-  CoalScalar EPSILON = std::numeric_limits<CoalScalar>::epsilon() * 100;
+  Scalar EPSILON = std::numeric_limits<Scalar>::epsilon() * 100;
 
   // We assume that capsules are centered at the origin.
   const coal::Vec3s& c1 = tf1.getTranslation();
   const coal::Vec3s& c2 = tf2.getTranslation();
   // We assume that capsules are oriented along z-axis.
-  CoalScalar halfLength1 = capsule1->halfLength;
-  CoalScalar halfLength2 = capsule2->halfLength;
-  CoalScalar radius1 = (capsule1->radius + capsule1->getSweptSphereRadius());
-  CoalScalar radius2 = (capsule2->radius + capsule2->getSweptSphereRadius());
+  Scalar halfLength1 = capsule1->halfLength;
+  Scalar halfLength2 = capsule2->halfLength;
+  Scalar radius1 = (capsule1->radius + capsule1->getSweptSphereRadius());
+  Scalar radius2 = (capsule2->radius + capsule2->getSweptSphereRadius());
   // direction of capsules
   // ||d1|| = 2 * halfLength1
   const coal::Vec3s d1 = 2 * halfLength1 * tf1.getRotation().col(2);
@@ -104,11 +108,11 @@ CoalScalar ShapeShapeDistance<Capsule, Capsule>(
   const coal::Vec3s p1 = c1 - d1 / 2;
   const coal::Vec3s p2 = c2 - d2 / 2;
   const coal::Vec3s r = p1 - p2;
-  CoalScalar a = d1.dot(d1);
-  CoalScalar b = d1.dot(d2);
-  CoalScalar c = d1.dot(r);
-  CoalScalar e = d2.dot(d2);
-  CoalScalar f = d2.dot(r);
+  Scalar a = d1.dot(d1);
+  Scalar b = d1.dot(d2);
+  Scalar c = d1.dot(r);
+  Scalar e = d2.dot(d2);
+  Scalar f = d2.dot(r);
   // S1 is parametrized by the equation p1 + s * d1
   // S2 is parametrized by the equation p2 + t * d2
 
@@ -127,10 +131,10 @@ CoalScalar ShapeShapeDistance<Capsule, Capsule>(
     w2 = p2;
   } else {
     // Always non-negative, equal 0 if the segments are colinear
-    CoalScalar denom = fmax(a * e - b * b, 0);
+    Scalar denom = Scalar(fmax(a * e - b * b, 0));
 
-    CoalScalar s;
-    CoalScalar t;
+    Scalar s;
+    Scalar t;
     if (denom > EPSILON) {
       s = clamp((b * f - c * e), denom);
       t = b * s + f;
@@ -152,7 +156,7 @@ CoalScalar ShapeShapeDistance<Capsule, Capsule>(
   }
 
   // witness points achieving the distance between the two segments
-  CoalScalar distance = (w1 - w2).norm();
+  Scalar distance = (w1 - w2).norm();
 
   // capsule spcecific distance computation
   distance = distance - (radius1 + radius2);

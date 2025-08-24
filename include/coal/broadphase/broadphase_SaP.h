@@ -151,9 +151,9 @@ class COAL_DLLAPI SaPCollisionManager : public BroadPhaseCollisionManager {
     /// @brief set the value of the end point
     Vec3s& getVal();
 
-    CoalScalar getVal(int i) const;
+    Scalar getVal(int i) const;
 
-    CoalScalar& getVal(int i);
+    Scalar& getVal(int i);
   };
 
   /// @brief A pair of objects that are not culling away and should further
@@ -210,7 +210,7 @@ class COAL_DLLAPI SaPCollisionManager : public BroadPhaseCollisionManager {
   std::map<CollisionObject*, SaPAABB*> obj_aabb_map;
 
   bool distance_(CollisionObject* obj, DistanceCallBackBase* callback,
-                 CoalScalar& min_dist) const;
+                 Scalar& min_dist) const;
 
   bool collide_(CollisionObject* obj, CollisionCallBackBase* callback) const;
 

@@ -54,9 +54,9 @@ uint32_t quantize(S x, uint32_t n) {
 template <typename S>
 morton_functor<S, uint32_t>::morton_functor(const AABB& bbox)
     : base(bbox.min_),
-      inv(1.0 / (bbox.max_[0] - bbox.min_[0]),
-          1.0 / (bbox.max_[1] - bbox.min_[1]),
-          1.0 / (bbox.max_[2] - bbox.min_[2])) {
+      inv(Scalar(1) / (bbox.max_[0] - bbox.min_[0]),
+          Scalar(1) / (bbox.max_[1] - bbox.min_[1]),
+          Scalar(1) / (bbox.max_[2] - bbox.min_[2])) {
   // Do nothing
 }
 
@@ -74,9 +74,9 @@ uint32_t morton_functor<S, uint32_t>::operator()(const Vec3s& point) const {
 template <typename S>
 morton_functor<S, uint64_t>::morton_functor(const AABB& bbox)
     : base(bbox.min_),
-      inv(1.0 / (bbox.max_[0] - bbox.min_[0]),
-          1.0 / (bbox.max_[1] - bbox.min_[1]),
-          1.0 / (bbox.max_[2] - bbox.min_[2])) {
+      inv(Scalar(1) / (bbox.max_[0] - bbox.min_[0]),
+          Scalar(1) / (bbox.max_[1] - bbox.min_[1]),
+          Scalar(1) / (bbox.max_[2] - bbox.min_[2])) {
   // Do nothing
 }
 
@@ -106,9 +106,9 @@ constexpr size_t morton_functor<S, uint32_t>::bits() {
 template <typename S, size_t N>
 morton_functor<S, std::bitset<N>>::morton_functor(const AABB& bbox)
     : base(bbox.min_),
-      inv(1.0 / (bbox.max_[0] - bbox.min_[0]),
-          1.0 / (bbox.max_[1] - bbox.min_[1]),
-          1.0 / (bbox.max_[2] - bbox.min_[2])) {
+      inv(Scalar(1) / (bbox.max_[0] - bbox.min_[0]),
+          Scalar(1) / (bbox.max_[1] - bbox.min_[1]),
+          Scalar(1) / (bbox.max_[2] - bbox.min_[2])) {
   // Do nothing
 }
 

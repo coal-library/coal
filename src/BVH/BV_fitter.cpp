@@ -43,11 +43,11 @@
 
 namespace coal {
 
-static const double kIOS_RATIO = 1.5;
-static const double invSinA = 2;
-static const double cosA = sqrt(3.0) / 2.0;
+static const Scalar kIOS_RATIO = 1.5;
+static const Scalar invSinA = 2;
+static const Scalar cosA = sqrt(Scalar(3)) / Scalar(2);
 
-static inline void axisFromEigen(Vec3s eigenV[3], CoalScalar eigenS[3],
+static inline void axisFromEigen(Vec3s eigenV[3], Scalar eigenS[3],
                                  Matrix3s& axes) {
   int min, mid, max;
   if (eigenS[0] > eigenS[1]) {
@@ -87,13 +87,13 @@ void fit2(Vec3s* ps, OBB& bv) {
   const Vec3s& p1 = ps[0];
   const Vec3s& p2 = ps[1];
   Vec3s p1p2 = p1 - p2;
-  CoalScalar len_p1p2 = p1p2.norm();
+  Scalar len_p1p2 = p1p2.norm();
   p1p2.normalize();
 
   bv.axes.col(0).noalias() = p1p2;
   generateCoordinateSystem(bv.axes.col(0), bv.axes.col(1), bv.axes.col(2));
 
-  bv.extent << len_p1p2 * 0.5, 0, 0;
+  bv.extent << len_p1p2 * Scalar(0.5), 0, 0;
   bv.To.noalias() = (p1 + p2) / 2;
 }
 
@@ -105,7 +105,7 @@ void fit3(Vec3s* ps, OBB& bv) {
   e[0] = p1 - p2;
   e[1] = p2 - p3;
   e[2] = p3 - p1;
-  CoalScalar len[3];
+  Scalar len[3];
   len[0] = e[0].squaredNorm();
   len[1] = e[1].squaredNorm();
   len[2] = e[2].squaredNorm();
@@ -131,7 +131,7 @@ void fit6(Vec3s* ps, OBB& bv) {
 void fitn(Vec3s* ps, unsigned int n, OBB& bv) {
   Matrix3s M;
   Vec3s E[3];
-  CoalScalar s[3] = {0, 0, 0};  // three eigen values
+  Scalar s[3] = {0, 0, 0};  // three eigen values
 
   getCovariance(ps, NULL, NULL, NULL, n, M);
   eigen(M, s, E);
@@ -156,7 +156,7 @@ void fit2(Vec3s* ps, RSS& bv) {
   const Vec3s& p1 = ps[0];
   const Vec3s& p2 = ps[1];
   bv.axes.col(0).noalias() = p1 - p2;
-  CoalScalar len_p1p2 = bv.axes.col(0).norm();
+  Scalar len_p1p2 = bv.axes.col(0).norm();
   bv.axes.col(0) /= len_p1p2;
 
   generateCoordinateSystem(bv.axes.col(0), bv.axes.col(1), bv.axes.col(2));
@@ -175,7 +175,7 @@ void fit3(Vec3s* ps, RSS& bv) {
   e[0] = p1 - p2;
   e[1] = p2 - p3;
   e[2] = p3 - p1;
-  CoalScalar len[3];
+  Scalar len[3];
   len[0] = e[0].squaredNorm();
   len[1] = e[1].squaredNorm();
   len[2] = e[2].squaredNorm();
@@ -202,7 +202,7 @@ void fit6(Vec3s* ps, RSS& bv) {
 void fitn(Vec3s* ps, unsigned int n, RSS& bv) {
   Matrix3s M;  // row first matrix
   Vec3s E[3];  // row first eigen-vectors
-  CoalScalar s[3] = {0, 0, 0};
+  Scalar s[3] = {0, 0, 0};
 
   getCovariance(ps, NULL, NULL, NULL, n, M);
   eigen(M, s, E);
@@ -233,22 +233,22 @@ void fit2(Vec3s* ps, kIOS& bv) {
   const Vec3s& p1 = ps[0];
   const Vec3s& p2 = ps[1];
   Vec3s p1p2 = p1 - p2;
-  CoalScalar len_p1p2 = p1p2.norm();
+  Scalar len_p1p2 = p1p2.norm();
   p1p2.normalize();
 
   Matrix3s& axes = bv.obb.axes;
   axes.col(0).noalias() = p1p2;
   generateCoordinateSystem(axes.col(0), axes.col(1), axes.col(2));
 
-  CoalScalar r0 = len_p1p2 * 0.5;
+  Scalar r0 = len_p1p2 * Scalar(0.5);
   bv.obb.extent << r0, 0, 0;
   bv.obb.To = (p1 + p2) * 0.5;
 
   bv.spheres[0].o = bv.obb.To;
   bv.spheres[0].r = r0;
 
-  CoalScalar r1 = r0 * invSinA;
-  CoalScalar r1cosA = r1 * cosA;
+  Scalar r1 = r0 * invSinA;
+  Scalar r1cosA = r1 * cosA;
   bv.spheres[1].r = r1;
   bv.spheres[2].r = r1;
   Vec3s delta = axes.col(1) * r1cosA;
@@ -272,7 +272,7 @@ void fit3(Vec3s* ps, kIOS& bv) {
   e[0] = p1 - p2;
   e[1] = p2 - p3;
   e[2] = p3 - p1;
-  CoalScalar len[3];
+  Scalar len[3];
   len[0] = e[0].squaredNorm();
   len[1] = e[1].squaredNorm();
   len[2] = e[2].squaredNorm();
@@ -289,14 +289,14 @@ void fit3(Vec3s* ps, kIOS& bv) {
                      bv.obb.extent);
 
   // compute radius and center
-  CoalScalar r0;
+  Scalar r0;
   Vec3s center;
   circumCircleComputation(p1, p2, p3, center, r0);
 
   bv.spheres[0].o = center;
   bv.spheres[0].r = r0;
 
-  CoalScalar r1 = r0 * invSinA;
+  Scalar r1 = r0 * invSinA;
   Vec3s delta = bv.obb.axes.col(2) * (r1 * cosA);
 
   bv.spheres[1].r = r1;
@@ -308,7 +308,7 @@ void fit3(Vec3s* ps, kIOS& bv) {
 void fitn(Vec3s* ps, unsigned int n, kIOS& bv) {
   Matrix3s M;
   Vec3s E[3];
-  CoalScalar s[3] = {0, 0, 0};  // three eigen values;
+  Scalar s[3] = {0, 0, 0};  // three eigen values;
 
   getCovariance(ps, NULL, NULL, NULL, n, M);
   eigen(M, s, E);
@@ -321,7 +321,7 @@ void fitn(Vec3s* ps, unsigned int n, kIOS& bv) {
   // get center and extension
   const Vec3s& center = bv.obb.To;
   const Vec3s& extent = bv.obb.extent;
-  CoalScalar r0 = maximumDistance(ps, NULL, NULL, NULL, n, center);
+  Scalar r0 = maximumDistance(ps, NULL, NULL, NULL, n, center);
 
   // decide the k in kIOS
   if (extent[0] > kIOS_RATIO * extent[2]) {
@@ -336,12 +336,12 @@ void fitn(Vec3s* ps, unsigned int n, kIOS& bv) {
   bv.spheres[0].r = r0;
 
   if (bv.num_spheres >= 3) {
-    CoalScalar r10 = sqrt(r0 * r0 - extent[2] * extent[2]) * invSinA;
+    Scalar r10 = sqrt(r0 * r0 - extent[2] * extent[2]) * invSinA;
     Vec3s delta = axes.col(2) * (r10 * cosA - extent[2]);
     bv.spheres[1].o = center - delta;
     bv.spheres[2].o = center + delta;
 
-    CoalScalar r11 = 0, r12 = 0;
+    Scalar r11 = 0, r12 = 0;
     r11 = maximumDistance(ps, NULL, NULL, NULL, n, bv.spheres[1].o);
     r12 = maximumDistance(ps, NULL, NULL, NULL, n, bv.spheres[2].o);
     bv.spheres[1].o += axes.col(2) * (-r10 + r11);
@@ -352,7 +352,7 @@ void fitn(Vec3s* ps, unsigned int n, kIOS& bv) {
   }
 
   if (bv.num_spheres >= 5) {
-    CoalScalar r10 = bv.spheres[1].r;
+    Scalar r10 = bv.spheres[1].r;
     Vec3s delta =
         axes.col(1) *
         (sqrt(r10 * r10 - extent[0] * extent[0] - extent[2] * extent[2]) -
@@ -360,7 +360,7 @@ void fitn(Vec3s* ps, unsigned int n, kIOS& bv) {
     bv.spheres[3].o = bv.spheres[0].o - delta;
     bv.spheres[4].o = bv.spheres[0].o + delta;
 
-    CoalScalar r21 = 0, r22 = 0;
+    Scalar r21 = 0, r22 = 0;
     r21 = maximumDistance(ps, NULL, NULL, NULL, n, bv.spheres[3].o);
     r22 = maximumDistance(ps, NULL, NULL, NULL, n, bv.spheres[4].o);
 
@@ -481,9 +481,9 @@ OBB BVFitter<OBB>::fit(unsigned int* primitive_indices,
                        unsigned int num_primitives) {
   OBB bv;
 
-  Matrix3s M;       // row first matrix
-  Vec3s E[3];       // row first eigen-vectors
-  CoalScalar s[3];  // three eigen values
+  Matrix3s M;   // row first matrix
+  Vec3s E[3];   // row first eigen-vectors
+  Scalar s[3];  // three eigen values
 
   getCovariance(vertices, prev_vertices, tri_indices, primitive_indices,
                 num_primitives, M);
@@ -503,7 +503,7 @@ OBBRSS BVFitter<OBBRSS>::fit(unsigned int* primitive_indices,
   OBBRSS bv;
   Matrix3s M;
   Vec3s E[3];
-  CoalScalar s[3];
+  Scalar s[3];
 
   getCovariance(vertices, prev_vertices, tri_indices, primitive_indices,
                 num_primitives, M);
@@ -516,8 +516,8 @@ OBBRSS BVFitter<OBBRSS>::fit(unsigned int* primitive_indices,
                      num_primitives, bv.obb.axes, bv.obb.To, bv.obb.extent);
 
   Vec3s origin;
-  CoalScalar l[2];
-  CoalScalar r;
+  Scalar l[2];
+  Scalar r;
   getRadiusAndOriginAndRectangleSize(vertices, prev_vertices, tri_indices,
                                      primitive_indices, num_primitives,
                                      bv.rss.axes, origin, l, r);
@@ -534,9 +534,9 @@ RSS BVFitter<RSS>::fit(unsigned int* primitive_indices,
                        unsigned int num_primitives) {
   RSS bv;
 
-  Matrix3s M;       // row first matrix
-  Vec3s E[3];       // row first eigen-vectors
-  CoalScalar s[3];  // three eigen values
+  Matrix3s M;   // row first matrix
+  Vec3s E[3];   // row first eigen-vectors
+  Scalar s[3];  // three eigen values
   getCovariance(vertices, prev_vertices, tri_indices, primitive_indices,
                 num_primitives, M);
   eigen(M, s, E);
@@ -545,8 +545,8 @@ RSS BVFitter<RSS>::fit(unsigned int* primitive_indices,
   // set rss origin, rectangle size and radius
 
   Vec3s origin;
-  CoalScalar l[2];
-  CoalScalar r;
+  Scalar l[2];
+  Scalar r;
   getRadiusAndOriginAndRectangleSize(vertices, prev_vertices, tri_indices,
                                      primitive_indices, num_primitives, bv.axes,
                                      origin, l, r);
@@ -565,7 +565,7 @@ kIOS BVFitter<kIOS>::fit(unsigned int* primitive_indices,
 
   Matrix3s M;  // row first matrix
   Vec3s E[3];  // row first eigen-vectors
-  CoalScalar s[3];
+  Scalar s[3];
 
   getCovariance(vertices, prev_vertices, tri_indices, primitive_indices,
                 num_primitives, M);
@@ -580,8 +580,8 @@ kIOS BVFitter<kIOS>::fit(unsigned int* primitive_indices,
 
   const Vec3s& center = bv.obb.To;
   const Vec3s& extent = bv.obb.extent;
-  CoalScalar r0 = maximumDistance(vertices, prev_vertices, tri_indices,
-                                  primitive_indices, num_primitives, center);
+  Scalar r0 = maximumDistance(vertices, prev_vertices, tri_indices,
+                              primitive_indices, num_primitives, center);
 
   // decide k in kIOS
   if (extent[0] > kIOS_RATIO * extent[2]) {
@@ -596,15 +596,15 @@ kIOS BVFitter<kIOS>::fit(unsigned int* primitive_indices,
   bv.spheres[0].r = r0;
 
   if (bv.num_spheres >= 3) {
-    CoalScalar r10 = sqrt(r0 * r0 - extent[2] * extent[2]) * invSinA;
+    Scalar r10 = sqrt(r0 * r0 - extent[2] * extent[2]) * invSinA;
     Vec3s delta = axes.col(2) * (r10 * cosA - extent[2]);
     bv.spheres[1].o = center - delta;
     bv.spheres[2].o = center + delta;
 
-    CoalScalar r11 =
+    Scalar r11 =
         maximumDistance(vertices, prev_vertices, tri_indices, primitive_indices,
                         num_primitives, bv.spheres[1].o);
-    CoalScalar r12 =
+    Scalar r12 =
         maximumDistance(vertices, prev_vertices, tri_indices, primitive_indices,
                         num_primitives, bv.spheres[2].o);
 
@@ -616,7 +616,7 @@ kIOS BVFitter<kIOS>::fit(unsigned int* primitive_indices,
   }
 
   if (bv.num_spheres >= 5) {
-    CoalScalar r10 = bv.spheres[1].r;
+    Scalar r10 = bv.spheres[1].r;
     Vec3s delta =
         axes.col(1) *
         (sqrt(r10 * r10 - extent[0] * extent[0] - extent[2] * extent[2]) -
@@ -624,7 +624,7 @@ kIOS BVFitter<kIOS>::fit(unsigned int* primitive_indices,
     bv.spheres[3].o = bv.spheres[0].o - delta;
     bv.spheres[4].o = bv.spheres[0].o + delta;
 
-    CoalScalar r21 = 0, r22 = 0;
+    Scalar r21 = 0, r22 = 0;
     r21 = maximumDistance(vertices, prev_vertices, tri_indices,
                           primitive_indices, num_primitives, bv.spheres[3].o);
     r22 = maximumDistance(vertices, prev_vertices, tri_indices,
@@ -647,11 +647,11 @@ AABB BVFitter<AABB>::fit(unsigned int* primitive_indices,
 
   if (type == BVH_MODEL_TRIANGLES)  /// The primitive is triangle
   {
-    Triangle t0 = tri_indices[primitive_indices[0]];
+    Triangle32 t0 = tri_indices[primitive_indices[0]];
     bv = AABB(vertices[t0[0]]);
 
     for (unsigned int i = 0; i < num_primitives; ++i) {
-      Triangle t = tri_indices[primitive_indices[i]];
+      Triangle32 t = tri_indices[primitive_indices[i]];
       bv += vertices[t[0]];
       bv += vertices[t[1]];
       bv += vertices[t[2]];

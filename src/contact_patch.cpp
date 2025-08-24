@@ -37,6 +37,8 @@
 #include "coal/contact_patch.h"
 #include "coal/collision_utility.h"
 
+#include "coal/tracy.hh"
+
 namespace coal {
 
 ContactPatchFunctionMatrix& getContactPatchFunctionLookTable() {
@@ -49,6 +51,7 @@ void computeContactPatch(const CollisionGeometry* o1, const Transform3s& tf1,
                          const CollisionResult& collision_result,
                          const ContactPatchRequest& request,
                          ContactPatchResult& result) {
+  COAL_TRACY_ZONE_SCOPED_N("coal::computeContactPatch");
   if (!collision_result.isCollision() || request.max_num_patch == 0) {
     // do nothing
     return;
@@ -140,6 +143,7 @@ void ComputeContactPatch::run(const Transform3s& tf1, const Transform3s& tf2,
                               const CollisionResult& collision_result,
                               const ContactPatchRequest& request,
                               ContactPatchResult& result) const {
+  COAL_TRACY_ZONE_SCOPED_N("coal::ComputeContactPatch::run");
   if (!collision_result.isCollision() || request.max_num_patch == 0) {
     // do nothing
     return;

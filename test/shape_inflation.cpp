@@ -59,11 +59,10 @@ using coal::Vec3s;
 #define MATH_SQUARED(x) (x * x)
 
 template <typename Shape>
-bool isApprox(const Shape &s1, const Shape &s2, const CoalScalar tol);
+bool isApprox(const Shape &s1, const Shape &s2, const Scalar tol);
 
-bool isApprox(const CoalScalar &v1, const CoalScalar &v2,
-              const CoalScalar tol) {
-  typedef Eigen::Matrix<CoalScalar, 1, 1> Matrix;
+bool isApprox(const Scalar &v1, const Scalar &v2, const Scalar tol) {
+  typedef Eigen::Matrix<Scalar, 1, 1> Matrix;
   Matrix m1;
   m1 << v1;
   Matrix m2;
@@ -71,48 +70,48 @@ bool isApprox(const CoalScalar &v1, const CoalScalar &v2,
   return m1.isApprox(m2, tol);
 }
 
-bool isApprox(const Box &s1, const Box &s2, const CoalScalar tol) {
+bool isApprox(const Box &s1, const Box &s2, const Scalar tol) {
   return s1.halfSide.isApprox(s2.halfSide, tol);
 }
 
-bool isApprox(const Sphere &s1, const Sphere &s2, const CoalScalar tol) {
+bool isApprox(const Sphere &s1, const Sphere &s2, const Scalar tol) {
   return isApprox(s1.radius, s2.radius, tol);
 }
 
-bool isApprox(const Ellipsoid &s1, const Ellipsoid &s2, const CoalScalar tol) {
+bool isApprox(const Ellipsoid &s1, const Ellipsoid &s2, const Scalar tol) {
   return s1.radii.isApprox(s2.radii, tol);
 }
 
-bool isApprox(const Capsule &s1, const Capsule &s2, const CoalScalar tol) {
+bool isApprox(const Capsule &s1, const Capsule &s2, const Scalar tol) {
   return isApprox(s1.radius, s2.radius, tol) &&
          isApprox(s1.halfLength, s2.halfLength, tol);
 }
 
-bool isApprox(const Cylinder &s1, const Cylinder &s2, const CoalScalar tol) {
+bool isApprox(const Cylinder &s1, const Cylinder &s2, const Scalar tol) {
   return isApprox(s1.radius, s2.radius, tol) &&
          isApprox(s1.halfLength, s2.halfLength, tol);
 }
 
-bool isApprox(const Cone &s1, const Cone &s2, const CoalScalar tol) {
+bool isApprox(const Cone &s1, const Cone &s2, const Scalar tol) {
   return isApprox(s1.radius, s2.radius, tol) &&
          isApprox(s1.halfLength, s2.halfLength, tol);
 }
 
-bool isApprox(const TriangleP &s1, const TriangleP &s2, const CoalScalar tol) {
+bool isApprox(const TriangleP &s1, const TriangleP &s2, const Scalar tol) {
   return s1.a.isApprox(s2.a, tol) && s1.b.isApprox(s2.b, tol) &&
          s1.c.isApprox(s2.c, tol);
 }
 
-bool isApprox(const Halfspace &s1, const Halfspace &s2, const CoalScalar tol) {
+bool isApprox(const Halfspace &s1, const Halfspace &s2, const Scalar tol) {
   return isApprox(s1.d, s2.d, tol) && s1.n.isApprox(s2.n, tol);
 }
 
 template <typename Shape>
-void test(const Shape &original_shape, const CoalScalar inflation,
-          const CoalScalar tol = 1e-8) {
+void test(const Shape &original_shape, const Scalar inflation,
+          const Scalar tol = Scalar(1e-8)) {
   // Zero inflation
   {
-    const CoalScalar inflation = 0.;
+    const Scalar inflation = 0.;
     const auto &inflation_result = original_shape.inflated(inflation);
     const Transform3s &shift = inflation_result.second;
     const Shape &inflated_shape = inflation_result.first;
@@ -155,43 +154,43 @@ void test(const Shape &original_shape, const CoalScalar inflation,
 }
 
 template <typename Shape>
-void test_throw(const Shape &shape, const CoalScalar inflation) {
+void test_throw(const Shape &shape, const Scalar inflation) {
   BOOST_REQUIRE_THROW(shape.inflated(inflation), std::invalid_argument);
 }
 
 template <typename Shape>
-void test_no_throw(const Shape &shape, const CoalScalar inflation) {
+void test_no_throw(const Shape &shape, const Scalar inflation) {
   BOOST_REQUIRE_NO_THROW(shape.inflated(inflation));
 }
 
 BOOST_AUTO_TEST_CASE(test_inflate) {
   const coal::Sphere sphere(1);
-  test(sphere, 0.01, 1e-8);
-  test_throw(sphere, -1.1);
+  test(sphere, Scalar(0.01), Scalar(1e-8));
+  test_throw(sphere, Scalar(-1.1));
   test_no_throw(sphere, 1.);
 
   const coal::Box box(1, 1, 1);
-  test(box, 0.01, 1e-8);
-  test_throw(box, -0.6);
+  test(box, Scalar(0.01), Scalar(1e-8));
+  test_throw(box, Scalar(-0.6));
 
   const coal::Ellipsoid ellipsoid(1, 2, 3);
-  test(ellipsoid, 0.01, 1e-8);
-  test_throw(ellipsoid, -1.1);
+  test(ellipsoid, Scalar(0.01), Scalar(1e-8));
+  test_throw(ellipsoid, Scalar(-1.1));
 
-  const coal::Capsule capsule(1., 2.);
-  test(capsule, 0.01, 1e-8);
-  test_throw(capsule, -1.1);
+  const coal::Capsule capsule(1, 2);
+  test(capsule, Scalar(0.01), Scalar(1e-8));
+  test_throw(capsule, Scalar(-1.1));
 
-  const coal::Cylinder cylinder(1., 2.);
-  test(cylinder, 0.01, 1e-8);
-  test_throw(cylinder, -1.1);
+  const coal::Cylinder cylinder(1, 2);
+  test(cylinder, Scalar(0.01), Scalar(1e-8));
+  test_throw(cylinder, Scalar(-1.1));
 
-  const coal::Cone cone(1., 4.);
-  test(cone, 0.01, 1e-8);
-  test_throw(cone, -1.1);
+  const coal::Cone cone(1, 4);
+  test(cone, Scalar(0.01), Scalar(1e-8));
+  test_throw(cone, Scalar(-1.1));
 
-  const coal::Halfspace halfspace(Vec3s::UnitZ(), 0.);
-  test(halfspace, 0.01, 1e-8);
+  const coal::Halfspace halfspace(Vec3s::UnitZ(), 0);
+  test(halfspace, Scalar(0.01), Scalar(1e-8));
 
   //  const coal::TriangleP triangle(Vec3s::UnitX(), Vec3s::UnitY(),
   //                                     Vec3s::UnitZ());

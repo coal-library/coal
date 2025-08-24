@@ -137,7 +137,7 @@ void HierarchyTree<BV>::init_1(Node* leaves, int n_leaves_) {
   if (n_leaves > 0) bound_bv = nodes[0].bv;
   for (size_t i = 1; i < n_leaves; ++i) bound_bv += nodes[i].bv;
 
-  morton_functor<CoalScalar, uint32_t> coder(bound_bv);
+  morton_functor<Scalar, uint32_t> coder(bound_bv);
   for (size_t i = 0; i < n_leaves; ++i)
     nodes[i].code = coder(nodes[i].bv.center());
 
@@ -175,7 +175,7 @@ void HierarchyTree<BV>::init_2(Node* leaves, int n_leaves_) {
   if (n_leaves > 0) bound_bv = nodes[0].bv;
   for (size_t i = 1; i < n_leaves; ++i) bound_bv += nodes[i].bv;
 
-  morton_functor<CoalScalar, uint32_t> coder(bound_bv);
+  morton_functor<Scalar, uint32_t> coder(bound_bv);
   for (size_t i = 0; i < n_leaves; ++i)
     nodes[i].code = coder(nodes[i].bv.center());
 
@@ -213,7 +213,7 @@ void HierarchyTree<BV>::init_3(Node* leaves, int n_leaves_) {
   if (n_leaves > 0) bound_bv = nodes[0].bv;
   for (size_t i = 1; i < n_leaves; ++i) bound_bv += nodes[i].bv;
 
-  morton_functor<CoalScalar, uint32_t> coder(bound_bv);
+  morton_functor<Scalar, uint32_t> coder(bound_bv);
   for (size_t i = 0; i < n_leaves; ++i)
     nodes[i].code = coder(nodes[i].bv.center());
 
@@ -296,7 +296,7 @@ bool HierarchyTree<BV>::update(size_t leaf, const BV& bv) {
 //==============================================================================
 template <typename BV>
 bool HierarchyTree<BV>::update(size_t leaf, const BV& bv, const Vec3s& vel,
-                               CoalScalar margin) {
+                               Scalar margin) {
   COAL_UNUSED_VARIABLE(bv);
   COAL_UNUSED_VARIABLE(vel);
   COAL_UNUSED_VARIABLE(margin);
@@ -477,10 +477,10 @@ void HierarchyTree<BV>::bottomup(size_t* lbeg, size_t* lend) {
   size_t* lcur_end = lend;
   while (lbeg < lcur_end - 1) {
     size_t *min_it1 = nullptr, *min_it2 = nullptr;
-    CoalScalar min_size = (std::numeric_limits<CoalScalar>::max)();
+    Scalar min_size = (std::numeric_limits<Scalar>::max)();
     for (size_t* it1 = lbeg; it1 < lcur_end; ++it1) {
       for (size_t* it2 = it1 + 1; it2 < lcur_end; ++it2) {
-        CoalScalar cur_size = (nodes[*it1].bv + nodes[*it2].bv).size();
+        Scalar cur_size = (nodes[*it1].bv + nodes[*it2].bv).size();
         if (cur_size < min_size) {
           min_size = cur_size;
           min_it1 = it1;
@@ -528,7 +528,7 @@ size_t HierarchyTree<BV>::topdown_0(size_t* lbeg, size_t* lend) {
       for (size_t* i = lbeg + 1; i < lend; ++i) vol += nodes[*i].bv;
 
       size_t best_axis = 0;
-      CoalScalar extent[3] = {vol.width(), vol.height(), vol.depth()};
+      Scalar extent[3] = {vol.width(), vol.height(), vol.depth()};
       if (extent[1] > extent[0]) best_axis = 1;
       if (extent[2] > extent[best_axis]) best_axis = 2;
 
@@ -562,7 +562,7 @@ size_t HierarchyTree<BV>::topdown_1(size_t* lbeg, size_t* lend) {
         split_p += nodes[*i].bv.center();
         vol += nodes[*i].bv;
       }
-      split_p /= static_cast<CoalScalar>(num_leaves);
+      split_p /= static_cast<Scalar>(num_leaves);
       int best_axis = -1;
       int bestmidp = (int)num_leaves;
       int splitcount[3][2] = {{0, 0}, {0, 0}, {0, 0}};
@@ -583,7 +583,7 @@ size_t HierarchyTree<BV>::topdown_1(size_t* lbeg, size_t* lend) {
 
       if (best_axis < 0) best_axis = 0;
 
-      CoalScalar split_value = split_p[best_axis];
+      Scalar split_value = split_p[best_axis];
       size_t* lcenter = lbeg;
       for (size_t* i = lbeg; i < lend; ++i) {
         if (nodes[*i].bv.center()[best_axis] < split_value) {
@@ -931,14 +931,14 @@ struct SelectImpl {
 //==============================================================================
 template <typename BV>
 size_t select(size_t query, size_t node1, size_t node2, NodeBase<BV>* nodes) {
-  return SelectImpl<CoalScalar, BV>::run(query, node1, node2, nodes);
+  return SelectImpl<Scalar, BV>::run(query, node1, node2, nodes);
 }
 
 //==============================================================================
 template <typename BV>
 size_t select(const BV& query, size_t node1, size_t node2,
               NodeBase<BV>* nodes) {
-  return SelectImpl<CoalScalar, BV>::run(query, node1, node2, nodes);
+  return SelectImpl<Scalar, BV>::run(query, node1, node2, nodes);
 }
 
 //==============================================================================
@@ -952,8 +952,8 @@ struct SelectImpl<S, AABB> {
     Vec3s v = bv.min_ + bv.max_;
     Vec3s v1 = v - (bv1.min_ + bv1.max_);
     Vec3s v2 = v - (bv2.min_ + bv2.max_);
-    CoalScalar d1 = fabs(v1[0]) + fabs(v1[1]) + fabs(v1[2]);
-    CoalScalar d2 = fabs(v2[0]) + fabs(v2[1]) + fabs(v2[2]);
+    Scalar d1 = fabs(v1[0]) + fabs(v1[1]) + fabs(v1[2]);
+    Scalar d2 = fabs(v2[0]) + fabs(v2[1]) + fabs(v2[2]);
     return (d1 < d2) ? 0 : 1;
   }
 
@@ -965,8 +965,8 @@ struct SelectImpl<S, AABB> {
     Vec3s v = bv.min_ + bv.max_;
     Vec3s v1 = v - (bv1.min_ + bv1.max_);
     Vec3s v2 = v - (bv2.min_ + bv2.max_);
-    CoalScalar d1 = fabs(v1[0]) + fabs(v1[1]) + fabs(v1[2]);
-    CoalScalar d2 = fabs(v2[0]) + fabs(v2[1]) + fabs(v2[2]);
+    Scalar d1 = fabs(v1[0]) + fabs(v1[1]) + fabs(v1[2]);
+    Scalar d2 = fabs(v2[0]) + fabs(v2[1]) + fabs(v2[2]);
     return (d1 < d2) ? 0 : 1;
   }
 };

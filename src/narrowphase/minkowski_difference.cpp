@@ -49,7 +49,7 @@ void getSupportTpl(const Shape0* s0, const Shape1* s1, const Matrix3s& oR1,
                    const Vec3s& ot1, const Vec3s& dir, Vec3s& support0,
                    Vec3s& support1, support_func_guess_t& hint,
                    ShapeSupportData data[2]) {
-  assert(dir.norm() > Eigen::NumTraits<CoalScalar>::epsilon());
+  assert(dir.norm() > Eigen::NumTraits<Scalar>::epsilon());
   getShapeSupport<_SupportOptions>(s0, dir, support0, hint[0], data[0]);
 
   if (TransformIsIdentity) {
@@ -77,8 +77,7 @@ void getSupportFuncTpl(const MinkowskiDiff& md, const Vec3s& dir,
 template <typename Shape0, int _SupportOptions>
 MinkowskiDiff::GetSupportFunction makeGetSupportFunction1(
     const ShapeBase* s1, bool identity,
-    Eigen::Array<CoalScalar, 1, 2>& swept_sphere_radius,
-    ShapeSupportData data[2]) {
+    Eigen::Array<Scalar, 1, 2>& swept_sphere_radius, ShapeSupportData data[2]) {
   if (_SupportOptions == SupportOptions::WithSweptSphere) {
     // No need to store the information of swept sphere radius
     swept_sphere_radius[1] = 0;
@@ -132,21 +131,46 @@ MinkowskiDiff::GetSupportFunction makeGetSupportFunction1(
         return getSupportFuncTpl<Shape0, Cylinder, true, _SupportOptions>;
       else
         return getSupportFuncTpl<Shape0, Cylinder, false, _SupportOptions>;
-    case GEOM_CONVEX: {
-      const ConvexBase* convex1 = static_cast<const ConvexBase*>(s1);
+    case GEOM_CONVEX16: {
+      const ConvexBase16* convex1 = static_cast<const ConvexBase16*>(s1);
       if (static_cast<size_t>(convex1->num_points) >
-          ConvexBase::num_vertices_large_convex_threshold) {
+          ConvexBase16::num_vertices_large_convex_threshold) {
         data[1].visited.assign(convex1->num_points, false);
         data[1].last_dir.setZero();
         if (identity)
-          return getSupportFuncTpl<Shape0, LargeConvex, true, _SupportOptions>;
+          return getSupportFuncTpl<Shape0, LargeConvex16, true,
+                                   _SupportOptions>;
         else
-          return getSupportFuncTpl<Shape0, LargeConvex, false, _SupportOptions>;
+          return getSupportFuncTpl<Shape0, LargeConvex16, false,
+                                   _SupportOptions>;
       } else {
         if (identity)
-          return getSupportFuncTpl<Shape0, SmallConvex, true, _SupportOptions>;
+          return getSupportFuncTpl<Shape0, SmallConvex16, true,
+                                   _SupportOptions>;
         else
-          return getSupportFuncTpl<Shape0, SmallConvex, false, _SupportOptions>;
+          return getSupportFuncTpl<Shape0, SmallConvex16, false,
+                                   _SupportOptions>;
+      }
+    }
+    case GEOM_CONVEX32: {
+      const ConvexBase32* convex1 = static_cast<const ConvexBase32*>(s1);
+      if (static_cast<size_t>(convex1->num_points) >
+          ConvexBase32::num_vertices_large_convex_threshold) {
+        data[1].visited.assign(convex1->num_points, false);
+        data[1].last_dir.setZero();
+        if (identity)
+          return getSupportFuncTpl<Shape0, LargeConvex32, true,
+                                   _SupportOptions>;
+        else
+          return getSupportFuncTpl<Shape0, LargeConvex32, false,
+                                   _SupportOptions>;
+      } else {
+        if (identity)
+          return getSupportFuncTpl<Shape0, SmallConvex32, true,
+                                   _SupportOptions>;
+        else
+          return getSupportFuncTpl<Shape0, SmallConvex32, false,
+                                   _SupportOptions>;
       }
     }
     default:
@@ -158,8 +182,7 @@ MinkowskiDiff::GetSupportFunction makeGetSupportFunction1(
 template <int _SupportOptions>
 MinkowskiDiff::GetSupportFunction makeGetSupportFunction0(
     const ShapeBase* s0, const ShapeBase* s1, bool identity,
-    Eigen::Array<CoalScalar, 1, 2>& swept_sphere_radius,
-    ShapeSupportData data[2]) {
+    Eigen::Array<Scalar, 1, 2>& swept_sphere_radius, ShapeSupportData data[2]) {
   if (_SupportOptions == SupportOptions::WithSweptSphere) {
     // No need to store the information of swept sphere radius
     swept_sphere_radius[0] = 0;
@@ -206,16 +229,29 @@ MinkowskiDiff::GetSupportFunction makeGetSupportFunction0(
       return makeGetSupportFunction1<Cylinder, _SupportOptions>(
           s1, identity, swept_sphere_radius, data);
       break;
-    case GEOM_CONVEX: {
-      const ConvexBase* convex0 = static_cast<const ConvexBase*>(s0);
+    case GEOM_CONVEX16: {
+      const ConvexBase16* convex0 = static_cast<const ConvexBase16*>(s0);
       if (static_cast<size_t>(convex0->num_points) >
-          ConvexBase::num_vertices_large_convex_threshold) {
+          ConvexBase16::num_vertices_large_convex_threshold) {
         data[0].visited.assign(convex0->num_points, false);
         data[0].last_dir.setZero();
-        return makeGetSupportFunction1<LargeConvex, _SupportOptions>(
+        return makeGetSupportFunction1<LargeConvex16, _SupportOptions>(
             s1, identity, swept_sphere_radius, data);
       } else
-        return makeGetSupportFunction1<SmallConvex, _SupportOptions>(
+        return makeGetSupportFunction1<SmallConvex16, _SupportOptions>(
+            s1, identity, swept_sphere_radius, data);
+      break;
+    }
+    case GEOM_CONVEX32: {
+      const ConvexBase32* convex0 = static_cast<const ConvexBase32*>(s0);
+      if (static_cast<size_t>(convex0->num_points) >
+          ConvexBase32::num_vertices_large_convex_threshold) {
+        data[0].visited.assign(convex0->num_points, false);
+        data[0].last_dir.setZero();
+        return makeGetSupportFunction1<LargeConvex32, _SupportOptions>(
+            s1, identity, swept_sphere_radius, data);
+      } else
+        return makeGetSupportFunction1<SmallConvex32, _SupportOptions>(
             s1, identity, swept_sphere_radius, data);
       break;
     }
@@ -248,8 +284,11 @@ bool getNormalizeSupportDirection(const ShapeBase* shape) {
     case GEOM_CYLINDER:
       return (bool)shape_traits<Cylinder>::NeedNesterovNormalizeHeuristic;
       break;
-    case GEOM_CONVEX:
-      return (bool)shape_traits<ConvexBase>::NeedNesterovNormalizeHeuristic;
+    case GEOM_CONVEX16:
+      return (bool)shape_traits<ConvexBase16>::NeedNesterovNormalizeHeuristic;
+      break;
+    case GEOM_CONVEX32:
+      return (bool)shape_traits<ConvexBase32>::NeedNesterovNormalizeHeuristic;
       break;
     default:
       COAL_THROW_PRETTY("Unsupported geometric shape", std::logic_error);

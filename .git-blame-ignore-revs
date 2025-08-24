@@ -8,3 +8,5 @@ febfbcbe9c98cdb4e0c7bbf4554a6925b391834b
 58dee5ae90eded5125825a2da0fe76a5031f3334
 # black . (Guilhem Saurel, 2023-10-24)
 889ff8d1ca00b9e317e1da4136e233bb49a049df
+# pre-commit run -all (ManifoldFR, 2025-02-12)
+3c3494086db02747bf858142bc3be5cbc244385f

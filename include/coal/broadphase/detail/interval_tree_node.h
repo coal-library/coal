@@ -68,11 +68,11 @@ class COAL_DLLAPI IntervalTreeNode {
   /// @brief interval stored in the node
   SimpleInterval* stored_interval;
 
-  CoalScalar key;
+  Scalar key;
 
-  CoalScalar high;
+  Scalar high;
 
-  CoalScalar max_high;
+  Scalar max_high;
 
   /// @brief red or black node: if red = false then the node is black
   bool red;

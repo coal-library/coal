@@ -41,10 +41,9 @@
 namespace coal {
 
 void checkResultLowerBound(const CollisionResult& result,
-                           CoalScalar sqrDistLowerBound) {
+                           Scalar sqrDistLowerBound) {
   COAL_UNUSED_VARIABLE(result);
-  const CoalScalar dummy_precision =
-      std::sqrt(Eigen::NumTraits<CoalScalar>::epsilon());
+  const Scalar dummy_precision = std::sqrt(Eigen::NumTraits<Scalar>::epsilon());
   COAL_UNUSED_VARIABLE(dummy_precision);
   if (sqrDistLowerBound == 0) {
     COAL_ASSERT(result.distance_lower_bound <= dummy_precision,
@@ -65,7 +64,7 @@ void collide(CollisionTraversalNodeBase* node, const CollisionRequest& request,
   if (front_list && front_list->size() > 0) {
     propagateBVHFrontListCollisionRecurse(node, request, result, front_list);
   } else {
-    CoalScalar sqrDistLowerBound = 0;
+    Scalar sqrDistLowerBound = 0;
     if (recursive)
       collisionRecurse(node, 0, 0, front_list, sqrDistLowerBound);
     else

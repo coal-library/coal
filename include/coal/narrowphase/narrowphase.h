@@ -65,7 +65,7 @@ struct COAL_DLLAPI GJKSolver {
   size_t gjk_max_iterations;
 
   /// @brief tolerance of GJK
-  CoalScalar gjk_tolerance;
+  Scalar gjk_tolerance;
 
   /// @brief which warm start to use for GJK
   GJKInitialGuess gjk_initial_guess;
@@ -83,7 +83,7 @@ struct COAL_DLLAPI GJKSolver {
 
   /// @brief If GJK can guarantee that the distance between the shapes is
   /// greater than this value, it will early stop.
-  CoalScalar distance_upper_bound;
+  Scalar distance_upper_bound;
 
   /// @brief Variant of the GJK algorithm (Default, Nesterov or Polyak).
   GJKVariant gjk_variant;
@@ -101,14 +101,14 @@ struct COAL_DLLAPI GJKSolver {
   size_t epa_max_iterations;
 
   /// @brief tolerance of EPA
-  CoalScalar epa_tolerance;
+  Scalar epa_tolerance;
 
   /// @brief Minkowski difference used by GJK and EPA algorithms
   mutable details::MinkowskiDiff minkowski_difference;
 
  private:
   // Used internally for assertion checks.
-  static constexpr CoalScalar m_dummy_precision = 1e-6;
+  static constexpr Scalar m_dummy_precision = Scalar(1e-6);
 
  public:
   COAL_COMPILER_DIAGNOSTIC_PUSH
@@ -128,7 +128,7 @@ struct COAL_DLLAPI GJKSolver {
         enable_cached_guess(false),  // Use gjk_initial_guess instead
         cached_guess(Vec3s(1, 0, 0)),
         support_func_cached_guess(support_func_guess_t::Zero()),
-        distance_upper_bound((std::numeric_limits<CoalScalar>::max)()),
+        distance_upper_bound((std::numeric_limits<Scalar>::max)()),
         gjk_variant(GJKVariant::DefaultGJK),
         gjk_convergence_criterion(GJKConvergenceCriterion::Default),
         gjk_convergence_criterion_type(GJKConvergenceCriterionType::Absolute),
@@ -171,7 +171,7 @@ struct COAL_DLLAPI GJKSolver {
     this->gjk_max_iterations = request.gjk_max_iterations;
     this->gjk_tolerance = request.gjk_tolerance;
     // For distance computation, we don't want GJK to early stop
-    this->distance_upper_bound = (std::numeric_limits<CoalScalar>::max)();
+    this->distance_upper_bound = (std::numeric_limits<Scalar>::max)();
     this->gjk_variant = request.gjk_variant;
     this->gjk_convergence_criterion = request.gjk_convergence_criterion;
     this->gjk_convergence_criterion_type =
@@ -224,8 +224,9 @@ struct COAL_DLLAPI GJKSolver {
     this->gjk_max_iterations = request.gjk_max_iterations;
     // The distance upper bound should be at least greater to the requested
     // security margin. Otherwise, we will likely miss some collisions.
-    this->distance_upper_bound = (std::max)(
-        0., (std::max)(request.distance_upper_bound, request.security_margin));
+    this->distance_upper_bound =
+        (std::max)(Scalar(0), (std::max)(request.distance_upper_bound,
+                                         request.security_margin));
     this->gjk_variant = request.gjk_variant;
     this->gjk_convergence_criterion = request.gjk_convergence_criterion;
     this->gjk_convergence_criterion_type =
@@ -269,7 +270,7 @@ struct COAL_DLLAPI GJKSolver {
 
   /// @brief Helper to return the precision of the solver on the distance
   /// estimate, depending on whether or not `compute_penetration` is true.
-  CoalScalar getDistancePrecision(const bool compute_penetration) const {
+  Scalar getDistancePrecision(const bool compute_penetration) const {
     return compute_penetration
                ? (std::max)(this->gjk_tolerance, this->epa_tolerance)
                : this->gjk_tolerance;
@@ -305,12 +306,11 @@ struct COAL_DLLAPI GJKSolver {
   /// It's up to the user to decide whether the shapes are in collision or not,
   /// based on that estimate.
   template <typename S1, typename S2>
-  CoalScalar shapeDistance(const S1& s1, const Transform3s& tf1, const S2& s2,
-                           const Transform3s& tf2,
-                           const bool compute_penetration, Vec3s& p1, Vec3s& p2,
-                           Vec3s& normal) const {
+  Scalar shapeDistance(const S1& s1, const Transform3s& tf1, const S2& s2,
+                       const Transform3s& tf2, const bool compute_penetration,
+                       Vec3s& p1, Vec3s& p2, Vec3s& normal) const {
     constexpr bool relative_transformation_already_computed = false;
-    CoalScalar distance;
+    Scalar distance;
     this->runGJKAndEPA(s1, tf1, s2, tf2, compute_penetration, distance, p1, p2,
                        normal, relative_transformation_already_computed);
     return distance;
@@ -320,16 +320,16 @@ struct COAL_DLLAPI GJKSolver {
   /// second shape is a triangle. It is more efficient to pre-compute the
   /// relative transformation between the two shapes before calling GJK/EPA.
   template <typename S1>
-  CoalScalar shapeDistance(const S1& s1, const Transform3s& tf1,
-                           const TriangleP& s2, const Transform3s& tf2,
-                           const bool compute_penetration, Vec3s& p1, Vec3s& p2,
-                           Vec3s& normal) const {
+  Scalar shapeDistance(const S1& s1, const Transform3s& tf1,
+                       const TriangleP& s2, const Transform3s& tf2,
+                       const bool compute_penetration, Vec3s& p1, Vec3s& p2,
+                       Vec3s& normal) const {
     const Transform3s tf_1M2(tf1.inverseTimes(tf2));
     TriangleP tri(tf_1M2.transform(s2.a), tf_1M2.transform(s2.b),
                   tf_1M2.transform(s2.c));
 
     constexpr bool relative_transformation_already_computed = true;
-    CoalScalar distance;
+    Scalar distance;
     this->runGJKAndEPA(s1, tf1, tri, tf_1M2, compute_penetration, distance, p1,
                        p2, normal, relative_transformation_already_computed);
     return distance;
@@ -337,11 +337,11 @@ struct COAL_DLLAPI GJKSolver {
 
   /// @brief See other partial template specialization of shapeDistance above.
   template <typename S2>
-  CoalScalar shapeDistance(const TriangleP& s1, const Transform3s& tf1,
-                           const S2& s2, const Transform3s& tf2,
-                           const bool compute_penetration, Vec3s& p1, Vec3s& p2,
-                           Vec3s& normal) const {
-    CoalScalar distance = this->shapeDistance<S2>(
+  Scalar shapeDistance(const TriangleP& s1, const Transform3s& tf1,
+                       const S2& s2, const Transform3s& tf2,
+                       const bool compute_penetration, Vec3s& p1, Vec3s& p2,
+                       Vec3s& normal) const {
+    Scalar distance = this->shapeDistance<S2>(
         s2, tf2, s1, tf1, compute_penetration, p2, p1, normal);
     normal = -normal;
     return distance;
@@ -421,8 +421,8 @@ struct COAL_DLLAPI GJKSolver {
             int _SupportOptions = details::SupportOptions::NoSweptSphere>
   void runGJKAndEPA(
       const S1& s1, const Transform3s& tf1, const S2& s2,
-      const Transform3s& tf2, const bool compute_penetration,
-      CoalScalar& distance, Vec3s& p1, Vec3s& p2, Vec3s& normal,
+      const Transform3s& tf2, const bool compute_penetration, Scalar& distance,
+      Vec3s& p1, Vec3s& p2, Vec3s& normal,
       const bool relative_transformation_already_computed = false) const {
     // Reset internal state of GJK algorithm
     if (relative_transformation_already_computed)
@@ -443,7 +443,8 @@ struct COAL_DLLAPI GJKSolver {
                        *(this->minkowski_difference.shapes[1]), guess,
                        support_hint);
 
-    this->gjk.evaluate(this->minkowski_difference, guess, support_hint);
+    this->gjk.evaluate(this->minkowski_difference, guess.cast<SolverScalar>(),
+                       support_hint);
 
     switch (this->gjk.status) {
       case details::GJK::DidNotRun:
@@ -451,9 +452,9 @@ struct COAL_DLLAPI GJKSolver {
                     std::logic_error);
         this->cached_guess = Vec3s(1, 0, 0);
         this->support_func_cached_guess.setZero();
-        distance = -(std::numeric_limits<CoalScalar>::max)();
+        distance = -(std::numeric_limits<Scalar>::max)();
         p1 = p2 = normal =
-            Vec3s::Constant(std::numeric_limits<CoalScalar>::quiet_NaN());
+            Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN());
         break;
       case details::GJK::Failed:
         //
@@ -515,7 +516,7 @@ struct COAL_DLLAPI GJKSolver {
 
           // TODO: understand why EPA's performance is so bad on cylinders and
           // cones.
-          this->epa.evaluate(this->gjk, -guess);
+          this->epa.evaluate(this->gjk, (-guess).cast<SolverScalar>());
 
           switch (epa.status) {
             //
@@ -587,17 +588,17 @@ struct COAL_DLLAPI GJKSolver {
   }
 
   void GJKEarlyStopExtractWitnessPointsAndNormal(const Transform3s& tf1,
-                                                 CoalScalar& distance,
-                                                 Vec3s& p1, Vec3s& p2,
+                                                 Scalar& distance, Vec3s& p1,
+                                                 Vec3s& p2,
                                                  Vec3s& normal) const {
     COAL_UNUSED_VARIABLE(tf1);
     // Cache gjk result for potential future call to this GJKSolver.
-    this->cached_guess = this->gjk.ray;
+    this->cached_guess = this->gjk.ray.cast<Scalar>();
     this->support_func_cached_guess = this->gjk.support_hint;
 
-    distance = this->gjk.distance;
+    distance = Scalar(this->gjk.distance);
     p1 = p2 = normal =
-        Vec3s::Constant(std::numeric_limits<CoalScalar>::quiet_NaN());
+        Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN());
     // If we absolutely want to return some witness points, we could use
     // the following code (or simply merge the early stopped case with the
     // valid case below):
@@ -608,8 +609,8 @@ struct COAL_DLLAPI GJKSolver {
   }
 
   void GJKExtractWitnessPointsAndNormal(const Transform3s& tf1,
-                                        CoalScalar& distance, Vec3s& p1,
-                                        Vec3s& p2, Vec3s& normal) const {
+                                        Scalar& distance, Vec3s& p1, Vec3s& p2,
+                                        Vec3s& normal) const {
     // Apart from early stopping, there are two cases where GJK says there is no
     // collision:
     // 1. GJK proved the distance is above its tolerance (default 1e-6).
@@ -621,13 +622,18 @@ struct COAL_DLLAPI GJKSolver {
                 "The norm of GJK's ray should be bigger than GJK's tolerance.",
                 std::logic_error);
     // Cache gjk result for potential future call to this GJKSolver.
-    this->cached_guess = this->gjk.ray;
+    this->cached_guess = this->gjk.ray.cast<Scalar>();
     this->support_func_cached_guess = this->gjk.support_hint;
 
-    distance = this->gjk.distance;
+    distance = Scalar(this->gjk.distance);
     // TODO: On degenerated case, the closest points may be non-unique.
     // (i.e. an object face normal is colinear to `gjk.ray`)
-    gjk.getWitnessPointsAndNormal(this->minkowski_difference, p1, p2, normal);
+    Vec3ps p1_, p2_, normal_;
+    gjk.getWitnessPointsAndNormal(this->minkowski_difference, p1_, p2_,
+                                  normal_);
+    p1 = p1_.cast<Scalar>();
+    p2 = p2_.cast<Scalar>();
+    normal = normal_.cast<Scalar>();
     Vec3s p = tf1.transform(0.5 * (p1 + p2));
     normal = tf1.getRotation() * normal;
     p1.noalias() = p - 0.5 * distance * normal;
@@ -635,8 +641,8 @@ struct COAL_DLLAPI GJKSolver {
   }
 
   void GJKCollisionExtractWitnessPointsAndNormal(const Transform3s& tf1,
-                                                 CoalScalar& distance,
-                                                 Vec3s& p1, Vec3s& p2,
+                                                 Scalar& distance, Vec3s& p1,
+                                                 Vec3s& p2,
                                                  Vec3s& normal) const {
     COAL_UNUSED_VARIABLE(tf1);
     COAL_ASSERT(this->gjk.distance <=
@@ -649,21 +655,25 @@ struct COAL_DLLAPI GJKSolver {
     // this->cached_guess = this->gjk.ray;
     this->support_func_cached_guess = this->gjk.support_hint;
 
-    distance = this->gjk.distance;
+    distance = Scalar(this->gjk.distance);
     p1 = p2 = normal =
-        Vec3s::Constant(std::numeric_limits<CoalScalar>::quiet_NaN());
+        Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN());
   }
 
   void EPAExtractWitnessPointsAndNormal(const Transform3s& tf1,
-                                        CoalScalar& distance, Vec3s& p1,
-                                        Vec3s& p2, Vec3s& normal) const {
+                                        Scalar& distance, Vec3s& p1, Vec3s& p2,
+                                        Vec3s& normal) const {
     // Cache EPA result for potential future call to this GJKSolver.
     // This caching allows to warm-start the next GJK call.
-    this->cached_guess = -(this->epa.depth * this->epa.normal);
+    this->cached_guess = -(this->epa.depth * this->epa.normal).cast<Scalar>();
     this->support_func_cached_guess = this->epa.support_hint;
-    distance = (std::min)(0., -this->epa.depth);
-    this->epa.getWitnessPointsAndNormal(this->minkowski_difference, p1, p2,
-                                        normal);
+    distance = (std::min)(Scalar(0), -Scalar(this->epa.depth));
+    Vec3ps p1_, p2_, normal_;
+    this->epa.getWitnessPointsAndNormal(this->minkowski_difference, p1_, p2_,
+                                        normal_);
+    p1 = p1_.cast<Scalar>();
+    p2 = p2_.cast<Scalar>();
+    normal = normal_.cast<Scalar>();
     // The following is very important to understand why EPA can sometimes
     // return a normal that is not colinear to the vector $p_1 - p_2$ when
     // working with tolerances like $\epsilon = 10^{-3}$.
@@ -710,15 +720,15 @@ struct COAL_DLLAPI GJKSolver {
   }
 
   void EPAFailedExtractWitnessPointsAndNormal(const Transform3s& tf1,
-                                              CoalScalar& distance, Vec3s& p1,
+                                              Scalar& distance, Vec3s& p1,
                                               Vec3s& p2, Vec3s& normal) const {
     this->cached_guess = Vec3s(1, 0, 0);
     this->support_func_cached_guess.setZero();
 
     COAL_UNUSED_VARIABLE(tf1);
-    distance = -(std::numeric_limits<CoalScalar>::max)();
+    distance = -(std::numeric_limits<Scalar>::max)();
     p1 = p2 = normal =
-        Vec3s::Constant(std::numeric_limits<CoalScalar>::quiet_NaN());
+        Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN());
   }
 };
 

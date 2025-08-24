@@ -45,7 +45,7 @@ namespace coal {
 namespace detail {
 
 //==============================================================================
-SpatialHash::SpatialHash(const AABB& scene_limit_, CoalScalar cell_size_)
+SpatialHash::SpatialHash(const AABB& scene_limit_, Scalar cell_size_)
     : cell_size(cell_size_), scene_limit(scene_limit_) {
   width[0] = std::ceil(scene_limit.width() / cell_size);
   width[1] = std::ceil(scene_limit.height() / cell_size);

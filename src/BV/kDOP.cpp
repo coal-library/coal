@@ -44,8 +44,7 @@
 namespace coal {
 
 /// @brief Find the smaller and larger one of two values
-inline void minmax(CoalScalar a, CoalScalar b, CoalScalar& minv,
-                   CoalScalar& maxv) {
+inline void minmax(Scalar a, Scalar b, Scalar& minv, Scalar& maxv) {
   if (a > b) {
     minv = b;
     maxv = a;
@@ -55,7 +54,7 @@ inline void minmax(CoalScalar a, CoalScalar b, CoalScalar& minv,
   }
 }
 /// @brief Merge the interval [minv, maxv] and value p/
-inline void minmax(CoalScalar p, CoalScalar& minv, CoalScalar& maxv) {
+inline void minmax(Scalar p, Scalar& minv, Scalar& maxv) {
   if (p > maxv) maxv = p;
   if (p < minv) minv = p;
 }
@@ -63,11 +62,11 @@ inline void minmax(CoalScalar p, CoalScalar& minv, CoalScalar& maxv) {
 /// @brief Compute the distances to planes with normals from KDOP vectors except
 /// those of AABB face planes
 template <short N>
-void getDistances(const Vec3s& /*p*/, CoalScalar* /*d*/) {}
+void getDistances(const Vec3s& /*p*/, Scalar* /*d*/) {}
 
 /// @brief Specification of getDistances
 template <>
-inline void getDistances<5>(const Vec3s& p, CoalScalar* d) {
+inline void getDistances<5>(const Vec3s& p, Scalar* d) {
   d[0] = p[0] + p[1];
   d[1] = p[0] + p[2];
   d[2] = p[1] + p[2];
@@ -76,7 +75,7 @@ inline void getDistances<5>(const Vec3s& p, CoalScalar* d) {
 }
 
 template <>
-inline void getDistances<6>(const Vec3s& p, CoalScalar* d) {
+inline void getDistances<6>(const Vec3s& p, Scalar* d) {
   d[0] = p[0] + p[1];
   d[1] = p[0] + p[2];
   d[2] = p[1] + p[2];
@@ -86,7 +85,7 @@ inline void getDistances<6>(const Vec3s& p, CoalScalar* d) {
 }
 
 template <>
-inline void getDistances<9>(const Vec3s& p, CoalScalar* d) {
+inline void getDistances<9>(const Vec3s& p, Scalar* d) {
   d[0] = p[0] + p[1];
   d[1] = p[0] + p[2];
   d[2] = p[1] + p[2];
@@ -100,7 +99,7 @@ inline void getDistances<9>(const Vec3s& p, CoalScalar* d) {
 
 template <short N>
 KDOP<N>::KDOP() {
-  CoalScalar real_max = (std::numeric_limits<CoalScalar>::max)();
+  Scalar real_max = (std::numeric_limits<Scalar>::max)();
   dist_.template head<N / 2>().setConstant(real_max);
   dist_.template tail<N / 2>().setConstant(-real_max);
 }
@@ -111,7 +110,7 @@ KDOP<N>::KDOP(const Vec3s& v) {
     dist_[i] = dist_[N / 2 + i] = v[i];
   }
 
-  CoalScalar d[(N - 6) / 2];
+  Scalar d[(N - 6) / 2];
   getDistances<(N - 6) / 2>(v, d);
   for (short i = 0; i < (N - 6) / 2; ++i) {
     dist_[3 + i] = dist_[3 + i + N / 2] = d[i];
@@ -124,7 +123,7 @@ KDOP<N>::KDOP(const Vec3s& a, const Vec3s& b) {
     minmax(a[i], b[i], dist_[i], dist_[i + N / 2]);
   }
 
-  CoalScalar ad[(N - 6) / 2], bd[(N - 6) / 2];
+  Scalar ad[(N - 6) / 2], bd[(N - 6) / 2];
   getDistances<(N - 6) / 2>(a, ad);
   getDistances<(N - 6) / 2>(b, bd);
   for (short i = 0; i < (N - 6) / 2; ++i) {
@@ -143,21 +142,18 @@ bool KDOP<N>::overlap(const KDOP<N>& other) const {
 
 template <short N>
 bool KDOP<N>::overlap(const KDOP<N>& other, const CollisionRequest& request,
-                      CoalScalar& sqrDistLowerBound) const {
-  const CoalScalar breakDistance(request.break_distance +
-                                 request.security_margin);
+                      Scalar& sqrDistLowerBound) const {
+  const Scalar breakDistance(request.break_distance + request.security_margin);
 
-  CoalScalar a =
-      (dist_.template head<N / 2>() - other.dist_.template tail<N / 2>())
-          .minCoeff();
+  Scalar a = (dist_.template head<N / 2>() - other.dist_.template tail<N / 2>())
+                 .minCoeff();
   if (a > breakDistance) {
     sqrDistLowerBound = a * a;
     return false;
   }
 
-  CoalScalar b =
-      (other.dist_.template head<N / 2>() - dist_.template tail<N / 2>())
-          .minCoeff();
+  Scalar b = (other.dist_.template head<N / 2>() - dist_.template tail<N / 2>())
+                 .minCoeff();
   if (b > breakDistance) {
     sqrDistLowerBound = b * b;
     return false;
@@ -173,7 +169,7 @@ bool KDOP<N>::inside(const Vec3s& p) const {
   if ((p.array() > dist_.template segment<3>(N / 2)).any()) return false;
 
   enum { P = ((N - 6) / 2) };
-  Eigen::Array<CoalScalar, P, 1> d;
+  Eigen::Array<Scalar, P, 1> d;
   getDistances<P>(p, d.data());
 
   if ((d < dist_.template segment<P>(3)).any()) return false;
@@ -188,7 +184,7 @@ KDOP<N>& KDOP<N>::operator+=(const Vec3s& p) {
     minmax(p[i], dist_[i], dist_[N / 2 + i]);
   }
 
-  CoalScalar pd[(N - 6) / 2];
+  Scalar pd[(N - 6) / 2];
   getDistances<(N - 6) / 2>(p, pd);
   for (short i = 0; i < (N - 6) / 2; ++i) {
     minmax(pd[i], dist_[3 + i], dist_[3 + N / 2 + i]);
@@ -213,8 +209,8 @@ KDOP<N> KDOP<N>::operator+(const KDOP<N>& other) const {
 }
 
 template <short N>
-CoalScalar KDOP<N>::distance(const KDOP<N>& /*other*/, Vec3s* /*P*/,
-                             Vec3s* /*Q*/) const {
+Scalar KDOP<N>::distance(const KDOP<N>& /*other*/, Vec3s* /*P*/,
+                         Vec3s* /*Q*/) const {
   std::cerr << "KDOP distance not implemented!" << std::endl;
   return 0.0;
 }
@@ -227,7 +223,7 @@ KDOP<N> translate(const KDOP<N>& bv, const Vec3s& t) {
     res.dist(short(N / 2 + i)) += t[i];
   }
 
-  CoalScalar d[(N - 6) / 2];
+  Scalar d[(N - 6) / 2];
   getDistances<(N - 6) / 2>(t, d);
   for (short i = 0; i < (N - 6) / 2; ++i) {
     res.dist(short(3 + i)) += d[i];

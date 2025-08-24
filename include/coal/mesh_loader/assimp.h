@@ -54,7 +54,7 @@ namespace internal {
 
 struct COAL_DLLAPI TriangleAndVertices {
   std::vector<coal::Vec3s> vertices_;
-  std::vector<coal::Triangle> triangles_;
+  std::vector<coal::Triangle32> triangles_;
 };
 
 struct COAL_DLLAPI Loader {

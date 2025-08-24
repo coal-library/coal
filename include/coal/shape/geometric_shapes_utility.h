@@ -61,10 +61,19 @@ COAL_DLLAPI std::vector<Vec3s> getBoundVertices(const Cone& cone,
                                                 const Transform3s& tf);
 COAL_DLLAPI std::vector<Vec3s> getBoundVertices(const Cylinder& cylinder,
                                                 const Transform3s& tf);
-COAL_DLLAPI std::vector<Vec3s> getBoundVertices(const ConvexBase& convex,
-                                                const Transform3s& tf);
 COAL_DLLAPI std::vector<Vec3s> getBoundVertices(const TriangleP& triangle,
                                                 const Transform3s& tf);
+template <typename IndexType>
+std::vector<Vec3s> getBoundVertices(const ConvexBaseTpl<IndexType>& convex,
+                                    const Transform3s& tf) {
+  std::vector<Vec3s> result(convex.num_points);
+  const std::vector<Vec3s>& points_ = *(convex.points);
+  for (std::size_t i = 0; i < convex.num_points; ++i) {
+    result[i] = tf.transform(points_[i]);
+  }
+
+  return result;
+}
 }  // namespace details
 /// @endcond
 
@@ -103,10 +112,13 @@ COAL_DLLAPI void computeBV<AABB, Cone>(const Cone& s, const Transform3s& tf,
 template <>
 COAL_DLLAPI void computeBV<AABB, Cylinder>(const Cylinder& s,
                                            const Transform3s& tf, AABB& bv);
+template <>
+COAL_DLLAPI void computeBV<AABB, ConvexBase32>(const ConvexBase32& s,
+                                               const Transform3s& tf, AABB& bv);
 
 template <>
-COAL_DLLAPI void computeBV<AABB, ConvexBase>(const ConvexBase& s,
-                                             const Transform3s& tf, AABB& bv);
+COAL_DLLAPI void computeBV<AABB, ConvexBase16>(const ConvexBase16& s,
+                                               const Transform3s& tf, AABB& bv);
 
 template <>
 COAL_DLLAPI void computeBV<AABB, TriangleP>(const TriangleP& s,
@@ -141,8 +153,12 @@ COAL_DLLAPI void computeBV<OBB, Cylinder>(const Cylinder& s,
                                           const Transform3s& tf, OBB& bv);
 
 template <>
-COAL_DLLAPI void computeBV<OBB, ConvexBase>(const ConvexBase& s,
-                                            const Transform3s& tf, OBB& bv);
+COAL_DLLAPI void computeBV<OBB, ConvexBase32>(const ConvexBase32& s,
+                                              const Transform3s& tf, OBB& bv);
+
+template <>
+COAL_DLLAPI void computeBV<OBB, ConvexBase16>(const ConvexBase16& s,
+                                              const Transform3s& tf, OBB& bv);
 
 template <>
 COAL_DLLAPI void computeBV<OBB, Halfspace>(const Halfspace& s,

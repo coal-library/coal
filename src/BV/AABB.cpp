@@ -44,18 +44,18 @@
 namespace coal {
 
 AABB::AABB()
-    : min_(Vec3s::Constant((std::numeric_limits<CoalScalar>::max)())),
-      max_(Vec3s::Constant(-(std::numeric_limits<CoalScalar>::max)())) {}
+    : min_(Vec3s::Constant((std::numeric_limits<Scalar>::max)())),
+      max_(Vec3s::Constant(-(std::numeric_limits<Scalar>::max)())) {}
 
 bool AABB::overlap(const AABB& other, const CollisionRequest& request,
-                   CoalScalar& sqrDistLowerBound) const {
-  const CoalScalar break_distance_squared =
+                   Scalar& sqrDistLowerBound) const {
+  const Scalar break_distance_squared =
       request.break_distance * request.break_distance;
 
   sqrDistLowerBound =
       (min_ - other.max_ - Vec3s::Constant(request.security_margin))
           .array()
-          .max(CoalScalar(0))
+          .max(Scalar(0))
           .matrix()
           .squaredNorm();
   if (sqrDistLowerBound > break_distance_squared) return false;
@@ -63,7 +63,7 @@ bool AABB::overlap(const AABB& other, const CollisionRequest& request,
   sqrDistLowerBound =
       (other.min_ - max_ - Vec3s::Constant(request.security_margin))
           .array()
-          .max(CoalScalar(0))
+          .max(Scalar(0))
           .matrix()
           .squaredNorm();
   if (sqrDistLowerBound > break_distance_squared) return false;
@@ -71,23 +71,23 @@ bool AABB::overlap(const AABB& other, const CollisionRequest& request,
   return true;
 }
 
-CoalScalar AABB::distance(const AABB& other, Vec3s* P, Vec3s* Q) const {
-  CoalScalar result = 0;
+Scalar AABB::distance(const AABB& other, Vec3s* P, Vec3s* Q) const {
+  Scalar result = 0;
   for (Eigen::DenseIndex i = 0; i < 3; ++i) {
-    const CoalScalar& amin = min_[i];
-    const CoalScalar& amax = max_[i];
-    const CoalScalar& bmin = other.min_[i];
-    const CoalScalar& bmax = other.max_[i];
+    const Scalar& amin = min_[i];
+    const Scalar& amax = max_[i];
+    const Scalar& bmin = other.min_[i];
+    const Scalar& bmax = other.max_[i];
 
     if (amin > bmax) {
-      CoalScalar delta = bmax - amin;
+      Scalar delta = bmax - amin;
       result += delta * delta;
       if (P && Q) {
         (*P)[i] = amin;
         (*Q)[i] = bmax;
       }
     } else if (bmin > amax) {
-      CoalScalar delta = amax - bmin;
+      Scalar delta = amax - bmin;
       result += delta * delta;
       if (P && Q) {
         (*P)[i] = amax;
@@ -96,11 +96,11 @@ CoalScalar AABB::distance(const AABB& other, Vec3s* P, Vec3s* Q) const {
     } else {
       if (P && Q) {
         if (bmin >= amin) {
-          CoalScalar t = 0.5 * (amax + bmin);
+          Scalar t = Scalar(0.5) * (amax + bmin);
           (*P)[i] = t;
           (*Q)[i] = t;
         } else {
-          CoalScalar t = 0.5 * (amin + bmax);
+          Scalar t = Scalar(0.5) * (amin + bmax);
           (*P)[i] = t;
           (*Q)[i] = t;
         }
@@ -111,19 +111,19 @@ CoalScalar AABB::distance(const AABB& other, Vec3s* P, Vec3s* Q) const {
   return std::sqrt(result);
 }
 
-CoalScalar AABB::distance(const AABB& other) const {
-  CoalScalar result = 0;
+Scalar AABB::distance(const AABB& other) const {
+  Scalar result = 0;
   for (Eigen::DenseIndex i = 0; i < 3; ++i) {
-    const CoalScalar& amin = min_[i];
-    const CoalScalar& amax = max_[i];
-    const CoalScalar& bmin = other.min_[i];
-    const CoalScalar& bmax = other.max_[i];
+    const Scalar& amin = min_[i];
+    const Scalar& amax = max_[i];
+    const Scalar& bmin = other.min_[i];
+    const Scalar& bmax = other.max_[i];
 
     if (amin > bmax) {
-      CoalScalar delta = bmax - amin;
+      Scalar delta = bmax - amin;
       result += delta * delta;
     } else if (bmin > amax) {
-      CoalScalar delta = amax - bmin;
+      Scalar delta = amax - bmin;
       result += delta * delta;
     }
   }
@@ -139,7 +139,7 @@ bool overlap(const Matrix3s& R0, const Vec3s& T0, const AABB& b1,
 
 bool overlap(const Matrix3s& R0, const Vec3s& T0, const AABB& b1,
              const AABB& b2, const CollisionRequest& request,
-             CoalScalar& sqrDistLowerBound) {
+             Scalar& sqrDistLowerBound) {
   AABB bb1(translate(rotate(b1, R0), T0));
   return bb1.overlap(b2, request, sqrDistLowerBound);
 }
@@ -156,8 +156,8 @@ bool AABB::overlap(const Plane& p) const {
   const Vec3s support2 =
       ((-p.n).array() > 0).select(halfside, -halfside) + center;
 
-  const CoalScalar dist1 = p.n.dot(support1) - p.d;
-  const CoalScalar dist2 = p.n.dot(support2) - p.d;
+  const Scalar dist1 = p.n.dot(support1) - p.d;
+  const Scalar dist2 = p.n.dot(support2) - p.d;
   const int sign1 = (dist1 > 0) ? 1 : -1;
   const int sign2 = (dist2 > 0) ? 1 : -1;
 
@@ -169,8 +169,8 @@ bool AABB::overlap(const Plane& p) const {
     // Both supports are on the same side of the plane.
     // We now need to check if they are on the same side of the plane inflated
     // by the swept-sphere radius.
-    const CoalScalar ssr_dist1 = std::abs(dist1) - p.getSweptSphereRadius();
-    const CoalScalar ssr_dist2 = std::abs(dist2) - p.getSweptSphereRadius();
+    const Scalar ssr_dist1 = std::abs(dist1) - p.getSweptSphereRadius();
+    const Scalar ssr_dist2 = std::abs(dist2) - p.getSweptSphereRadius();
     const int ssr_sign1 = (ssr_dist1 > 0) ? 1 : -1;
     const int ssr_sign2 = (ssr_dist2 > 0) ? 1 : -1;
     return ssr_sign1 != ssr_sign2;

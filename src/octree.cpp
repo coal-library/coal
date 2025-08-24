@@ -58,15 +58,15 @@ struct Neighbors {
 void computeNeighbors(const std::vector<Vec6s>& boxes,
                       std::vector<Neighbors>& neighbors) {
   typedef std::vector<Vec6s> VectorVec6s;
-  CoalScalar fixedSize = -1;
-  CoalScalar e(1e-8);
+  Scalar fixedSize = -1;
+  Scalar e = Scalar(1e-8);
   for (std::size_t i = 0; i < boxes.size(); ++i) {
     const Vec6s& box(boxes[i]);
     Neighbors& n(neighbors[i]);
-    CoalScalar x(box[0]);
-    CoalScalar y(box[1]);
-    CoalScalar z(box[2]);
-    CoalScalar s(box[3]);
+    Scalar x(box[0]);
+    Scalar y(box[1]);
+    Scalar z(box[2]);
+    Scalar s(box[3]);
     if (fixedSize == -1)
       fixedSize = s;
     else
@@ -75,9 +75,9 @@ void computeNeighbors(const std::vector<Vec6s>& boxes,
     for (VectorVec6s::const_iterator it = boxes.begin(); it != boxes.end();
          ++it) {
       const Vec6s& otherBox = *it;
-      CoalScalar xo(otherBox[0]);
-      CoalScalar yo(otherBox[1]);
-      CoalScalar zo(otherBox[2]);
+      Scalar xo(otherBox[0]);
+      Scalar yo(otherBox[1]);
+      Scalar zo(otherBox[2]);
       // if (fabs(x-xo) < e && fabs(y-yo) < e && fabs(z-zo) < e){
       //   continue;
       // }
@@ -122,19 +122,28 @@ void OcTree::exportAsObjFile(const std::string& filename) const {
     const Vec6s& box(boxes[i]);
     internal::Neighbors& n(neighbors[i]);
 
-    CoalScalar x(box[0]);
-    CoalScalar y(box[1]);
-    CoalScalar z(box[2]);
-    CoalScalar size(box[3]);
+    Scalar x(box[0]);
+    Scalar y(box[1]);
+    Scalar z(box[2]);
+    Scalar size(box[3]);
 
-    vertices.push_back(Vec3s(x - .5 * size, y - .5 * size, z - .5 * size));
-    vertices.push_back(Vec3s(x + .5 * size, y - .5 * size, z - .5 * size));
-    vertices.push_back(Vec3s(x - .5 * size, y + .5 * size, z - .5 * size));
-    vertices.push_back(Vec3s(x + .5 * size, y + .5 * size, z - .5 * size));
-    vertices.push_back(Vec3s(x - .5 * size, y - .5 * size, z + .5 * size));
-    vertices.push_back(Vec3s(x + .5 * size, y - .5 * size, z + .5 * size));
-    vertices.push_back(Vec3s(x - .5 * size, y + .5 * size, z + .5 * size));
-    vertices.push_back(Vec3s(x + .5 * size, y + .5 * size, z + .5 * size));
+    const Scalar half = Scalar(0.5);
+    vertices.push_back(
+        Vec3s(x - half * size, y - half * size, z - half * size));
+    vertices.push_back(
+        Vec3s(x + half * size, y - half * size, z - half * size));
+    vertices.push_back(
+        Vec3s(x - half * size, y + half * size, z - half * size));
+    vertices.push_back(
+        Vec3s(x + half * size, y + half * size, z - half * size));
+    vertices.push_back(
+        Vec3s(x - half * size, y - half * size, z + half * size));
+    vertices.push_back(
+        Vec3s(x + half * size, y - half * size, z + half * size));
+    vertices.push_back(
+        Vec3s(x - half * size, y + half * size, z + half * size));
+    vertices.push_back(
+        Vec3s(x + half * size, y + half * size, z + half * size));
 
     // Add face only if box has no neighbor with the same face
     if (!n.minusX()) {
@@ -186,9 +195,9 @@ void OcTree::exportAsObjFile(const std::string& filename) const {
 }
 
 OcTreePtr_t makeOctree(
-    const Eigen::Matrix<CoalScalar, Eigen::Dynamic, 3>& point_cloud,
-    const CoalScalar resolution) {
-  typedef Eigen::Matrix<CoalScalar, Eigen::Dynamic, 3> InputType;
+    const Eigen::Matrix<Scalar, Eigen::Dynamic, 3>& point_cloud,
+    const Scalar resolution) {
+  typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 3> InputType;
   typedef InputType::ConstRowXpr RowType;
 
   shared_ptr<octomap::OcTree> octree(new octomap::OcTree(resolution));

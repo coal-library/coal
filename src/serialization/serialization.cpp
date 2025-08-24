@@ -70,9 +70,12 @@ COAL_SERIALIZATION_DEFINE_EXPORT(Plane)
   COAL_SERIALIZATION_DEFINE_EXPORT(Derived)       \
   /**/
 
-COAL_SERIALIZATION_CAST_REGISTER(ConvexBase, CollisionGeometry)
-EXPORT_AND_CAST(Convex<Triangle>, ConvexBase)
-EXPORT_AND_CAST(Convex<Quadrilateral>, ConvexBase)
+COAL_SERIALIZATION_CAST_REGISTER(ConvexBase16, CollisionGeometry)
+COAL_SERIALIZATION_CAST_REGISTER(ConvexBase32, CollisionGeometry)
+EXPORT_AND_CAST(ConvexTpl<Triangle16>, ConvexBase16)
+EXPORT_AND_CAST(ConvexTpl<Triangle32>, ConvexBase32)
+EXPORT_AND_CAST(ConvexTpl<Quadrilateral16>, ConvexBase16)
+EXPORT_AND_CAST(ConvexTpl<Quadrilateral32>, ConvexBase32)
 
 COAL_SERIALIZATION_DEFINE_EXPORT(HeightField<AABB>)
 COAL_SERIALIZATION_DEFINE_EXPORT(HeightField<OBB>)

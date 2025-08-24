@@ -45,7 +45,7 @@ namespace coal {
 //==============================================================================
 template <typename HashTable>
 SpatialHashingCollisionManager<HashTable>::SpatialHashingCollisionManager(
-    CoalScalar cell_size, const Vec3s& scene_min, const Vec3s& scene_max,
+    Scalar cell_size, const Vec3s& scene_min, const Vec3s& scene_max,
     unsigned int default_table_size)
     : scene_limit(AABB(scene_min, scene_max)),
       hash_table(new HashTable(detail::SpatialHash(scene_limit, cell_size))) {
@@ -262,7 +262,7 @@ template <typename HashTable>
 void SpatialHashingCollisionManager<HashTable>::distance(
     CollisionObject* obj, DistanceCallBackBase* callback) const {
   if (size() == 0) return;
-  CoalScalar min_dist = (std::numeric_limits<CoalScalar>::max)();
+  Scalar min_dist = (std::numeric_limits<Scalar>::max)();
   distance_(obj, callback, min_dist);
 }
 
@@ -309,10 +309,10 @@ bool SpatialHashingCollisionManager<HashTable>::collide_(
 template <typename HashTable>
 bool SpatialHashingCollisionManager<HashTable>::distance_(
     CollisionObject* obj, DistanceCallBackBase* callback,
-    CoalScalar& min_dist) const {
+    Scalar& min_dist) const {
   auto delta = (obj->getAABB().max_ - obj->getAABB().min_) * 0.5;
   auto aabb = obj->getAABB();
-  if (min_dist < (std::numeric_limits<CoalScalar>::max)()) {
+  if (min_dist < (std::numeric_limits<Scalar>::max)()) {
     Vec3s min_dist_delta(min_dist, min_dist, min_dist);
     aabb.expand(min_dist_delta);
   }
@@ -320,7 +320,7 @@ bool SpatialHashingCollisionManager<HashTable>::distance_(
   AABB overlap_aabb;
 
   auto status = 1;
-  CoalScalar old_min_distance;
+  Scalar old_min_distance;
 
   while (1) {
     old_min_distance = min_dist;
@@ -350,7 +350,7 @@ bool SpatialHashingCollisionManager<HashTable>::distance_(
     }
 
     if (status == 1) {
-      if (old_min_distance < (std::numeric_limits<CoalScalar>::max)()) {
+      if (old_min_distance < (std::numeric_limits<Scalar>::max)()) {
         break;
       } else {
         if (min_dist < old_min_distance) {
@@ -422,7 +422,7 @@ void SpatialHashingCollisionManager<HashTable>::distance(
   this->enable_tested_set_ = true;
   this->tested_set.clear();
 
-  CoalScalar min_dist = (std::numeric_limits<CoalScalar>::max)();
+  Scalar min_dist = (std::numeric_limits<Scalar>::max)();
 
   for (const auto& obj : objs) {
     if (distance_(obj, callback, min_dist)) break;
@@ -473,7 +473,7 @@ void SpatialHashingCollisionManager<HashTable>::distance(
     return;
   }
 
-  CoalScalar min_dist = (std::numeric_limits<CoalScalar>::max)();
+  Scalar min_dist = (std::numeric_limits<Scalar>::max)();
 
   if (this->size() < other_manager->size()) {
     for (const auto& obj : objs)
@@ -512,7 +512,7 @@ template <typename HashTable>
 template <typename Container>
 bool SpatialHashingCollisionManager<HashTable>::distanceObjectToObjects(
     CollisionObject* obj, const Container& objs, DistanceCallBackBase* callback,
-    CoalScalar& min_dist) const {
+    Scalar& min_dist) const {
   for (auto& obj2 : objs) {
     if (obj == obj2) continue;
 

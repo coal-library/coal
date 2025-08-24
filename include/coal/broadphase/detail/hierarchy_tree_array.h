@@ -114,7 +114,7 @@ class HierarchyTree {
   bool update(size_t leaf, const BV& bv);
 
   /// @brief update one leaf's bounding volume, with prediction
-  bool update(size_t leaf, const BV& bv, const Vec3s& vel, CoalScalar margin);
+  bool update(size_t leaf, const BV& bv, const Vec3s& vel, Scalar margin);
 
   /// @brief update one leaf's bounding volume, with prediction
   bool update(size_t leaf, const BV& bv, const Vec3s& vel);

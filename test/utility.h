@@ -68,7 +68,7 @@
                           << (Va) << "\n!=\n"                                \
                           << (Vb) << "\n]")
 
-#define CoalScalar_IS_APPROX(Va, Vb, precision)                              \
+#define Scalar_IS_APPROX(Va, Vb, precision)                                  \
   BOOST_CHECK_MESSAGE(std::abs((Va) - (Vb)) < precision,                     \
                       "check " #Va ".isApprox(" #Vb ") failed at precision " \
                           << precision << " [\n"                             \
@@ -123,40 +123,40 @@ struct TStruct {
 
 extern const Eigen::IOFormat vfmt;
 extern const Eigen::IOFormat pyfmt;
-typedef Eigen::AngleAxis<CoalScalar> AngleAxis;
+typedef Eigen::AngleAxis<Scalar> AngleAxis;
 extern const Vec3s UnitX;
 extern const Vec3s UnitY;
 extern const Vec3s UnitZ;
 
 /// @brief Load an obj mesh file
 void loadOBJFile(const char* filename, std::vector<Vec3s>& points,
-                 std::vector<Triangle>& triangles);
+                 std::vector<Triangle32>& triangles);
 
 void saveOBJFile(const char* filename, std::vector<Vec3s>& points,
-                 std::vector<Triangle>& triangles);
+                 std::vector<Triangle32>& triangles);
 
 #ifdef COAL_HAS_OCTOMAP
 coal::OcTree loadOctreeFile(const std::string& filename,
-                            const CoalScalar& resolution);
+                            const Scalar& resolution);
 #endif
 
 /// @brief Generate one random transform whose translation is constrained by
 /// extents and rotation without constraints. The translation is (x, y, z), and
 /// extents[0] <= x <= extents[3], extents[1] <= y <= extents[4], extents[2] <=
 /// z <= extents[5]
-void generateRandomTransform(CoalScalar extents[6], Transform3s& transform);
+void generateRandomTransform(Scalar extents[6], Transform3s& transform);
 
 /// @brief Generate n random transforms whose translations are constrained by
 /// extents.
-void generateRandomTransforms(CoalScalar extents[6],
+void generateRandomTransforms(Scalar extents[6],
                               std::vector<Transform3s>& transforms,
                               std::size_t n);
 
 /// @brief Generate n random transforms whose translations are constrained by
 /// extents. Also generate another transforms2 which have additional random
 /// translation & rotation to the transforms generated.
-void generateRandomTransforms(CoalScalar extents[6], CoalScalar delta_trans[3],
-                              CoalScalar delta_rot,
+void generateRandomTransforms(Scalar extents[6], Scalar delta_trans[3],
+                              Scalar delta_rot,
                               std::vector<Transform3s>& transforms,
                               std::vector<Transform3s>& transforms2,
                               std::size_t n);
@@ -164,7 +164,7 @@ void generateRandomTransforms(CoalScalar extents[6], CoalScalar delta_trans[3],
 /// @ brief Structure for minimum distance between two meshes and the
 /// corresponding nearest point pair
 struct DistanceRes {
-  double distance;
+  Scalar distance;
   Vec3s p1;
   Vec3s p2;
 };
@@ -178,11 +178,11 @@ bool defaultCollisionFunction(CollisionObject* o1, CollisionObject* o2,
 /// return value means whether the broad phase can stop now. also return dist,
 /// i.e. the bmin distance till now
 bool defaultDistanceFunction(CollisionObject* o1, CollisionObject* o2,
-                             void* cdata, CoalScalar& dist);
+                             void* cdata, Scalar& dist);
 
 std::string getNodeTypeName(NODE_TYPE node_type);
 
-Quatf makeQuat(CoalScalar w, CoalScalar x, CoalScalar y, CoalScalar z);
+Quats makeQuat(Scalar w, Scalar x, Scalar y, Scalar z);
 
 std::ostream& operator<<(std::ostream& os, const Transform3s& tf);
 
@@ -190,44 +190,45 @@ std::ostream& operator<<(std::ostream& os, const Transform3s& tf);
 std::size_t getNbRun(const int& argc, char const* const* argv,
                      std::size_t defaultValue);
 
-void generateEnvironments(std::vector<CollisionObject*>& env,
-                          CoalScalar env_scale, std::size_t n);
+void generateEnvironments(std::vector<CollisionObject*>& env, Scalar env_scale,
+                          std::size_t n);
 
 void generateEnvironmentsMesh(std::vector<CollisionObject*>& env,
-                              CoalScalar env_scale, std::size_t n);
+                              Scalar env_scale, std::size_t n);
 
 /// @brief Constructs a box with halfsides (l, w, d), centered around 0.
 /// The box is 2*l wide on the x-axis, 2*w wide on the y-axis and 2*d wide on
 /// the z-axis.
-Convex<Quadrilateral> buildBox(CoalScalar l, CoalScalar w, CoalScalar d);
+ConvexTpl<Quadrilateral32> buildBox(Scalar l, Scalar w, Scalar d);
 
 /// @brief We give an ellipsoid as input. The output is a 20 faces polytope
 /// which vertices belong to the original ellipsoid surface. The procedure is
 /// simple: we construct a icosahedron, see
 /// https://sinestesia.co/blog/tutorials/python-icospheres/ . We then apply an
 /// ellipsoid tranformation to each vertex of the icosahedron.
-Convex<Triangle> constructPolytopeFromEllipsoid(const Ellipsoid& ellipsoid);
+ConvexTpl<Triangle32> constructPolytopeFromEllipsoid(
+    const Ellipsoid& ellipsoid);
 
-Box makeRandomBox(CoalScalar min_size, CoalScalar max_size);
+Box makeRandomBox(Scalar min_size, Scalar max_size);
 
-Sphere makeRandomSphere(CoalScalar min_size, CoalScalar max_size);
+Sphere makeRandomSphere(Scalar min_size, Scalar max_size);
 
-Ellipsoid makeRandomEllipsoid(CoalScalar min_size, CoalScalar max_size);
+Ellipsoid makeRandomEllipsoid(Scalar min_size, Scalar max_size);
 
-Capsule makeRandomCapsule(std::array<CoalScalar, 2> min_size,
-                          std::array<CoalScalar, 2> max_size);
+Capsule makeRandomCapsule(std::array<Scalar, 2> min_size,
+                          std::array<Scalar, 2> max_size);
 
-Cone makeRandomCone(std::array<CoalScalar, 2> min_size,
-                    std::array<CoalScalar, 2> max_size);
+Cone makeRandomCone(std::array<Scalar, 2> min_size,
+                    std::array<Scalar, 2> max_size);
 
-Cylinder makeRandomCylinder(std::array<CoalScalar, 2> min_size,
-                            std::array<CoalScalar, 2> max_size);
+Cylinder makeRandomCylinder(std::array<Scalar, 2> min_size,
+                            std::array<Scalar, 2> max_size);
 
-Convex<Triangle> makeRandomConvex(CoalScalar min_size, CoalScalar max_size);
+ConvexTpl<Triangle32> makeRandomConvex(Scalar min_size, Scalar max_size);
 
-Plane makeRandomPlane(CoalScalar min_size, CoalScalar max_size);
+Plane makeRandomPlane(Scalar min_size, Scalar max_size);
 
-Halfspace makeRandomHalfspace(CoalScalar min_size, CoalScalar max_size);
+Halfspace makeRandomHalfspace(Scalar min_size, Scalar max_size);
 
 std::shared_ptr<ShapeBase> makeRandomGeometry(NODE_TYPE node_type);
 

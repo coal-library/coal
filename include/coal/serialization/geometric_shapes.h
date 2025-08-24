@@ -18,7 +18,7 @@ void serialize(Archive& ar, coal::ShapeBase& shape_base,
   ar& make_nvp(
       "base",
       boost::serialization::base_object<coal::CollisionGeometry>(shape_base));
-  ::coal::CoalScalar radius = shape_base.getSweptSphereRadius();
+  ::coal::Scalar radius = shape_base.getSweptSphereRadius();
   ar& make_nvp("swept_sphere_radius", radius);
 
   if (Archive::is_loading::value) {

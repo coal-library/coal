@@ -31,7 +31,11 @@ export CMAKE_EXPORT_COMPILE_COMMANDS=1
 # Activate color output with Ninja
 export CMAKE_COLOR_DIAGNOSTICS=1
 
+# Set Python interpreter path
+export PYTHON_EXECUTABLE=$(which python)
+
 # Set default build value only if not previously set
 export COAL_BUILD_TYPE=${COAL_BUILD_TYPE:=Release}
 export COAL_PYTHON_STUBS=${COAL_PYTHON_STUBS:=ON}
+export COAL_PYTHON_NANOBIND=${COAL_PYTHON_NANOBIND:=ON}
 export COAL_HAS_QHULL=${COAL_HAS_QHULL:=OFF}

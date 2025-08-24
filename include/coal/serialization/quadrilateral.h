@@ -11,8 +11,8 @@
 namespace boost {
 namespace serialization {
 
-template <class Archive>
-void serialize(Archive &ar, coal::Quadrilateral &quadrilateral,
+template <class Archive, typename Integer>
+void serialize(Archive &ar, coal::QuadrilateralTpl<Integer> &quadrilateral,
                const unsigned int /*version*/) {
   ar &make_nvp("p0", quadrilateral[0]);
   ar &make_nvp("p1", quadrilateral[1]);

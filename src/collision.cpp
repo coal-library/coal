@@ -40,6 +40,8 @@
 #include "coal/collision_func_matrix.h"
 #include "coal/narrowphase/narrowphase.h"
 
+#include "coal/tracy.hh"
+
 namespace coal {
 
 CollisionFunctionMatrix& getCollisionFunctionLookTable() {
@@ -68,8 +70,9 @@ std::size_t collide(const CollisionObject* o1, const CollisionObject* o2,
 std::size_t collide(const CollisionGeometry* o1, const Transform3s& tf1,
                     const CollisionGeometry* o2, const Transform3s& tf2,
                     const CollisionRequest& request, CollisionResult& result) {
+  COAL_TRACY_ZONE_SCOPED_N("coal::collide");
   // If security margin is set to -infinity, return that there is no collision
-  if (request.security_margin == -std::numeric_limits<CoalScalar>::infinity()) {
+  if (request.security_margin == -std::numeric_limits<Scalar>::infinity()) {
     result.clear();
     return false;
   }
@@ -160,8 +163,9 @@ std::size_t ComputeCollision::run(const Transform3s& tf1,
                                   const Transform3s& tf2,
                                   const CollisionRequest& request,
                                   CollisionResult& result) const {
+  COAL_TRACY_ZONE_SCOPED_N("coal::ComputeCollision::run");
   // If security margin is set to -infinity, return that there is no collision
-  if (request.security_margin == -std::numeric_limits<CoalScalar>::infinity()) {
+  if (request.security_margin == -std::numeric_limits<Scalar>::infinity()) {
     result.clear();
     return false;
   }

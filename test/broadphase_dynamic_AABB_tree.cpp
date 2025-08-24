@@ -58,16 +58,16 @@ struct CallBackData {
 // the dynamic tree against the `data`. We assume that the first two
 // parameters are always objects[0] and objects[1] in two possible orders,
 // so we can safely ignore the second parameter. We do not use the last
-// CoalScalar& parameter, which specifies the distance beyond which the
+// Scalar& parameter, which specifies the distance beyond which the
 // pair of objects will be skipped.
 
 struct DistanceCallBackDerived : DistanceCallBackBase {
-  bool distance(CollisionObject* o1, CollisionObject* o2, CoalScalar& dist) {
+  bool distance(CollisionObject* o1, CollisionObject* o2, Scalar& dist) {
     return distance_callback(o1, o2, &data, dist);
   }
 
   bool distance_callback(CollisionObject* a, CollisionObject*,
-                         void* callback_data, CoalScalar&) {
+                         void* callback_data, Scalar&) {
     // Unpack the data.
     CallBackData* data = static_cast<CallBackData*>(callback_data);
     const std::vector<CollisionObject*>& objects = *(data->objects);
@@ -101,8 +101,8 @@ BOOST_AUTO_TEST_CASE(DynamicAABBTreeCollisionManager_class) {
   CollisionGeometryPtr_t sphere1 = make_shared<Sphere>(0.2);
   CollisionObject object0(sphere0);
   CollisionObject object1(sphere1);
-  const Eigen::Vector3d position0(0.1, 0.2, 0.3);
-  const Eigen::Vector3d position1(0.11, 0.21, 0.31);
+  const Vec3s position0(Scalar(0.1), Scalar(0.2), Scalar(0.3));
+  const Vec3s position1(Scalar(0.11), Scalar(0.21), Scalar(0.31));
 
   // We will use `objects` to check the order of the two collision objects in
   // our callback function.
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(DynamicAABBTreeCollisionManager_class) {
   objects.push_back(&object0);
   objects.push_back(&object1);
 
-  std::vector<Eigen::Vector3d> positions;
+  std::vector<Vec3s> positions;
   positions.push_back(position0);
   positions.push_back(position1);
 

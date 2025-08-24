@@ -128,14 +128,14 @@ class COAL_DLLAPI AABB {
 
   /// @brief Check whether two AABB are overlap
   bool overlap(const AABB& other, const CollisionRequest& request,
-               CoalScalar& sqrDistLowerBound) const;
+               Scalar& sqrDistLowerBound) const;
 
   /// @brief Distance between two AABBs
-  CoalScalar distance(const AABB& other) const;
+  Scalar distance(const AABB& other) const;
 
   /// @brief Distance between two AABBs; P and Q, should not be NULL, return the
   /// nearest points
-  CoalScalar distance(const AABB& other, Vec3s* P, Vec3s* Q) const;
+  Scalar distance(const AABB& other, Vec3s* P, Vec3s* Q) const;
 
   /// @brief Merge the AABB and a point
   inline AABB& operator+=(const Vec3s& p) {
@@ -158,22 +158,22 @@ class COAL_DLLAPI AABB {
   }
 
   /// @brief Size of the AABB (used in BV_Splitter to order two AABBs)
-  inline CoalScalar size() const { return (max_ - min_).squaredNorm(); }
+  inline Scalar size() const { return (max_ - min_).squaredNorm(); }
 
   /// @brief Center of the AABB
   inline Vec3s center() const { return (min_ + max_) * 0.5; }
 
   /// @brief Width of the AABB
-  inline CoalScalar width() const { return max_[0] - min_[0]; }
+  inline Scalar width() const { return max_[0] - min_[0]; }
 
   /// @brief Height of the AABB
-  inline CoalScalar height() const { return max_[1] - min_[1]; }
+  inline Scalar height() const { return max_[1] - min_[1]; }
 
   /// @brief Depth of the AABB
-  inline CoalScalar depth() const { return max_[2] - min_[2]; }
+  inline Scalar depth() const { return max_[2] - min_[2]; }
 
   /// @brief Volume of the AABB
-  inline CoalScalar volume() const { return width() * height() * depth(); }
+  inline Scalar volume() const { return width() * height() * depth(); }
 
   /// @}
 
@@ -213,14 +213,14 @@ class COAL_DLLAPI AABB {
 
   /// @brief expand the half size of the AABB by a scalar delta, and keep the
   /// center unchanged.
-  inline AABB& expand(const CoalScalar delta) {
+  inline AABB& expand(const Scalar delta) {
     min_.array() -= delta;
     max_.array() += delta;
     return *this;
   }
 
   /// @brief expand the aabb by increase the thickness of the plate by a ratio
-  inline AABB& expand(const AABB& core, CoalScalar ratio) {
+  inline AABB& expand(const AABB& core, Scalar ratio) {
     min_ = min_ * ratio - core.min_;
     max_ = max_ * ratio - core.max_;
     return *this;
@@ -228,6 +228,8 @@ class COAL_DLLAPI AABB {
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
+
+/** @} */  // end of Bounding_Volume
 
 /// @brief translate the center of AABB by t
 static inline AABB translate(const AABB& aabb, const Vec3s& t) {
@@ -260,7 +262,7 @@ COAL_DLLAPI bool overlap(const Matrix3s& R0, const Vec3s& T0, const AABB& b1,
 /// and b2 is in identity.
 COAL_DLLAPI bool overlap(const Matrix3s& R0, const Vec3s& T0, const AABB& b1,
                          const AABB& b2, const CollisionRequest& request,
-                         CoalScalar& sqrDistLowerBound);
+                         Scalar& sqrDistLowerBound);
 }  // namespace coal
 
 #endif

@@ -48,13 +48,13 @@
 using namespace coal;
 
 BOOST_AUTO_TEST_CASE(vec_test_eigen_vec64) {
-  Vec3s v1(1.0, 2.0, 3.0);
-  BOOST_CHECK(v1[0] == 1.0);
-  BOOST_CHECK(v1[1] == 2.0);
-  BOOST_CHECK(v1[2] == 3.0);
+  Vec3s v1(1, 2, 3);
+  BOOST_CHECK(v1[0] == Scalar(1));
+  BOOST_CHECK(v1[1] == Scalar(2));
+  BOOST_CHECK(v1[2] == Scalar(3));
 
   Vec3s v2 = v1;
-  Vec3s v3(3.3, 4.3, 5.3);
+  Vec3s v3(Scalar(3.3), Scalar(4.3), Scalar(5.3));
   v1 += v3;
   BOOST_CHECK(isEqual(v1, v2 + v3));
   v1 -= v3;
@@ -105,14 +105,14 @@ BOOST_AUTO_TEST_CASE(vec_test_eigen_vec64) {
   BOOST_CHECK(v1.dot(v2) == 26);
 }
 
-Vec3s rotate(Vec3s input, CoalScalar w, Vec3s vec) {
+Vec3s rotate(Vec3s input, Scalar w, Vec3s vec) {
   return 2 * vec.dot(input) * vec + (w * w - vec.dot(vec)) * input +
          2 * w * vec.cross(input);
 }
 
 BOOST_AUTO_TEST_CASE(quaternion) {
-  Quatf q1(Quatf::Identity()), q2, q3;
-  q2 = fromAxisAngle(Vec3s(0, 0, 1), M_PI / 2);
+  Quats q1(Quats::Identity()), q2, q3;
+  q2 = fromAxisAngle(Vec3s(0, 0, 1), Scalar(M_PI / 2));
   q3 = q2.inverse();
 
   Vec3s v(1, -1, 0);
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(quaternion) {
 }
 
 BOOST_AUTO_TEST_CASE(transform) {
-  Quatf q = fromAxisAngle(Vec3s(0, 0, 1), M_PI / 2);
+  Quats q = fromAxisAngle(Vec3s(0, 0, 1), Scalar(M_PI / 2));
   Vec3s T(0, 1, 2);
   Transform3s tf(q, T);
 

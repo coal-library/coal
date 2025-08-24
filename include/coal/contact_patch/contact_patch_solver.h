@@ -84,8 +84,7 @@ struct COAL_DLLAPI ContactPatchSolver {
   typedef void (*SupportSetFunction)(const ShapeBase* shape,
                                      SupportSet& support_set, int& hint,
                                      ShapeSupportData& support_data,
-                                     size_t num_sampled_supports,
-                                     CoalScalar tol);
+                                     size_t num_sampled_supports, Scalar tol);
 
   /// @brief Number of vectors to pre-allocate in the `m_clipping_sets` vectors.
   static constexpr size_t default_num_preallocated_supports = 16;
@@ -98,7 +97,7 @@ struct COAL_DLLAPI ContactPatchSolver {
 
   /// @brief Tolerance below which points are added to the shapes support sets.
   /// See @ref ContactPatchRequest::m_patch_tolerance for more details.
-  CoalScalar patch_tolerance;
+  Scalar patch_tolerance;
 
   /// @brief Support set function for shape s1.
   mutable SupportSetFunction supportFuncShape1;
@@ -134,7 +133,7 @@ struct COAL_DLLAPI ContactPatchSolver {
     const size_t num_contact_patch = 1;
     const size_t preallocated_patch_size =
         ContactPatch::default_preallocated_size;
-    const CoalScalar patch_tolerance = 1e-3;
+    const Scalar patch_tolerance = Scalar(1e-3);
     const ContactPatchRequest request(num_contact_patch,
                                       preallocated_patch_size, patch_tolerance);
     this->set(request);

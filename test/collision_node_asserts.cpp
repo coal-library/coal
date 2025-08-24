@@ -7,10 +7,10 @@
 
 using namespace coal;
 
-constexpr CoalScalar pi = boost::math::constants::pi<CoalScalar>();
+constexpr Scalar pi = boost::math::constants::pi<Scalar>();
 
-double DegToRad(const double& deg) {
-  static double degToRad = pi / 180.;
+Scalar DegToRad(const Scalar& deg) {
+  static Scalar degToRad = pi / Scalar(180);
   return deg * degToRad;
 }
 std::vector<Vec3s> dirs{Vec3s::UnitZ(),  -Vec3s::UnitZ(), Vec3s::UnitY(),
@@ -19,7 +19,7 @@ std::vector<Vec3s> dirs{Vec3s::UnitZ(),  -Vec3s::UnitZ(), Vec3s::UnitY(),
 BOOST_AUTO_TEST_CASE(TestTriangles) {
   std::vector<Vec3s> triVertices{Vec3s(1, 0, 0), Vec3s(1, 1, 0),
                                  Vec3s(0, 1, 0)};
-  std::vector<Triangle> triangle{{0, 1, 2}};
+  std::vector<Triangle32> triangle{{0, 1, 2}};
 
   BVHModel<OBBRSS> tri1{};
   BVHModel<OBBRSS> tri2{};
@@ -44,11 +44,11 @@ BOOST_AUTO_TEST_CASE(TestTriangles) {
     for (int j = 0; j < 180; j += 30) {
       for (int k = 0; k < 180; k += 30) {
         tri1Tf.setQuatRotation(
-            Eigen::AngleAxis<double>(0., Vec3s::UnitZ()) *
-            Eigen::AngleAxis<double>(DegToRad(k), Vec3s::UnitY()));
+            Eigen::AngleAxis<Scalar>(0., Vec3s::UnitZ()) *
+            Eigen::AngleAxis<Scalar>(DegToRad(Scalar(k)), Vec3s::UnitY()));
         tri2Tf.setQuatRotation(
-            Eigen::AngleAxis<double>(DegToRad(i), Vec3s::UnitZ()) *
-            Eigen::AngleAxis<double>(DegToRad(j), Vec3s::UnitY()));
+            Eigen::AngleAxis<Scalar>(DegToRad(Scalar(i)), Vec3s::UnitZ()) *
+            Eigen::AngleAxis<Scalar>(DegToRad(Scalar(j)), Vec3s::UnitY()));
         CollisionResult result;
 
         /// assertion: src/collision_node.cpp:58

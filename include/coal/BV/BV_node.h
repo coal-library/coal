@@ -121,14 +121,14 @@ struct COAL_DLLAPI BVNode : public BVNodeBase {
   bool overlap(const BVNode& other) const { return bv.overlap(other.bv); }
   /// @brief Check whether two BVNode collide
   bool overlap(const BVNode& other, const CollisionRequest& request,
-               CoalScalar& sqrDistLowerBound) const {
+               Scalar& sqrDistLowerBound) const {
     return bv.overlap(other.bv, request, sqrDistLowerBound);
   }
 
   /// @brief Compute the distance between two BVNode. P1 and P2, if not NULL and
   /// the underlying BV supports distance, return the nearest points.
-  CoalScalar distance(const BVNode& other, Vec3s* P1 = NULL,
-                      Vec3s* P2 = NULL) const {
+  Scalar distance(const BVNode& other, Vec3s* P1 = NULL,
+                  Vec3s* P2 = NULL) const {
     return bv.distance(other.bv, P1, P2);
   }
 

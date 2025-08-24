@@ -47,8 +47,8 @@ namespace coal {
 bool kIOS::overlap(const kIOS& other) const {
   for (unsigned int i = 0; i < num_spheres; ++i) {
     for (unsigned int j = 0; j < other.num_spheres; ++j) {
-      CoalScalar o_dist = (spheres[i].o - other.spheres[j].o).squaredNorm();
-      CoalScalar sum_r = spheres[i].r + other.spheres[j].r;
+      Scalar o_dist = (spheres[i].o - other.spheres[j].o).squaredNorm();
+      Scalar sum_r = spheres[i].r + other.spheres[j].r;
       if (o_dist > sum_r * sum_r) return false;
     }
   }
@@ -57,11 +57,11 @@ bool kIOS::overlap(const kIOS& other) const {
 }
 
 bool kIOS::overlap(const kIOS& other, const CollisionRequest& request,
-                   CoalScalar& sqrDistLowerBound) const {
+                   Scalar& sqrDistLowerBound) const {
   for (unsigned int i = 0; i < num_spheres; ++i) {
     for (unsigned int j = 0; j < other.num_spheres; ++j) {
-      CoalScalar o_dist = (spheres[i].o - other.spheres[j].o).squaredNorm();
-      CoalScalar sum_r = spheres[i].r + other.spheres[j].r;
+      Scalar o_dist = (spheres[i].o - other.spheres[j].o).squaredNorm();
+      Scalar sum_r = spheres[i].r + other.spheres[j].r;
       if (o_dist > sum_r * sum_r) {
         o_dist = sqrt(o_dist) - sum_r;
         sqrDistLowerBound = o_dist * o_dist;
@@ -75,7 +75,7 @@ bool kIOS::overlap(const kIOS& other, const CollisionRequest& request,
 
 bool kIOS::contain(const Vec3s& p) const {
   for (unsigned int i = 0; i < num_spheres; ++i) {
-    CoalScalar r = spheres[i].r;
+    Scalar r = spheres[i].r;
     if ((spheres[i].o - p).squaredNorm() > r * r) return false;
   }
 
@@ -84,8 +84,8 @@ bool kIOS::contain(const Vec3s& p) const {
 
 kIOS& kIOS::operator+=(const Vec3s& p) {
   for (unsigned int i = 0; i < num_spheres; ++i) {
-    CoalScalar r = spheres[i].r;
-    CoalScalar new_r_sqr = (p - spheres[i].o).squaredNorm();
+    Scalar r = spheres[i].r;
+    Scalar new_r_sqr = (p - spheres[i].o).squaredNorm();
     if (new_r_sqr > r * r) {
       spheres[i].r = sqrt(new_r_sqr);
     }
@@ -109,23 +109,23 @@ kIOS kIOS::operator+(const kIOS& other) const {
   return result;
 }
 
-CoalScalar kIOS::width() const { return obb.width(); }
+Scalar kIOS::width() const { return obb.width(); }
 
-CoalScalar kIOS::height() const { return obb.height(); }
+Scalar kIOS::height() const { return obb.height(); }
 
-CoalScalar kIOS::depth() const { return obb.depth(); }
+Scalar kIOS::depth() const { return obb.depth(); }
 
-CoalScalar kIOS::volume() const { return obb.volume(); }
+Scalar kIOS::volume() const { return obb.volume(); }
 
-CoalScalar kIOS::size() const { return volume(); }
+Scalar kIOS::size() const { return volume(); }
 
-CoalScalar kIOS::distance(const kIOS& other, Vec3s* P, Vec3s* Q) const {
-  CoalScalar d_max = 0;
+Scalar kIOS::distance(const kIOS& other, Vec3s* P, Vec3s* Q) const {
+  Scalar d_max = 0;
   long id_a = -1, id_b = -1;
   for (unsigned int i = 0; i < num_spheres; ++i) {
     for (unsigned int j = 0; j < other.num_spheres; ++j) {
-      CoalScalar d = (spheres[i].o - other.spheres[j].o).norm() -
-                     (spheres[i].r + other.spheres[j].r);
+      Scalar d = (spheres[i].o - other.spheres[j].o).norm() -
+                 (spheres[i].r + other.spheres[j].r);
       if (d_max < d) {
         d_max = d;
         if (P && Q) {
@@ -139,7 +139,7 @@ CoalScalar kIOS::distance(const kIOS& other, Vec3s* P, Vec3s* Q) const {
   if (P && Q) {
     if (id_a != -1 && id_b != -1) {
       const Vec3s v = spheres[id_a].o - spheres[id_b].o;
-      CoalScalar len_v = v.norm();
+      Scalar len_v = v.norm();
       *P = spheres[id_a].o - v * (spheres[id_a].r / len_v);
       *Q = spheres[id_b].o + v * (spheres[id_b].r / len_v);
     }
@@ -164,7 +164,7 @@ bool overlap(const Matrix3s& R0, const Vec3s& T0, const kIOS& b1,
 
 bool overlap(const Matrix3s& R0, const Vec3s& T0, const kIOS& b1,
              const kIOS& b2, const CollisionRequest& request,
-             CoalScalar& sqrDistLowerBound) {
+             Scalar& sqrDistLowerBound) {
   kIOS b2_temp = b2;
   for (unsigned int i = 0; i < b2_temp.num_spheres; ++i) {
     b2_temp.spheres[i].o.noalias() =
@@ -177,8 +177,8 @@ bool overlap(const Matrix3s& R0, const Vec3s& T0, const kIOS& b1,
   return b1.overlap(b2_temp, request, sqrDistLowerBound);
 }
 
-CoalScalar distance(const Matrix3s& R0, const Vec3s& T0, const kIOS& b1,
-                    const kIOS& b2, Vec3s* P, Vec3s* Q) {
+Scalar distance(const Matrix3s& R0, const Vec3s& T0, const kIOS& b1,
+                const kIOS& b2, Vec3s* P, Vec3s* Q) {
   kIOS b2_temp = b2;
   for (unsigned int i = 0; i < b2_temp.num_spheres; ++i) {
     b2_temp.spheres[i].o = R0 * b2_temp.spheres[i].o + T0;

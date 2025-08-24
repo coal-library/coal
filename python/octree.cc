@@ -35,7 +35,7 @@ void exposeOctree() {
 
   bp::class_<OcTree, bp::bases<CollisionGeometry>, shared_ptr<OcTree> >(
       "OcTree", doxygen::class_doc<OcTree>(), bp::no_init)
-      .def(dv::init<OcTree, CoalScalar>())
+      .def(dv::init<OcTree, Scalar>())
       .def("clone", &OcTree::clone, doxygen::member_func_doc(&OcTree::clone),
            bp::return_value_policy<bp::manage_new_object>())
       .def(dv::member_func("getTreeDepth", &OcTree::getTreeDepth))

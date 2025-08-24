@@ -39,27 +39,33 @@
 #include "coal/internal/shape_shape_func.h"
 #include "../narrowphase/details.h"
 
+#include "coal/tracy.hh"
+
 namespace coal {
 
 namespace internal {
 template <>
-CoalScalar ShapeShapeDistance<TriangleP, Halfspace>(
+Scalar ShapeShapeDistance<TriangleP, Halfspace>(
     const CollisionGeometry* o1, const Transform3s& tf1,
     const CollisionGeometry* o2, const Transform3s& tf2, const GJKSolver*,
     const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+  COAL_TRACY_ZONE_SCOPED_N(
+      "coal::internal::ShapeShapeDistance<TriangleP, Halfspace>");
   const TriangleP& s1 = static_cast<const TriangleP&>(*o1);
   const Halfspace& s2 = static_cast<const Halfspace&>(*o2);
-  const CoalScalar distance =
+  const Scalar distance =
       details::halfspaceDistance(s2, tf2, s1, tf1, p2, p1, normal);
   normal = -normal;
   return distance;
 }
 
 template <>
-CoalScalar ShapeShapeDistance<Halfspace, TriangleP>(
+Scalar ShapeShapeDistance<Halfspace, TriangleP>(
     const CollisionGeometry* o1, const Transform3s& tf1,
     const CollisionGeometry* o2, const Transform3s& tf2, const GJKSolver*,
     const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+  COAL_TRACY_ZONE_SCOPED_N(
+      "coal::internal::ShapeShapeDistance<Halfspace, TriangleP>");
   const Halfspace& s1 = static_cast<const Halfspace&>(*o1);
   const TriangleP& s2 = static_cast<const TriangleP&>(*o2);
   return details::halfspaceDistance(s1, tf1, s2, tf2, p1, p2, normal);
