@@ -49,34 +49,32 @@ namespace coal {
 /// requirements for contacts, including whether return the nearest points, this
 /// function performs the distance between them. Return value is the minimum
 /// distance generated between the two objects.
-COAL_DLLAPI CoalScalar distance(const CollisionObject* o1,
-                                const CollisionObject* o2,
-                                const DistanceRequest& request,
-                                DistanceResult& result);
+COAL_DLLAPI Scalar distance(const CollisionObject* o1,
+                            const CollisionObject* o2,
+                            const DistanceRequest& request,
+                            DistanceResult& result);
 
 /// @copydoc distance(const CollisionObject*, const CollisionObject*, const
 /// DistanceRequest&, DistanceResult&)
-COAL_DLLAPI CoalScalar distance(const CollisionGeometry* o1,
-                                const Transform3s& tf1,
-                                const CollisionGeometry* o2,
-                                const Transform3s& tf2,
-                                const DistanceRequest& request,
-                                DistanceResult& result);
+COAL_DLLAPI Scalar distance(const CollisionGeometry* o1, const Transform3s& tf1,
+                            const CollisionGeometry* o2, const Transform3s& tf2,
+                            const DistanceRequest& request,
+                            DistanceResult& result);
 
 /// This class reduces the cost of identifying the geometry pair.
 /// This is mostly useful for repeated shape-shape queries.
 ///
 /// \code
 ///   ComputeDistance calc_distance (o1, o2);
-///   CoalScalar distance = calc_distance(tf1, tf2, request, result);
+///   Scalar distance = calc_distance(tf1, tf2, request, result);
 /// \endcode
 class COAL_DLLAPI ComputeDistance {
  public:
   ComputeDistance(const CollisionGeometry* o1, const CollisionGeometry* o2);
 
-  CoalScalar operator()(const Transform3s& tf1, const Transform3s& tf2,
-                        const DistanceRequest& request,
-                        DistanceResult& result) const;
+  Scalar operator()(const Transform3s& tf1, const Transform3s& tf2,
+                    const DistanceRequest& request,
+                    DistanceResult& result) const;
 
   bool operator==(const ComputeDistance& other) const {
     return o1 == other.o1 && o2 == other.o2 && swap_geoms == other.swap_geoms &&
@@ -102,9 +100,9 @@ class COAL_DLLAPI ComputeDistance {
   DistanceFunctionMatrix::DistanceFunc func;
   bool swap_geoms;
 
-  virtual CoalScalar run(const Transform3s& tf1, const Transform3s& tf2,
-                         const DistanceRequest& request,
-                         DistanceResult& result) const;
+  virtual Scalar run(const Transform3s& tf1, const Transform3s& tf2,
+                     const DistanceRequest& request,
+                     DistanceResult& result) const;
 
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

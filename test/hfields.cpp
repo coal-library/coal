@@ -54,13 +54,14 @@
 #include <iostream>
 
 using namespace coal;
+using RowVector = Eigen::RowVector<Scalar, Eigen::Dynamic>;
 
 template <typename BV>
 void test_constant_hfields(const Eigen::DenseIndex nx,
                            const Eigen::DenseIndex ny,
-                           const CoalScalar min_altitude,
-                           const CoalScalar max_altitude) {
-  const CoalScalar x_dim = 1., y_dim = 2.;
+                           const Scalar min_altitude,
+                           const Scalar max_altitude) {
+  const Scalar x_dim = 1., y_dim = 2.;
   const MatrixXs heights = MatrixXs::Constant(ny, nx, max_altitude);
 
   HeightField<BV> hfield(x_dim, y_dim, heights, min_altitude);
@@ -98,7 +99,8 @@ void test_constant_hfields(const Eigen::DenseIndex nx,
   // Build equivalent object
   const Box equivalent_box(x_dim, y_dim, max_altitude - min_altitude);
   const Transform3s box_placement(
-      Matrix3s::Identity(), Vec3s(0., 0., (max_altitude + min_altitude) / 2.));
+      Matrix3s::Identity(),
+      Vec3s(0., 0., (max_altitude + min_altitude) / Scalar(2)));
 
   // Test collision
   const Sphere sphere(1.);
@@ -110,7 +112,8 @@ void test_constant_hfields(const Eigen::DenseIndex nx,
 
   // No collision case
   {
-    const CoalScalar eps_no_collision = +0.1 * (max_altitude - min_altitude);
+    const Scalar eps_no_collision =
+        +Scalar(0.1) * (max_altitude - min_altitude);
     M_sphere.setTranslation(
         Vec3s(0., 0., max_altitude + sphere.radius + eps_no_collision));
     M_box.setTranslation(
@@ -137,7 +140,7 @@ void test_constant_hfields(const Eigen::DenseIndex nx,
 
   // Collision case
   {
-    const CoalScalar eps_collision = -0.1 * (max_altitude - min_altitude);
+    const Scalar eps_collision = -Scalar(0.1) * (max_altitude - min_altitude);
     M_sphere.setTranslation(
         Vec3s(0., 0., max_altitude + sphere.radius + eps_collision));
     M_box.setTranslation(
@@ -165,11 +168,12 @@ void test_constant_hfields(const Eigen::DenseIndex nx,
 
   // Update height
   hfield.updateHeights(
-      MatrixXs::Constant(ny, nx, max_altitude / 2.));  // We change nothing
+      MatrixXs::Constant(ny, nx, max_altitude / 2));  // We change nothing
 
   // No collision case
   {
-    const CoalScalar eps_no_collision = +0.1 * (max_altitude - min_altitude);
+    const Scalar eps_no_collision =
+        +Scalar(0.1) * (max_altitude - min_altitude);
     M_sphere.setTranslation(
         Vec3s(0., 0., max_altitude + sphere.radius + eps_no_collision));
     M_box.setTranslation(
@@ -196,7 +200,7 @@ void test_constant_hfields(const Eigen::DenseIndex nx,
 
   // Collision case
   {
-    const CoalScalar eps_collision = -0.1 * (max_altitude - min_altitude);
+    const Scalar eps_collision = -Scalar(0.1) * (max_altitude - min_altitude);
     M_sphere.setTranslation(
         Vec3s(0., 0., max_altitude + sphere.radius + eps_collision));
     M_box.setTranslation(
@@ -228,7 +232,7 @@ void test_constant_hfields(const Eigen::DenseIndex nx,
 
   // Collision case
   {
-    const CoalScalar eps_collision = -0.1 * (max_altitude - min_altitude);
+    const Scalar eps_collision = -Scalar(0.1) * (max_altitude - min_altitude);
     M_sphere.setTranslation(
         Vec3s(0., 0., max_altitude + sphere.radius + eps_collision));
     M_box.setTranslation(
@@ -256,7 +260,7 @@ void test_constant_hfields(const Eigen::DenseIndex nx,
 }
 
 BOOST_AUTO_TEST_CASE(building_constant_hfields) {
-  const CoalScalar max_altitude = 1., min_altitude = 0.;
+  const Scalar max_altitude = 1., min_altitude = 0.;
 
   test_constant_hfields<OBBRSS>(2, 2, min_altitude,
                                 max_altitude);  // Simple case
@@ -272,9 +276,9 @@ BOOST_AUTO_TEST_CASE(building_constant_hfields) {
 template <typename BV>
 void test_negative_security_margin(const Eigen::DenseIndex nx,
                                    const Eigen::DenseIndex ny,
-                                   const CoalScalar min_altitude,
-                                   const CoalScalar max_altitude) {
-  const CoalScalar x_dim = 1., y_dim = 2.;
+                                   const Scalar min_altitude,
+                                   const Scalar max_altitude) {
+  const Scalar x_dim = 1., y_dim = 2.;
   const MatrixXs heights = MatrixXs::Constant(ny, nx, max_altitude);
 
   HeightField<BV> hfield(x_dim, y_dim, heights, min_altitude);
@@ -282,7 +286,8 @@ void test_negative_security_margin(const Eigen::DenseIndex nx,
   // Build equivalent object
   const Box equivalent_box(x_dim, y_dim, max_altitude - min_altitude);
   const Transform3s box_placement(
-      Matrix3s::Identity(), Vec3s(0., 0., (max_altitude + min_altitude) / 2.));
+      Matrix3s::Identity(),
+      Vec3s(0, 0, (max_altitude + min_altitude) / Scalar(2)));
 
   // Test collision
   const Sphere sphere(1.);
@@ -294,7 +299,8 @@ void test_negative_security_margin(const Eigen::DenseIndex nx,
 
   // No collision case
   {
-    const CoalScalar eps_no_collision = +0.1 * (max_altitude - min_altitude);
+    const Scalar eps_no_collision =
+        +Scalar(0.1) * (max_altitude - min_altitude);
     M_sphere.setTranslation(
         Vec3s(0., 0., max_altitude + sphere.radius + eps_no_collision));
     M_box.setTranslation(
@@ -321,13 +327,14 @@ void test_negative_security_margin(const Eigen::DenseIndex nx,
 
   // Collision case - positive security_margin
   {
-    const CoalScalar eps_no_collision = +0.1 * (max_altitude - min_altitude);
+    const Scalar eps_no_collision =
+        +Scalar(0.1) * (max_altitude - min_altitude);
     M_sphere.setTranslation(
         Vec3s(0., 0., max_altitude + sphere.radius + eps_no_collision));
     M_box.setTranslation(
         Vec3s(0., 0., max_altitude + box.halfSide[2] + eps_no_collision));
     CollisionRequest request;
-    request.security_margin = eps_no_collision + 1e-6;
+    request.security_margin = eps_no_collision + Scalar(1e-6);
 
     CollisionResult result;
     collide(&hfield, IdTransform, &sphere, M_sphere, request, result);
@@ -349,7 +356,8 @@ void test_negative_security_margin(const Eigen::DenseIndex nx,
 
   // Collision case
   {
-    const CoalScalar eps_no_collision = -0.1 * (max_altitude - min_altitude);
+    const Scalar eps_no_collision =
+        -Scalar(0.1) * (max_altitude - min_altitude);
     M_sphere.setTranslation(
         Vec3s(0., 0., max_altitude + sphere.radius + eps_no_collision));
     M_box.setTranslation(
@@ -376,13 +384,14 @@ void test_negative_security_margin(const Eigen::DenseIndex nx,
 
   // No collision case - negative security_margin
   {
-    const CoalScalar eps_no_collision = -0.1 * (max_altitude - min_altitude);
+    const Scalar eps_no_collision =
+        -Scalar(0.1) * (max_altitude - min_altitude);
     M_sphere.setTranslation(
         Vec3s(0., 0., max_altitude + sphere.radius + eps_no_collision));
     M_box.setTranslation(
         Vec3s(0., 0., max_altitude + box.halfSide[2] + eps_no_collision));
     CollisionRequest request;
-    request.security_margin = eps_no_collision - 1e-4;
+    request.security_margin = eps_no_collision - Scalar(1e-4);
 
     CollisionResult result;
     collide(&hfield, IdTransform, &sphere, M_sphere, request, result);
@@ -404,7 +413,7 @@ void test_negative_security_margin(const Eigen::DenseIndex nx,
 }
 
 BOOST_AUTO_TEST_CASE(negative_security_margin) {
-  const CoalScalar max_altitude = 1., min_altitude = 0.;
+  const Scalar max_altitude = 1., min_altitude = 0.;
 
   //  test_negative_security_margin<OBBRSS>(100, 100, min_altitude,
   //  max_altitude);
@@ -415,22 +424,21 @@ BOOST_AUTO_TEST_CASE(hfield_with_square_hole) {
   const Eigen::DenseIndex nx = 100, ny = 100;
 
   typedef AABB BV;
-  const MatrixXs X =
-      Eigen::RowVectorXd::LinSpaced(nx, -1., 1.).replicate(ny, 1);
-  const MatrixXs Y = Eigen::VectorXd::LinSpaced(ny, 1., -1.).replicate(1, nx);
+  const MatrixXs X = RowVector::LinSpaced(nx, -1., 1.).replicate(ny, 1);
+  const MatrixXs Y = VecXs::LinSpaced(ny, 1., -1.).replicate(1, nx);
 
-  const CoalScalar dim_square = 0.5;
+  const Scalar dim_square = 0.5;
 
   const Eigen::Array<bool, Eigen::Dynamic, Eigen::Dynamic> hole =
       (X.array().abs() < dim_square) && (Y.array().abs() < dim_square);
 
   const MatrixXs heights =
-      MatrixXs::Ones(ny, nx) - hole.cast<double>().matrix();
+      MatrixXs::Ones(ny, nx) - hole.cast<Scalar>().matrix();
 
   const HeightField<BV> hfield(2., 2., heights, -10.);
 
-  Sphere sphere(0.48);
-  const Transform3s sphere_pos(Vec3s(0., 0., 0.5));
+  Sphere sphere(Scalar(0.48));
+  const Transform3s sphere_pos(Vec3s(0, 0, Scalar(0.5)));
   const Transform3s hfield_pos;
 
   const CollisionRequest request;
@@ -442,11 +450,11 @@ BOOST_AUTO_TEST_CASE(hfield_with_square_hole) {
     BOOST_CHECK(!result.isCollision());
   }
 
-  sphere.radius = 0.51;
+  sphere.radius = Scalar(0.51);
 
   {
     CollisionResult result;
-    const Sphere sphere2(0.51);
+    const Sphere sphere2(Scalar(0.51));
     collide(&hfield, hfield_pos, &sphere2, sphere_pos, request, result);
 
     BOOST_CHECK(result.isCollision());
@@ -459,17 +467,16 @@ BOOST_AUTO_TEST_CASE(hfield_with_circular_hole) {
   //  typedef OBBRSS BV; TODO(jcarpent): OBBRSS does not work (compile in Debug
   //  mode), as the overlap of OBBRSS is not satisfactory yet.
   typedef AABB BV;
-  const MatrixXs X =
-      Eigen::RowVectorXd::LinSpaced(nx, -1., 1.).replicate(ny, 1);
-  const MatrixXs Y = Eigen::VectorXd::LinSpaced(ny, 1., -1.).replicate(1, nx);
+  const MatrixXs X = RowVector::LinSpaced(nx, -1., 1.).replicate(ny, 1);
+  const MatrixXs Y = VecXs::LinSpaced(ny, 1., -1.).replicate(1, nx);
 
-  const CoalScalar dim_hole = 1;
+  const Scalar dim_hole = 1;
 
   const Eigen::Array<bool, Eigen::Dynamic, Eigen::Dynamic> hole =
       (X.array().square() + Y.array().square() <= dim_hole);
 
   const MatrixXs heights =
-      MatrixXs::Ones(ny, nx) - hole.cast<double>().matrix();
+      MatrixXs::Ones(ny, nx) - hole.cast<Scalar>().matrix();
 
   const HeightField<BV> hfield(2., 2., heights, -10.);
 
@@ -479,11 +486,11 @@ BOOST_AUTO_TEST_CASE(hfield_with_circular_hole) {
   BOOST_CHECK(hfield.getYGrid()[0] == +1.);
   BOOST_CHECK(hfield.getYGrid()[ny - 1] == -1.);
 
-  Sphere sphere(0.975);
-  const Transform3s sphere_pos(Vec3s(0., 0., 1.));
+  Sphere sphere(Scalar(0.975));
+  const Transform3s sphere_pos(Vec3s(0, 0, 1));
   const Transform3s hfield_pos;
 
-  const CoalScalar thresholds[3] = {0., 0.01, -0.005};
+  const Scalar thresholds[3] = {0, Scalar(0.01), Scalar(-0.005)};
 
   for (int i = 0; i < 3; ++i) {
     CollisionResult result;
@@ -495,7 +502,7 @@ BOOST_AUTO_TEST_CASE(hfield_with_circular_hole) {
   }
 
   // Increase the size of the sphere to force the collision
-  sphere.radius = 1.01;
+  sphere.radius = Scalar(1.01);
   for (int i = 0; i < 3; ++i) {
     CollisionResult result;
     CollisionRequest request;
@@ -508,19 +515,19 @@ BOOST_AUTO_TEST_CASE(hfield_with_circular_hole) {
   {
     CollisionResult result;
     CollisionRequest request;
-    request.security_margin = -0.02;
+    request.security_margin = Scalar(-0.02);
     collide(&hfield, hfield_pos, &sphere, sphere_pos, request, result);
 
     BOOST_CHECK(!result.isCollision());
   }
 }
 
-bool isApprox(const CoalScalar v1, const CoalScalar v2,
-              const CoalScalar tol = 1e-6) {
+bool isApprox(const Scalar v1, const Scalar v2,
+              const Scalar tol = Scalar(1e-6)) {
   return std::fabs(v1 - v2) <= tol;
 }
 
-Vec3s computeFaceNormal(const Triangle& triangle,
+Vec3s computeFaceNormal(const Triangle32& triangle,
                         const std::vector<Vec3s>& points) {
   const Vec3s pointA = points[triangle[0]];
   const Vec3s pointB = points[triangle[1]];
@@ -530,10 +537,10 @@ Vec3s computeFaceNormal(const Triangle& triangle,
 }
 
 BOOST_AUTO_TEST_CASE(test_hfield_bin_face_normal_orientation) {
-  const CoalScalar sphere_radius = 1.;
+  const Scalar sphere_radius = 1.;
   Sphere sphere(sphere_radius);
   MatrixXs altitutes(2, 2);
-  CoalScalar altitude_value = 1.;
+  Scalar altitude_value = 1.;
   altitutes.fill(altitude_value);
 
   typedef AABB BV;
@@ -557,7 +564,7 @@ BOOST_AUTO_TEST_CASE(test_hfield_bin_face_normal_orientation) {
   BOOST_CHECK((node.contact_active_faces & FaceOrientation::WEST) ==
               int(FaceOrientation::WEST));
 
-  Convex<Triangle> convex1, convex2;
+  ConvexTpl<Triangle32> convex1, convex2;
   int convex1_active_faces, convex2_active_faces;
   details::buildConvexTriangles(node, hfield, convex1, convex1_active_faces,
                                 convex2, convex2_active_faces);
@@ -567,7 +574,7 @@ BOOST_AUTO_TEST_CASE(test_hfield_bin_face_normal_orientation) {
     const std::vector<Vec3s>& points = *(convex1.points);
     // BOTTOM
     {
-      const Triangle& triangle = (*(convex1.polygons))[0];
+      const Triangle32& triangle = (*(convex1.polygons))[0];
 
       BOOST_CHECK(
           computeFaceNormal(triangle, points).isApprox(-Vec3s::UnitZ()));
@@ -575,15 +582,15 @@ BOOST_AUTO_TEST_CASE(test_hfield_bin_face_normal_orientation) {
 
     // TOP
     {
-      const Triangle& triangle = (*(convex1.polygons))[1];
+      const Triangle32& triangle = (*(convex1.polygons))[1];
 
       BOOST_CHECK(computeFaceNormal(triangle, points).isApprox(Vec3s::UnitZ()));
     }
 
     // WEST sides
     {
-      const Triangle& triangle1 = (*(convex1.polygons))[2];
-      const Triangle& triangle2 = (*(convex1.polygons))[3];
+      const Triangle32& triangle1 = (*(convex1.polygons))[2];
+      const Triangle32& triangle2 = (*(convex1.polygons))[3];
 
       BOOST_CHECK(
           computeFaceNormal(triangle1, points).isApprox(-Vec3s::UnitX()));
@@ -595,8 +602,8 @@ BOOST_AUTO_TEST_CASE(test_hfield_bin_face_normal_orientation) {
     {
       const Vec3s south_east_normal = Vec3s(1., -1., 0).normalized();
 
-      const Triangle& triangle1 = (*(convex1.polygons))[4];
-      const Triangle& triangle2 = (*(convex1.polygons))[5];
+      const Triangle32& triangle1 = (*(convex1.polygons))[4];
+      const Triangle32& triangle2 = (*(convex1.polygons))[5];
 
       BOOST_CHECK(
           computeFaceNormal(triangle1, points).isApprox(south_east_normal));
@@ -606,8 +613,8 @@ BOOST_AUTO_TEST_CASE(test_hfield_bin_face_normal_orientation) {
 
     // NORTH sides
     {
-      const Triangle& triangle1 = (*(convex1.polygons))[6];
-      const Triangle& triangle2 = (*(convex1.polygons))[7];
+      const Triangle32& triangle1 = (*(convex1.polygons))[6];
+      const Triangle32& triangle2 = (*(convex1.polygons))[7];
 
       std::cout << "computeFaceNormal(triangle1,points): "
                 << computeFaceNormal(triangle1, points).transpose()
@@ -625,7 +632,7 @@ BOOST_AUTO_TEST_CASE(test_hfield_bin_face_normal_orientation) {
 
     // BOTTOM
     {
-      const Triangle& triangle = (*(convex2.polygons))[0];
+      const Triangle32& triangle = (*(convex2.polygons))[0];
 
       BOOST_CHECK(
           computeFaceNormal(triangle, points).isApprox(-Vec3s::UnitZ()));
@@ -633,15 +640,15 @@ BOOST_AUTO_TEST_CASE(test_hfield_bin_face_normal_orientation) {
 
     // TOP
     {
-      const Triangle& triangle = (*(convex2.polygons))[1];
+      const Triangle32& triangle = (*(convex2.polygons))[1];
 
       BOOST_CHECK(computeFaceNormal(triangle, points).isApprox(Vec3s::UnitZ()));
     }
 
     // SOUTH sides
     {
-      const Triangle& triangle1 = (*(convex2.polygons))[2];
-      const Triangle& triangle2 = (*(convex2.polygons))[3];
+      const Triangle32& triangle1 = (*(convex2.polygons))[2];
+      const Triangle32& triangle2 = (*(convex2.polygons))[3];
 
       BOOST_CHECK(
           computeFaceNormal(triangle1, points).isApprox(-Vec3s::UnitY()));
@@ -653,8 +660,8 @@ BOOST_AUTO_TEST_CASE(test_hfield_bin_face_normal_orientation) {
     {
       const Vec3s north_west_normal = Vec3s(-1., 1., 0).normalized();
 
-      const Triangle& triangle1 = (*(convex2.polygons))[4];
-      const Triangle& triangle2 = (*(convex2.polygons))[5];
+      const Triangle32& triangle1 = (*(convex2.polygons))[4];
+      const Triangle32& triangle2 = (*(convex2.polygons))[5];
 
       BOOST_CHECK(
           computeFaceNormal(triangle1, points).isApprox(north_west_normal));
@@ -664,8 +671,8 @@ BOOST_AUTO_TEST_CASE(test_hfield_bin_face_normal_orientation) {
 
     // EAST sides
     {
-      const Triangle& triangle1 = (*(convex2.polygons))[6];
-      const Triangle& triangle2 = (*(convex2.polygons))[7];
+      const Triangle32& triangle1 = (*(convex2.polygons))[6];
+      const Triangle32& triangle2 = (*(convex2.polygons))[7];
 
       BOOST_CHECK(
           computeFaceNormal(triangle1, points).isApprox(Vec3s::UnitX()));
@@ -677,10 +684,10 @@ BOOST_AUTO_TEST_CASE(test_hfield_bin_face_normal_orientation) {
 
 BOOST_AUTO_TEST_CASE(test_hfield_bin_active_faces) {
   typedef HFNodeBase::FaceOrientation FaceOrientation;
-  const CoalScalar sphere_radius = 1.;
+  const Scalar sphere_radius = 1.;
   Sphere sphere(sphere_radius);
   MatrixXs altitutes(3, 3);
-  CoalScalar altitude_value = 1.;
+  Scalar altitude_value = 1.;
   altitutes.fill(altitude_value);
 
   typedef AABB BV;
@@ -714,10 +721,10 @@ BOOST_AUTO_TEST_CASE(test_hfield_bin_active_faces) {
 }
 
 BOOST_AUTO_TEST_CASE(test_hfield_single_bin) {
-  const CoalScalar sphere_radius = 1.;
+  const Scalar sphere_radius = 1.;
   Sphere sphere(sphere_radius);
   MatrixXs altitutes(2, 2);
-  CoalScalar altitude_value = 1.;
+  Scalar altitude_value = 1.;
   altitutes.fill(altitude_value);
 
   typedef AABB BV;
@@ -733,7 +740,7 @@ BOOST_AUTO_TEST_CASE(test_hfield_single_bin) {
 
     CollisionResult result;
     CollisionRequest request;
-    request.security_margin = -0.005;
+    request.security_margin = -Scalar(0.005);
     collide(&hfield, hfield_pos, &sphere, sphere_pos, request, result);
 
     BOOST_CHECK(!result.isCollision());
@@ -748,7 +755,7 @@ BOOST_AUTO_TEST_CASE(test_hfield_single_bin) {
 
     CollisionResult result;
     CollisionRequest request;
-    request.security_margin = +0.005;
+    request.security_margin = +Scalar(0.005);
     collide(&hfield, hfield_pos, &sphere, sphere_pos, request, result);
 
     BOOST_CHECK(result.isCollision());
@@ -768,7 +775,7 @@ BOOST_AUTO_TEST_CASE(test_hfield_single_bin) {
 
     CollisionResult result;
     CollisionRequest request;
-    request.security_margin = -0.005;
+    request.security_margin = -Scalar(0.005);
     collide(&hfield, hfield_pos, &sphere, sphere_pos, request, result);
 
     BOOST_CHECK(!result.isCollision());
@@ -780,7 +787,7 @@ BOOST_AUTO_TEST_CASE(test_hfield_single_bin) {
 
     CollisionResult result;
     CollisionRequest request;
-    request.security_margin = +0.005;
+    request.security_margin = +Scalar(0.005);
     collide(&hfield, hfield_pos, &sphere, sphere_pos, request, result);
 
     BOOST_CHECK(result.isCollision());
@@ -801,7 +808,7 @@ BOOST_AUTO_TEST_CASE(test_hfield_single_bin) {
 
     CollisionResult result;
     CollisionRequest request;
-    request.security_margin = -0.005;
+    request.security_margin = -Scalar(0.005);
     collide(&hfield, hfield_pos, &sphere, sphere_pos, request, result);
 
     BOOST_CHECK(!result.isCollision());
@@ -814,7 +821,7 @@ BOOST_AUTO_TEST_CASE(test_hfield_single_bin) {
 
     CollisionResult result;
     CollisionRequest request;
-    request.security_margin = +0.005;
+    request.security_margin = +Scalar(0.005);
     collide(&hfield, hfield_pos, &sphere, sphere_pos, request, result);
 
     BOOST_CHECK(result.isCollision());
@@ -833,7 +840,7 @@ BOOST_AUTO_TEST_CASE(test_hfield_single_bin) {
 
     CollisionResult result;
     CollisionRequest request;
-    request.security_margin = -0.005;
+    request.security_margin = -Scalar(0.005);
     collide(&hfield, hfield_pos, &sphere, sphere_pos, request, result);
 
     BOOST_CHECK(!result.isCollision());
@@ -846,7 +853,7 @@ BOOST_AUTO_TEST_CASE(test_hfield_single_bin) {
 
     CollisionResult result;
     CollisionRequest request;
-    request.security_margin = +0.005;
+    request.security_margin = +Scalar(0.005);
     collide(&hfield, hfield_pos, &sphere, sphere_pos, request, result);
 
     BOOST_CHECK(result.isCollision());
@@ -866,7 +873,7 @@ BOOST_AUTO_TEST_CASE(test_hfield_single_bin) {
 
     CollisionResult result;
     CollisionRequest request;
-    request.security_margin = -0.005;
+    request.security_margin = -Scalar(0.005);
     collide(&hfield, hfield_pos, &sphere, sphere_pos, request, result);
 
     BOOST_CHECK(!result.isCollision());
@@ -874,12 +881,12 @@ BOOST_AUTO_TEST_CASE(test_hfield_single_bin) {
 
   {
     const Transform3s sphere_pos(
-        Vec3s(0., hfield.getYGrid()[0] + sphere_radius, 0.5));
+        Vec3s(0, hfield.getYGrid()[0] + sphere_radius, Scalar(0.5)));
     const Transform3s hfield_pos;
 
     CollisionResult result;
     CollisionRequest request;
-    request.security_margin = +0.005;
+    request.security_margin = +Scalar(0.005);
     collide(&hfield, hfield_pos, &sphere, sphere_pos, request, result);
 
     BOOST_CHECK(result.isCollision());
@@ -899,7 +906,7 @@ BOOST_AUTO_TEST_CASE(test_hfield_single_bin) {
 
     CollisionResult result;
     CollisionRequest request;
-    request.security_margin = -0.005;
+    request.security_margin = -Scalar(0.005);
     collide(&hfield, hfield_pos, &sphere, sphere_pos, request, result);
 
     BOOST_CHECK(!result.isCollision());
@@ -907,12 +914,12 @@ BOOST_AUTO_TEST_CASE(test_hfield_single_bin) {
 
   {
     const Transform3s sphere_pos(
-        Vec3s(0., hfield.getYGrid()[1] - sphere_radius, 0.5));
+        Vec3s(0., hfield.getYGrid()[1] - sphere_radius, Scalar(0.5)));
     const Transform3s hfield_pos;
 
     CollisionResult result;
     CollisionRequest request;
-    request.security_margin = +0.005;
+    request.security_margin = +Scalar(0.005);
     collide(&hfield, hfield_pos, &sphere, sphere_pos, request, result);
 
     BOOST_CHECK(result.isCollision());

@@ -56,7 +56,8 @@ namespace utf = boost::unit_test::framework;
 using namespace coal;
 
 void makeMesh(const std::vector<Vec3s>& vertices,
-              const std::vector<Triangle>& triangles, BVHModel<OBBRSS>& model) {
+              const std::vector<Triangle32>& triangles,
+              BVHModel<OBBRSS>& model) {
   coal::SplitMethodType split_method(coal::SPLIT_METHOD_MEAN);
   model.bv_splitter.reset(new BVSplitter<OBBRSS>(split_method));
   model.bv_splitter.reset(new BVSplitter<OBBRSS>(split_method));
@@ -67,7 +68,7 @@ void makeMesh(const std::vector<Vec3s>& vertices,
 }
 
 coal::OcTree makeOctree(const BVHModel<OBBRSS>& mesh,
-                        const CoalScalar& resolution) {
+                        const Scalar& resolution) {
   Vec3s m(mesh.aabb_local.min_);
   Vec3s M(mesh.aabb_local.max_);
   coal::Box box(resolution, resolution, resolution);
@@ -76,14 +77,15 @@ coal::OcTree makeOctree(const BVHModel<OBBRSS>& mesh,
   Transform3s tfBox;
   octomap::OcTreePtr_t octree(new octomap::OcTree(resolution));
 
-  for (CoalScalar x = resolution * floor(m[0] / resolution); x <= M[0];
+  for (Scalar x = resolution * floor(m[0] / resolution); x <= M[0];
        x += resolution) {
-    for (CoalScalar y = resolution * floor(m[1] / resolution); y <= M[1];
+    for (Scalar y = resolution * floor(m[1] / resolution); y <= M[1];
          y += resolution) {
-      for (CoalScalar z = resolution * floor(m[2] / resolution); z <= M[2];
+      for (Scalar z = resolution * floor(m[2] / resolution); z <= M[2];
            z += resolution) {
-        Vec3s center(x + .5 * resolution, y + .5 * resolution,
-                     z + .5 * resolution);
+        const Scalar half = Scalar(0.5);
+        Vec3s center(x + half * resolution, y + half * resolution,
+                     z + half * resolution);
         tfBox.setTranslation(center);
         coal::collide(&box, tfBox, &mesh, Transform3s(), request, result);
         if (result.isCollision()) {
@@ -101,12 +103,57 @@ coal::OcTree makeOctree(const BVHModel<OBBRSS>& mesh,
   return OcTree(octree);
 }
 
+BOOST_AUTO_TEST_CASE(octree_aabb) {
+  // Create a simple octree with 8 nodes arranged in a 2x2x2 cube
+  Scalar resolution = 1.0;
+  octomap::OcTreePtr_t octree_ptr(new octomap::OcTree(resolution));
+  std::vector<octomap::point3d> points = {
+      octomap::point3d(0.5, 0.5, 0.5), octomap::point3d(1.5, 0.5, 0.5),
+      octomap::point3d(0.5, 1.5, 0.5), octomap::point3d(1.5, 1.5, 0.5),
+      octomap::point3d(0.5, 0.5, 1.5), octomap::point3d(1.5, 0.5, 1.5),
+      octomap::point3d(0.5, 1.5, 1.5), octomap::point3d(1.5, 1.5, 1.5)};
+  for (const auto& point : points) {
+    octree_ptr->updateNode(point, true);
+  }
+  octree_ptr->updateInnerOccupancy();
+  // Make sure the octree is not pruned
+  octree_ptr->expand();
+  // Check initial size
+  BOOST_CHECK_EQUAL(octree_ptr->getNumLeafNodes(), 8);
+
+  // Create coal::OcTree and compute AABB
+  coal::OcTree octree(octree_ptr);
+  octree.computeLocalAABB();
+
+  // The AABB should encompass the 2x2x2 cube from (0,0,0) to (2,2,2)
+  BOOST_CHECK(octree.aabb_local.min_.isApprox(Vec3s(0, 0, 0), 1e-6));
+  BOOST_CHECK(octree.aabb_local.max_.isApprox(Vec3s(2, 2, 2), 1e-6));
+
+  // Create a copy and prune it
+  octomap::OcTreePtr_t octree_pruned_ptr(new octomap::OcTree(*octree_ptr));
+  octree_pruned_ptr->prune();
+  // Check pruned size, the 8 leaf nodes should have been merged into 1
+  BOOST_CHECK_EQUAL(octree_pruned_ptr->getNumLeafNodes(), 1);
+
+  // Create coal::OcTree and compute AABB
+  coal::OcTree octree_pruned(octree_pruned_ptr);
+  octree_pruned.computeLocalAABB();
+
+  // The AABB should encompass the 2x2x2 cube from (0,0,0) to (2,2,2)
+  BOOST_CHECK(octree_pruned.aabb_local.min_.isApprox(Vec3s(0, 0, 0), 1e-6));
+  BOOST_CHECK(octree_pruned.aabb_local.max_.isApprox(Vec3s(2, 2, 2), 1e-6));
+
+  // The AABB should remain the same after pruning
+  BOOST_CHECK(octree.aabb_local.min_.isApprox(octree_pruned.aabb_local.min_));
+  BOOST_CHECK(octree.aabb_local.max_.isApprox(octree_pruned.aabb_local.max_));
+}
+
 BOOST_AUTO_TEST_CASE(octree_mesh) {
   Eigen::IOFormat tuple(Eigen::FullPrecision, Eigen::DontAlignCols, "", ", ",
                         "", "", "(", ")");
-  CoalScalar resolution(10.);
+  Scalar resolution(10.);
   std::vector<Vec3s> pRob, pEnv;
-  std::vector<Triangle> tRob, tEnv;
+  std::vector<Triangle32> tRob, tEnv;
   boost::filesystem::path path(TEST_RESOURCES_DIR);
   loadOBJFile((path / "rob.obj").string().c_str(), pRob, tRob);
   loadOBJFile((path / "env.obj").string().c_str(), pEnv, tEnv);
@@ -136,11 +183,11 @@ BOOST_AUTO_TEST_CASE(octree_mesh) {
   {
     const std::vector<uint8_t> bytes = envOctree.tobytes();
     BOOST_CHECK(bytes.size() > 0 && bytes.size() <= envOctree.toBoxes().size() *
-                                                        3 * sizeof(CoalScalar));
+                                                        3 * sizeof(Scalar));
   }
 
   std::vector<Transform3s> transforms;
-  CoalScalar extents[] = {-2000, -2000, 0, 2000, 2000, 2000};
+  Scalar extents[] = {-2000, -2000, 0, 2000, 2000, 2000};
 #ifndef NDEBUG  // if debug mode
   std::size_t N = 100;
 #else
@@ -178,9 +225,9 @@ BOOST_AUTO_TEST_CASE(octree_mesh) {
 BOOST_AUTO_TEST_CASE(octree_height_field) {
   Eigen::IOFormat tuple(Eigen::FullPrecision, Eigen::DontAlignCols, "", ", ",
                         "", "", "(", ")");
-  CoalScalar resolution(10.);
+  Scalar resolution(10.);
   std::vector<Vec3s> pEnv;
-  std::vector<Triangle> tEnv;
+  std::vector<Triangle32> tEnv;
   boost::filesystem::path path(TEST_RESOURCES_DIR);
   loadOBJFile((path / "env.obj").string().c_str(), pEnv, tEnv);
 
@@ -196,16 +243,16 @@ BOOST_AUTO_TEST_CASE(octree_height_field) {
   std::cout << "Finished loading octree." << std::endl;
 
   // Building hfield
-  const CoalScalar x_dim = 10, y_dim = 20;
+  const Scalar x_dim = 10, y_dim = 20;
   const int nx = 100, ny = 100;
-  const CoalScalar max_altitude = 1., min_altitude = 0.;
+  const Scalar max_altitude = 1., min_altitude = 0.;
   const MatrixXs heights = MatrixXs::Constant(ny, nx, max_altitude);
 
   HeightField<AABB> hfield(x_dim, y_dim, heights, min_altitude);
   hfield.computeLocalAABB();
 
   std::vector<Transform3s> transforms;
-  CoalScalar extents[] = {-2000, -2000, 0, 2000, 2000, 2000};
+  Scalar extents[] = {-2000, -2000, 0, 2000, 2000, 2000};
 #ifndef NDEBUG  // if debug mode
   std::size_t N = 1000;
 #else

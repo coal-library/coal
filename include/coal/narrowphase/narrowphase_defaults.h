@@ -44,21 +44,21 @@ namespace coal {
 
 /// GJK
 constexpr size_t GJK_DEFAULT_MAX_ITERATIONS = 128;
-constexpr CoalScalar GJK_DEFAULT_TOLERANCE = 1e-6;
+constexpr Scalar GJK_DEFAULT_TOLERANCE = Scalar(1e-6);
 /// Note: if the considered shapes are on the order of the meter, and the
 /// convergence criterion of GJK is the default VDB criterion,
 /// setting a tolerance of 1e-6 on the GJK algorithm makes it precise up to
 /// the micro-meter.
 /// The same is true for EPA.
-constexpr CoalScalar GJK_MINIMUM_TOLERANCE = 1e-6;
+constexpr Scalar GJK_MINIMUM_TOLERANCE = Scalar(1e-6);
 
 /// EPA
 /// EPA build a polytope which maximum size is:
 ///   - `#iterations + 4` vertices
 ///   - `2 x #iterations + 4` faces
 constexpr size_t EPA_DEFAULT_MAX_ITERATIONS = 64;
-constexpr CoalScalar EPA_DEFAULT_TOLERANCE = 1e-6;
-constexpr CoalScalar EPA_MINIMUM_TOLERANCE = 1e-6;
+constexpr Scalar EPA_DEFAULT_TOLERANCE = Scalar(1e-6);
+constexpr Scalar EPA_MINIMUM_TOLERANCE = Scalar(1e-6);
 
 }  // namespace coal
 

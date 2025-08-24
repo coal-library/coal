@@ -9,22 +9,18 @@ on:
     paths-ignore:
       - .gitlab-ci.yml
       - .gitignore
-      - '*.md'
+      - '**.md'
       - CITATION.*
       - LICENSE
       - .pre-commit-config.yaml
-      - CHANGELOG.md
-      - development/*.md
   pull_request:
     paths-ignore:
       - .gitlab-ci.yml
       - .gitignore
-      - '*.md'
+      - '**.md'
       - CITATION.*
       - LICENSE
       - .pre-commit-config.yaml
-      - CHANGELOG.md
-      - development/*.md
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -34,10 +30,9 @@ jobs:
     strategy:
       matrix:
         env:
-          - {ROS_DISTRO: noetic}
-          - {ROS_DISTRO: iron}
           - {ROS_DISTRO: humble}
-          #- {ROS_DISTRO: rolling}
+          - {ROS_DISTRO: jazzy}
+          - {ROS_DISTRO: rolling}
     env:
       #CCACHE_DIR: /github/home/.ccache # Enable ccache
       BUILDER: colcon
@@ -53,7 +48,7 @@ jobs:
       #    path: ${{ env.CCACHE_DIR }}
       #    key: ccache-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}
       # Run industrial_ci
-      - uses: 'ros-industrial/industrial_ci@9f963f67ebb889792175776c5ee00134d7bb569b'
+      - uses: 'ros-industrial/industrial_ci@e3d16c224caf4832cf68e74093eb70f3a979b4cc'
         env: ${{ matrix.env }}
 
   check:

@@ -81,7 +81,6 @@
 #else
 #define COAL_ASSERT(check, message, exception) \
   {                                            \
-    COAL_UNUSED_VARIABLE(exception(message));  \
     assert((check) && message);                \
   }
 #endif

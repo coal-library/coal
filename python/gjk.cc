@@ -178,7 +178,7 @@ void exposeGJK() {
 
   if (!eigenpy::register_symbolic_link_to_registered_type<GJK>()) {
     class_<GJK>("GJK", doxygen::class_doc<GJK>(), no_init)
-        .def(doxygen::visitor::init<GJK, unsigned int, CoalScalar>())
+        .def(doxygen::visitor::init<GJK, unsigned int, Scalar>())
         .DEF_RW_CLASS_ATTRIB(GJK, distance)
         .DEF_RW_CLASS_ATTRIB(GJK, ray)
         .DEF_RW_CLASS_ATTRIB(GJK, support_hint)

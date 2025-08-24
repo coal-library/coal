@@ -9,11 +9,11 @@
 #include "utility.h"
 
 using coal::Box;
-using coal::CoalScalar;
 using coal::collide;
 using coal::CollisionRequest;
 using coal::CollisionResult;
 using coal::ComputeCollision;
+using coal::Scalar;
 using coal::Transform3s;
 using coal::Vec3s;
 
@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE(box_box_collision) {
   // Compute collision
   CollisionRequest req;
   req.enable_cached_gjk_guess = true;
-  req.distance_upper_bound = 1e-6;
+  req.distance_upper_bound = Scalar(1e-6);
   CollisionResult res;
   ComputeCollision collide_functor(&shape1, &shape2);
 

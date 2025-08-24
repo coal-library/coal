@@ -56,7 +56,7 @@ class SpatialHashingCollisionManager : public BroadPhaseCollisionManager {
   typedef BroadPhaseCollisionManager Base;
   using Base::getObjects;
 
-  SpatialHashingCollisionManager(CoalScalar cell_size, const Vec3s& scene_min,
+  SpatialHashingCollisionManager(Scalar cell_size, const Vec3s& scene_min,
                                  const Vec3s& scene_max,
                                  unsigned int default_table_size = 1000);
 
@@ -128,7 +128,7 @@ class SpatialHashingCollisionManager : public BroadPhaseCollisionManager {
   /// @brief perform distance computation between one object and all the objects
   /// belonging ot the manager
   bool distance_(CollisionObject* obj, DistanceCallBackBase* callback,
-                 CoalScalar& min_dist) const;
+                 Scalar& min_dist) const;
 
   /// @brief all objects in the scene
   std::list<CollisionObject*> objs;
@@ -157,7 +157,7 @@ class SpatialHashingCollisionManager : public BroadPhaseCollisionManager {
   template <typename Container>
   bool distanceObjectToObjects(CollisionObject* obj, const Container& objs,
                                DistanceCallBackBase* callback,
-                               CoalScalar& min_dist) const;
+                               Scalar& min_dist) const;
 };
 
 }  // namespace coal

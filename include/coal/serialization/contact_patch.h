@@ -16,7 +16,7 @@ template <class Archive>
 void serialize(Archive& ar, coal::ContactPatch& contact_patch,
                const unsigned int /*version*/) {
   using namespace coal;
-  typedef Eigen::Matrix<CoalScalar, 2, Eigen::Dynamic> PolygonPoints;
+  typedef Eigen::Matrix<Scalar, 2, Eigen::Dynamic> PolygonPoints;
 
   size_t patch_size = contact_patch.size();
   ar& make_nvp("patch_size", patch_size);
@@ -25,7 +25,7 @@ void serialize(Archive& ar, coal::ContactPatch& contact_patch,
       contact_patch.points().resize(patch_size);
     }
     Eigen::Map<PolygonPoints> points_map(
-        reinterpret_cast<CoalScalar*>(contact_patch.points().data()), 2,
+        reinterpret_cast<Scalar*>(contact_patch.points().data()), 2,
         static_cast<Eigen::Index>(patch_size));
     ar& make_nvp("points", points_map);
   }
@@ -43,7 +43,7 @@ void serialize(Archive& ar, coal::ContactPatchRequest& request,
   ar& make_nvp("max_num_patch", request.max_num_patch);
 
   size_t num_samples_curved_shapes = request.getNumSamplesCurvedShapes();
-  CoalScalar patch_tolerance = request.getPatchTolerance();
+  Scalar patch_tolerance = request.getPatchTolerance();
   ar& make_nvp("num_samples_curved_shapes", num_samples_curved_shapes);
   ar& make_nvp("patch_tolerance", num_samples_curved_shapes);
 

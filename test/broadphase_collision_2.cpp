@@ -62,7 +62,7 @@
 using namespace coal;
 
 /// @brief test for broad phase collision and self collision
-void broad_phase_collision_test(CoalScalar env_scale, std::size_t env_size,
+void broad_phase_collision_test(Scalar env_scale, std::size_t env_size,
                                 std::size_t query_size,
                                 std::size_t num_max_contacts = 1,
                                 bool exhaustive = false, bool use_mesh = false);
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(test_core_mesh_bf_broad_phase_collision_mesh_exhaustive) {
 #endif
 }
 
-void broad_phase_collision_test(CoalScalar env_scale, std::size_t env_size,
+void broad_phase_collision_test(Scalar env_scale, std::size_t env_size,
                                 std::size_t query_size,
                                 std::size_t num_max_contacts, bool exhaustive,
                                 bool use_mesh) {
@@ -210,9 +210,9 @@ void broad_phase_collision_test(CoalScalar env_scale, std::size_t env_size,
 
   Vec3s lower_limit, upper_limit;
   SpatialHashingCollisionManager<>::computeBound(env, lower_limit, upper_limit);
-  // CoalScalar ncell_per_axis = std::pow((S)env_size / 10, 1 / 3.0);
-  CoalScalar ncell_per_axis = 20;
-  CoalScalar cell_size =
+  // Scalar ncell_per_axis = std::pow((S)env_size / 10, 1 / 3.0);
+  Scalar ncell_per_axis = 20;
+  Scalar cell_size =
       std::min(std::min((upper_limit[0] - lower_limit[0]) / ncell_per_axis,
                         (upper_limit[1] - lower_limit[1]) / ncell_per_axis),
                (upper_limit[2] - lower_limit[2]) / ncell_per_axis);
@@ -365,7 +365,7 @@ void broad_phase_collision_test(CoalScalar env_scale, std::size_t env_size,
 
   std::cout << "collision time" << std::endl;
   for (size_t i = 0; i < ts.size(); ++i) {
-    CoalScalar tmp = 0;
+    double tmp = 0;
     for (size_t j = 3; j < ts[i].records.size(); ++j) tmp += ts[i].records[j];
     std::cout << std::setw(w) << tmp << " ";
   }

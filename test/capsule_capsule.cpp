@@ -52,9 +52,11 @@
 #include "utility.h"
 
 using namespace coal;
+using Quat = Eigen::Quaternion<Scalar>;
+using Vec4s = Eigen::Matrix<Scalar, 4, 1>;
 
 BOOST_AUTO_TEST_CASE(collision_capsule_capsule_trivial) {
-  const double radius = 1.;
+  const Scalar radius = 1.;
 
   CollisionGeometryPtr_t c1(new Capsule(radius, 0.));
   CollisionGeometryPtr_t c2(new Capsule(radius, 0.));
@@ -72,15 +74,11 @@ BOOST_AUTO_TEST_CASE(collision_capsule_capsule_trivial) {
   Transform3s tf2;
 
   for (int i = 0; i < num_tests; ++i) {
-    Eigen::Vector3d p1 = Eigen::Vector3d::Random() * (2. * radius);
-    Eigen::Vector3d p2 = Eigen::Vector3d::Random() * (2. * radius);
+    Vec3s p1 = Vec3s::Random() * (2. * radius);
+    Vec3s p2 = Vec3s::Random() * (2. * radius);
 
-    Eigen::Matrix3d rot1 =
-        Eigen::Quaterniond(Eigen::Vector4d::Random().normalized())
-            .toRotationMatrix();
-    Eigen::Matrix3d rot2 =
-        Eigen::Quaterniond(Eigen::Vector4d::Random().normalized())
-            .toRotationMatrix();
+    Matrix3s rot1 = Quat(Vec4s::Random().normalized()).toRotationMatrix();
+    Matrix3s rot2 = Quat(Vec4s::Random().normalized()).toRotationMatrix();
 
     tf1.setTranslation(p1);
     tf1.setRotation(rot1);
@@ -110,8 +108,8 @@ BOOST_AUTO_TEST_CASE(collision_capsule_capsule_trivial) {
 }
 
 BOOST_AUTO_TEST_CASE(collision_capsule_capsule_aligned) {
-  const double radius = 0.01;
-  const double length = 0.2;
+  const Scalar radius = Scalar(0.01);
+  const Scalar length = Scalar(0.2);
 
   CollisionGeometryPtr_t c1(new Capsule(radius, length));
   CollisionGeometryPtr_t c2(new Capsule(radius, length));
@@ -124,16 +122,14 @@ BOOST_AUTO_TEST_CASE(collision_capsule_capsule_aligned) {
   Transform3s tf1;
   Transform3s tf2;
 
-  Eigen::Vector3d p1 = Eigen::Vector3d::Zero();
-  Eigen::Vector3d p2_no_collision =
-      Eigen::Vector3d(0., 0.,
-                      2 * (length / 2. + radius) +
-                          1e-3);  // because capsule are along the Z axis
+  Vec3s p1 = Vec3s::Zero();
+  Vec3s p2_no_collision =
+      Vec3s(0, 0,
+            Scalar(2 * (length / 2. + radius) +
+                   1e-3));  // because capsule are along the Z axis
 
   for (int i = 0; i < num_tests; ++i) {
-    Eigen::Matrix3d rot =
-        Eigen::Quaterniond(Eigen::Vector4d::Random().normalized())
-            .toRotationMatrix();
+    Matrix3s rot = Quat(Vec4s::Random().normalized()).toRotationMatrix();
 
     tf1.setTranslation(p1);
     tf1.setRotation(rot);
@@ -153,12 +149,10 @@ BOOST_AUTO_TEST_CASE(collision_capsule_capsule_aligned) {
     BOOST_CHECK(capsule_num_collisions == 0);
   }
 
-  Eigen::Vector3d p2_with_collision =
-      Eigen::Vector3d(0., 0., std::min(length / 2., radius) * (1. - 1e-2));
+  Vec3s p2_with_collision =
+      Vec3s(0, 0, Scalar(std::min(length / 2, radius) * (1. - 1e-2)));
   for (int i = 0; i < num_tests; ++i) {
-    Eigen::Matrix3d rot =
-        Eigen::Quaterniond(Eigen::Vector4d::Random().normalized())
-            .toRotationMatrix();
+    Matrix3s rot = Quat(Vec4s::Random().normalized()).toRotationMatrix();
 
     tf1.setTranslation(p1);
     tf1.setRotation(rot);
@@ -178,17 +172,14 @@ BOOST_AUTO_TEST_CASE(collision_capsule_capsule_aligned) {
     BOOST_CHECK(capsule_num_collisions > 0);
   }
 
-  p2_no_collision = Eigen::Vector3d(0., 0., 2 * (length / 2. + radius) + 1e-3);
+  p2_no_collision = Vec3s(0, 0, Scalar(2 * (length / 2. + radius) + 1e-3));
 
-  Transform3s geom1_placement(Eigen::Matrix3d::Identity(),
-                              Eigen::Vector3d::Zero());
-  Transform3s geom2_placement(Eigen::Matrix3d::Identity(), p2_no_collision);
+  Transform3s geom1_placement(Matrix3s::Identity(), Vec3s::Zero());
+  Transform3s geom2_placement(Matrix3s::Identity(), p2_no_collision);
 
   for (int i = 0; i < num_tests; ++i) {
-    Eigen::Matrix3d rot =
-        Eigen::Quaterniond(Eigen::Vector4d::Random().normalized())
-            .toRotationMatrix();
-    Eigen::Vector3d trans = Eigen::Vector3d::Random();
+    Matrix3s rot = Quat(Vec4s::Random().normalized()).toRotationMatrix();
+    Vec3s trans = Vec3s::Random();
 
     Transform3s displacement(rot, trans);
     Transform3s tf1 = displacement * geom1_placement;
@@ -208,15 +199,13 @@ BOOST_AUTO_TEST_CASE(collision_capsule_capsule_aligned) {
   }
 
   //  p2_with_collision =
-  //  Eigen::Vector3d(0.,0.,std::min(length/2.,radius)*(1.-1e-2));
-  p2_with_collision = Eigen::Vector3d(0., 0., 0.01);
+  //  Vec3s(0.,0.,std::min(length/2.,radius)*(1.-1e-2));
+  p2_with_collision = Vec3s(0, 0, Scalar(0.01));
   geom2_placement.setTranslation(p2_with_collision);
 
   for (int i = 0; i < num_tests; ++i) {
-    Eigen::Matrix3d rot =
-        Eigen::Quaterniond(Eigen::Vector4d::Random().normalized())
-            .toRotationMatrix();
-    Eigen::Vector3d trans = Eigen::Vector3d::Random();
+    Matrix3s rot = Quat(Vec4s::Random().normalized()).toRotationMatrix();
+    Vec3s trans = Vec3s::Random();
 
     Transform3s displacement(rot, trans);
     Transform3s tf1 = displacement * geom1_placement;
@@ -241,7 +230,7 @@ BOOST_AUTO_TEST_CASE(distance_capsulecapsule_origin) {
   CollisionGeometryPtr_t s2(new Capsule(5, 10));
 
   Transform3s tf1;
-  Transform3s tf2(Vec3s(20.1, 0, 0));
+  Transform3s tf2(Vec3s(Scalar(20.1), 0, 0));
 
   CollisionObject o1(s1, tf1);
   CollisionObject o2(s2, tf2);
@@ -285,7 +274,7 @@ BOOST_AUTO_TEST_CASE(distance_capsulecapsule_transformXY) {
             << ", p2 = " << distanceResult.nearest_points[1]
             << ", distance = " << distanceResult.min_distance << std::endl;
 
-  CoalScalar expected = sqrt(800) - 10;
+  Scalar expected = sqrt(Scalar(800)) - 10;
   BOOST_CHECK_CLOSE(distanceResult.min_distance, expected, 1e-6);
 }
 
@@ -294,7 +283,7 @@ BOOST_AUTO_TEST_CASE(distance_capsulecapsule_transformZ) {
   CollisionGeometryPtr_t s2(new Capsule(5, 10));
 
   Transform3s tf1;
-  Transform3s tf2(Vec3s(0, 0, 20.1));
+  Transform3s tf2(Vec3s(0, 0, Scalar(20.1)));
 
   CollisionObject o1(s1, tf1);
   CollisionObject o2(s2, tf2);
@@ -320,7 +309,8 @@ BOOST_AUTO_TEST_CASE(distance_capsulecapsule_transformZ2) {
   CollisionGeometryPtr_t s2(new Capsule(5, 10));
 
   Transform3s tf1;
-  Transform3s tf2(makeQuat(sqrt(2) / 2, 0, sqrt(2) / 2, 0), Vec3s(0, 0, 25.1));
+  Transform3s tf2(makeQuat(sqrt(Scalar(2)) / 2, 0, sqrt(Scalar(2)) / 2, 0),
+                  Vec3s(0, 0, Scalar(25.1)));
 
   CollisionObject o1(s1, tf1);
   CollisionObject o2(s2, tf2);

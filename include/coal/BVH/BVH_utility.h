@@ -82,19 +82,20 @@ COAL_DLLAPI BVHModel<KDOP<24> >* BVHExtract(const BVHModel<KDOP<24> >& model,
 
 /// @brief Compute the covariance matrix for a set or subset of points. if ts =
 /// null, then indices refer to points directly; otherwise refer to triangles
-COAL_DLLAPI void getCovariance(Vec3s* ps, Vec3s* ps2, Triangle* ts,
+COAL_DLLAPI void getCovariance(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
                                unsigned int* indices, unsigned int n,
                                Matrix3s& M);
 
 /// @brief Compute the RSS bounding volume parameters: radius, rectangle size
 /// and the origin, given the BV axises.
 COAL_DLLAPI void getRadiusAndOriginAndRectangleSize(
-    Vec3s* ps, Vec3s* ps2, Triangle* ts, unsigned int* indices, unsigned int n,
-    const Matrix3s& axes, Vec3s& origin, CoalScalar l[2], CoalScalar& r);
+    Vec3s* ps, Vec3s* ps2, Triangle32* ts, unsigned int* indices,
+    unsigned int n, const Matrix3s& axes, Vec3s& origin, Scalar l[2],
+    Scalar& r);
 
 /// @brief Compute the bounding volume extent and center for a set or subset of
 /// points, given the BV axises.
-COAL_DLLAPI void getExtentAndCenter(Vec3s* ps, Vec3s* ps2, Triangle* ts,
+COAL_DLLAPI void getExtentAndCenter(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
                                     unsigned int* indices, unsigned int n,
                                     Matrix3s& axes, Vec3s& center,
                                     Vec3s& extent);
@@ -102,13 +103,13 @@ COAL_DLLAPI void getExtentAndCenter(Vec3s* ps, Vec3s* ps2, Triangle* ts,
 /// @brief Compute the center and radius for a triangle's circumcircle
 COAL_DLLAPI void circumCircleComputation(const Vec3s& a, const Vec3s& b,
                                          const Vec3s& c, Vec3s& center,
-                                         CoalScalar& radius);
+                                         Scalar& radius);
 
 /// @brief Compute the maximum distance from a given center point to a point
 /// cloud
-COAL_DLLAPI CoalScalar maximumDistance(Vec3s* ps, Vec3s* ps2, Triangle* ts,
-                                       unsigned int* indices, unsigned int n,
-                                       const Vec3s& query);
+COAL_DLLAPI Scalar maximumDistance(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
+                                   unsigned int* indices, unsigned int n,
+                                   const Vec3s& query);
 
 }  // namespace coal
 

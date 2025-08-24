@@ -77,14 +77,13 @@ struct COAL_DLLAPI OBBRSS {
   /// @retval sqrDistLowerBound squared lower bound on distance between
   ///         objects if they do not overlap.
   bool overlap(const OBBRSS& other, const CollisionRequest& request,
-               CoalScalar& sqrDistLowerBound) const {
+               Scalar& sqrDistLowerBound) const {
     return obb.overlap(other.obb, request, sqrDistLowerBound);
   }
 
   /// @brief Distance between two OBBRSS; P and Q , is not NULL, returns the
   /// nearest points
-  CoalScalar distance(const OBBRSS& other, Vec3s* P = NULL,
-                      Vec3s* Q = NULL) const {
+  Scalar distance(const OBBRSS& other, Vec3s* P = NULL, Vec3s* Q = NULL) const {
     return rss.distance(other.rss, P, Q);
   }
 
@@ -110,23 +109,25 @@ struct COAL_DLLAPI OBBRSS {
   }
 
   /// @brief Size of the OBBRSS (used in BV_Splitter to order two OBBRSS)
-  inline CoalScalar size() const { return obb.size(); }
+  inline Scalar size() const { return obb.size(); }
 
   /// @brief Center of the OBBRSS
   inline const Vec3s& center() const { return obb.center(); }
 
   /// @brief Width of the OBRSS
-  inline CoalScalar width() const { return obb.width(); }
+  inline Scalar width() const { return obb.width(); }
 
   /// @brief Height of the OBBRSS
-  inline CoalScalar height() const { return obb.height(); }
+  inline Scalar height() const { return obb.height(); }
 
   /// @brief Depth of the OBBRSS
-  inline CoalScalar depth() const { return obb.depth(); }
+  inline Scalar depth() const { return obb.depth(); }
 
   /// @brief Volume of the OBBRSS
-  inline CoalScalar volume() const { return obb.volume(); }
+  inline Scalar volume() const { return obb.volume(); }
 };
+
+/** @} */  // end of Bounding_Volume
 
 /// @brief Check collision between two OBBRSS, b1 is in configuration (R0, T0)
 /// and b2 is in indentity
@@ -143,15 +144,14 @@ inline bool overlap(const Matrix3s& R0, const Vec3s& T0, const OBBRSS& b1,
 /// not overlap.
 inline bool overlap(const Matrix3s& R0, const Vec3s& T0, const OBBRSS& b1,
                     const OBBRSS& b2, const CollisionRequest& request,
-                    CoalScalar& sqrDistLowerBound) {
+                    Scalar& sqrDistLowerBound) {
   return overlap(R0, T0, b1.obb, b2.obb, request, sqrDistLowerBound);
 }
 
 /// @brief Computate distance between two OBBRSS, b1 is in configuation (R0, T0)
 /// and b2 is in indentity; P and Q, is not NULL, returns the nearest points
-inline CoalScalar distance(const Matrix3s& R0, const Vec3s& T0,
-                           const OBBRSS& b1, const OBBRSS& b2, Vec3s* P = NULL,
-                           Vec3s* Q = NULL) {
+inline Scalar distance(const Matrix3s& R0, const Vec3s& T0, const OBBRSS& b1,
+                       const OBBRSS& b2, Vec3s* P = NULL, Vec3s* Q = NULL) {
   return distance(R0, T0, b1.rss, b2.rss, P, Q);
 }
 

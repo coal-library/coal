@@ -39,14 +39,18 @@
 #include "coal/internal/shape_shape_func.h"
 #include "../narrowphase/details.h"
 
+#include "coal/tracy.hh"
+
 namespace coal {
 
 namespace internal {
 template <>
-CoalScalar ShapeShapeDistance<TriangleP, TriangleP>(
+Scalar ShapeShapeDistance<TriangleP, TriangleP>(
     const CollisionGeometry* o1, const Transform3s& tf1,
     const CollisionGeometry* o2, const Transform3s& tf2,
     const GJKSolver* solver, const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+  COAL_TRACY_ZONE_SCOPED_N(
+      "coal::internal::ShapeShapeDistance<TriangleP, TriangleP>");
   // Transform the triangles in world frame
   const TriangleP& s1 = static_cast<const TriangleP&>(*o1);
   const TriangleP t1(tf1.transform(s1.a), tf1.transform(s1.b),
@@ -75,19 +79,24 @@ CoalScalar ShapeShapeDistance<TriangleP, TriangleP>(
   solver->epa.status =
       details::EPA::DidNotRun;  // EPA is never called in this function
 
+  Vec3ps guess_ = guess.cast<SolverScalar>();
   details::GJK::Status gjk_status =
-      solver->gjk.evaluate(solver->minkowski_difference, guess, support_hint);
+      solver->gjk.evaluate(solver->minkowski_difference, guess_, support_hint);
 
-  solver->cached_guess = solver->gjk.getGuessFromSimplex();
+  solver->cached_guess = solver->gjk.getGuessFromSimplex().cast<Scalar>();
   solver->support_func_cached_guess = solver->gjk.support_hint;
 
   // Retrieve witness points and normal
-  solver->gjk.getWitnessPointsAndNormal(solver->minkowski_difference, p1, p2,
-                                        normal);
-  CoalScalar distance = solver->gjk.distance;
+  Vec3ps p1_, p2_, normal_;
+  solver->gjk.getWitnessPointsAndNormal(solver->minkowski_difference, p1_, p2_,
+                                        normal_);
+  p1 = p1_.cast<Scalar>();
+  p2 = p2_.cast<Scalar>();
+  normal = normal_.cast<Scalar>();
+  Scalar distance = Scalar(solver->gjk.distance);
 
   if (gjk_status == details::GJK::Collision) {
-    CoalScalar penetrationDepth =
+    Scalar penetrationDepth =
         details::computePenetration(t1.a, t1.b, t1.c, t2.a, t2.b, t2.c, normal);
     distance = -penetrationDepth;
   } else {

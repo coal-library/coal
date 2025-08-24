@@ -80,7 +80,7 @@ struct morton_functor<S, uint32_t> {
 };
 
 using morton_functoru32f = morton_functor<float, uint32_t>;
-using morton_functoru32d = morton_functor<CoalScalar, uint32_t>;
+using morton_functoru32d = morton_functor<Scalar, uint32_t>;
 
 /// @brief Functor to compute 60 bit morton code for a given AABB
 template <typename S>

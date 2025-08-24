@@ -100,7 +100,7 @@ class HierarchyTree {
   bool update(Node* leaf, const BV& bv);
 
   /// @brief update one leaf's bounding volume, with prediction
-  bool update(Node* leaf, const BV& bv, const Vec3s& vel, CoalScalar margin);
+  bool update(Node* leaf, const BV& bv, const Vec3s& vel, Scalar margin);
 
   /// @brief update one leaf's bounding volume, with prediction
   bool update(Node* leaf, const BV& bv, const Vec3s& vel);

@@ -131,8 +131,8 @@ struct shape_traits<Cylinder> : shape_traits_base {
   };
 };
 
-template <>
-struct shape_traits<ConvexBase> : shape_traits_base {
+template <typename IndexType>
+struct shape_traits<ConvexBaseTpl<IndexType>> : shape_traits_base {
   enum {
     NeedNormalizedDir = false,
     NeedNesterovNormalizeHeuristic = true,

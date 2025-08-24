@@ -119,7 +119,7 @@ class COAL_DLLAPI IntervalTreeCollisionManager
     CollisionObject* obj;
 
     /// @brief end point value
-    CoalScalar value;
+    Scalar value;
 
     /// @brief tag for whether it is a lower bound or higher bound of an
     /// interval, 0 for lo, and 1 for hi
@@ -133,7 +133,7 @@ class COAL_DLLAPI IntervalTreeCollisionManager
   struct COAL_DLLAPI SAPInterval : public detail::SimpleInterval {
     CollisionObject* obj;
 
-    SAPInterval(CoalScalar low_, CoalScalar high_, CollisionObject* obj_);
+    SAPInterval(Scalar low_, Scalar high_, CollisionObject* obj_);
   };
 
   bool checkColl(
@@ -145,12 +145,12 @@ class COAL_DLLAPI IntervalTreeCollisionManager
       typename std::deque<detail::SimpleInterval*>::const_iterator pos_start,
       typename std::deque<detail::SimpleInterval*>::const_iterator pos_end,
       CollisionObject* obj, DistanceCallBackBase* callback,
-      CoalScalar& min_dist) const;
+      Scalar& min_dist) const;
 
   bool collide_(CollisionObject* obj, CollisionCallBackBase* callback) const;
 
   bool distance_(CollisionObject* obj, DistanceCallBackBase* callback,
-                 CoalScalar& min_dist) const;
+                 Scalar& min_dist) const;
 
   /// @brief vector stores all the end points
   std::vector<EndPoint> endpoints[3];

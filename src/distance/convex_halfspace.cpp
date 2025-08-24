@@ -39,31 +39,43 @@
 #include "coal/internal/shape_shape_func.h"
 #include "../narrowphase/details.h"
 
+#include "coal/tracy.hh"
+
 namespace coal {
 
 namespace internal {
-template <>
-CoalScalar ShapeShapeDistance<ConvexBase, Halfspace>(
-    const CollisionGeometry* o1, const Transform3s& tf1,
-    const CollisionGeometry* o2, const Transform3s& tf2, const GJKSolver*,
-    const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {
-  const ConvexBase& s1 = static_cast<const ConvexBase&>(*o1);
-  const Halfspace& s2 = static_cast<const Halfspace&>(*o2);
-  const CoalScalar distance =
-      details::halfspaceDistance(s2, tf2, s1, tf1, p2, p1, normal);
-  normal = -normal;
-  return distance;
-}
 
-template <>
-CoalScalar ShapeShapeDistance<Halfspace, ConvexBase>(
-    const CollisionGeometry* o1, const Transform3s& tf1,
-    const CollisionGeometry* o2, const Transform3s& tf2, const GJKSolver*,
-    const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {
-  const Halfspace& s1 = static_cast<const Halfspace&>(*o1);
-  const ConvexBase& s2 = static_cast<const ConvexBase&>(*o2);
-  return details::halfspaceDistance(s1, tf1, s2, tf2, p1, p2, normal);
-}
+#define ConvexHalfspaceShapeShapeDistance(ConvexBaseType)                    \
+  template <>                                                                \
+  Scalar ShapeShapeDistance<ConvexBaseType, Halfspace>(                      \
+      const CollisionGeometry* o1, const Transform3s& tf1,                   \
+      const CollisionGeometry* o2, const Transform3s& tf2, const GJKSolver*, \
+      const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {                     \
+    COAL_TRACY_ZONE_SCOPED_N(                                                \
+        "coal::internal::ShapeShapeDistance<ConvexBase, Halfspace>");        \
+    const ConvexBaseType& s1 = static_cast<const ConvexBaseType&>(*o1);      \
+    const Halfspace& s2 = static_cast<const Halfspace&>(*o2);                \
+    const Scalar distance =                                                  \
+        details::halfspaceDistance(s2, tf2, s1, tf1, p2, p1, normal);        \
+    normal = -normal;                                                        \
+    return distance;                                                         \
+  }                                                                          \
+                                                                             \
+  template <>                                                                \
+  Scalar ShapeShapeDistance<Halfspace, ConvexBaseType>(                      \
+      const CollisionGeometry* o1, const Transform3s& tf1,                   \
+      const CollisionGeometry* o2, const Transform3s& tf2, const GJKSolver*, \
+      const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {                     \
+    COAL_TRACY_ZONE_SCOPED_N(                                                \
+        "coal::internal::ShapeShapeDistance<Halfspace, ConvexBase>");        \
+    const Halfspace& s1 = static_cast<const Halfspace&>(*o1);                \
+    const ConvexBaseType& s2 = static_cast<const ConvexBaseType&>(*o2);      \
+    return details::halfspaceDistance(s1, tf1, s2, tf2, p1, p2, normal);     \
+  }
+
+ConvexHalfspaceShapeShapeDistance(ConvexBase16);
+ConvexHalfspaceShapeShapeDistance(ConvexBase32);
+
 }  // namespace internal
 
 }  // namespace coal

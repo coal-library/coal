@@ -47,12 +47,12 @@ namespace detail {
 
 /// @brief Spatial hash function: hash an AABB to a set of integer values
 struct COAL_DLLAPI SpatialHash {
-  SpatialHash(const AABB& scene_limit_, CoalScalar cell_size_);
+  SpatialHash(const AABB& scene_limit_, Scalar cell_size_);
 
   std::vector<unsigned int> operator()(const AABB& aabb) const;
 
  private:
-  CoalScalar cell_size;
+  Scalar cell_size;
   AABB scene_limit;
   unsigned int width[3];
 };

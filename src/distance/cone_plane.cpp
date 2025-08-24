@@ -42,28 +42,36 @@
 #include "coal/internal/shape_shape_func.h"
 #include "../narrowphase/details.h"
 
+#include "coal/tracy.hh"
+
 namespace coal {
 struct GJKSolver;
 
 namespace internal {
 template <>
-CoalScalar ShapeShapeDistance<Cone, Plane>(
-    const CollisionGeometry* o1, const Transform3s& tf1,
-    const CollisionGeometry* o2, const Transform3s& tf2, const GJKSolver*,
-    const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+Scalar ShapeShapeDistance<Cone, Plane>(const CollisionGeometry* o1,
+                                       const Transform3s& tf1,
+                                       const CollisionGeometry* o2,
+                                       const Transform3s& tf2, const GJKSolver*,
+                                       const bool, Vec3s& p1, Vec3s& p2,
+                                       Vec3s& normal) {
+  COAL_TRACY_ZONE_SCOPED_N("coal::internal::ShapeShapeDistance<Cone, Plane>");
   const Cone& s1 = static_cast<const Cone&>(*o1);
   const Plane& s2 = static_cast<const Plane&>(*o2);
-  const CoalScalar distance =
+  const Scalar distance =
       details::planeDistance(s2, tf2, s1, tf1, p2, p1, normal);
   normal = -normal;
   return distance;
 }
 
 template <>
-CoalScalar ShapeShapeDistance<Plane, Cone>(
-    const CollisionGeometry* o1, const Transform3s& tf1,
-    const CollisionGeometry* o2, const Transform3s& tf2, const GJKSolver*,
-    const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+Scalar ShapeShapeDistance<Plane, Cone>(const CollisionGeometry* o1,
+                                       const Transform3s& tf1,
+                                       const CollisionGeometry* o2,
+                                       const Transform3s& tf2, const GJKSolver*,
+                                       const bool, Vec3s& p1, Vec3s& p2,
+                                       Vec3s& normal) {
+  COAL_TRACY_ZONE_SCOPED_N("coal::internal::ShapeShapeDistance<Plane, Cone>");
   const Plane& s1 = static_cast<const Plane&>(*o1);
   const Cone& s2 = static_cast<const Cone&>(*o2);
   return details::planeDistance(s1, tf1, s2, tf2, p1, p2, normal);

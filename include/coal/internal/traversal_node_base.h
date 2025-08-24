@@ -112,11 +112,11 @@ class CollisionTraversalNodeBase : public TraversalNodeBase {
   /// @retval sqrDistLowerBound square of a lower bound of the minimal
   ///         distance between bounding volumes.
   virtual bool BVDisjoints(unsigned int b1, unsigned int b2,
-                           CoalScalar& sqrDistLowerBound) const = 0;
+                           Scalar& sqrDistLowerBound) const = 0;
 
   /// @brief Leaf test between node b1 and b2, if they are both leafs
   virtual void leafCollides(unsigned int /*b1*/, unsigned int /*b2*/,
-                            CoalScalar& /*sqrDistLowerBound*/) const = 0;
+                            Scalar& /*sqrDistLowerBound*/) const = 0;
 
   /// @brief Check whether the traversal can stop
   bool canStop() const { return this->request.isSatisfied(*(this->result)); }
@@ -145,16 +145,16 @@ class DistanceTraversalNodeBase : public TraversalNodeBase {
   /// @brief BV test between b1 and b2
   /// @return a lower bound of the distance between the two BV.
   /// @note except for OBB, this method returns the distance.
-  virtual CoalScalar BVDistanceLowerBound(unsigned int /*b1*/,
-                                          unsigned int /*b2*/) const {
-    return (std::numeric_limits<CoalScalar>::max)();
+  virtual Scalar BVDistanceLowerBound(unsigned int /*b1*/,
+                                      unsigned int /*b2*/) const {
+    return (std::numeric_limits<Scalar>::max)();
   }
 
   /// @brief Leaf test between node b1 and b2, if they are both leafs
   virtual void leafComputeDistance(unsigned int b1, unsigned int b2) const = 0;
 
   /// @brief Check whether the traversal can stop
-  virtual bool canStop(CoalScalar /*c*/) const { return false; }
+  virtual bool canStop(Scalar /*c*/) const { return false; }
 
   /// @brief request setting for distance
   DistanceRequest request;

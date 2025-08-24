@@ -11,8 +11,8 @@
 namespace boost {
 namespace serialization {
 
-template <class Archive>
-void serialize(Archive &ar, coal::Triangle &triangle,
+template <class Archive, typename Integer>
+void serialize(Archive &ar, coal::TriangleTpl<Integer> &triangle,
                const unsigned int /*version*/) {
   ar &make_nvp("p0", triangle[0]);
   ar &make_nvp("p1", triangle[1]);

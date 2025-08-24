@@ -42,23 +42,10 @@
 #include "coal/shape/geometric_shapes.h"
 #include "coal/math/transform.h"
 #include "coal/collision_data.h"
+#include "coal/narrowphase/support_data.h"
 
 namespace coal {
-
 namespace details {
-
-/// @brief Options for the computation of support points.
-/// `NoSweptSphere` option is used when the support function is called
-/// by GJK or EPA. In this case, the swept sphere radius is not taken into
-/// account in the support function. It is used by GJK and EPA after they have
-/// converged to correct the solution.
-/// `WithSweptSphere` option is used when the support function is called
-/// directly by the user. In this case, the swept sphere radius is taken into
-/// account in the support function.
-enum SupportOptions {
-  NoSweptSphere = 0,
-  WithSweptSphere = 0x1,
-};
 
 // ============================================================================
 // ============================ SUPPORT FUNCTIONS =============================
@@ -69,26 +56,12 @@ enum SupportOptions {
 /// @param shape the shape.
 /// @param dir support direction.
 /// @param hint used to initialize the search when shape is a ConvexBase object.
-/// @tparam SupportOptions is a value of the SupportOptions enum. If set to
+/// @tparam _SupportOptions is a value of the SupportOptions enum. If set to
 /// `WithSweptSphere`, the support functions take into account the shapes' swept
 /// sphere radii. Please see `MinkowskiDiff::set(const ShapeBase*, const
 /// ShapeBase*)` for more details.
 template <int _SupportOptions = SupportOptions::NoSweptSphere>
 Vec3s getSupport(const ShapeBase* shape, const Vec3s& dir, int& hint);
-
-/// @brief Stores temporary data for the computation of support points.
-struct COAL_DLLAPI ShapeSupportData {
-  // @brief Tracks which points have been visited in a ConvexBase.
-  std::vector<int8_t> visited;
-
-  // @brief Tracks the last support direction used on this shape; used to
-  // warm-start the ConvexBase support function.
-  Vec3s last_dir = Vec3s::Zero();
-
-  // @brief Temporary set used to compute the convex-hull of a support set.
-  // Only used for ConvexBase and Box.
-  SupportSet::Polygon polygon;
-};
 
 /// @brief Triangle support function.
 template <int _SupportOptions = SupportOptions::NoSweptSphere>
@@ -130,27 +103,37 @@ void getShapeSupport(const Cylinder* cylinder, const Vec3s& dir, Vec3s& support,
 /// @brief ConvexBase support function.
 /// @note See @ref LargeConvex and SmallConvex to see how to optimize
 /// ConvexBase's support computation.
-template <int _SupportOptions = SupportOptions::NoSweptSphere>
-void getShapeSupport(const ConvexBase* convex, const Vec3s& dir, Vec3s& support,
-                     int& hint, ShapeSupportData& /*unused*/);
+template <int _SupportOptions = SupportOptions::NoSweptSphere,
+          typename IndexType>
+void getShapeSupport(const ConvexBaseTpl<IndexType>* convex, const Vec3s& dir,
+                     Vec3s& support, int& hint, ShapeSupportData& /*unused*/);
 
 /// @brief Cast a `ConvexBase` to a `LargeConvex` to use the log version of
 /// `getShapeSupport`. This is **much** faster than the linear version of
 /// `getShapeSupport` when a `ConvexBase` has more than a few dozen of vertices.
 /// @note WARNING: when using a LargeConvex, the neighbors in `ConvexBase` must
 /// have been constructed! Otherwise the support function will segfault.
-struct LargeConvex : ShapeBase {};
+template <typename IndexType>
+struct LargeConvex : ConvexBaseTpl<IndexType> {};
+typedef LargeConvex<Triangle16::IndexType> LargeConvex16;
+typedef LargeConvex<Triangle32::IndexType> LargeConvex32;
+
 /// @brief See @ref LargeConvex.
-struct SmallConvex : ShapeBase {};
+template <typename IndexType>
+struct SmallConvex : ConvexBaseTpl<IndexType> {};
+typedef SmallConvex<Triangle16::IndexType> SmallConvex16;
+typedef SmallConvex<Triangle32::IndexType> SmallConvex32;
 
 /// @brief Support function for large ConvexBase (>32 vertices).
-template <int _SupportOptions = SupportOptions::NoSweptSphere>
-void getShapeSupport(const SmallConvex* convex, const Vec3s& dir,
+template <int _SupportOptions = SupportOptions::NoSweptSphere,
+          typename IndexType>
+void getShapeSupport(const SmallConvex<IndexType>* convex, const Vec3s& dir,
                      Vec3s& support, int& hint, ShapeSupportData& data);
 
 /// @brief Support function for small ConvexBase (<32 vertices).
-template <int _SupportOptions = SupportOptions::NoSweptSphere>
-void getShapeSupport(const LargeConvex* convex, const Vec3s& dir,
+template <int _SupportOptions = SupportOptions::NoSweptSphere,
+          typename IndexType>
+void getShapeSupport(const LargeConvex<IndexType>* convex, const Vec3s& dir,
                      Vec3s& support, int& hint, ShapeSupportData& support_data);
 
 // ============================================================================
@@ -188,14 +171,14 @@ void getShapeSupport(const LargeConvex* convex, const Vec3s& dir,
 /// Otherwise said, if a point p of the shape is at a distance `tol` from the
 /// support plane, it is added to the set. Thus, `tol` can be seen as the
 /// "thickness" of the support plane.
-/// @tparam SupportOptions is a value of the SupportOptions enum. If set to
+/// @tparam _SupportOptions is a value of the SupportOptions enum. If set to
 /// `WithSweptSphere`, the support functions take into account the shapes' swept
 /// sphere radii.
 template <int _SupportOptions = SupportOptions::NoSweptSphere>
 void getSupportSet(const ShapeBase* shape, SupportSet& support_set, int& hint,
-                   size_t num_sampled_supports = 6, CoalScalar tol = 1e-3);
+                   size_t num_sampled_supports = 6, Scalar tol = Scalar(1e-3));
 
-/// @brief Same as @ref getSupportSet(const ShapeBase*, const CoalScalar,
+/// @brief Same as @ref getSupportSet(const ShapeBase*, const Scalar,
 /// SupportSet&, const int) but also constructs the support set frame from
 /// `dir`.
 /// @note The support direction `dir` is expressed in the local frame of the
@@ -205,7 +188,7 @@ void getSupportSet(const ShapeBase* shape, SupportSet& support_set, int& hint,
 template <int _SupportOptions = SupportOptions::NoSweptSphere>
 void getSupportSet(const ShapeBase* shape, const Vec3s& dir,
                    SupportSet& support_set, int& hint,
-                   size_t num_sampled_supports = 6, CoalScalar tol = 1e-3) {
+                   size_t num_sampled_supports = 6, Scalar tol = Scalar(1e-3)) {
   support_set.tf.rotation() = constructOrthonormalBasisFromVector(dir);
   const Vec3s& support_dir = support_set.getNormal();
   const Vec3s support = getSupport<_SupportOptions>(shape, support_dir, hint);
@@ -219,7 +202,7 @@ template <int _SupportOptions = SupportOptions::NoSweptSphere>
 void getShapeSupportSet(const TriangleP* triangle, SupportSet& support_set,
                         int& /*unused*/, ShapeSupportData& /*unused*/,
                         size_t /*unused*/ num_sampled_supports = 6,
-                        CoalScalar tol = 1e-3);
+                        Scalar tol = Scalar(1e-3));
 
 /// @brief Box support set function.
 /// Assumes the support set frame has already been computed.
@@ -227,7 +210,7 @@ template <int _SupportOptions = SupportOptions::NoSweptSphere>
 void getShapeSupportSet(const Box* box, SupportSet& support_set,
                         int& /*unused*/, ShapeSupportData& support_data,
                         size_t /*unused*/ num_sampled_supports = 6,
-                        CoalScalar tol = 1e-3);
+                        Scalar tol = Scalar(1e-3));
 
 /// @brief Sphere support set function.
 /// Assumes the support set frame has already been computed.
@@ -235,7 +218,7 @@ template <int _SupportOptions = SupportOptions::NoSweptSphere>
 void getShapeSupportSet(const Sphere* sphere, SupportSet& support_set,
                         int& /*unused*/, ShapeSupportData& /*unused*/,
                         size_t /*unused*/ num_sampled_supports = 6,
-                        CoalScalar /*unused*/ tol = 1e-3);
+                        Scalar /*unused*/ tol = Scalar(1e-3));
 
 /// @brief Ellipsoid support set function.
 /// Assumes the support set frame has already been computed.
@@ -243,7 +226,7 @@ template <int _SupportOptions = SupportOptions::NoSweptSphere>
 void getShapeSupportSet(const Ellipsoid* ellipsoid, SupportSet& support_set,
                         int& /*unused*/, ShapeSupportData& /*unused*/,
                         size_t /*unused*/ num_sampled_supports = 6,
-                        CoalScalar /*unused*/ tol = 1e-3);
+                        Scalar /*unused*/ tol = Scalar(1e-3));
 
 /// @brief Capsule support set function.
 /// Assumes the support set frame has already been computed.
@@ -251,47 +234,55 @@ template <int _SupportOptions = SupportOptions::NoSweptSphere>
 void getShapeSupportSet(const Capsule* capsule, SupportSet& support_set,
                         int& /*unused*/, ShapeSupportData& /*unused*/,
                         size_t /*unused*/ num_sampled_supports = 6,
-                        CoalScalar tol = 1e-3);
+                        Scalar tol = Scalar(1e-3));
 
 /// @brief Cone support set function.
 /// Assumes the support set frame has already been computed.
 template <int _SupportOptions = SupportOptions::NoSweptSphere>
 void getShapeSupportSet(const Cone* cone, SupportSet& support_set,
                         int& /*unused*/, ShapeSupportData& /*unused*/,
-                        size_t num_sampled_supports = 6, CoalScalar tol = 1e-3);
+                        size_t num_sampled_supports = 6,
+                        Scalar tol = Scalar(1e-3));
 
 /// @brief Cylinder support set function.
 /// Assumes the support set frame has already been computed.
 template <int _SupportOptions = SupportOptions::NoSweptSphere>
 void getShapeSupportSet(const Cylinder* cylinder, SupportSet& support_set,
                         int& /*unused*/, ShapeSupportData& /*unused*/,
-                        size_t num_sampled_supports = 6, CoalScalar tol = 1e-3);
+                        size_t num_sampled_supports = 6,
+                        Scalar tol = Scalar(1e-3));
 
 /// @brief ConvexBase support set function.
 /// Assumes the support set frame has already been computed.
 /// @note See @ref LargeConvex and SmallConvex to see how to optimize
 /// ConvexBase's support computation.
-template <int _SupportOptions = SupportOptions::NoSweptSphere>
-void getShapeSupportSet(const ConvexBase* convex, SupportSet& support_set,
-                        int& hint, ShapeSupportData& support_data,
+template <int _SupportOptions = SupportOptions::NoSweptSphere,
+          typename IndexType>
+void getShapeSupportSet(const ConvexBaseTpl<IndexType>* convex,
+                        SupportSet& support_set, int& hint,
+                        ShapeSupportData& support_data,
                         size_t /*unused*/ num_sampled_supports = 6,
-                        CoalScalar tol = 1e-3);
+                        Scalar tol = Scalar(1e-3));
 
 /// @brief Support set function for large ConvexBase (>32 vertices).
 /// Assumes the support set frame has already been computed.
-template <int _SupportOptions = SupportOptions::NoSweptSphere>
-void getShapeSupportSet(const SmallConvex* convex, SupportSet& support_set,
-                        int& /*unused*/, ShapeSupportData& /*unused*/,
+template <int _SupportOptions = SupportOptions::NoSweptSphere,
+          typename IndexType>
+void getShapeSupportSet(const SmallConvex<IndexType>* convex,
+                        SupportSet& support_set, int& /*unused*/,
+                        ShapeSupportData& /*unused*/,
                         size_t /*unused*/ num_sampled_supports = 6,
-                        CoalScalar tol = 1e-3);
+                        Scalar tol = Scalar(1e-3));
 
 /// @brief Support set function for small ConvexBase (<32 vertices).
 /// Assumes the support set frame has already been computed.
-template <int _SupportOptions = SupportOptions::NoSweptSphere>
-void getShapeSupportSet(const LargeConvex* convex, SupportSet& support_set,
-                        int& hint, ShapeSupportData& support_data,
+template <int _SupportOptions = SupportOptions::NoSweptSphere,
+          typename IndexType>
+void getShapeSupportSet(const LargeConvex<IndexType>* convex,
+                        SupportSet& support_set, int& hint,
+                        ShapeSupportData& support_data,
                         size_t /*unused*/ num_sampled_supports = 6,
-                        CoalScalar tol = 1e-3);
+                        Scalar tol = Scalar(1e-3));
 
 /// @brief Computes the convex-hull of support_set. For now, this function is
 /// only needed for Box and ConvexBase.
@@ -302,7 +293,6 @@ COAL_DLLAPI void computeSupportSetConvexHull(SupportSet::Polygon& cloud,
                                              SupportSet::Polygon& cvx_hull);
 
 }  // namespace details
-
 }  // namespace coal
 
 #endif  // COAL_SUPPORT_FUNCTIONS_H

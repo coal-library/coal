@@ -282,10 +282,10 @@ class MemberDef(Reference):
         return ", ".join([d["type"] + " " + d["name"] for d in self.template_params])
 
     def s_rettype(self):
-        assert (
-            not self.special
-        ), "Member {} ({}) is a special function and no return type".format(
-            self.name, self.id
+        assert not self.special, (
+            "Member {} ({}) is a special function and no return type".format(
+                self.name, self.id
+            )
         )
         if len(self.parent.template_params) > 0:
             tplargs = (

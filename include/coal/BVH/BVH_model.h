@@ -53,7 +53,8 @@ namespace coal {
 /// @addtogroup Construction_Of_BVH
 /// @{
 
-class ConvexBase;
+template <typename _IndexType>
+class ConvexBaseTpl;
 
 template <typename BV>
 class BVFitter;
@@ -64,11 +65,14 @@ class BVSplitter;
 /// point cloud model (which is viewed as a degraded version of mesh)
 class COAL_DLLAPI BVHModelBase : public CollisionGeometry {
  public:
+  typedef typename Triangle32::IndexType IndexType;
+  typedef ConvexBaseTpl<IndexType> ConvexType;
+
   /// @brief Geometry point data
   std::shared_ptr<std::vector<Vec3s>> vertices;
 
   /// @brief Geometry triangle index data, will be NULL for point clouds
-  std::shared_ptr<std::vector<Triangle>> tri_indices;
+  std::shared_ptr<std::vector<Triangle32>> tri_indices;
 
   /// @brief Geometry point data in previous frame
   std::shared_ptr<std::vector<Vec3s>> prev_vertices;
@@ -83,7 +87,8 @@ class COAL_DLLAPI BVHModelBase : public CollisionGeometry {
   BVHBuildState build_state;
 
   /// @brief Convex<Triangle> representation of this object
-  shared_ptr<ConvexBase> convex;
+  // TODO: deprecated
+  shared_ptr<ConvexType> convex;
 
   /// @brief Model type described by the instance
   BVHModelType getModelType() const {
@@ -127,7 +132,7 @@ class COAL_DLLAPI BVHModelBase : public CollisionGeometry {
 
   /// @brief Add a set of triangles in the new BVH model
   int addSubModel(const std::vector<Vec3s>& ps,
-                  const std::vector<Triangle>& ts);
+                  const std::vector<Triangle32>& ts);
 
   /// @brief Add a set of points in the new BVH model
   int addSubModel(const std::vector<Vec3s>& ps);
@@ -199,7 +204,7 @@ class COAL_DLLAPI BVHModelBase : public CollisionGeometry {
   virtual void makeParentRelative() = 0;
 
   Vec3s computeCOM() const {
-    CoalScalar vol = 0;
+    Scalar vol = 0;
     Vec3s com(0, 0, 0);
     if (!(vertices.get())) {
       std::cerr << "BVH Error in `computeCOM`! The BVHModel does not contain "
@@ -214,11 +219,11 @@ class COAL_DLLAPI BVHModelBase : public CollisionGeometry {
                 << std::endl;
       return com;
     }
-    const std::vector<Triangle>& tri_indices_ = *tri_indices;
+    const std::vector<Triangle32>& tri_indices_ = *tri_indices;
 
     for (unsigned int i = 0; i < num_tris; ++i) {
-      const Triangle& tri = tri_indices_[i];
-      CoalScalar d_six_vol =
+      const Triangle32& tri = tri_indices_[i];
+      Scalar d_six_vol =
           (vertices_[tri[0]].cross(vertices_[tri[1]])).dot(vertices_[tri[2]]);
       vol += d_six_vol;
       com += (vertices_[tri[0]] + vertices_[tri[1]] + vertices_[tri[2]]) *
@@ -228,8 +233,8 @@ class COAL_DLLAPI BVHModelBase : public CollisionGeometry {
     return com / (vol * 4);
   }
 
-  CoalScalar computeVolume() const {
-    CoalScalar vol = 0;
+  Scalar computeVolume() const {
+    Scalar vol = 0;
     if (!(vertices.get())) {
       std::cerr << "BVH Error in `computeCOM`! The BVHModel does not contain "
                    "vertices."
@@ -243,10 +248,10 @@ class COAL_DLLAPI BVHModelBase : public CollisionGeometry {
                 << std::endl;
       return vol;
     }
-    const std::vector<Triangle>& tri_indices_ = *tri_indices;
+    const std::vector<Triangle32>& tri_indices_ = *tri_indices;
     for (unsigned int i = 0; i < num_tris; ++i) {
-      const Triangle& tri = tri_indices_[i];
-      CoalScalar d_six_vol =
+      const Triangle32& tri = tri_indices_[i];
+      Scalar d_six_vol =
           (vertices_[tri[0]].cross(vertices_[tri[1]])).dot(vertices_[tri[2]]);
       vol += d_six_vol;
     }
@@ -258,8 +263,15 @@ class COAL_DLLAPI BVHModelBase : public CollisionGeometry {
     Matrix3s C = Matrix3s::Zero();
 
     Matrix3s C_canonical;
-    C_canonical << 1 / 60.0, 1 / 120.0, 1 / 120.0, 1 / 120.0, 1 / 60.0,
-        1 / 120.0, 1 / 120.0, 1 / 120.0, 1 / 60.0;
+    C_canonical << Scalar(1 / 60.0),  //
+        Scalar(1 / 120.0),            //
+        Scalar(1 / 120.0),            //
+        Scalar(1 / 120.0),            //
+        Scalar(1 / 60.0),             //
+        Scalar(1 / 120.0),            //
+        Scalar(1 / 120.0),            //
+        Scalar(1 / 120.0),            //
+        Scalar(1 / 60.0);
 
     if (!(vertices.get())) {
       std::cerr << "BVH Error in `computeMomentofInertia`! The BVHModel does "
@@ -274,9 +286,9 @@ class COAL_DLLAPI BVHModelBase : public CollisionGeometry {
                 << std::endl;
       return C;
     }
-    const std::vector<Triangle>& tri_indices_ = *tri_indices;
+    const std::vector<Triangle32>& tri_indices_ = *tri_indices;
     for (unsigned int i = 0; i < num_tris; ++i) {
-      const Triangle& tri = tri_indices_[i];
+      const Triangle32& tri = tri_indices_[i];
       const Vec3s& v1 = vertices_[tri[0]];
       const Vec3s& v2 = vertices_[tri[1]];
       const Vec3s& v3 = vertices_[tri[2]];

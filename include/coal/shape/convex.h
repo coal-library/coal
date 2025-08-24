@@ -39,6 +39,7 @@
 #define COAL_SHAPE_CONVEX_H
 
 #include "coal/shape/geometric_shapes.h"
+#include <iostream>
 
 namespace coal {
 
@@ -46,42 +47,82 @@ namespace coal {
 /// @tparam PolygonT the polygon class. It must have method \c size() and
 ///         \c operator[](int i)
 template <typename PolygonT>
-class Convex : public ConvexBase {
+class ConvexTpl : public ConvexBaseTpl<typename PolygonT::IndexType> {
  public:
+  typedef typename PolygonT::IndexType IndexType;
+  typedef ConvexBaseTpl<IndexType> Base;
+  typedef typename Base::Neighbors Neighbors;
+
+  using Base::neighbors;
+  using Base::num_points;
+  using Base::points;
+
   /// @brief Construct an uninitialized convex object
-  Convex() : ConvexBase(), num_polygons(0) {}
+  ConvexTpl() : Base(), num_polygons(0) {}
+
+  ~ConvexTpl() {}
 
   /// @brief Constructing a convex, providing normal and offset of each polytype
-  /// surface, and the points and shape topology information \param ownStorage
-  /// whether this class owns the pointers of points and
-  ///                    polygons. If owned, they are deleted upon destruction.
+  /// surface, and the points and shape topology information
   /// \param points_ list of 3D points
   /// \param num_points_ number of 3D points
   /// \param polygons_ \copydoc Convex::polygons
   /// \param num_polygons_ the number of polygons.
   /// \note num_polygons_ is not the allocated size of polygons_.
-  Convex(std::shared_ptr<std::vector<Vec3s>> points_, unsigned int num_points_,
-         std::shared_ptr<std::vector<PolygonT>> polygons_,
-         unsigned int num_polygons_);
+  ConvexTpl(std::shared_ptr<std::vector<Vec3s>> points_,
+            unsigned int num_points_,
+            std::shared_ptr<std::vector<PolygonT>> polygons_,
+            unsigned int num_polygons_);
 
-  /// @brief Copy constructor
-  /// Only the list of neighbors is copied.
-  Convex(const Convex& other);
+  /// @brief Cast Convex to ConvexBaseTpl.
+  /// This method should never be marked as virtual
+  Base &base() { return static_cast<Base &>(*this); }
 
-  ~Convex();
+  /// @brief Const cast Convex to ConvexBaseTpl.
+  /// This method should never be marked as virtual
+  const Base &base() const { return static_cast<const Base &>(*this); }
+
+  /// @brief Copy constructor.
+  /// The copy constructor only shallow copies the data (it copies the shared
+  /// pointers but does not deep clones the data).
+  ConvexTpl(const ConvexTpl &other) { *this = other; }
+
+  /// @brief Copy operator.
+  /// The copy operator only shallow copies the data (it copies the shared
+  /// pointers but does not deep clones the data).
+  ConvexTpl &operator=(const ConvexTpl &other);
+
+  // Clone (deep copy).
+  COAL_DEPRECATED_MESSAGE(Use deepcopy instead.)
+  ConvexTpl *clone() const override { return this->deepcopy(); };
+
+  // Deep copy of a Convex.
+  // This method deep copies every field of the class.
+  ConvexTpl *deepcopy() const override {
+    ConvexTpl *copy = new ConvexTpl();
+    deepcopy(this, copy);
+    return copy;
+  }
+
+  /// @brief Cast this Convex vertex indices to OtherIndexType.
+  /// This effectively deep copies this Convex into a new one.
+  template <typename OtherPolygonT>
+  ConvexTpl<OtherPolygonT> cast() const {
+    ConvexTpl<OtherPolygonT> res;
+    deepcopy(this, &res);
+    return res;
+  }
 
   /// based on http://number-none.com/blow/inertia/bb_inertia.doc
-  Matrix3s computeMomentofInertia() const;
+  virtual Matrix3s computeMomentofInertia() const override;
 
-  Vec3s computeCOM() const;
+  virtual Vec3s computeCOM() const override;
 
-  CoalScalar computeVolume() const;
+  virtual Scalar computeVolume() const override;
 
   ///
   /// @brief Set the current Convex from a list of points and polygons.
   ///
-  /// \param ownStorage whether this class owns the pointers of points and
-  ///                    polygons. If owned, they are deleted upon destruction.
   /// \param points list of 3D points
   /// \param num_points number of 3D points
   /// \param polygons \copydoc Convex::polygons
@@ -92,9 +133,6 @@ class Convex : public ConvexBase {
            std::shared_ptr<std::vector<PolygonT>> polygons,
            unsigned int num_polygons);
 
-  /// @brief Clone (deep copy)
-  virtual Convex<PolygonT>* clone() const;
-
   /// @brief An array of PolygonT object.
   /// PolygonT should contains a list of vertices for each polygon,
   /// in counter clockwise order.
@@ -103,10 +141,21 @@ class Convex : public ConvexBase {
 
  protected:
   void fillNeighbors();
+
+  // Deep copy of a Convex.
+  // This method deep copies every field of the class.
+  template <typename OtherPolygonT>
+  static void deepcopy(const ConvexTpl<PolygonT> *source,
+                       ConvexTpl<OtherPolygonT> *copy);
+
+  using Base::nneighbors_;
 };
+
+template <typename PolygonT>
+using Convex = ConvexTpl<PolygonT>;
 
 }  // namespace coal
 
-#include "coal/shape/details/convex.hxx"
+#include "coal/shape/convex.hxx"
 
 #endif

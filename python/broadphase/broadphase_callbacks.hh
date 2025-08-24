@@ -80,11 +80,11 @@ struct DistanceCallBackBaseWrapper : DistanceCallBackBase,
 
   void init() { this->get_override("init")(); }
   bool distance(CollisionObject* o1, CollisionObject* o2,
-                Eigen::Matrix<double, 1, 1>& dist) {
+                Eigen::Matrix<Scalar, 1, 1>& dist) {
     return distance(o1, o2, dist.coeffRef(0, 0));
   }
 
-  bool distance(CollisionObject* o1, CollisionObject* o2, CoalScalar& dist) {
+  bool distance(CollisionObject* o1, CollisionObject* o2, Scalar& dist) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
     return this->get_override("distance")(o1, o2, dist);
@@ -100,7 +100,7 @@ struct DistanceCallBackBaseWrapper : DistanceCallBackBase,
              bp::pure_virtual(
                  static_cast<bool (Self::*)(
                      CollisionObject* o1, CollisionObject* o2,
-                     Eigen::Matrix<double, 1, 1>& dist)>(&Self::distance)),
+                     Eigen::Matrix<Scalar, 1, 1>& dist)>(&Self::distance)),
              doxygen::member_func_doc(&Base::distance))
         .def("__call__", &Base::operator(),
              doxygen::member_func_doc(&Base::operator()));

@@ -91,11 +91,9 @@ template <short N>
 class COAL_DLLAPI KDOP {
  protected:
   /// @brief Origin's distances to N KDOP planes
-  Eigen::Array<CoalScalar, N, 1> dist_;
+  Eigen::Array<Scalar, N, 1> dist_;
 
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   /// @brief Creating kDOP containing nothing
   KDOP();
 
@@ -116,30 +114,29 @@ class COAL_DLLAPI KDOP {
   }
 
   /// @brief Check whether two KDOPs overlap.
-  bool overlap(const KDOP<N>& other) const;
+  bool overlap(const KDOP& other) const;
 
   /// @brief Check whether two KDOPs overlap.
   /// @return true if collision happens.
   /// @retval sqrDistLowerBound squared lower bound on distance between boxes if
   ///         they do not overlap.
-  bool overlap(const KDOP<N>& other, const CollisionRequest& request,
-               CoalScalar& sqrDistLowerBound) const;
+  bool overlap(const KDOP& other, const CollisionRequest& request,
+               Scalar& sqrDistLowerBound) const;
 
-  /// @brief The distance between two KDOP<N>. Not implemented.
-  CoalScalar distance(const KDOP<N>& other, Vec3s* P = NULL,
-                      Vec3s* Q = NULL) const;
+  /// @brief The distance between two KDOP, Not implemented.
+  Scalar distance(const KDOP& other, Vec3s* P = NULL, Vec3s* Q = NULL) const;
 
   /// @brief Merge the point and the KDOP
-  KDOP<N>& operator+=(const Vec3s& p);
+  KDOP& operator+=(const Vec3s& p);
 
   /// @brief Merge two KDOPs
-  KDOP<N>& operator+=(const KDOP<N>& other);
+  KDOP& operator+=(const KDOP& other);
 
   /// @brief Create a KDOP by mergin two KDOPs
-  KDOP<N> operator+(const KDOP<N>& other) const;
+  KDOP<N> operator+(const KDOP& other) const;
 
   /// @brief Size of the kDOP (used in BV_Splitter to order two kDOPs)
-  inline CoalScalar size() const {
+  inline Scalar size() const {
     return width() * width() + height() * height() + depth() * depth();
   }
 
@@ -149,24 +146,29 @@ class COAL_DLLAPI KDOP {
   }
 
   /// @brief The (AABB) width
-  inline CoalScalar width() const { return dist_[N / 2] - dist_[0]; }
+  inline Scalar width() const { return dist_[N / 2] - dist_[0]; }
 
   /// @brief The (AABB) height
-  inline CoalScalar height() const { return dist_[N / 2 + 1] - dist_[1]; }
+  inline Scalar height() const { return dist_[N / 2 + 1] - dist_[1]; }
 
   /// @brief The (AABB) depth
-  inline CoalScalar depth() const { return dist_[N / 2 + 2] - dist_[2]; }
+  inline Scalar depth() const { return dist_[N / 2 + 2] - dist_[2]; }
 
   /// @brief The (AABB) volume
-  inline CoalScalar volume() const { return width() * height() * depth(); }
+  inline Scalar volume() const { return width() * height() * depth(); }
 
-  inline CoalScalar dist(short i) const { return dist_[i]; }
+  inline Scalar dist(short i) const { return dist_[i]; }
 
-  inline CoalScalar& dist(short i) { return dist_[i]; }
+  inline Scalar& dist(short i) { return dist_[i]; }
 
   //// @brief Check whether one point is inside the KDOP
   bool inside(const Vec3s& p) const;
+
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
+
+/** @} */  // end of Bounding_Volume
 
 template <short N>
 bool overlap(const Matrix3s& /*R0*/, const Vec3s& /*T0*/, const KDOP<N>& /*b1*/,
@@ -177,7 +179,7 @@ bool overlap(const Matrix3s& /*R0*/, const Vec3s& /*T0*/, const KDOP<N>& /*b1*/,
 template <short N>
 bool overlap(const Matrix3s& /*R0*/, const Vec3s& /*T0*/, const KDOP<N>& /*b1*/,
              const KDOP<N>& /*b2*/, const CollisionRequest& /*request*/,
-             CoalScalar& /*sqrDistLowerBound*/) {
+             Scalar& /*sqrDistLowerBound*/) {
   COAL_THROW_PRETTY("not implemented", std::logic_error);
 }
 

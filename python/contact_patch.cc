@@ -93,12 +93,12 @@ void exposeContactPatchAPI() {
           ContactPatchRequest>()) {
     class_<ContactPatchRequest>(
         "ContactPatchRequest", doxygen::class_doc<ContactPatchRequest>(),
-        init<optional<size_t, size_t, CoalScalar>>(
+        init<optional<size_t, size_t, Scalar>>(
             (arg("self"), arg("max_num_patch"),
              arg("num_samples_curved_shapes"), arg("patch_tolerance")),
             "ContactPatchRequest constructor."))
         .def(dv::init<ContactPatchRequest, const CollisionRequest&,
-                      bp::optional<size_t, CoalScalar>>())
+                      bp::optional<size_t, Scalar>>())
         .DEF_RW_CLASS_ATTRIB(ContactPatchRequest, max_num_patch)
         .DEF_CLASS_FUNC(ContactPatchRequest, getNumSamplesCurvedShapes)
         .DEF_CLASS_FUNC(ContactPatchRequest, setNumSamplesCurvedShapes)

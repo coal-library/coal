@@ -65,12 +65,12 @@ class COAL_DLLAPI ShapeCollisionTraversalNode
   }
 
   /// @brief BV culling test in one BVTT node
-  bool BVDisjoints(int, int, CoalScalar&) const {
+  bool BVDisjoints(int, int, Scalar&) const {
     COAL_THROW_PRETTY("Not implemented", std::runtime_error);
   }
 
   /// @brief Intersection testing between leaves (two shapes)
-  void leafCollides(int, int, CoalScalar&) const {
+  void leafCollides(int, int, Scalar&) const {
     ShapeShapeCollide<S1, S2>(this->model1, this->tf1, this->model2, this->tf2,
                               this->nsolver, this->request, *(this->result));
   }
@@ -99,7 +99,7 @@ class COAL_DLLAPI ShapeDistanceTraversalNode
   }
 
   /// @brief BV culling test in one BVTT node
-  CoalScalar BVDistanceLowerBound(unsigned int, unsigned int) const {
+  Scalar BVDistanceLowerBound(unsigned int, unsigned int) const {
     return -1;  // should not be used
   }
 

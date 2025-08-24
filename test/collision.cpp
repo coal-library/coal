@@ -40,8 +40,8 @@
 #define BOOST_TEST_MODULE COAL_COLLISION
 #include <boost/test/included/unit_test.hpp>
 
-#include <fstream>
 #include <boost/assign/list_of.hpp>
+#include <fstream>
 
 #include "coal/fwd.hh"
 
@@ -53,19 +53,19 @@ COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
 COAL_COMPILER_DIAGNOSTIC_POP
 
 #include "coal/BV/BV.h"
-#include "coal/shape/geometric_shapes.h"
-#include "coal/narrowphase/narrowphase.h"
 #include "coal/mesh_loader/assimp.h"
+#include "coal/narrowphase/narrowphase.h"
+#include "coal/shape/geometric_shapes.h"
 
-#include "coal/internal/traversal_node_bvhs.h"
-#include "coal/internal/traversal_node_setup.h"
 #include "../src/collision_node.h"
 #include "coal/internal/BV_splitter.h"
+#include "coal/internal/traversal_node_bvhs.h"
+#include "coal/internal/traversal_node_setup.h"
 
 #include "coal/timings.h"
 
-#include "utility.h"
 #include "fcl_resources/config.h"
+#include "utility.h"
 
 using namespace coal;
 namespace utf = boost::unit_test::framework;
@@ -73,7 +73,7 @@ namespace utf = boost::unit_test::framework;
 int num_max_contacts = (std::numeric_limits<int>::max)();
 
 BOOST_AUTO_TEST_CASE(OBB_Box_test) {
-  CoalScalar r_extents[] = {-1000, -1000, -1000, 1000, 1000, 1000};
+  Scalar r_extents[] = {-1000, -1000, -1000, 1000, 1000, 1000};
   std::vector<Transform3s> rotate_transform;
   generateRandomTransforms(r_extents, rotate_transform, 1);
 
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(OBB_Box_test) {
   Transform3s box1_tf;
   constructBox(aabb1, rotate_transform[0], box1, box1_tf);
 
-  CoalScalar extents[] = {-1000, -1000, -1000, 1000, 1000, 1000};
+  Scalar extents[] = {-1000, -1000, -1000, 1000, 1000, 1000};
   std::size_t n = 1000;
 
   std::vector<Transform3s> transforms;
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(OBB_Box_test) {
 }
 
 BOOST_AUTO_TEST_CASE(OBB_shape_test) {
-  CoalScalar r_extents[] = {-1000, -1000, -1000, 1000, 1000, 1000};
+  Scalar r_extents[] = {-1000, -1000, -1000, 1000, 1000, 1000};
   std::vector<Transform3s> rotate_transform;
   generateRandomTransforms(r_extents, rotate_transform, 1);
 
@@ -137,14 +137,14 @@ BOOST_AUTO_TEST_CASE(OBB_shape_test) {
   Transform3s box1_tf;
   constructBox(aabb1, rotate_transform[0], box1, box1_tf);
 
-  CoalScalar extents[] = {-1000, -1000, -1000, 1000, 1000, 1000};
+  Scalar extents[] = {-1000, -1000, -1000, 1000, 1000, 1000};
   std::size_t n = 1000;
 
   std::vector<Transform3s> transforms;
   generateRandomTransforms(extents, transforms, n);
 
   for (std::size_t i = 0; i < transforms.size(); ++i) {
-    CoalScalar len = (aabb1.max_[0] - aabb1.min_[0]) * 0.5;
+    Scalar len = (aabb1.max_[0] - aabb1.min_[0]) * Scalar(0.5);
     OBB obb2;
     GJKSolver solver;
 
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(OBB_shape_test) {
 }
 
 BOOST_AUTO_TEST_CASE(OBB_AABB_test) {
-  CoalScalar extents[] = {-1000, -1000, -1000, 1000, 1000, 1000};
+  Scalar extents[] = {-1000, -1000, -1000, 1000, 1000, 1000};
   std::size_t n = 1000;
 
   std::vector<Transform3s> transforms;
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(OBB_AABB_test) {
   std::cout << std::endl;
 }
 
-std::ostream* bench_stream = NULL;
+std::ostream *bench_stream = NULL;
 bool bs_nl = true;
 bool bs_hp = false;
 #define BENCHMARK(stream)                           \
@@ -272,11 +272,11 @@ std::vector<SplitMethodType> splitMethods = boost::assign::list_of(
 
 #define BV_STR_SPECIALIZATION(bv) \
   template <>                     \
-  const char* str<bv>() {         \
+  const char *str<bv>() {         \
     return #bv;                   \
   }
 template <typename BV>
-const char* str();
+const char *str();
 BV_STR_SPECIALIZATION(AABB)
 BV_STR_SPECIALIZATION(OBB)
 BV_STR_SPECIALIZATION(RSS)
@@ -312,7 +312,7 @@ COAL_COMPILER_DIAGNOSTIC_PUSH
 COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
 
 struct mesh_mesh_run_test {
-  mesh_mesh_run_test(const std::vector<Transform3s>& _transforms,
+  mesh_mesh_run_test(const std::vector<Transform3s> &_transforms,
                      const CollisionRequest _request)
       : transforms(_transforms),
         request(_request),
@@ -321,7 +321,7 @@ struct mesh_mesh_run_test {
         isInit(false),
         indent(0) {}
 
-  const std::vector<Transform3s>& transforms;
+  const std::vector<Transform3s> &transforms;
   const CollisionRequest request;
   bool enable_statistics, benchmark;
   std::vector<Contacts_t> contacts;
@@ -332,9 +332,9 @@ struct mesh_mesh_run_test {
 
   COAL_COMPILER_DIAGNOSTIC_POP
 
-  const char* getindent() {
+  const char *getindent() {
     assert(indent < 9);
-    static const char* t[] = {"",
+    static const char *t[] = {"",
                               "\t",
                               "\t\t",
                               "\t\t\t",
@@ -347,9 +347,9 @@ struct mesh_mesh_run_test {
   }
 
   template <typename BV>
-  void query(const std::vector<Transform3s>& transforms,
+  void query(const std::vector<Transform3s> &transforms,
              SplitMethodType splitMethod, const CollisionRequest request,
-             std::vector<Contacts_t>& contacts) {
+             std::vector<Contacts_t> &contacts) {
     BENCHMARK_HEADER("BV");
     BENCHMARK_HEADER("oriented");
     BENCHMARK_HEADER("Split method");
@@ -385,7 +385,7 @@ struct mesh_mesh_run_test {
       ++indent;
 
       for (std::size_t i = 0; i < transforms.size(); ++i) {
-        const Transform3s& tf1 = transforms[i];
+        const Transform3s &tf1 = transforms[i];
         timer.start();
 
         CollisionResult local_result;
@@ -437,9 +437,9 @@ struct mesh_mesh_run_test {
             request);
         node.enable_statistics = enable_statistics;
 
-        BVH_t* model1_tmp = new BVH_t(*model1);
+        BVH_t *model1_tmp = new BVH_t(*model1);
         Transform3s tf1_tmp = tf1;
-        BVH_t* model2_tmp = new BVH_t(*model2);
+        BVH_t *model2_tmp = new BVH_t(*model2);
         Transform3s tf2_tmp = tf2;
 
         bool success = initialize(node, *model1_tmp, tf1_tmp, *model2_tmp,
@@ -624,7 +624,7 @@ struct mesh_mesh_run_test {
 //
 BOOST_AUTO_TEST_CASE(mesh_mesh) {
   std::vector<Transform3s> transforms;
-  CoalScalar extents[] = {-3000, -3000, 0, 3000, 3000, 3000};
+  Scalar extents[] = {-3000, -3000, 0, 3000, 3000, 3000};
 #ifndef NDEBUG  // if debug mode
   std::size_t n = 1;
 #else
@@ -648,14 +648,14 @@ BOOST_AUTO_TEST_CASE(mesh_mesh) {
   mesh_mesh_run_test runner(
       transforms, CollisionRequest(CONTACT, (size_t)num_max_contacts));
   runner.enable_statistics = true;
-  boost::mpl::for_each<BVs_t, wrap<boost::mpl::placeholders::_1> >(runner);
+  boost::mpl::for_each<BVs_t, wrap<boost::mpl::placeholders::_1>>(runner);
 
   COAL_COMPILER_DIAGNOSTIC_POP
 }
 
 BOOST_AUTO_TEST_CASE(mesh_mesh_benchmark) {
   std::vector<Transform3s> transforms;
-  CoalScalar extents[] = {-3000, -3000, 0, 3000, 3000, 3000};
+  Scalar extents[] = {-3000, -3000, 0, 3000, 3000, 3000};
 #ifndef NDEBUG
   std::size_t n = 0;
 #else
@@ -684,14 +684,14 @@ BOOST_AUTO_TEST_CASE(mesh_mesh_benchmark) {
   mesh_mesh_run_test runner1(transforms, CollisionRequest());
   runner1.enable_statistics = false;
   runner1.benchmark = true;
-  boost::mpl::for_each<BVs_t, wrap<boost::mpl::placeholders::_1> >(runner1);
+  boost::mpl::for_each<BVs_t, wrap<boost::mpl::placeholders::_1>>(runner1);
 
   // with lower bound.
   mesh_mesh_run_test runner2(transforms,
                              CollisionRequest(DISTANCE_LOWER_BOUND, 1));
   runner2.enable_statistics = false;
   runner2.benchmark = true;
-  boost::mpl::for_each<BVs_t, wrap<boost::mpl::placeholders::_1> >(runner2);
+  boost::mpl::for_each<BVs_t, wrap<boost::mpl::placeholders::_1>>(runner2);
 
   bench_stream = NULL;
   ofs.close();

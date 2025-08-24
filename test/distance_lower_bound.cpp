@@ -47,7 +47,6 @@
 #include "fcl_resources/config.h"
 
 using coal::BVHModel;
-using coal::CoalScalar;
 using coal::CollisionGeometryPtr_t;
 using coal::CollisionObject;
 using coal::CollisionRequest;
@@ -55,15 +54,16 @@ using coal::CollisionResult;
 using coal::DistanceRequest;
 using coal::DistanceResult;
 using coal::OBBRSS;
+using coal::Scalar;
 using coal::shared_ptr;
 using coal::Transform3s;
-using coal::Triangle;
+using coal::Triangle32;
 using coal::Vec3s;
 
 bool testDistanceLowerBound(const Transform3s& tf,
                             const CollisionGeometryPtr_t& m1,
                             const CollisionGeometryPtr_t& m2,
-                            CoalScalar& distance) {
+                            Scalar& distance) {
   Transform3s pose1(tf), pose2;
 
   CollisionRequest request;
@@ -94,7 +94,7 @@ bool testCollide(const Transform3s& tf, const CollisionGeometryPtr_t& m1,
 }
 
 bool testDistance(const Transform3s& tf, const CollisionGeometryPtr_t& m1,
-                  const CollisionGeometryPtr_t& m2, CoalScalar& distance) {
+                  const CollisionGeometryPtr_t& m2, Scalar& distance) {
   Transform3s pose1(tf), pose2;
 
   DistanceRequest request;
@@ -114,7 +114,7 @@ bool testDistance(const Transform3s& tf, const CollisionGeometryPtr_t& m1,
 
 BOOST_AUTO_TEST_CASE(mesh_mesh) {
   std::vector<Vec3s> p1, p2;
-  std::vector<Triangle> t1, t2;
+  std::vector<Triangle32> t1, t2;
   boost::filesystem::path path(TEST_RESOURCES_DIR);
 
   loadOBJFile((path / "env.obj").string().c_str(), p1, t1);
@@ -132,14 +132,14 @@ BOOST_AUTO_TEST_CASE(mesh_mesh) {
   m2->endModel();
 
   std::vector<Transform3s> transforms;
-  CoalScalar extents[] = {-3000, -3000, 0, 3000, 3000, 3000};
+  Scalar extents[] = {-3000, -3000, 0, 3000, 3000, 3000};
   std::size_t n = 100;
 
   generateRandomTransforms(extents, transforms, n);
 
   // collision
   for (std::size_t i = 0; i < transforms.size(); ++i) {
-    CoalScalar distanceLowerBound, distance;
+    Scalar distanceLowerBound, distance;
     bool col1, col2, col3;
     col1 = testDistanceLowerBound(transforms[i], m1, m2, distanceLowerBound);
     col2 = testDistance(transforms[i], m1, m2, distance);
@@ -167,12 +167,12 @@ BOOST_AUTO_TEST_CASE(box_sphere) {
   M2.setIdentity();
 
   std::vector<Transform3s> transforms;
-  CoalScalar extents[] = {-2., -2., -2., 2., 2., 2.};
+  Scalar extents[] = {-2., -2., -2., 2., 2., 2.};
   const std::size_t n = 1000;
 
   generateRandomTransforms(extents, transforms, n);
 
-  CoalScalar distanceLowerBound, distance;
+  Scalar distanceLowerBound, distance;
   bool col1, col2;
   col1 = testDistanceLowerBound(M1, sphere, box, distanceLowerBound);
   col2 = testDistance(M1, sphere, box, distance);
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(box_sphere) {
   BOOST_CHECK(distanceLowerBound <= distance);
 
   for (std::size_t i = 0; i < transforms.size(); ++i) {
-    CoalScalar distanceLowerBound, distance;
+    Scalar distanceLowerBound, distance;
     bool col1, col2;
     col1 =
         testDistanceLowerBound(transforms[i], sphere, box, distanceLowerBound);
@@ -204,12 +204,12 @@ BOOST_AUTO_TEST_CASE(sphere_sphere) {
   M2.setIdentity();
 
   std::vector<Transform3s> transforms;
-  CoalScalar extents[] = {-2., -2., -2., 2., 2., 2.};
+  Scalar extents[] = {-2., -2., -2., 2., 2., 2.};
   const std::size_t n = 1000;
 
   generateRandomTransforms(extents, transforms, n);
 
-  CoalScalar distanceLowerBound, distance;
+  Scalar distanceLowerBound, distance;
   bool col1, col2;
   col1 = testDistanceLowerBound(M1, sphere1, sphere2, distanceLowerBound);
   col2 = testDistance(M1, sphere1, sphere2, distance);
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(sphere_sphere) {
   BOOST_CHECK(distanceLowerBound <= distance);
 
   for (std::size_t i = 0; i < transforms.size(); ++i) {
-    CoalScalar distanceLowerBound, distance;
+    Scalar distanceLowerBound, distance;
     bool col1, col2;
     col1 = testDistanceLowerBound(transforms[i], sphere1, sphere2,
                                   distanceLowerBound);
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE(sphere_sphere) {
 
 BOOST_AUTO_TEST_CASE(box_mesh) {
   std::vector<Vec3s> p1;
-  std::vector<Triangle> t1;
+  std::vector<Triangle32> t1;
   boost::filesystem::path path(TEST_RESOURCES_DIR);
 
   loadOBJFile((path / "env.obj").string().c_str(), p1, t1);
@@ -246,14 +246,14 @@ BOOST_AUTO_TEST_CASE(box_mesh) {
   m1->endModel();
 
   std::vector<Transform3s> transforms;
-  CoalScalar extents[] = {-3000, -3000, 0, 3000, 3000, 3000};
+  Scalar extents[] = {-3000, -3000, 0, 3000, 3000, 3000};
   std::size_t n = 100;
 
   generateRandomTransforms(extents, transforms, n);
 
   // collision
   for (std::size_t i = 0; i < transforms.size(); ++i) {
-    CoalScalar distanceLowerBound, distance;
+    Scalar distanceLowerBound, distance;
     bool col1, col2;
     col1 = testDistanceLowerBound(transforms[i], m1, m2, distanceLowerBound);
     col2 = testDistance(transforms[i], m1, m2, distance);

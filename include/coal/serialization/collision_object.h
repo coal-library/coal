@@ -48,7 +48,7 @@ template <typename BV>
 class HeightField;
 
 template <typename PolygonT>
-class Convex;
+class ConvexTpl;
 
 struct OBB;
 struct OBBRSS;
@@ -83,7 +83,7 @@ struct register_type<CollisionGeometry> {
     ar.template register_type<HeightField<OBB>>();
     ar.template register_type<HeightField<OBBRSS>>();
     ar.template register_type<HeightField<AABB>>();
-    ar.template register_type<Convex<Triangle>>();
+    ar.template register_type<ConvexTpl<Triangle32>>();
     ;
   }
 };

@@ -1,6 +1,0 @@
-[submodule "cmake"]
-	path = cmake
-	url = https://github.com/jrl-umi3218/jrl-cmakemodules.git
-[submodule "third-parties/qhull"]
-	path = third-parties/qhull
-	url = https://github.com/qhull/qhull.git

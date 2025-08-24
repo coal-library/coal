@@ -55,7 +55,7 @@ class COAL_DLLAPI kIOS {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     Vec3s o;
-    CoalScalar r;
+    Scalar r;
 
     bool operator==(const kIOS_Sphere& other) const {
       return o == other.o && r == other.r;
@@ -70,8 +70,8 @@ class COAL_DLLAPI kIOS {
   static kIOS_Sphere encloseSphere(const kIOS_Sphere& s0,
                                    const kIOS_Sphere& s1) {
     Vec3s d = s1.o - s0.o;
-    CoalScalar dist2 = d.squaredNorm();
-    CoalScalar diff_r = s1.r - s0.r;
+    Scalar dist2 = d.squaredNorm();
+    Scalar diff_r = s1.r - s0.r;
 
     /** The sphere with the larger radius encloses the other */
     if (diff_r * diff_r >= dist2) {
@@ -93,8 +93,6 @@ class COAL_DLLAPI kIOS {
   }
 
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   /// @brief Equality operator
   bool operator==(const kIOS& other) const {
     bool res = obb == other.obb && num_spheres == other.num_spheres;
@@ -129,11 +127,10 @@ class COAL_DLLAPI kIOS {
 
   /// @brief Check collision between two kIOS
   bool overlap(const kIOS& other, const CollisionRequest&,
-               CoalScalar& sqrDistLowerBound) const;
+               Scalar& sqrDistLowerBound) const;
 
   /// @brief The distance between two kIOS
-  CoalScalar distance(const kIOS& other, Vec3s* P = NULL,
-                      Vec3s* Q = NULL) const;
+  Scalar distance(const kIOS& other, Vec3s* P = NULL, Vec3s* Q = NULL) const;
 
   /// @brief A simple way to merge the kIOS and a point
   kIOS& operator+=(const Vec3s& p);
@@ -148,23 +145,28 @@ class COAL_DLLAPI kIOS {
   kIOS operator+(const kIOS& other) const;
 
   /// @brief size of the kIOS (used in BV_Splitter to order two kIOSs)
-  CoalScalar size() const;
+  Scalar size() const;
 
   /// @brief Center of the kIOS
   const Vec3s& center() const { return spheres[0].o; }
 
   /// @brief Width of the kIOS
-  CoalScalar width() const;
+  Scalar width() const;
 
   /// @brief Height of the kIOS
-  CoalScalar height() const;
+  Scalar height() const;
 
   /// @brief Depth of the kIOS
-  CoalScalar depth() const;
+  Scalar depth() const;
 
   /// @brief Volume of the kIOS
-  CoalScalar volume() const;
+  Scalar volume() const;
+
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
+
+/** @} */  // end of Bounding_Volume
 
 /// @brief Translate the kIOS BV
 COAL_DLLAPI kIOS translate(const kIOS& bv, const Vec3s& t);
@@ -180,13 +182,12 @@ COAL_DLLAPI bool overlap(const Matrix3s& R0, const Vec3s& T0, const kIOS& b1,
 /// @todo Not efficient
 COAL_DLLAPI bool overlap(const Matrix3s& R0, const Vec3s& T0, const kIOS& b1,
                          const kIOS& b2, const CollisionRequest& request,
-                         CoalScalar& sqrDistLowerBound);
+                         Scalar& sqrDistLowerBound);
 
 /// @brief Approximate distance between two kIOS bounding volumes
 /// @todo P and Q is not returned, need implementation
-COAL_DLLAPI CoalScalar distance(const Matrix3s& R0, const Vec3s& T0,
-                                const kIOS& b1, const kIOS& b2, Vec3s* P = NULL,
-                                Vec3s* Q = NULL);
+COAL_DLLAPI Scalar distance(const Matrix3s& R0, const Vec3s& T0, const kIOS& b1,
+                            const kIOS& b2, Vec3s* P = NULL, Vec3s* Q = NULL);
 
 }  // namespace coal
 

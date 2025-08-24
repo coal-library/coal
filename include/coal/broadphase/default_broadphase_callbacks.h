@@ -189,7 +189,7 @@ bool defaultCollisionFunction(CollisionObject* o1, CollisionObject* o2,
 /// @return `true` if the broadphase evaluation should stop.
 /// @tparam S   The scalar type with which the computation will be performed.
 bool defaultDistanceFunction(CollisionObject* o1, CollisionObject* o2,
-                             void* data, CoalScalar& dist);
+                             void* data, Scalar& dist);
 
 /// @brief Default collision callback to check collision between collision
 /// objects.
@@ -212,7 +212,7 @@ struct COAL_DLLAPI DistanceCallBackDefault : DistanceCallBackBase {
   /// Clears the distance result and sets the done boolean to false.
   void init() { data.clear(); }
 
-  bool distance(CollisionObject* o1, CollisionObject* o2, CoalScalar& dist);
+  bool distance(CollisionObject* o1, CollisionObject* o2, Scalar& dist);
 
   DistanceData data;
 

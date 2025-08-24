@@ -5,24 +5,20 @@ on:
     paths-ignore:
       - .gitlab-ci.yml
       - .gitignore
-      - '*.md'
+      - '**.md'
       - CITATION.*
       - LICENSE
       - colcon.pkg
       - .pre-commit-config.yaml
-      - CHANGELOG.md
-      - development/*.md
   pull_request:
     paths-ignore:
       - .gitlab-ci.yml
       - .gitignore
-      - '*.md'
+      - '**.md'
       - CITATION.*
       - LICENSE
       - colcon.pkg
       - .pre-commit-config.yaml
-      - CHANGELOG.md
-      - development/*.md
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -41,7 +37,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, macos-13]
-        environment: [all, all-python-oldest]
+        environment: [all, all-python-oldest, all-boost-python]
         build_type: [Release, Debug]
         cxx_options: ['', '-mavx2']
         exclude:
@@ -75,7 +71,7 @@ jobs:
         key: ccache-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.cxx_options }}-${{ matrix.environment }}-${{ github.sha }}
         restore-keys: ccache-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.cxx_options }}-${{ matrix.environment }}-
 
-    - uses: prefix-dev/setup-pixi@v0.8.1
+    - uses: prefix-dev/setup-pixi@v0.8.14
       with:
         cache: true
         environments: ${{ matrix.environment }}
@@ -92,6 +88,35 @@ jobs:
       if: ${{ ! (contains(matrix.os, 'windows') && matrix.build_type == 'Debug') }}
       run: |
         pixi run -e ${{ matrix.environment }} ctest --test-dir build --output-on-failure
+
+    # Following steps will modify the pixi environment
+    - name: Build Coal cpp [MacOS/Linux/Windows]
+      env:
+        CMAKE_BUILD_PARALLEL_LEVEL: 2
+        COAL_BUILD_TYPE: ${{ matrix.build_type }}
+        COAL_CXX_FLAGS: ${{ matrix.cxx_options }}
+      shell: bash -el {0}
+      run: |
+        pixi run -e ${{ matrix.environment }} configure \
+          -DBUILD_PYTHON_INTERFACE=OFF \
+          -B build_cpp
+        pixi run -e ${{ matrix.environment }} cmake --build build_cpp --target all
+        pixi run -e ${{ matrix.environment }} cmake --install build_cpp
+
+    - name: Build Coal standalone python [MacOS/Linux/Windows]
+      env:
+        CMAKE_BUILD_PARALLEL_LEVEL: 2
+        COAL_BUILD_TYPE: ${{ matrix.build_type }}
+        COAL_CXX_FLAGS: ${{ matrix.cxx_options }}
+      shell: bash -el {0}
+      run: |
+        pixi run -e ${{ matrix.environment }} configure \
+          -DBUILD_PYTHON_INTERFACE=ON \
+          -DBUILD_STANDALONE_PYTHON_INTERFACE=ON \
+          -B build_python
+        pixi run -e ${{ matrix.environment }} cmake --build build_python --target all
+        pixi run -e ${{ matrix.environment }} cmake --install build_python
+        pixi run -e ${{ matrix.environment }} python -c "import coal"
 
   check:
     if: always()

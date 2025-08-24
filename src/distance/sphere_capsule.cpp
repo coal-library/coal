@@ -39,28 +39,34 @@
 #include "coal/internal/shape_shape_func.h"
 #include "../narrowphase/details.h"
 
+#include "coal/tracy.hh"
+
 namespace coal {
 struct GJKSolver;
 
 namespace internal {
 template <>
-CoalScalar ShapeShapeDistance<Sphere, Capsule>(
+Scalar ShapeShapeDistance<Sphere, Capsule>(
     const CollisionGeometry* o1, const Transform3s& tf1,
     const CollisionGeometry* o2, const Transform3s& tf2, const GJKSolver*,
     const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+  COAL_TRACY_ZONE_SCOPED_N(
+      "coal::internal::ShapeShapeDistance<Sphere, Capsule>");
   const Sphere& s1 = static_cast<const Sphere&>(*o1);
   const Capsule& s2 = static_cast<const Capsule&>(*o2);
   return details::sphereCapsuleDistance(s1, tf1, s2, tf2, p1, p2, normal);
 }
 
 template <>
-CoalScalar ShapeShapeDistance<Capsule, Sphere>(
+Scalar ShapeShapeDistance<Capsule, Sphere>(
     const CollisionGeometry* o1, const Transform3s& tf1,
     const CollisionGeometry* o2, const Transform3s& tf2, const GJKSolver*,
     const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+  COAL_TRACY_ZONE_SCOPED_N(
+      "coal::internal::ShapeShapeDistance<Capsule, Sphere>");
   const Capsule& s1 = static_cast<const Capsule&>(*o1);
   const Sphere& s2 = static_cast<const Sphere&>(*o2);
-  const CoalScalar distance =
+  const Scalar distance =
       details::sphereCapsuleDistance(s2, tf2, s1, tf1, p2, p1, normal);
   normal = -normal;
   return distance;

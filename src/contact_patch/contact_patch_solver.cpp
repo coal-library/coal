@@ -46,10 +46,42 @@ template <typename ShapeType,
 void getShapeSupportSetTpl(const ShapeBase* shape, SupportSet& support_set,
                            int& hint, ShapeSupportData& support_data,
                            size_t num_sampled_supports = 6,
-                           CoalScalar tol = 1e-3) {
+                           Scalar tol = Scalar(1e-3)) {
   const ShapeType* shape_ = static_cast<const ShapeType*>(shape);
   getShapeSupportSet<_SupportOptions>(shape_, support_set, hint, support_data,
                                       num_sampled_supports, tol);
+}
+
+/// @brief Templated shape support set functions for ConvexBase.
+template <typename IndexType,
+          int _SupportOptions = SupportOptions::NoSweptSphere>
+void getConvexBaseSupportSetTpl(const ShapeBase* shape, SupportSet& support_set,
+                                int& hint, ShapeSupportData& support_data,
+                                size_t num_sampled_supports = 6,
+                                Scalar tol = Scalar(1e-3)) {
+  const ConvexBaseTpl<IndexType>* convex =
+      static_cast<const ConvexBaseTpl<IndexType>*>(shape);
+
+  if (support_data.polygon.capacity() <
+      ::coal::ContactPatchSolver::default_num_preallocated_supports) {
+    support_data.polygon.reserve(
+        ::coal::ContactPatchSolver::default_num_preallocated_supports);
+  }
+
+  if ((size_t)(convex->num_points) >
+      ConvexBaseTpl<IndexType>::num_vertices_large_convex_threshold) {
+    const LargeConvex<IndexType>* convex_ =
+        static_cast<const LargeConvex<IndexType>*>(convex);
+    support_data.visited.assign(convex_->num_points, false);
+    support_data.last_dir.setZero();
+    return getShapeSupportSet<_SupportOptions>(
+        convex_, support_set, hint, support_data, num_sampled_supports, tol);
+  } else {
+    const SmallConvex<IndexType>* convex_ =
+        static_cast<const SmallConvex<IndexType>*>(convex);
+    return getShapeSupportSet<_SupportOptions>(
+        convex_, support_set, hint, support_data, num_sampled_supports, tol);
+  }
 }
 
 }  // namespace details
@@ -81,22 +113,12 @@ ContactPatchSolver::makeSupportSetFunction(const ShapeBase* shape,
       return details::getShapeSupportSetTpl<Cone, Options::NoSweptSphere>;
     case GEOM_CYLINDER:
       return details::getShapeSupportSetTpl<Cylinder, Options::NoSweptSphere>;
-    case GEOM_CONVEX: {
-      const ConvexBase* convex = static_cast<const ConvexBase*>(shape);
-      if (support_data.polygon.capacity() < default_num_preallocated_supports) {
-        support_data.polygon.reserve(default_num_preallocated_supports);
-      }
-      if ((size_t)(convex->num_points) >
-          ConvexBase::num_vertices_large_convex_threshold) {
-        support_data.visited.assign(convex->num_points, false);
-        support_data.last_dir.setZero();
-        return details::getShapeSupportSetTpl<details::LargeConvex,
-                                              Options::NoSweptSphere>;
-      } else {
-        return details::getShapeSupportSetTpl<details::SmallConvex,
-                                              Options::NoSweptSphere>;
-      }
-    }
+    case GEOM_CONVEX16:
+      return details::getConvexBaseSupportSetTpl<Triangle16::IndexType,
+                                                 Options::NoSweptSphere>;
+    case GEOM_CONVEX32:
+      return details::getConvexBaseSupportSetTpl<Triangle32::IndexType,
+                                                 Options::NoSweptSphere>;
     default:
       COAL_THROW_PRETTY("Unsupported geometric shape.", std::logic_error);
   }

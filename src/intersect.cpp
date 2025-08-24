@@ -46,9 +46,9 @@
 namespace coal {
 
 bool Intersect::buildTrianglePlane(const Vec3s& v1, const Vec3s& v2,
-                                   const Vec3s& v3, Vec3s* n, CoalScalar* t) {
+                                   const Vec3s& v3, Vec3s* n, Scalar* t) {
   Vec3s n_ = (v2 - v1).cross(v3 - v1);
-  CoalScalar norm2 = n_.squaredNorm();
+  Scalar norm2 = n_.squaredNorm();
   if (norm2 > 0) {
     *n = n_ / sqrt(norm2);
     *t = n->dot(v1);
@@ -61,7 +61,7 @@ void TriangleDistance::segPoints(const Vec3s& P, const Vec3s& A, const Vec3s& Q,
                                  const Vec3s& B, Vec3s& VEC, Vec3s& X,
                                  Vec3s& Y) {
   Vec3s T;
-  CoalScalar A_dot_A, B_dot_B, A_dot_B, A_dot_T, B_dot_T;
+  Scalar A_dot_A, B_dot_B, A_dot_B, A_dot_T, B_dot_T;
   Vec3s TMP;
 
   T = Q - P;
@@ -74,12 +74,12 @@ void TriangleDistance::segPoints(const Vec3s& P, const Vec3s& A, const Vec3s& Q,
   // t parameterizes ray P,A
   // u parameterizes ray Q,B
 
-  CoalScalar t, u;
+  Scalar t, u;
 
   // compute t for the closest point on ray P,A to
   // ray Q,B
 
-  CoalScalar denom = A_dot_A * B_dot_B - A_dot_B * A_dot_B;
+  Scalar denom = A_dot_A * B_dot_B - A_dot_B * A_dot_B;
 
   t = (A_dot_T * B_dot_B - B_dot_T * A_dot_B) / denom;
 
@@ -153,8 +153,8 @@ void TriangleDistance::segPoints(const Vec3s& P, const Vec3s& A, const Vec3s& Q,
   }
 }
 
-CoalScalar TriangleDistance::sqrTriDistance(const Vec3s S[3], const Vec3s T[3],
-                                            Vec3s& P, Vec3s& Q) {
+Scalar TriangleDistance::sqrTriDistance(const Vec3s S[3], const Vec3s T[3],
+                                        Vec3s& P, Vec3s& Q) {
   // Compute vectors along the 6 sides
 
   Vec3s Sv[3];
@@ -178,7 +178,7 @@ CoalScalar TriangleDistance::sqrTriDistance(const Vec3s S[3], const Vec3s T[3],
   // points found, and whether the triangles were shown disjoint
 
   Vec3s V, Z, minP, minQ;
-  CoalScalar mindd;
+  Scalar mindd;
   int shown_disjoint = 0;
 
   mindd = (S[0] - T[0]).squaredNorm() + 1;  // Set first minimum safely high
@@ -190,7 +190,7 @@ CoalScalar TriangleDistance::sqrTriDistance(const Vec3s S[3], const Vec3s T[3],
       segPoints(S[i], Sv[i], T[j], Tv[j], VEC, P, Q);
 
       V = Q - P;
-      CoalScalar dd = V.dot(V);
+      Scalar dd = V.dot(V);
 
       // Verify this closest point pair only if the distance
       // squared is less than the minimum found thus far.
@@ -201,13 +201,13 @@ CoalScalar TriangleDistance::sqrTriDistance(const Vec3s S[3], const Vec3s T[3],
         mindd = dd;
 
         Z = S[(i + 2) % 3] - P;
-        CoalScalar a = Z.dot(VEC);
+        Scalar a = Z.dot(VEC);
         Z = T[(j + 2) % 3] - Q;
-        CoalScalar b = Z.dot(VEC);
+        Scalar b = Z.dot(VEC);
 
         if ((a <= 0) && (b >= 0)) return dd;
 
-        CoalScalar p = V.dot(VEC);
+        Scalar p = V.dot(VEC);
 
         if (a < 0) a = 0;
         if (b > 0) b = 0;
@@ -233,7 +233,7 @@ CoalScalar TriangleDistance::sqrTriDistance(const Vec3s S[3], const Vec3s T[3],
   // First check for case 1
 
   Vec3s Sn;
-  CoalScalar Snl;
+  Scalar Snl;
 
   Sn = Sv[0].cross(Sv[1]);  // Compute normal to S triangle
   Snl = Sn.dot(Sn);         // Compute square of length of normal
@@ -301,7 +301,7 @@ CoalScalar TriangleDistance::sqrTriDistance(const Vec3s S[3], const Vec3s T[3],
   }
 
   Vec3s Tn;
-  CoalScalar Tnl;
+  Scalar Tnl;
 
   Tn = Tv[0].cross(Tv[1]);
   Tnl = Tn.dot(Tn);
@@ -367,10 +367,10 @@ CoalScalar TriangleDistance::sqrTriDistance(const Vec3s S[3], const Vec3s T[3],
     return 0;
 }
 
-CoalScalar TriangleDistance::sqrTriDistance(const Vec3s& S1, const Vec3s& S2,
-                                            const Vec3s& S3, const Vec3s& T1,
-                                            const Vec3s& T2, const Vec3s& T3,
-                                            Vec3s& P, Vec3s& Q) {
+Scalar TriangleDistance::sqrTriDistance(const Vec3s& S1, const Vec3s& S2,
+                                        const Vec3s& S3, const Vec3s& T1,
+                                        const Vec3s& T2, const Vec3s& T3,
+                                        Vec3s& P, Vec3s& Q) {
   Vec3s S[3];
   Vec3s T[3];
   S[0] = S1;
@@ -383,9 +383,9 @@ CoalScalar TriangleDistance::sqrTriDistance(const Vec3s& S1, const Vec3s& S2,
   return sqrTriDistance(S, T, P, Q);
 }
 
-CoalScalar TriangleDistance::sqrTriDistance(const Vec3s S[3], const Vec3s T[3],
-                                            const Matrix3s& R, const Vec3s& Tl,
-                                            Vec3s& P, Vec3s& Q) {
+Scalar TriangleDistance::sqrTriDistance(const Vec3s S[3], const Vec3s T[3],
+                                        const Matrix3s& R, const Vec3s& Tl,
+                                        Vec3s& P, Vec3s& Q) {
   Vec3s T_transformed[3];
   T_transformed[0] = R * T[0] + Tl;
   T_transformed[1] = R * T[1] + Tl;
@@ -394,9 +394,9 @@ CoalScalar TriangleDistance::sqrTriDistance(const Vec3s S[3], const Vec3s T[3],
   return sqrTriDistance(S, T_transformed, P, Q);
 }
 
-CoalScalar TriangleDistance::sqrTriDistance(const Vec3s S[3], const Vec3s T[3],
-                                            const Transform3s& tf, Vec3s& P,
-                                            Vec3s& Q) {
+Scalar TriangleDistance::sqrTriDistance(const Vec3s S[3], const Vec3s T[3],
+                                        const Transform3s& tf, Vec3s& P,
+                                        Vec3s& Q) {
   Vec3s T_transformed[3];
   T_transformed[0] = tf.transform(T[0]);
   T_transformed[1] = tf.transform(T[1]);
@@ -405,11 +405,11 @@ CoalScalar TriangleDistance::sqrTriDistance(const Vec3s S[3], const Vec3s T[3],
   return sqrTriDistance(S, T_transformed, P, Q);
 }
 
-CoalScalar TriangleDistance::sqrTriDistance(const Vec3s& S1, const Vec3s& S2,
-                                            const Vec3s& S3, const Vec3s& T1,
-                                            const Vec3s& T2, const Vec3s& T3,
-                                            const Matrix3s& R, const Vec3s& Tl,
-                                            Vec3s& P, Vec3s& Q) {
+Scalar TriangleDistance::sqrTriDistance(const Vec3s& S1, const Vec3s& S2,
+                                        const Vec3s& S3, const Vec3s& T1,
+                                        const Vec3s& T2, const Vec3s& T3,
+                                        const Matrix3s& R, const Vec3s& Tl,
+                                        Vec3s& P, Vec3s& Q) {
   Vec3s T1_transformed = R * T1 + Tl;
   Vec3s T2_transformed = R * T2 + Tl;
   Vec3s T3_transformed = R * T3 + Tl;
@@ -417,291 +417,16 @@ CoalScalar TriangleDistance::sqrTriDistance(const Vec3s& S1, const Vec3s& S2,
                         T3_transformed, P, Q);
 }
 
-CoalScalar TriangleDistance::sqrTriDistance(const Vec3s& S1, const Vec3s& S2,
-                                            const Vec3s& S3, const Vec3s& T1,
-                                            const Vec3s& T2, const Vec3s& T3,
-                                            const Transform3s& tf, Vec3s& P,
-                                            Vec3s& Q) {
+Scalar TriangleDistance::sqrTriDistance(const Vec3s& S1, const Vec3s& S2,
+                                        const Vec3s& S3, const Vec3s& T1,
+                                        const Vec3s& T2, const Vec3s& T3,
+                                        const Transform3s& tf, Vec3s& P,
+                                        Vec3s& Q) {
   Vec3s T1_transformed = tf.transform(T1);
   Vec3s T2_transformed = tf.transform(T2);
   Vec3s T3_transformed = tf.transform(T3);
   return sqrTriDistance(S1, S2, S3, T1_transformed, T2_transformed,
                         T3_transformed, P, Q);
-}
-
-Project::ProjectResult Project::projectLine(const Vec3s& a, const Vec3s& b,
-                                            const Vec3s& p) {
-  ProjectResult res;
-
-  const Vec3s d = b - a;
-  const CoalScalar l = d.squaredNorm();
-
-  if (l > 0) {
-    const CoalScalar t = (p - a).dot(d);
-    res.parameterization[1] = (t >= l) ? 1 : ((t <= 0) ? 0 : (t / l));
-    res.parameterization[0] = 1 - res.parameterization[1];
-    if (t >= l) {
-      res.sqr_distance = (p - b).squaredNorm();
-      res.encode = 2; /* 0x10 */
-    } else if (t <= 0) {
-      res.sqr_distance = (p - a).squaredNorm();
-      res.encode = 1; /* 0x01 */
-    } else {
-      res.sqr_distance = (a + d * res.parameterization[1] - p).squaredNorm();
-      res.encode = 3; /* 0x00 */
-    }
-  }
-
-  return res;
-}
-
-Project::ProjectResult Project::projectTriangle(const Vec3s& a, const Vec3s& b,
-                                                const Vec3s& c,
-                                                const Vec3s& p) {
-  ProjectResult res;
-
-  static const size_t nexti[3] = {1, 2, 0};
-  const Vec3s* vt[] = {&a, &b, &c};
-  const Vec3s dl[] = {a - b, b - c, c - a};
-  const Vec3s& n = dl[0].cross(dl[1]);
-  const CoalScalar l = n.squaredNorm();
-
-  if (l > 0) {
-    CoalScalar mindist = -1;
-    for (size_t i = 0; i < 3; ++i) {
-      if ((*vt[i] - p).dot(dl[i].cross(n)) >
-          0)  // origin is to the outside part of the triangle edge, then the
-              // optimal can only be on the edge
-      {
-        size_t j = nexti[i];
-        ProjectResult res_line = projectLine(*vt[i], *vt[j], p);
-
-        if (mindist < 0 || res_line.sqr_distance < mindist) {
-          mindist = res_line.sqr_distance;
-          res.encode =
-              static_cast<unsigned int>(((res_line.encode & 1) ? 1 << i : 0) +
-                                        ((res_line.encode & 2) ? 1 << j : 0));
-          res.parameterization[i] = res_line.parameterization[0];
-          res.parameterization[j] = res_line.parameterization[1];
-          res.parameterization[nexti[j]] = 0;
-        }
-      }
-    }
-
-    if (mindist < 0)  // the origin project is within the triangle
-    {
-      CoalScalar d = (a - p).dot(n);
-      CoalScalar s = sqrt(l);
-      Vec3s p_to_project = n * (d / l);
-      mindist = p_to_project.squaredNorm();
-      res.encode = 7;  // m = 0x111
-      res.parameterization[0] = dl[1].cross(b - p - p_to_project).norm() / s;
-      res.parameterization[1] = dl[2].cross(c - p - p_to_project).norm() / s;
-      res.parameterization[2] =
-          1 - res.parameterization[0] - res.parameterization[1];
-    }
-
-    res.sqr_distance = mindist;
-  }
-
-  return res;
-}
-
-Project::ProjectResult Project::projectTetrahedra(const Vec3s& a,
-                                                  const Vec3s& b,
-                                                  const Vec3s& c,
-                                                  const Vec3s& d,
-                                                  const Vec3s& p) {
-  ProjectResult res;
-
-  static const size_t nexti[] = {1, 2, 0};
-  const Vec3s* vt[] = {&a, &b, &c, &d};
-  const Vec3s dl[3] = {a - d, b - d, c - d};
-  CoalScalar vl = triple(dl[0], dl[1], dl[2]);
-  bool ng = (vl * (a - p).dot((b - c).cross(a - b))) <= 0;
-  if (ng &&
-      std::abs(vl) > 0)  // abs(vl) == 0, the tetrahedron is degenerated; if ng
-                         // is false, then the last vertex in the tetrahedron
-                         // does not grow toward the origin (in fact origin is
-                         // on the other side of the abc face)
-  {
-    CoalScalar mindist = -1;
-
-    for (size_t i = 0; i < 3; ++i) {
-      size_t j = nexti[i];
-      CoalScalar s = vl * (d - p).dot(dl[i].cross(dl[j]));
-      if (s > 0)  // the origin is to the outside part of a triangle face, then
-                  // the optimal can only be on the triangle face
-      {
-        ProjectResult res_triangle = projectTriangle(*vt[i], *vt[j], d, p);
-        if (mindist < 0 || res_triangle.sqr_distance < mindist) {
-          mindist = res_triangle.sqr_distance;
-          res.encode =
-              static_cast<unsigned int>((res_triangle.encode & 1 ? 1 << i : 0) +
-                                        (res_triangle.encode & 2 ? 1 << j : 0) +
-                                        (res_triangle.encode & 4 ? 8 : 0));
-          res.parameterization[i] = res_triangle.parameterization[0];
-          res.parameterization[j] = res_triangle.parameterization[1];
-          res.parameterization[nexti[j]] = 0;
-          res.parameterization[3] = res_triangle.parameterization[2];
-        }
-      }
-    }
-
-    if (mindist < 0) {
-      mindist = 0;
-      res.encode = 15;
-      res.parameterization[0] = triple(c - p, b - p, d - p) / vl;
-      res.parameterization[1] = triple(a - p, c - p, d - p) / vl;
-      res.parameterization[2] = triple(b - p, a - p, d - p) / vl;
-      res.parameterization[3] =
-          1 - (res.parameterization[0] + res.parameterization[1] +
-               res.parameterization[2]);
-    }
-
-    res.sqr_distance = mindist;
-  } else if (!ng) {
-    res = projectTriangle(a, b, c, p);
-    res.parameterization[3] = 0;
-  }
-  return res;
-}
-
-Project::ProjectResult Project::projectLineOrigin(const Vec3s& a,
-                                                  const Vec3s& b) {
-  ProjectResult res;
-
-  const Vec3s d = b - a;
-  const CoalScalar l = d.squaredNorm();
-
-  if (l > 0) {
-    const CoalScalar t = -a.dot(d);
-    res.parameterization[1] = (t >= l) ? 1 : ((t <= 0) ? 0 : (t / l));
-    res.parameterization[0] = 1 - res.parameterization[1];
-    if (t >= l) {
-      res.sqr_distance = b.squaredNorm();
-      res.encode = 2; /* 0x10 */
-    } else if (t <= 0) {
-      res.sqr_distance = a.squaredNorm();
-      res.encode = 1; /* 0x01 */
-    } else {
-      res.sqr_distance = (a + d * res.parameterization[1]).squaredNorm();
-      res.encode = 3; /* 0x00 */
-    }
-  }
-
-  return res;
-}
-
-Project::ProjectResult Project::projectTriangleOrigin(const Vec3s& a,
-                                                      const Vec3s& b,
-                                                      const Vec3s& c) {
-  ProjectResult res;
-
-  static const size_t nexti[3] = {1, 2, 0};
-  const Vec3s* vt[] = {&a, &b, &c};
-  const Vec3s dl[] = {a - b, b - c, c - a};
-  const Vec3s& n = dl[0].cross(dl[1]);
-  const CoalScalar l = n.squaredNorm();
-
-  if (l > 0) {
-    CoalScalar mindist = -1;
-    for (size_t i = 0; i < 3; ++i) {
-      if (vt[i]->dot(dl[i].cross(n)) >
-          0)  // origin is to the outside part of the triangle edge, then the
-              // optimal can only be on the edge
-      {
-        size_t j = nexti[i];
-        ProjectResult res_line = projectLineOrigin(*vt[i], *vt[j]);
-
-        if (mindist < 0 || res_line.sqr_distance < mindist) {
-          mindist = res_line.sqr_distance;
-          res.encode =
-              static_cast<unsigned int>(((res_line.encode & 1) ? 1 << i : 0) +
-                                        ((res_line.encode & 2) ? 1 << j : 0));
-          res.parameterization[i] = res_line.parameterization[0];
-          res.parameterization[j] = res_line.parameterization[1];
-          res.parameterization[nexti[j]] = 0;
-        }
-      }
-    }
-
-    if (mindist < 0)  // the origin project is within the triangle
-    {
-      CoalScalar d = a.dot(n);
-      CoalScalar s = sqrt(l);
-      Vec3s o_to_project = n * (d / l);
-      mindist = o_to_project.squaredNorm();
-      res.encode = 7;  // m = 0x111
-      res.parameterization[0] = dl[1].cross(b - o_to_project).norm() / s;
-      res.parameterization[1] = dl[2].cross(c - o_to_project).norm() / s;
-      res.parameterization[2] =
-          1 - res.parameterization[0] - res.parameterization[1];
-    }
-
-    res.sqr_distance = mindist;
-  }
-
-  return res;
-}
-
-Project::ProjectResult Project::projectTetrahedraOrigin(const Vec3s& a,
-                                                        const Vec3s& b,
-                                                        const Vec3s& c,
-                                                        const Vec3s& d) {
-  ProjectResult res;
-
-  static const size_t nexti[] = {1, 2, 0};
-  const Vec3s* vt[] = {&a, &b, &c, &d};
-  const Vec3s dl[3] = {a - d, b - d, c - d};
-  CoalScalar vl = triple(dl[0], dl[1], dl[2]);
-  bool ng = (vl * a.dot((b - c).cross(a - b))) <= 0;
-  if (ng &&
-      std::abs(vl) > 0)  // abs(vl) == 0, the tetrahedron is degenerated; if ng
-                         // is false, then the last vertex in the tetrahedron
-                         // does not grow toward the origin (in fact origin is
-                         // on the other side of the abc face)
-  {
-    CoalScalar mindist = -1;
-
-    for (size_t i = 0; i < 3; ++i) {
-      size_t j = nexti[i];
-      CoalScalar s = vl * d.dot(dl[i].cross(dl[j]));
-      if (s > 0)  // the origin is to the outside part of a triangle face, then
-                  // the optimal can only be on the triangle face
-      {
-        ProjectResult res_triangle = projectTriangleOrigin(*vt[i], *vt[j], d);
-        if (mindist < 0 || res_triangle.sqr_distance < mindist) {
-          mindist = res_triangle.sqr_distance;
-          res.encode =
-              static_cast<unsigned int>((res_triangle.encode & 1 ? 1 << i : 0) +
-                                        (res_triangle.encode & 2 ? 1 << j : 0) +
-                                        (res_triangle.encode & 4 ? 8 : 0));
-          res.parameterization[i] = res_triangle.parameterization[0];
-          res.parameterization[j] = res_triangle.parameterization[1];
-          res.parameterization[nexti[j]] = 0;
-          res.parameterization[3] = res_triangle.parameterization[2];
-        }
-      }
-    }
-
-    if (mindist < 0) {
-      mindist = 0;
-      res.encode = 15;
-      res.parameterization[0] = triple(c, b, d) / vl;
-      res.parameterization[1] = triple(a, c, d) / vl;
-      res.parameterization[2] = triple(b, a, d) / vl;
-      res.parameterization[3] =
-          1 - (res.parameterization[0] + res.parameterization[1] +
-               res.parameterization[2]);
-    }
-
-    res.sqr_distance = mindist;
-  } else if (!ng) {
-    res = projectTriangleOrigin(a, b, c);
-    res.parameterization[3] = 0;
-  }
-  return res;
 }
 
 }  // namespace coal

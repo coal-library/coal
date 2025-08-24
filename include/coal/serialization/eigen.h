@@ -45,6 +45,37 @@ struct traits<boost::serialization::U> {
 #endif
 #endif
 
+// There is the same kind of bug with CL when building
+// nanobind bindings.
+// This doesn't happen when building Boost.Python bindings.
+// We only activate the workaround when C++17 is enable since
+// it's mandatory to build nanobind.
+#if defined(_MSVC_LANG) && _MSVC_LANG >= 201703L
+namespace boost {
+namespace archive {
+class xml_iarchive;
+class text_iarchive;
+class binary_iarchive;
+}  // namespace archive
+}  // namespace boost
+namespace Eigen {
+namespace internal {
+template <>
+struct traits<boost::archive::xml_iarchive> {
+  enum { Flags = 0 };
+};
+template <>
+struct traits<boost::archive::text_iarchive> {
+  enum { Flags = 0 };
+};
+template <>
+struct traits<boost::archive::binary_iarchive> {
+  enum { Flags = 0 };
+};
+}  // namespace internal
+}  // namespace Eigen
+#endif
+
 namespace boost {
 namespace serialization {
 
