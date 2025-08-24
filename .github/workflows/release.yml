@@ -12,7 +12,7 @@ on:
 
 env:
   CMEEL_LOG_LEVEL: DEBUG
-  DEPS: numpy cmeel-boost~=1.87.0 cmeel-eigen cmeel-assimp cmeel-octomap cmeel-qhull eigenpy[build]
+  DEPS: cmeel-boost~=1.89.0 cmeel-eigen cmeel-assimp cmeel-octomap cmeel-qhull eigenpy[build] jrl-cmakemodules libcoal numpy
   PROJECT: coal
 
 jobs:
