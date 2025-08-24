@@ -7,7 +7,7 @@ requires = [
   "cmeel-qhull >= 8.0.2.1, < 8.0.3",
   "cmeel[build]",
   "cmeel-eigen",
-  "eigenpy[build] >= 3.12, < 4"
+  "eigenpy[build] >= 3.12, < 4",
   "jrl-cmakemodules",
   "libcoal",
 ]
@@ -18,7 +18,7 @@ dependencies = [
   "cmeel-boost ~= 1.89.0",
   "cmeel-octomap >= 1.9.8.2, < 2",
   "cmeel-qhull >= 8.0.2.1, < 8.0.3",
-  "eigenpy >= 3.12, < 4"
+  "eigenpy >= 3.12, < 4",
   "libcoal",
 ]
 description = "An extension of the Flexible Collision Library"
