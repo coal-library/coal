@@ -176,7 +176,7 @@ MODERNIZE_TARGET_LINK_LIBRARIES(
 
 target_link_libraries(
   ${LIBRARY_NAME}
-  PUBLIC Boost::serialization Boost::chrono Boost::filesystem
+  PUBLIC Boost::serialization Boost::filesystem
 )
 
 if(COAL_ENABLE_LOGGING)
@@ -198,10 +198,6 @@ if(COAL_BUILD_WITH_TRACY)
 endif()
 
 if(WIN32)
-  target_link_libraries(
-    ${LIBRARY_NAME}
-    INTERFACE Boost::thread Boost::date_time
-  )
   # There is an issue with MSVC 2017 and Eigen (due to std::aligned_storage).
   # See https://github.com/ceres-solver/ceres-solver/issues/481
   target_compile_definitions(
