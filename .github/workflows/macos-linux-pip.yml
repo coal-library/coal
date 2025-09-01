@@ -41,7 +41,7 @@ jobs:
           - os: "macos"
             python-version: "3.8"  # Not available on arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: 'true'
       - uses: actions/setup-python@v5
