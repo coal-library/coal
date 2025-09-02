@@ -297,38 +297,6 @@ bool leafCollide(CollisionObject* o1, CollisionObject* o2,
 //==============================================================================
 bool nodeCollide(DynamicAABBTreeCollisionManager::DynamicAABBNode* node1,
                  DynamicAABBTreeCollisionManager::DynamicAABBNode* node2) {
-  // This function assumes that at least node1 or node2 is not a leaf of the
-  // tree.
-  if (node1->isLeaf()) {
-    CollisionObject* o1 = static_cast<CollisionObject*>(node1->data);
-    if (o1->getNodeType() == GEOM_HALFSPACE ||
-        o1->getNodeType() == GEOM_PLANE) {
-      if (o1->getNodeType() == GEOM_HALFSPACE) {
-        const auto& halfspace =
-            static_cast<const Halfspace&>(*(o1->collisionGeometryPtr()));
-        return node2->bv.overlap(transform(halfspace, o1->getTransform()));
-      }
-      const auto& plane =
-          static_cast<const Plane&>(*(o1->collisionGeometryPtr()));
-      return node2->bv.overlap(transform(plane, o1->getTransform()));
-    }
-  }
-
-  if (node2->isLeaf()) {
-    CollisionObject* o2 = static_cast<CollisionObject*>(node2->data);
-    if (o2->getNodeType() == GEOM_HALFSPACE ||
-        o2->getNodeType() == GEOM_PLANE) {
-      if (o2->getNodeType() == GEOM_HALFSPACE) {
-        const auto& halfspace =
-            static_cast<const Halfspace&>(*(o2->collisionGeometryPtr()));
-        return node1->bv.overlap(transform(halfspace, o2->getTransform()));
-      }
-      const auto& plane =
-          static_cast<const Plane&>(*(o2->collisionGeometryPtr()));
-      return node1->bv.overlap(transform(plane, o2->getTransform()));
-    }
-  }
-
   return node1->bv.overlap(node2->bv);
 }
 
