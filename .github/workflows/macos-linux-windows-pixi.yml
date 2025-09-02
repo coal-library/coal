@@ -71,7 +71,7 @@ jobs:
         key: ccache-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.cxx_options }}-${{ matrix.environment }}-${{ github.sha }}
         restore-keys: ccache-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.cxx_options }}-${{ matrix.environment }}-
 
-    - uses: prefix-dev/setup-pixi@v0.8.14
+    - uses: prefix-dev/setup-pixi@v0.9.0
       with:
         cache: true
         environments: ${{ matrix.environment }}
