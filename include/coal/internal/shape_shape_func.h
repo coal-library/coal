@@ -146,7 +146,6 @@ struct ShapeShapeCollider {
     Scalar distance = internal::ShapeShapeDistance<ShapeType1, ShapeType2>(
         o1, tf1, o2, tf2, nsolver, compute_penetration, p1, p2, normal);
 
-    size_t num_contacts = 0;
     const Scalar distToCollision = distance - request.security_margin;
 
     internal::updateDistanceLowerBoundFromLeaf(request, result, distToCollision,
@@ -158,10 +157,9 @@ struct ShapeShapeCollider {
                         distance);
         result.addContact(contact);
       }
-      num_contacts = result.numContacts();
     }
 
-    return num_contacts;
+    return result.numContacts();
   }
 };
 
