@@ -641,8 +641,11 @@ class COAL_DLLAPI OcTreeSolver {
                         (int)Contact::NONE, c1, c2, -normal, distance));
           }
         }
-      } else
-        sqrDistLowerBound = distToCollision * distToCollision;
+      } else {
+        Scalar sqrDistLowerBound_ = distToCollision * distToCollision;
+        if (sqrDistLowerBound_ < sqrDistLowerBound)
+          sqrDistLowerBound = sqrDistLowerBound_;
+      }
 
       //    const Vec3s c1 = contact_point - distance * 0.5 * normal;
       //    const Vec3s c2 = contact_point + distance * 0.5 * normal;
@@ -761,8 +764,11 @@ class COAL_DLLAPI OcTreeSolver {
                                         normal, distance));
           }
         }
-      } else
-        sqrDistLowerBound = distToCollision * distToCollision;
+      } else {
+        Scalar sqrDistLowerBound_ = distToCollision * distToCollision;
+        if (sqrDistLowerBound_ < sqrDistLowerBound)
+          sqrDistLowerBound = sqrDistLowerBound_;
+      }
 
       //    const Vec3s c1 = contact_point - distance * 0.5 * normal;
       //    const Vec3s c2 = contact_point + distance * 0.5 * normal;

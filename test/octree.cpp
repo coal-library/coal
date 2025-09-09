@@ -262,7 +262,8 @@ BOOST_AUTO_TEST_CASE(octree_height_field) {
                      utf::master_test_suite().argv, N);
 
   generateRandomTransforms(extents, transforms, 2 * N);
-  CollisionRequest request(coal::CONTACT | coal::DISTANCE_LOWER_BOUND, 3);
+  CollisionRequest request(coal::CONTACT | coal::DISTANCE_LOWER_BOUND,
+                           (std::numeric_limits<int>::max)());
   for (std::size_t i = 0; i < N; ++i) {
     CollisionResult resultBox;
     CollisionResult resultHfield1, resultHfield2;
