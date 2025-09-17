@@ -5,8 +5,6 @@ on:
     branches:
       - devel
   pull_request:
-    branches:
-      - devel
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,6 +14,7 @@ jobs:
   nix-full:
     runs-on: "${{ matrix.os }}-latest"
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu, macos]
         py: [bp, nb]
