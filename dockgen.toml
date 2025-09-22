@@ -1,0 +1,7 @@
+[eigenpy]
+url = "github:stack-of-tasks"
+
+[coal]
+url = "."
+apt_deps = ["libassimp-dev", "liboctomap-dev"]
+src_deps = ["eigenpy"]

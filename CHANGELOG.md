@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - CMake: add COAL_DISABLE_HPP_FCL_WARNINGS option ([#709](https://github.com/coal-library/coal/pull/709))
 - CMake: add support for BUILD_STANDALONE_PYTHON_INTERFACE ([#658](https://github.com/coal-library/coal/pull/658))
 - broadphase: add functional API for collision and distance callbacks ([#724](https://github.com/coal-library/coal/pull/724))
+- Docker images `ghcr.io/coal-library/coal` ([#737](https://github.com/coal-library/coal/pull/737))
 
 ### Removed
 - Remove constraints on supported doxygen version to generate the python documentation ([#681](https://github.com/coal-library/coal/pull/681))
