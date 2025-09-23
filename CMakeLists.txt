@@ -79,6 +79,7 @@ option(
   "Build with tracy profiler for performance analysis"
   FALSE
 )
+option(COAL_BUILD_BENCHMARK "Build benchmarks" FALSE)
 
 # Check if the submodule cmake have been initialized
 set(JRL_CMAKE_MODULES "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -523,7 +524,10 @@ if(BUILD_PYTHON_INTERFACE)
 endif()
 if(BUILD_TESTING)
   add_subdirectory(test)
-endif(BUILD_TESTING)
+endif()
+if(COAL_BUILD_BENCHMARK)
+  add_subdirectory(benchmark)
+endif()
 
 PKG_CONFIG_APPEND_LIBS("coal")
 if(COAL_HAS_OCTOMAP)

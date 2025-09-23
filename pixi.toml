@@ -35,10 +35,7 @@ scripts = ["development/scripts/pixi/activation.sh"]
 scripts = ["development/scripts/pixi/activation.bat"]
 
 [tasks]
-# We must avoid to set CMAKE_CXX_FLAGS because of WIN32
-# https://discourse.cmake.org/t/strictly-appending-to-cmake-lang-flags/6478
 configure = { cmd = [
-  "CXXFLAGS=$COAL_CXX_FLAGS",
   "cmake",
   "-G",
   "Ninja",
@@ -52,6 +49,7 @@ configure = { cmd = [
   "-DGENERATE_PYTHON_STUBS=$COAL_PYTHON_STUBS",
   "-DCOAL_HAS_QHULL=$COAL_HAS_QHULL",
   "-DCOAL_PYTHON_NANOBIND=$COAL_PYTHON_NANOBIND",
+  "-DCOAL_BUILD_BENCHMARK=$COAL_BUILD_BENCHMARK",
 ] }
 build = { cmd = "cmake --build build --target all", depends-on = ["configure"] }
 clean = { cmd = "rm -rf build" }
@@ -69,7 +67,6 @@ tomlkit = ">=0.13.2"
 
 [feature.new-version.tasks]
 configure_new_version = { cmd = [
-  "CXXFLAGS=$COAL_CXX_FLAGS",
   "cmake",
   "-G",
   "Ninja",
@@ -103,6 +100,11 @@ activation.env = { COAL_PYTHON_NANOBIND = "OFF" }
 [feature.octomap]
 dependencies = { octomap = ">=1.10" }
 
+# Benchmark support
+[feature.benchmark]
+dependencies = { benchmark = ">=1.9.4" }
+activation = { env = { COAL_BUILD_BENCHMARK = "ON" } }
+
 [feature.python-latest.dependencies]
 python = "3.13.*"
 
@@ -130,6 +132,10 @@ default = { features = ["python-latest"], solve-group = "python-latest" }
 clang = { features = ["clang", "python-latest"] }
 lint = { features = ["lint"], solve-group = "python-latest" }
 qhull = { features = ["qhull", "python-latest"], solve-group = "python-latest" }
+benchmark = { features = [
+  "benchmark",
+  "python-latest",
+], solve-group = "python-latest" }
 octomap = { features = [
   "octomap",
   "python-latest",
@@ -138,23 +144,27 @@ python-oldest = { features = ["python-oldest"], solve-group = "python-oldest" }
 all = { features = [
   "qhull",
   "octomap",
+  "benchmark",
   "python-latest",
 ], solve-group = "python-latest" }
 # No solve-group, because boost.python will be legacy
 all-boost-python = { features = [
   "qhull",
   "octomap",
+  "benchmark",
   "python-latest",
   "boost-python",
-]}
+] }
 all-python-oldest = { features = [
   "qhull",
   "octomap",
+  "benchmark",
   "python-oldest",
 ], solve-group = "python-oldest" }
 all-clang-cl = { features = [
   "qhull",
   "octomap",
+  "benchmark",
   "clang-cl",
   "python-latest",
 ], solve-group = "python-latest" }
