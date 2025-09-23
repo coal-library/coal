@@ -82,8 +82,8 @@ jobs:
       env:
         CMAKE_BUILD_PARALLEL_LEVEL: 2
         COAL_BUILD_TYPE: ${{ matrix.build_type }}
-        COAL_CXX_FLAGS: ${{ matrix.cxx_options }}
       run: |
+        export CXXFLAGS="$CXXFLAGS ${{ matrix.cxx_options }}"
         pixi run -e ${{ matrix.environment }} build
 
     - name: Test Coal [MacOS/Linux/Windows]
@@ -96,9 +96,9 @@ jobs:
       env:
         CMAKE_BUILD_PARALLEL_LEVEL: 2
         COAL_BUILD_TYPE: ${{ matrix.build_type }}
-        COAL_CXX_FLAGS: ${{ matrix.cxx_options }}
       shell: bash -el {0}
       run: |
+        export CXXFLAGS="$CXXFLAGS ${{ matrix.cxx_options }}"
         pixi run -e ${{ matrix.environment }} configure \
           -DBUILD_PYTHON_INTERFACE=OFF \
           -B build_cpp
@@ -109,9 +109,9 @@ jobs:
       env:
         CMAKE_BUILD_PARALLEL_LEVEL: 2
         COAL_BUILD_TYPE: ${{ matrix.build_type }}
-        COAL_CXX_FLAGS: ${{ matrix.cxx_options }}
       shell: bash -el {0}
       run: |
+        export CXXFLAGS="$CXXFLAGS ${{ matrix.cxx_options }}"
         pixi run -e ${{ matrix.environment }} configure \
           -DBUILD_PYTHON_INTERFACE=ON \
           -DBUILD_STANDALONE_PYTHON_INTERFACE=ON \
