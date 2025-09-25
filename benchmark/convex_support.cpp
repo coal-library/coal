@@ -1,7 +1,9 @@
 // TODO
 // code support function with SOA + highway
 
-#include <Eigen/src/Core/util/Macros.h>
+#include <hwy/targets.h>
+#include <hwy/aligned_allocator.h>
+
 #include <benchmark/benchmark.h>
 
 #include <Eigen/Core>
@@ -164,9 +166,10 @@ template <typename _Scalar>
 struct LegacyAlgorithm {
   using Scalar = _Scalar;
   using Vec3 = Eigen::Vector<Scalar, 3>;
+  using Algorithm = LegacyAlgorithm;
 
-  static LegacyAlgorithm fromIcosahedron(const Icosahedron& ico) {
-    LegacyAlgorithm algo;
+  static Algorithm fromIcosahedron(const Icosahedron& ico) {
+    Algorithm algo;
     algo.points.reserve(ico.points.size());
     for (std::size_t i = 0; i < ico.points.size(); ++i) {
       algo.points.push_back(ico.points[i].cast<Scalar>());
@@ -194,9 +197,10 @@ struct SOAFloatEigenAlgorithm {
   using Array4 = Eigen::Array<Scalar, 4, 1>;
   using Mask4 = Eigen::Array<bool, 4, 1>;
   using Vec3 = Eigen::Vector<Scalar, 3>;
+  using Algorithm = SOAFloatEigenAlgorithm;
 
-  static SOAFloatEigenAlgorithm fromIcosahedron(const Icosahedron& ico) {
-    SOAFloatEigenAlgorithm algo;
+  static Algorithm fromIcosahedron(const Icosahedron& ico) {
+    Algorithm algo;
     std::size_t i = 0;
     for (; (i + 4) < ico.points.size(); i += 4) {
       Array4 x, y, z;
@@ -257,6 +261,44 @@ struct SOAFloatEigenAlgorithm {
   std::vector<Vec3> remainder;
 };
 
+namespace coal {
+float support(const float* HWY_RESTRICT x, const float* HWY_RESTRICT y,
+              const float* HWY_RESTRICT z, float x_dir, float y_dir,
+              float z_dir, std::size_t count);
+float support_with_target(const float* HWY_RESTRICT x,
+                          const float* HWY_RESTRICT y,
+                          const float* HWY_RESTRICT z, float x_dir, float y_dir,
+                          float z_dir, std::size_t count, std::int64_t target);
+}  // namespace coal
+
+struct SOAFloatHighwayAlgorithm {
+  using Scalar = float;
+  using Vec3 = Eigen::Vector<Scalar, 3>;
+  using Algorithm = SOAFloatHighwayAlgorithm;
+
+  static Algorithm fromIcosahedron(const Icosahedron& ico) {
+    Algorithm algo;
+    algo.x = hwy::AllocateAligned<Scalar>(ico.points.size());
+    algo.y = hwy::AllocateAligned<Scalar>(ico.points.size());
+    algo.z = hwy::AllocateAligned<Scalar>(ico.points.size());
+    algo.count = ico.points.size();
+    for (std::size_t i = 0; i < ico.points.size(); ++i) {
+      algo.x[i] = static_cast<Scalar>(ico.points[i].x());
+      algo.y[i] = static_cast<Scalar>(ico.points[i].y());
+      algo.z[i] = static_cast<Scalar>(ico.points[i].z());
+    }
+    return algo;
+  }
+
+  Scalar support(const Vec3& dir, std::int64_t target) {
+    return coal::support_with_target(x.get(), y.get(), z.get(), dir.x(),
+                                     dir.y(), dir.z(), count, target);
+  }
+
+  hwy::AlignedFreeUniquePtr<Scalar[]> x, y, z;
+  std::size_t count;
+};
+
 template <typename Scalar>
 static void legacyAlgorithmBench(benchmark::State& state) {
   using Algorithm = LegacyAlgorithm<Scalar>;
@@ -280,13 +322,35 @@ static void SOAFloatEigenAlgorithmBench(benchmark::State& state) {
   }
 }
 
+static void SOAFloatHighwayAlgorithmBench(benchmark::State& state) {
+  using Algorithm = SOAFloatHighwayAlgorithm;
+  auto ico = IcosahedronDatabase::get(static_cast<std::size_t>(state.range(1)));
+  auto algo = Algorithm::fromIcosahedron(ico);
+  auto vec = Algorithm::Vec3::UnitX();
+  for (auto _ : state) {
+    auto res = algo.support(vec, state.range(0));
+    benchmark::DoNotOptimize(res);
+  }
+}
+
 static void CustomArguments(benchmark::internal::Benchmark* b) {
   // 4 subdivide doesn't fit into L1 cache 5112 points > 48KB
   b->Arg(0)->Arg(1)->Arg(2)->Arg(3)->Arg(4);
+}
+static void CustomArgumentsHighway(benchmark::internal::Benchmark* b) {
+  for (std::int64_t target : hwy::SupportedAndGeneratedTargets()) {
+    // 4 subdivide doesn't fit into L1 cache 5112 points > 48KB
+    b->Args({target, 0})
+        ->Args({target, 1})
+        ->Args({target, 2})
+        ->Args({target, 3})
+        ->Args({target, 4});
+  }
 }
 
 BENCHMARK(legacyAlgorithmBench<float>)->Apply(CustomArguments);
 BENCHMARK(legacyAlgorithmBench<double>)->Apply(CustomArguments);
 BENCHMARK(SOAFloatEigenAlgorithmBench)->Apply(CustomArguments);
+BENCHMARK(SOAFloatHighwayAlgorithmBench)->Apply(CustomArgumentsHighway);
 
 BENCHMARK_MAIN();

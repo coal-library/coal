@@ -1,0 +1,75 @@
+#include <cstdint>
+#include <limits>
+
+#undef HWY_TARGET_INCLUDE
+#define HWY_TARGET_INCLUDE "convex_support_highway.cpp"
+#include <hwy/foreach_target.h>
+
+#include <hwy/highway.h>
+
+HWY_BEFORE_NAMESPACE();
+namespace coal {
+namespace HWY_NAMESPACE {
+namespace {
+
+namespace hn = hwy::HWY_NAMESPACE;
+
+float _support(const float* HWY_RESTRICT x, const float* HWY_RESTRICT y,
+               const float* HWY_RESTRICT z, float x_dir, float y_dir,
+               float z_dir, std::size_t count) {
+  const hn::ScalableTag<float> d;
+  const size_t N = hn::Lanes(d);
+  using V = decltype(hn::Zero(d));
+
+  V x_dir_v = hn::Set(d, x_dir);
+  V y_dir_v = hn::Set(d, y_dir);
+  V z_dir_v = hn::Set(d, z_dir);
+
+  V max_dot_v = hn::Set(d, std::numeric_limits<float>::min());
+  size_t i = 0;
+  for (; i + N <= count; i += N) {
+    const V x_v = hn::Load(d, x + i);
+    const V x_dot_v = x_v * x_dir_v;
+    const V y_v = hn::Load(d, y + i);
+    const V y_dot_v = y_v * y_dir_v;
+    const V z_v = hn::Load(d, z + i);
+    const V z_dot_v = z_v * z_dir_v;
+
+    const V dot_v = x_dot_v + y_dot_v + z_dot_v;
+    max_dot_v = hn::Max(max_dot_v, dot_v);
+  }
+
+  float max_dot = hn::ReduceMax(d, max_dot_v);
+  for (; i < count; ++i) {
+    const float dot = x[i] * x_dir + y[i] * y_dir + z[i] * z_dir;
+    max_dot = std::max(max_dot, dot);
+  }
+
+  return max_dot;
+}
+}  // namespace
+}  // namespace HWY_NAMESPACE
+}  // namespace coal
+HWY_AFTER_NAMESPACE();
+
+#if HWY_ONCE
+namespace coal {
+
+HWY_EXPORT(_support);
+
+float support(const float* HWY_RESTRICT x, const float* HWY_RESTRICT y,
+              const float* HWY_RESTRICT z, float x_dir, float y_dir,
+              float z_dir, std::size_t count) {
+  return HWY_DYNAMIC_DISPATCH(_support)(x, y, z, x_dir, y_dir, z_dir, count);
+}
+float support_with_target(const float* HWY_RESTRICT x,
+                          const float* HWY_RESTRICT y,
+                          const float* HWY_RESTRICT z, float x_dir, float y_dir,
+                          float z_dir, std::size_t count, std::int64_t target) {
+  hwy::SetSupportedTargetsForTest(target);
+  return HWY_DYNAMIC_DISPATCH(_support)(x, y, z, x_dir, y_dir, z_dir, count);
+  hwy::SetSupportedTargetsForTest(0);
+}
+}  // namespace coal
+
+#endif  // if HWY_ONCE
