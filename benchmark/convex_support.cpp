@@ -269,12 +269,20 @@ float support_with_target(const float* HWY_RESTRICT x,
                           const float* HWY_RESTRICT y,
                           const float* HWY_RESTRICT z, float x_dir, float y_dir,
                           float z_dir, std::size_t count, std::int64_t target);
+double support(const double* HWY_RESTRICT x, const double* HWY_RESTRICT y,
+               const double* HWY_RESTRICT z, double x_dir, double y_dir,
+               double z_dir, std::size_t count);
+double support_with_target(const double* HWY_RESTRICT x,
+                           const double* HWY_RESTRICT y,
+                           const double* HWY_RESTRICT z, double x_dir,
+                           double y_dir, double z_dir, std::size_t count,
+                           std::int64_t target);
 }  // namespace coal
 
-struct SOAFloatHighwayAlgorithm {
-  using Scalar = float;
+template <typename Scalar>
+struct SOAHighwayAlgorithm {
   using Vec3 = Eigen::Vector<Scalar, 3>;
-  using Algorithm = SOAFloatHighwayAlgorithm;
+  using Algorithm = SOAHighwayAlgorithm<Scalar>;
 
   static Algorithm fromIcosahedron(const Icosahedron& ico) {
     Algorithm algo;
@@ -322,8 +330,9 @@ static void SOAFloatEigenAlgorithmBench(benchmark::State& state) {
   }
 }
 
-static void SOAFloatHighwayAlgorithmBench(benchmark::State& state) {
-  using Algorithm = SOAFloatHighwayAlgorithm;
+template <typename Scalar>
+static void SOAHighwayAlgorithmBench(benchmark::State& state) {
+  using Algorithm = SOAHighwayAlgorithm<Scalar>;
   auto ico = IcosahedronDatabase::get(static_cast<std::size_t>(state.range(1)));
   auto algo = Algorithm::fromIcosahedron(ico);
   auto vec = Algorithm::Vec3::UnitX();
@@ -351,6 +360,7 @@ static void CustomArgumentsHighway(benchmark::internal::Benchmark* b) {
 BENCHMARK(legacyAlgorithmBench<float>)->Apply(CustomArguments);
 BENCHMARK(legacyAlgorithmBench<double>)->Apply(CustomArguments);
 BENCHMARK(SOAFloatEigenAlgorithmBench)->Apply(CustomArguments);
-BENCHMARK(SOAFloatHighwayAlgorithmBench)->Apply(CustomArgumentsHighway);
+BENCHMARK(SOAHighwayAlgorithmBench<float>)->Apply(CustomArgumentsHighway);
+BENCHMARK(SOAHighwayAlgorithmBench<double>)->Apply(CustomArgumentsHighway);
 
 BENCHMARK_MAIN();
