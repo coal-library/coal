@@ -6,9 +6,11 @@
 #include <hwy/foreach_target.h>
 
 #include <hwy/highway.h>
+#include <hwy/aligned_allocator.h>
 
 HWY_BEFORE_NAMESPACE();
 namespace coal {
+namespace bench {
 namespace HWY_NAMESPACE {
 namespace {
 
@@ -26,52 +28,25 @@ Scalar _support(const Scalar* HWY_RESTRICT x, const Scalar* HWY_RESTRICT y,
   V y_dir_v = hn::Set(d, y_dir);
   V z_dir_v = hn::Set(d, z_dir);
 
-  V max_dot_v_ilp1 = hn::Set(d, std::numeric_limits<Scalar>::min());
-  V max_dot_v_ilp2 = hn::Set(d, std::numeric_limits<Scalar>::min());
-  // V max_dot_v_ilp3 = hn::Set(d, std::numeric_limits<Scalar>::min());
-  // V max_dot_v_ilp4 = hn::Set(d, std::numeric_limits<Scalar>::min());
-  size_t i = 0;
-  // for (; i + N * 4 <= count; i += N * 4) {
-  for (; i + N * 2 <= count; i += N * 2) {
+  auto func = [&](std::size_t i) -> V {
     const V x_v_ilp1 = hn::Load(d, x + i);
     const V dot_v1_ilp1 = x_v_ilp1 * x_dir_v;
     const V y_v_ilp1 = hn::Load(d, y + i);
     const V dot_v2_ilp1 = hn::MulAdd(y_v_ilp1, y_dir_v, dot_v1_ilp1);
     const V z_v_ilp1 = hn::Load(d, z + i);
-    const V dot_v_ilp1 = hn::MulAdd(z_v_ilp1, z_dir_v, dot_v2_ilp1);
+    return hn::MulAdd(z_v_ilp1, z_dir_v, dot_v2_ilp1);
+  };
 
+  V max_dot_v_ilp1 = hn::Set(d, std::numeric_limits<Scalar>::min());
+  V max_dot_v_ilp2 = hn::Set(d, std::numeric_limits<Scalar>::min());
+  size_t i = 0;
+  for (; i + N * 2 <= count; i += N * 2) {
+    const V dot_v_ilp1 = func(i);
     max_dot_v_ilp1 = hn::Max(max_dot_v_ilp1, dot_v_ilp1);
 
-    const V x_v_ilp2 = hn::Load(d, x + i + 1 * N);
-    const V dot_v1_ilp2 = x_v_ilp2 * x_dir_v;
-    const V y_v_ilp2 = hn::Load(d, y + i + 1 * N);
-    const V dot_v2_ilp2 = hn::MulAdd(y_v_ilp2, y_dir_v, dot_v1_ilp2);
-    const V z_v_ilp2 = hn::Load(d, z + i + 1 * N);
-    const V dot_v_ilp2 = hn::MulAdd(z_v_ilp2, z_dir_v, dot_v2_ilp2);
-
+    const V dot_v_ilp2 = func(i + 1 * N);
     max_dot_v_ilp2 = hn::Max(max_dot_v_ilp2, dot_v_ilp2);
-
-    // const V x_v_ilp3 = hn::Load(d, x + i + 2 * N);
-    // const V dot_v1_ilp3 = x_v_ilp3 * x_dir_v;
-    // const V y_v_ilp3 = hn::Load(d, y + i + 2 * N);
-    // const V dot_v2_ilp3 = hn::MulAdd(y_v_ilp3, y_dir_v, dot_v1_ilp3);
-    // const V z_v_ilp3 = hn::Load(d, z + i + 2 * N);
-    // const V dot_v_ilp3 = hn::MulAdd(z_v_ilp3, z_dir_v, dot_v2_ilp3);
-    //
-    // max_dot_v_ilp3 = hn::Max(max_dot_v_ilp3, dot_v_ilp3);
-    //
-    // const V x_v_ilp4 = hn::Load(d, x + i + 3 * N);
-    // const V dot_v1_ilp4 = x_v_ilp4 * x_dir_v;
-    // const V y_v_ilp4 = hn::Load(d, y + i + 3 * N);
-    // const V dot_v2_ilp4 = hn::MulAdd(y_v_ilp4, y_dir_v, dot_v1_ilp4);
-    // const V z_v_ilp4 = hn::Load(d, z + i + 3 * N);
-    // const V dot_v_ilp4 = hn::MulAdd(z_v_ilp4, z_dir_v, dot_v2_ilp4);
-    //
-    // max_dot_v_ilp4 = hn::Max(max_dot_v_ilp4, dot_v_ilp4);
   }
-  // V max_dot_v1 = hn::Max(max_dot_v_ilp1, max_dot_v_ilp2);
-  // V max_dot_v2 = hn::Max(max_dot_v_ilp3, max_dot_v_ilp4);
-  // V max_dot_v = hn::Max(max_dot_v1, max_dot_v2);
   V max_dot_v = hn::Max(max_dot_v_ilp1, max_dot_v_ilp2);
 
   for (; i + N <= count; i += N) {
@@ -108,11 +83,13 @@ double _support_double(const double* HWY_RESTRICT x,
 
 }  // namespace
 }  // namespace HWY_NAMESPACE
+}  // namespace bench
 }  // namespace coal
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
 namespace coal {
+namespace bench {
 
 HWY_EXPORT(_support_float);
 HWY_EXPORT(_support_double);
@@ -148,6 +125,7 @@ double support_with_target(const double* HWY_RESTRICT x,
                                                count);
   hwy::SetSupportedTargetsForTest(0);
 }
+}  // namespace bench
 }  // namespace coal
 
 #endif  // if HWY_ONCE
