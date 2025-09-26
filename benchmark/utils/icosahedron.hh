@@ -1,5 +1,5 @@
-#ifndef COAL_BENCH_ICOSAHEDRON_HH
-#define COAL_BENCH_ICOSAHEDRON_HH
+#ifndef COAL_BENCH_UTILS_ICOSAHEDRON_HH
+#define COAL_BENCH_UTILS_ICOSAHEDRON_HH
 
 #include <Eigen/Core>
 
@@ -45,4 +45,4 @@ class IcosahedronDatabase {
 }  // namespace bench
 }  // namespace coal
 
-#endif  // ifndef COAL_BENCH_ICOSAHEDRON_HH
+#endif  // ifndef COAL_BENCH_UTILS_ICOSAHEDRON_HH

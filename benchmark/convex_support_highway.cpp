@@ -1,3 +1,5 @@
+#include "convex_support_highway.hh"
+
 #include <cstdint>
 #include <limits>
 
@@ -17,6 +19,34 @@ namespace {
 namespace hn = hwy::HWY_NAMESPACE;
 
 template <typename Scalar>
+SOAHighwayAlgorithm<Scalar> _fromIcosahedron(const utils::Icosahedron& ico) {
+  using Algorithm = SOAHighwayAlgorithm<Scalar>;
+
+  const hn::ScalableTag<Scalar> d;
+  const std::size_t N = hn::Lanes(d);
+  const std::size_t remainder = ico.points.size() % N;
+  const std::size_t padded_size = ico.points.size() + remainder;
+
+  Algorithm algo;
+  algo.x = hwy::AllocateAligned<Scalar>(padded_size);
+  algo.y = hwy::AllocateAligned<Scalar>(padded_size);
+  algo.z = hwy::AllocateAligned<Scalar>(padded_size);
+  algo.count = padded_size;
+
+  for (std::size_t i = 0; i < ico.points.size(); ++i) {
+    algo.x[i] = static_cast<Scalar>(ico.points[i].x());
+    algo.y[i] = static_cast<Scalar>(ico.points[i].y());
+    algo.z[i] = static_cast<Scalar>(ico.points[i].z());
+  }
+  for (std::size_t i = ico.points.size(); i < padded_size; ++i) {
+    algo.x[i] = static_cast<Scalar>(ico.points.back().x());
+    algo.y[i] = static_cast<Scalar>(ico.points.back().y());
+    algo.z[i] = static_cast<Scalar>(ico.points.back().z());
+  }
+  return algo;
+}
+
+template <typename Scalar>
 Scalar _support(const Scalar* HWY_RESTRICT x, const Scalar* HWY_RESTRICT y,
                 const Scalar* HWY_RESTRICT z, Scalar x_dir, Scalar y_dir,
                 Scalar z_dir, std::size_t count) {
@@ -29,12 +59,12 @@ Scalar _support(const Scalar* HWY_RESTRICT x, const Scalar* HWY_RESTRICT y,
   V z_dir_v = hn::Set(d, z_dir);
 
   auto func = [&](std::size_t i) -> V {
-    const V x_v_ilp1 = hn::Load(d, x + i);
-    const V dot_v1_ilp1 = x_v_ilp1 * x_dir_v;
-    const V y_v_ilp1 = hn::Load(d, y + i);
-    const V dot_v2_ilp1 = hn::MulAdd(y_v_ilp1, y_dir_v, dot_v1_ilp1);
-    const V z_v_ilp1 = hn::Load(d, z + i);
-    return hn::MulAdd(z_v_ilp1, z_dir_v, dot_v2_ilp1);
+    const V x_v_ = hn::Load(d, x + i);
+    const V dot_v1_ = x_v_ * x_dir_v;
+    const V y_v_ = hn::Load(d, y + i);
+    const V dot_v2_ = hn::MulAdd(y_v_, y_dir_v, dot_v1_);
+    const V z_v_ = hn::Load(d, z + i);
+    return hn::MulAdd(z_v_, z_dir_v, dot_v2_);
   };
 
   V max_dot_v_ilp1 = hn::Set(d, std::numeric_limits<Scalar>::min());
@@ -50,35 +80,11 @@ Scalar _support(const Scalar* HWY_RESTRICT x, const Scalar* HWY_RESTRICT y,
   V max_dot_v = hn::Max(max_dot_v_ilp1, max_dot_v_ilp2);
 
   for (; i + N <= count; i += N) {
-    const V x_v = hn::Load(d, x + i);
-    const V dot_v1 = x_v * x_dir_v;
-    const V y_v = hn::Load(d, y + i);
-    const V dot_v2 = hn::MulAdd(y_v, y_dir_v, dot_v1);
-    const V z_v = hn::Load(d, z + i);
-    const V dot_v = hn::MulAdd(z_v, z_dir_v, dot_v2);
-
+    const V dot_v = func(i);
     max_dot_v = hn::Max(max_dot_v, dot_v);
   }
 
-  Scalar max_dot = hn::ReduceMax(d, max_dot_v);
-  for (; i < count; ++i) {
-    const Scalar dot = x[i] * x_dir + y[i] * y_dir + z[i] * z_dir;
-    max_dot = std::max(max_dot, dot);
-  }
-
-  return max_dot;
-}
-
-float _support_float(const float* HWY_RESTRICT x, const float* HWY_RESTRICT y,
-                     const float* HWY_RESTRICT z, float x_dir, float y_dir,
-                     float z_dir, std::size_t count) {
-  return _support(x, y, z, x_dir, y_dir, z_dir, count);
-}
-double _support_double(const double* HWY_RESTRICT x,
-                       const double* HWY_RESTRICT y,
-                       const double* HWY_RESTRICT z, double x_dir, double y_dir,
-                       double z_dir, std::size_t count) {
-  return _support(x, y, z, x_dir, y_dir, z_dir, count);
+  return hn::ReduceMax(d, max_dot_v);
 }
 
 }  // namespace
@@ -91,40 +97,59 @@ HWY_AFTER_NAMESPACE();
 namespace coal {
 namespace bench {
 
-HWY_EXPORT(_support_float);
-HWY_EXPORT(_support_double);
+namespace {
+
+HWY_EXPORT_T(_supportFloat, _support<float>);
+HWY_EXPORT_T(_supportDouble, _support<double>);
+HWY_EXPORT_T(_fromIcosahedronFloat, _fromIcosahedron<float>);
+HWY_EXPORT_T(_fromIcosahedronDouble, _fromIcosahedron<double>);
+
+}  // namespace
 
 float support(const float* HWY_RESTRICT x, const float* HWY_RESTRICT y,
               const float* HWY_RESTRICT z, float x_dir, float y_dir,
               float z_dir, std::size_t count) {
-  return HWY_DYNAMIC_DISPATCH(_support_float)(x, y, z, x_dir, y_dir, z_dir,
-                                              count);
+  return HWY_DYNAMIC_DISPATCH_T(_supportFloat)(x, y, z, x_dir, y_dir, z_dir,
+                                               count);
 }
-float support_with_target(const float* HWY_RESTRICT x,
-                          const float* HWY_RESTRICT y,
-                          const float* HWY_RESTRICT z, float x_dir, float y_dir,
-                          float z_dir, std::size_t count, std::int64_t target) {
+float supportWithTarget(const float* HWY_RESTRICT x,
+                        const float* HWY_RESTRICT y,
+                        const float* HWY_RESTRICT z, float x_dir, float y_dir,
+                        float z_dir, std::size_t count, std::int64_t target) {
   hwy::SetSupportedTargetsForTest(target);
-  return HWY_DYNAMIC_DISPATCH(_support_float)(x, y, z, x_dir, y_dir, z_dir,
-                                              count);
+  return HWY_DYNAMIC_DISPATCH_T(_supportFloat)(x, y, z, x_dir, y_dir, z_dir,
+                                               count);
   hwy::SetSupportedTargetsForTest(0);
 }
 double support(const double* HWY_RESTRICT x, const double* HWY_RESTRICT y,
                const double* HWY_RESTRICT z, double x_dir, double y_dir,
                double z_dir, std::size_t count) {
-  return HWY_DYNAMIC_DISPATCH(_support_double)(x, y, z, x_dir, y_dir, z_dir,
-                                               count);
+  return HWY_DYNAMIC_DISPATCH_T(_supportDouble)(x, y, z, x_dir, y_dir, z_dir,
+                                                count);
 }
-double support_with_target(const double* HWY_RESTRICT x,
-                           const double* HWY_RESTRICT y,
-                           const double* HWY_RESTRICT z, double x_dir,
-                           double y_dir, double z_dir, std::size_t count,
-                           std::int64_t target) {
+double supportWithTarget(const double* HWY_RESTRICT x,
+                         const double* HWY_RESTRICT y,
+                         const double* HWY_RESTRICT z, double x_dir,
+                         double y_dir, double z_dir, std::size_t count,
+                         std::int64_t target) {
   hwy::SetSupportedTargetsForTest(target);
-  return HWY_DYNAMIC_DISPATCH(_support_double)(x, y, z, x_dir, y_dir, z_dir,
-                                               count);
+  return HWY_DYNAMIC_DISPATCH_T(_supportDouble)(x, y, z, x_dir, y_dir, z_dir,
+                                                count);
   hwy::SetSupportedTargetsForTest(0);
 }
+
+template <>
+SOAHighwayAlgorithm<float> SOAHighwayAlgorithm<float>::fromIcosahedron(
+    const utils::Icosahedron& ico) {
+  return HWY_DYNAMIC_DISPATCH_T(_fromIcosahedronFloat)(ico);
+}
+
+template <>
+SOAHighwayAlgorithm<double> SOAHighwayAlgorithm<double>::fromIcosahedron(
+    const utils::Icosahedron& ico) {
+  return HWY_DYNAMIC_DISPATCH_T(_fromIcosahedronDouble)(ico);
+}
+
 }  // namespace bench
 }  // namespace coal
 

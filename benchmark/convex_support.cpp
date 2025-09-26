@@ -1,5 +1,5 @@
-// TODO
-// code support function with SOA + highway
+#include "convex_support_highway.hh"
+#include "utils/icosahedron.hh"
 
 #include <hwy/targets.h>
 #include <hwy/aligned_allocator.h>
@@ -11,8 +11,6 @@
 #include <limits>
 #include <vector>
 #include <cmath>
-
-#include "utils/icosahedron.hh"
 
 namespace coal {
 namespace bench {
@@ -114,50 +112,6 @@ struct SOAFloatEigenAlgorithm {
 
   std::vector<Array4> x, y, z;
   std::vector<Vec3> remainder;
-};
-
-float support(const float* HWY_RESTRICT x, const float* HWY_RESTRICT y,
-              const float* HWY_RESTRICT z, float x_dir, float y_dir,
-              float z_dir, std::size_t count);
-float support_with_target(const float* HWY_RESTRICT x,
-                          const float* HWY_RESTRICT y,
-                          const float* HWY_RESTRICT z, float x_dir, float y_dir,
-                          float z_dir, std::size_t count, std::int64_t target);
-double support(const double* HWY_RESTRICT x, const double* HWY_RESTRICT y,
-               const double* HWY_RESTRICT z, double x_dir, double y_dir,
-               double z_dir, std::size_t count);
-double support_with_target(const double* HWY_RESTRICT x,
-                           const double* HWY_RESTRICT y,
-                           const double* HWY_RESTRICT z, double x_dir,
-                           double y_dir, double z_dir, std::size_t count,
-                           std::int64_t target);
-
-template <typename Scalar>
-struct SOAHighwayAlgorithm {
-  using Vec3 = Eigen::Vector<Scalar, 3>;
-  using Algorithm = SOAHighwayAlgorithm<Scalar>;
-
-  static Algorithm fromIcosahedron(const utils::Icosahedron& ico) {
-    Algorithm algo;
-    algo.x = hwy::AllocateAligned<Scalar>(ico.points.size());
-    algo.y = hwy::AllocateAligned<Scalar>(ico.points.size());
-    algo.z = hwy::AllocateAligned<Scalar>(ico.points.size());
-    algo.count = ico.points.size();
-    for (std::size_t i = 0; i < ico.points.size(); ++i) {
-      algo.x[i] = static_cast<Scalar>(ico.points[i].x());
-      algo.y[i] = static_cast<Scalar>(ico.points[i].y());
-      algo.z[i] = static_cast<Scalar>(ico.points[i].z());
-    }
-    return algo;
-  }
-
-  Scalar support(const Vec3& dir, std::int64_t target) {
-    return support_with_target(x.get(), y.get(), z.get(), dir.x(), dir.y(),
-                               dir.z(), count, target);
-  }
-
-  hwy::AlignedFreeUniquePtr<Scalar[]> x, y, z;
-  std::size_t count;
 };
 
 template <typename Scalar>
