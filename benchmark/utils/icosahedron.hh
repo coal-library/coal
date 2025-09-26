@@ -3,6 +3,7 @@
 
 #include <Eigen/Core>
 
+#include <array>
 #include <vector>
 #include <cstddef>
 #include <unordered_map>
@@ -13,7 +14,7 @@ namespace utils {
 
 class Icosahedron {
  public:
-  using TriangleIndex = std::tuple<std::size_t, std::size_t, std::size_t>;
+  using TriangleIndex = std::array<std::size_t, 3>;
 
   /// Construct a icosahedron.
   /// For explanation, see:
