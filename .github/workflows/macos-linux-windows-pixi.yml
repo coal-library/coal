@@ -82,6 +82,7 @@ jobs:
       env:
         CMAKE_BUILD_PARALLEL_LEVEL: 2
         COAL_BUILD_TYPE: ${{ matrix.build_type }}
+      shell: bash -el {0}
       run: |
         export CXXFLAGS="$CXXFLAGS ${{ matrix.cxx_options }}"
         pixi run -e ${{ matrix.environment }} build
