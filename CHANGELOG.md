@@ -8,11 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - CMake: add COAL_DISABLE_HPP_FCL_WARNINGS option ([#709](https://github.com/coal-library/coal/pull/709))
+- CMake: add support for BUILD_STANDALONE_PYTHON_INTERFACE ([#658](https://github.com/coal-library/coal/pull/658))
+- Docker images `ghcr.io/coal-library/coal` ([#737](https://github.com/coal-library/coal/pull/737))
 
 ### Removed
 - Remove constraints on supported doxygen version to generate the python documentation ([#681](https://github.com/coal-library/coal/pull/681))
 - Remove useless COAL_WITH_CXX11_SUPPORT guard ([#688](https://github.com/coal-library/coal/pull/688))
 - Remove qhull submodule, as ubuntu 20.04 is EoL ([#704](https://github.com/coal-library/coal/pull/704))
+- Removed support for octomap < 1.8 ([#727](https://github.com/coal-library/coal/pull/727))
 
 ### Changed
 - Formatted all CMake listfiles using gersemi, add gersemi to pre-commit configuration ([#657](https://github.com/coal-library/coal/pull/657/files))
