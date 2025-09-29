@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - broadphase: add functional API for collision and distance callbacks ([#724](https://github.com/coal-library/coal/pull/724))
+- Added a second set of Python bindings based on nanobind ([#659](https://github.com/coal-library/coal/pull/659))
 
 ### Removed
 - Remove direct dependency to ([#744](https://github.com/coal-library/coal/pull/744)):
@@ -16,10 +17,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Boost::date_time
   - Boost::thread
 
-### Added
-- Added a second set of Python bindings based on nanobind ([#659](https://github.com/coal-library/coal/pull/659))
+### Fixed
+- Fix doc parsing via doxygen scripts ([#678](https://github.com/coal-library/coal/pull/678) [#699](https://github.com/coal-library/coal/pull/699))
+- Correctly calculate AABB for pruned octrees ([#741](https://github.com/coal-library/coal/pull/741))
+- Fix contact counting in octree collision detection with ShapeShapeCollide ([#746](https://github.com/coal-library/coal/pull/746))
+- Fix sqrDistLowerBound in octree traversal with height field ([#753](https://github.com/coal-library/coal/pull/753))
 
-## [3.0.2] - 1980-01-01
+
+## [3.0.2] - 2025-09-29
 
 ### Added
 - CMake: add COAL_DISABLE_HPP_FCL_WARNINGS option ([#709](https://github.com/coal-library/coal/pull/709))
@@ -50,12 +55,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Introducing `Convex16` and `Convex32` to store neighbors and polygons indices as `uint16` or `uint32` ([#682](https://github.com/coal-library/coal/pull/682), [#716](https://github.com/coal-library/coal/pull/716)).
   - Along with #665, this allows to divide by two the memory footprint of `Convex`.
 - Fixed a bug in DynamicAABBTree broadphase that missed aabb overlaps when multiple planes/halfspaces are used in a scene.
-
-### Fixed
-- Fix doc parsing via doxygen scripts ([#678](https://github.com/coal-library/coal/pull/678) [#699](https://github.com/coal-library/coal/pull/699))
-- Correctly calculate AABB for pruned octrees ([#741](https://github.com/coal-library/coal/pull/741))
-- Fix contact counting in octree collision detection with ShapeShapeCollide ([#746](https://github.com/coal-library/coal/pull/746))
-- Fix sqrDistLowerBound in octree traversal with height field ([#753](https://github.com/coal-library/coal/pull/753))
 
 ## [3.0.1] - 2025-02-12
 
