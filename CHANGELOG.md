@@ -23,22 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix contact counting in octree collision detection with ShapeShapeCollide ([#746](https://github.com/coal-library/coal/pull/746))
 - Fix sqrDistLowerBound in octree traversal with height field ([#753](https://github.com/coal-library/coal/pull/753))
 
-
-## [3.0.2] - 2025-09-29
-
-### Added
-- CMake: add COAL_DISABLE_HPP_FCL_WARNINGS option ([#709](https://github.com/coal-library/coal/pull/709))
-- CMake: add support for BUILD_STANDALONE_PYTHON_INTERFACE ([#658](https://github.com/coal-library/coal/pull/658))
-- Docker images `ghcr.io/coal-library/coal` ([#737](https://github.com/coal-library/coal/pull/737))
-
-### Removed
-- Remove constraints on supported doxygen version to generate the python documentation ([#681](https://github.com/coal-library/coal/pull/681))
-- Remove useless COAL_WITH_CXX11_SUPPORT guard ([#688](https://github.com/coal-library/coal/pull/688))
-- Remove qhull submodule, as ubuntu 20.04 is EoL ([#704](https://github.com/coal-library/coal/pull/704))
-- Removed support for octomap < 1.8 ([#727](https://github.com/coal-library/coal/pull/727))
-
 ### Changed
-- Formatted all CMake listfiles using gersemi, add gersemi to pre-commit configuration ([#657](https://github.com/coal-library/coal/pull/657/files))
+
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))
   - Rename `CoalScalar` to `Scalar`
   - Add option to switch between (default) double precision and float precision
@@ -55,6 +41,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Introducing `Convex16` and `Convex32` to store neighbors and polygons indices as `uint16` or `uint32` ([#682](https://github.com/coal-library/coal/pull/682), [#716](https://github.com/coal-library/coal/pull/716)).
   - Along with #665, this allows to divide by two the memory footprint of `Convex`.
 - Fixed a bug in DynamicAABBTree broadphase that missed aabb overlaps when multiple planes/halfspaces are used in a scene.
+
+## [3.0.2] - 2025-09-29
+
+### Added
+- CMake: add COAL_DISABLE_HPP_FCL_WARNINGS option ([#709](https://github.com/coal-library/coal/pull/709))
+- CMake: add support for BUILD_STANDALONE_PYTHON_INTERFACE ([#658](https://github.com/coal-library/coal/pull/658))
+- Docker images `ghcr.io/coal-library/coal` ([#737](https://github.com/coal-library/coal/pull/737))
+
+### Removed
+- Remove constraints on supported doxygen version to generate the python documentation ([#681](https://github.com/coal-library/coal/pull/681))
+- Remove useless COAL_WITH_CXX11_SUPPORT guard ([#688](https://github.com/coal-library/coal/pull/688))
+- Remove qhull submodule, as ubuntu 20.04 is EoL ([#704](https://github.com/coal-library/coal/pull/704))
+- Removed support for octomap < 1.8 ([#727](https://github.com/coal-library/coal/pull/727))
+
+### Changed
+- Formatted all CMake listfiles using gersemi, add gersemi to pre-commit configuration ([#657](https://github.com/coal-library/coal/pull/657/files))
 
 ## [3.0.1] - 2025-02-12
 
