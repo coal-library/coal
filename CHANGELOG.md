@@ -7,16 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- CMake: add COAL_DISABLE_HPP_FCL_WARNINGS option ([#709](https://github.com/coal-library/coal/pull/709))
-- CMake: add support for BUILD_STANDALONE_PYTHON_INTERFACE ([#658](https://github.com/coal-library/coal/pull/658))
 - broadphase: add functional API for collision and distance callbacks ([#724](https://github.com/coal-library/coal/pull/724))
-- Docker images `ghcr.io/coal-library/coal` ([#737](https://github.com/coal-library/coal/pull/737))
 
 ### Removed
-- Remove constraints on supported doxygen version to generate the python documentation ([#681](https://github.com/coal-library/coal/pull/681))
-- Remove useless COAL_WITH_CXX11_SUPPORT guard ([#688](https://github.com/coal-library/coal/pull/688))
-- Remove qhull submodule, as ubuntu 20.04 is EoL ([#704](https://github.com/coal-library/coal/pull/704))
-- Removed support for octomap < 1.8 ([#727](https://github.com/coal-library/coal/pull/727))
 - Remove direct dependency to ([#744](https://github.com/coal-library/coal/pull/744)):
   - Boost::system
   - Boost::chrono
@@ -25,6 +18,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - Added a second set of Python bindings based on nanobind ([#659](https://github.com/coal-library/coal/pull/659))
+
+## [3.0.2] - 1980-01-01
+
+### Added
+- CMake: add COAL_DISABLE_HPP_FCL_WARNINGS option ([#709](https://github.com/coal-library/coal/pull/709))
+- CMake: add support for BUILD_STANDALONE_PYTHON_INTERFACE ([#658](https://github.com/coal-library/coal/pull/658))
+- Docker images `ghcr.io/coal-library/coal` ([#737](https://github.com/coal-library/coal/pull/737))
+
+### Removed
+- Remove constraints on supported doxygen version to generate the python documentation ([#681](https://github.com/coal-library/coal/pull/681))
+- Remove useless COAL_WITH_CXX11_SUPPORT guard ([#688](https://github.com/coal-library/coal/pull/688))
+- Remove qhull submodule, as ubuntu 20.04 is EoL ([#704](https://github.com/coal-library/coal/pull/704))
+- Removed support for octomap < 1.8 ([#727](https://github.com/coal-library/coal/pull/727))
 
 ### Changed
 - Formatted all CMake listfiles using gersemi, add gersemi to pre-commit configuration ([#657](https://github.com/coal-library/coal/pull/657/files))
@@ -587,7 +593,8 @@ Now Eigen is at the heart of linear algebra computations.
 First release
 
 
-[Unreleased]: https://github.com/coal-library/coal/compare/v3.0.1...HEAD
+[Unreleased]: https://github.com/coal-library/coal/compare/v3.0.2...HEAD
+[3.0.2]: https://github.com/coal-library/coal/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/coal-library/coal/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/coal-library/coal/compare/v2.4.5...v3.0.0
 [2.4.5]: https://github.com/coal-library/coal/compare/v2.4.4...v2.4.5

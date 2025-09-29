@@ -477,10 +477,12 @@ if(
     include/hpp/fcl/warning.hh
   )
   list(APPEND ${PROJECT_NAME}_HEADERS ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS})
-  HEADER_INSTALL(
-    COMPONENT hpp-fcl-compatibility
-    ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS}
-  )
+  if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
+    HEADER_INSTALL(
+      COMPONENT hpp-fcl-compatibility
+      ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS}
+    )
+  endif()
 endif()
 
 if(COAL_HAS_OCTOMAP)
@@ -508,8 +510,8 @@ if(BUILD_PYTHON_INTERFACE)
   )
   if(COAL_PYTHON_NANOBIND)
     find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
-    # jrl-cmakemodules use PYTHON_EXECUTABLE defined in FINDPYTHON macro. Since
-    # we doesn't call it in this branch, we must redefine it.
+    # jrl-cmakemodules use PYTHON_EXECUTABLE defined in FINDPYTHON macro.
+    # Since we doesn't call it in this branch, we must redefine it.
     set(PYTHON_EXECUTABLE ${Python_EXECUTABLE})
     add_subdirectory(python-nb)
   else()
