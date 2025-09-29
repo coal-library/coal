@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [3.0.2] - 1980-01-01
+
 ### Added
 - CMake: add COAL_DISABLE_HPP_FCL_WARNINGS option ([#709](https://github.com/coal-library/coal/pull/709))
 - CMake: add support for BUILD_STANDALONE_PYTHON_INTERFACE ([#658](https://github.com/coal-library/coal/pull/658))
@@ -556,7 +558,8 @@ Now Eigen is at the heart of linear algebra computations.
 First release
 
 
-[Unreleased]: https://github.com/coal-library/coal/compare/v3.0.1...HEAD
+[Unreleased]: https://github.com/coal-library/coal/compare/v3.0.2...HEAD
+[3.0.2]: https://github.com/coal-library/coal/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/coal-library/coal/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/coal-library/coal/compare/v2.4.5...v3.0.0
 [2.4.5]: https://github.com/coal-library/coal/compare/v2.4.4...v2.4.5
