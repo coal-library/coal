@@ -1,6 +1,6 @@
 [project]
 name = "coal"
-version = "3.0.1"
+version = "3.0.2"
 description = "An extension of the Flexible Collision Library"
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 channels = ["conda-forge"]
