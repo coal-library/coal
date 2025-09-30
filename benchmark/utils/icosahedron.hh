@@ -15,6 +15,7 @@ namespace utils {
 class Icosahedron {
  public:
   using TriangleIndex = std::array<std::size_t, 3>;
+  using NeighborIndexes = std::vector<std::size_t>;
 
   /// Construct a icosahedron.
   /// For explanation, see:
@@ -27,10 +28,12 @@ class Icosahedron {
  protected:
   Eigen::Vector3d middlePoint(std::size_t point1_index,
                               std::size_t point2_index) const;
+  void constructNeighbors();
 
  public:
   std::vector<Eigen::Vector3d> points;
   std::vector<TriangleIndex> triangles;
+  std::vector<NeighborIndexes> neighbors;
 };
 
 class IcosahedronDatabase {
