@@ -112,30 +112,11 @@ float support(const float* HWY_RESTRICT x, const float* HWY_RESTRICT y,
   return HWY_DYNAMIC_DISPATCH_T(_supportFloat)(x, y, z, x_dir, y_dir, z_dir,
                                                count);
 }
-float supportWithTarget(const float* HWY_RESTRICT x,
-                        const float* HWY_RESTRICT y,
-                        const float* HWY_RESTRICT z, float x_dir, float y_dir,
-                        float z_dir, std::size_t count, std::int64_t target) {
-  hwy::SetSupportedTargetsForTest(target);
-  return HWY_DYNAMIC_DISPATCH_T(_supportFloat)(x, y, z, x_dir, y_dir, z_dir,
-                                               count);
-  hwy::SetSupportedTargetsForTest(0);
-}
 double support(const double* HWY_RESTRICT x, const double* HWY_RESTRICT y,
                const double* HWY_RESTRICT z, double x_dir, double y_dir,
                double z_dir, std::size_t count) {
   return HWY_DYNAMIC_DISPATCH_T(_supportDouble)(x, y, z, x_dir, y_dir, z_dir,
                                                 count);
-}
-double supportWithTarget(const double* HWY_RESTRICT x,
-                         const double* HWY_RESTRICT y,
-                         const double* HWY_RESTRICT z, double x_dir,
-                         double y_dir, double z_dir, std::size_t count,
-                         std::int64_t target) {
-  hwy::SetSupportedTargetsForTest(target);
-  return HWY_DYNAMIC_DISPATCH_T(_supportDouble)(x, y, z, x_dir, y_dir, z_dir,
-                                                count);
-  hwy::SetSupportedTargetsForTest(0);
 }
 
 template <>

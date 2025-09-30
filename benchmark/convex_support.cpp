@@ -208,14 +208,20 @@ static void SOAFloatEigenLinearAlgorithmBench(benchmark::State& state) {
 template <typename Scalar>
 static void SOAHighwayLinearAlgorithmBench(benchmark::State& state) {
   using Algorithm = SOAHighwayAlgorithm<Scalar>;
+
+  const auto target = state.range(0);
+  const auto num_subdiv = state.range(1);
+
   auto ico =
-      utils::IcosahedronDatabase::get(static_cast<std::size_t>(state.range(1)));
-  auto algo = Algorithm::fromIcosahedron(ico);
+      utils::IcosahedronDatabase::get(static_cast<std::size_t>(num_subdiv));
   auto vec = Algorithm::Vec3::UnitX();
+  hwy::SetSupportedTargetsForTest(target);
+  auto algo = Algorithm::fromIcosahedron(ico);
   for (auto _ : state) {
-    auto res = algo.support(vec, state.range(0));
+    auto res = algo.support(vec);
     benchmark::DoNotOptimize(res);
   }
+  hwy::SetSupportedTargetsForTest(0);
 }
 
 template <typename Scalar>

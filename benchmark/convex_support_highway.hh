@@ -15,18 +15,9 @@ namespace bench {
 float support(const float* HWY_RESTRICT x, const float* HWY_RESTRICT y,
               const float* HWY_RESTRICT z, float x_dir, float y_dir,
               float z_dir, std::size_t count);
-float supportWithTarget(const float* HWY_RESTRICT x,
-                        const float* HWY_RESTRICT y,
-                        const float* HWY_RESTRICT z, float x_dir, float y_dir,
-                        float z_dir, std::size_t count, std::int64_t target);
 double support(const double* HWY_RESTRICT x, const double* HWY_RESTRICT y,
                const double* HWY_RESTRICT z, double x_dir, double y_dir,
                double z_dir, std::size_t count);
-double supportWithTarget(const double* HWY_RESTRICT x,
-                         const double* HWY_RESTRICT y,
-                         const double* HWY_RESTRICT z, double x_dir,
-                         double y_dir, double z_dir, std::size_t count,
-                         std::int64_t target);
 
 template <typename Scalar>
 struct SOAHighwayAlgorithm {
@@ -34,9 +25,9 @@ struct SOAHighwayAlgorithm {
   using Algorithm = SOAHighwayAlgorithm<Scalar>;
 
   static Algorithm fromIcosahedron(const utils::Icosahedron& ico);
-  Scalar support(const Vec3& dir, std::int64_t target) {
-    return supportWithTarget(x.get(), y.get(), z.get(), dir.x(), dir.y(),
-                             dir.z(), count, target);
+  Scalar support(const Vec3& dir) {
+    return coal::bench::support(x.get(), y.get(), z.get(), dir.x(), dir.y(),
+                                dir.z(), count);
   }
 
   hwy::AlignedFreeUniquePtr<Scalar[]> x, y, z;
