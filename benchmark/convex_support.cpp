@@ -16,10 +16,10 @@ namespace coal {
 namespace bench {
 
 template <typename _Scalar>
-struct LegacyAlgorithm {
+struct LegacyLinearAlgorithm {
   using Scalar = _Scalar;
   using Vec3 = Eigen::Vector<Scalar, 3>;
-  using Algorithm = LegacyAlgorithm;
+  using Algorithm = LegacyLinearAlgorithm;
 
   static Algorithm fromIcosahedron(const utils::Icosahedron& ico) {
     Algorithm algo;
@@ -41,16 +41,82 @@ struct LegacyAlgorithm {
     return max_dot;
   }
 
+  std::tuple<Scalar, std::size_t> supportWithIndex(const Vec3& dir) const {
+    std::size_t max_index = 0;
+    Scalar max_dot = points[0].dot(dir);
+    for (std::size_t i = 1; i < points.size(); ++i) {
+      Scalar dot = points[i].dot(dir);
+      if (dot > max_dot) {
+        max_dot = dot;
+        max_index = i;
+      }
+    }
+    return std::make_tuple(max_dot, max_index);
+  }
+
   std::vector<Vec3> points;
 };
 
-struct SOAFloatEigenAlgorithm {
+template <typename _Scalar>
+struct LegacyLogAlgorithm {
+  using Scalar = _Scalar;
+  using Vec3 = Eigen::Vector<Scalar, 3>;
+  using NeighborIndexes = std::vector<std::size_t>;
+  using Algorithm = LegacyLogAlgorithm;
+
+  static Algorithm fromIcosahedron(const utils::IcosahedronWithNeighbors& ico) {
+    Algorithm algo;
+    algo.points.reserve(ico.icosahedron.points.size());
+    for (std::size_t i = 0; i < ico.icosahedron.points.size(); ++i) {
+      algo.points.push_back(ico.icosahedron.points[i].cast<Scalar>());
+    }
+    algo.visited.resize(ico.icosahedron.points.size());
+    algo.neighbors = ico.neighbors;
+    return algo;
+  }
+
+  Scalar support(const Vec3& dir, std::size_t hint) const {
+    std::fill(visited.begin(), visited.end(), false);
+    bool found = true;
+    bool loose_check = true;
+    std::size_t current_vertex_index = hint;
+
+    Scalar max_dot = points[current_vertex_index].dot(dir);
+    while (found) {
+      const NeighborIndexes& n = neighbors[current_vertex_index];
+      found = false;
+      for (const auto neighbor_index : n) {
+        if (visited[neighbor_index]) continue;
+        visited[neighbor_index] = true;
+        const Scalar dot = points[neighbor_index].dot(dir);
+        bool better = false;
+        if (dot > max_dot) {
+          better = true;
+          loose_check = false;
+        } else if (loose_check && dot == max_dot)
+          better = true;
+        if (better) {
+          max_dot = dot;
+          current_vertex_index = neighbor_index;
+          found = true;
+        }
+      }
+    }
+    return max_dot;
+  }
+
+  std::vector<Vec3> points;
+  mutable std::vector<int8_t> visited;
+  std::vector<NeighborIndexes> neighbors;
+};
+
+struct SOAFloatEigenLinearAlgorithm {
   using Scalar = float;
   using Vec = Eigen::Vector<Scalar, Eigen::Dynamic>;
   using Array4 = Eigen::Array<Scalar, 4, 1>;
   using Mask4 = Eigen::Array<bool, 4, 1>;
   using Vec3 = Eigen::Vector<Scalar, 3>;
-  using Algorithm = SOAFloatEigenAlgorithm;
+  using Algorithm = SOAFloatEigenLinearAlgorithm;
 
   static Algorithm fromIcosahedron(const utils::Icosahedron& ico) {
     Algorithm algo;
@@ -115,8 +181,8 @@ struct SOAFloatEigenAlgorithm {
 };
 
 template <typename Scalar>
-static void legacyAlgorithmBench(benchmark::State& state) {
-  using Algorithm = LegacyAlgorithm<Scalar>;
+static void legacyLinearAlgorithmBench(benchmark::State& state) {
+  using Algorithm = LegacyLinearAlgorithm<Scalar>;
   auto ico =
       utils::IcosahedronDatabase::get(static_cast<std::size_t>(state.range(0)));
   auto algo = Algorithm::fromIcosahedron(ico);
@@ -127,8 +193,8 @@ static void legacyAlgorithmBench(benchmark::State& state) {
   }
 }
 
-static void SOAFloatEigenAlgorithmBench(benchmark::State& state) {
-  using Algorithm = SOAFloatEigenAlgorithm;
+static void SOAFloatEigenLinearAlgorithmBench(benchmark::State& state) {
+  using Algorithm = SOAFloatEigenLinearAlgorithm;
   auto ico =
       utils::IcosahedronDatabase::get(static_cast<std::size_t>(state.range(0)));
   auto algo = Algorithm::fromIcosahedron(ico);
@@ -140,7 +206,7 @@ static void SOAFloatEigenAlgorithmBench(benchmark::State& state) {
 }
 
 template <typename Scalar>
-static void SOAHighwayAlgorithmBench(benchmark::State& state) {
+static void SOAHighwayLinearAlgorithmBench(benchmark::State& state) {
   using Algorithm = SOAHighwayAlgorithm<Scalar>;
   auto ico =
       utils::IcosahedronDatabase::get(static_cast<std::size_t>(state.range(1)));
@@ -152,26 +218,85 @@ static void SOAHighwayAlgorithmBench(benchmark::State& state) {
   }
 }
 
-static void CustomArguments(benchmark::internal::Benchmark* b) {
-  // 4 subdivide doesn't fit into L1 cache 5112 points > 48KB
-  b->Arg(0)->Arg(1)->Arg(2)->Arg(3)->Arg(4);
-}
-static void CustomArgumentsHighway(benchmark::internal::Benchmark* b) {
-  for (std::int64_t target : hwy::SupportedAndGeneratedTargets()) {
-    // 4 subdivide doesn't fit into L1 cache 5112 points > 48KB
-    b->Args({target, 0})
-        ->Args({target, 1})
-        ->Args({target, 2})
-        ->Args({target, 3})
-        ->Args({target, 4});
+template <typename Scalar>
+static void legacyLogAlgorithmBench(benchmark::State& state) {
+  using Algorithm = LegacyLogAlgorithm<Scalar>;
+  using InitAlgorithm = LegacyLinearAlgorithm<Scalar>;
+  using Vec3 = typename InitAlgorithm::Vec3;
+
+  auto ico = utils::IcosahedronWithNeighborsDatabase::get(
+      static_cast<std::size_t>(state.range(1)));
+  auto init_algo = InitAlgorithm::fromIcosahedron(ico.icosahedron);
+  auto algo = Algorithm::fromIcosahedron(ico);
+  Vec3 init_dir;
+
+  switch (state.range(0)) {
+    case 0:
+      // Bad init
+      init_dir = -Vec3::UnitX();
+      break;
+    case 1:
+      // Medium init
+      init_dir = Vec3::UnitY();
+      break;
+    case 2:
+      // Good init
+      init_dir = Vec3(static_cast<Scalar>(0.9), static_cast<Scalar>(0.1),
+                      static_cast<Scalar>(0.1))
+                     .normalized();
+      ;
+      break;
+    default:
+      init_dir = Vec3::UnitX();
+  }
+  auto [_, hint] = init_algo.supportWithIndex(init_dir);
+
+  auto vec = Algorithm::Vec3::UnitX();
+
+  for (auto _ : state) {
+    auto res = algo.support(vec, hint);
+    benchmark::DoNotOptimize(res);
   }
 }
 
-BENCHMARK(legacyAlgorithmBench<float>)->Apply(CustomArguments);
-BENCHMARK(legacyAlgorithmBench<double>)->Apply(CustomArguments);
-BENCHMARK(SOAFloatEigenAlgorithmBench)->Apply(CustomArguments);
-BENCHMARK(SOAHighwayAlgorithmBench<float>)->Apply(CustomArgumentsHighway);
-BENCHMARK(SOAHighwayAlgorithmBench<double>)->Apply(CustomArgumentsHighway);
+static void LinearCustomArguments(benchmark::internal::Benchmark* b) {
+  // 4 subdivide doesn't fit into L1 cache 5112 points > 48KB
+  b->Arg(0)->Arg(1)->Arg(2)->Arg(3)->Arg(4)->Arg(5);
+}
+static void LogCustomArguments(benchmark::internal::Benchmark* b) {
+  for (int init : {0, 1, 2}) {
+    // 4 subdivide doesn't fit into L1 cache 5112 points > 48KB
+    b->Args({init, 0})
+        ->Args({init, 1})
+        ->Args({init, 2})
+        ->Args({init, 3})
+        ->Args({init, 4})
+        ->Args({init, 5});
+  }
+}
+static void LinearCustomArgumentsHighway(benchmark::internal::Benchmark* b) {
+  for (std::int64_t target : hwy::SupportedAndGeneratedTargets()) {
+    if (target != HWY_SSSE3 && target != HWY_SSE4 && target != HWY_NEON_BF16) {
+      // 4 subdivide doesn't fit into L1 cache 5112 points > 48KB
+      b->Args({target, 0})
+          ->Args({target, 1})
+          ->Args({target, 2})
+          ->Args({target, 3})
+          ->Args({target, 4})
+          ->Args({target, 5});
+    }
+  }
+}
+
+BENCHMARK(legacyLinearAlgorithmBench<float>)->Apply(LinearCustomArguments);
+BENCHMARK(legacyLinearAlgorithmBench<double>)->Apply(LinearCustomArguments);
+BENCHMARK(SOAFloatEigenLinearAlgorithmBench)->Apply(LinearCustomArguments);
+BENCHMARK(SOAHighwayLinearAlgorithmBench<float>)
+    ->Apply(LinearCustomArgumentsHighway);
+BENCHMARK(SOAHighwayLinearAlgorithmBench<double>)
+    ->Apply(LinearCustomArgumentsHighway);
+BENCHMARK(legacyLogAlgorithmBench<float>)->Apply(LogCustomArguments);
+BENCHMARK(legacyLogAlgorithmBench<double>)->Apply(LogCustomArguments);
 
 }  // namespace bench
 }  // namespace coal

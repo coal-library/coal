@@ -153,6 +153,7 @@ void Icosahedron::toSTL(std::ostream& stream) const {
 }
 
 void IcosahedronWithNeighbors::constructNeighbors() {
+  neighbors.resize(icosahedron.points.size());
   auto push_if_not_exist = [&](std::size_t vertex_index,
                                std::size_t neighbor_index) {
     auto& vertex_neighbors = neighbors[vertex_index];
@@ -162,7 +163,7 @@ void IcosahedronWithNeighbors::constructNeighbors() {
       vertex_neighbors.push_back(neighbor_index);
     }
   };
-  for (const auto& tri : triangles) {
+  for (const auto& tri : icosahedron.triangles) {
     push_if_not_exist(tri[0], tri[1]);
     push_if_not_exist(tri[0], tri[2]);
 

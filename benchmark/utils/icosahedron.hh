@@ -31,11 +31,9 @@ class Icosahedron {
 
 class IcosahedronWithNeighbors {
  public:
-  using TriangleIndex = std::array<std::size_t, 3>;
   using NeighborIndexes = std::vector<std::size_t>;
 
-  IcosahedronWithNeighbors(Icosahedron ico)
-      : points(ico.points), triangles(ico.triangles) {
+  IcosahedronWithNeighbors(Icosahedron ico) : icosahedron(ico) {
     constructNeighbors();
   }
 
@@ -43,8 +41,7 @@ class IcosahedronWithNeighbors {
   void constructNeighbors();
 
  public:
-  std::vector<Eigen::Vector3d> points;
-  std::vector<TriangleIndex> triangles;
+  Icosahedron icosahedron;
   std::vector<NeighborIndexes> neighbors;
 };
 
