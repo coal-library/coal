@@ -91,7 +91,6 @@ Icosahedron Icosahedron::construct(double scale) {
   ico.triangles.push_back({8, 6, 7});
   ico.triangles.push_back({9, 8, 1});
 
-  ico.constructNeighbors();
   return ico;
 }
 
@@ -130,7 +129,6 @@ Icosahedron Icosahedron::subdivide(std::size_t num_subdiv) const {
     }
     std::swap(ico.triangles, new_triangles);
   }
-  ico.constructNeighbors();
   return ico;
 }
 
@@ -154,17 +152,7 @@ void Icosahedron::toSTL(std::ostream& stream) const {
   stream << "endsolid icosahedron\n";
 }
 
-Eigen::Vector3d Icosahedron::middlePoint(std::size_t point1_index,
-                                         std::size_t point2_index) const {
-  const Eigen::Vector3d& p1 = points[point1_index];
-  const Eigen::Vector3d& p2 = points[point2_index];
-  return toSphere((p1 + p2) * 0.5, 1.);
-}
-
-void Icosahedron::constructNeighbors() {
-  neighbors.clear();
-  neighbors.resize(points.size());
-
+void IcosahedronWithNeighbors::constructNeighbors() {
   auto push_if_not_exist = [&](std::size_t vertex_index,
                                std::size_t neighbor_index) {
     auto& vertex_neighbors = neighbors[vertex_index];
@@ -196,6 +184,21 @@ const Icosahedron& IcosahedronDatabase::get(std::size_t num_subdiv) {
       .first->second;
 }
 std::unordered_map<std::size_t, Icosahedron> IcosahedronDatabase::icosahedrons;
+
+const IcosahedronWithNeighbors& IcosahedronWithNeighborsDatabase::get(
+    std::size_t num_subdiv) {
+  auto it = icosahedrons.find(num_subdiv);
+  if (it != icosahedrons.end()) {
+    return it->second;
+  }
+  return icosahedrons
+      .insert(
+          {num_subdiv, IcosahedronWithNeighbors(
+                           Icosahedron::construct(1.).subdivide(num_subdiv))})
+      .first->second;
+}
+std::unordered_map<std::size_t, IcosahedronWithNeighbors>
+    IcosahedronWithNeighborsDatabase::icosahedrons;
 
 }  // namespace utils
 }  // namespace bench

@@ -15,7 +15,6 @@ namespace utils {
 class Icosahedron {
  public:
   using TriangleIndex = std::array<std::size_t, 3>;
-  using NeighborIndexes = std::vector<std::size_t>;
 
   /// Construct a icosahedron.
   /// For explanation, see:
@@ -25,9 +24,22 @@ class Icosahedron {
   Icosahedron subdivide(std::size_t num_subdiv) const;
   void toSTL(std::ostream& stream) const;
 
+ public:
+  std::vector<Eigen::Vector3d> points;
+  std::vector<TriangleIndex> triangles;
+};
+
+class IcosahedronWithNeighbors {
+ public:
+  using TriangleIndex = std::array<std::size_t, 3>;
+  using NeighborIndexes = std::vector<std::size_t>;
+
+  IcosahedronWithNeighbors(Icosahedron ico)
+      : points(ico.points), triangles(ico.triangles) {
+    constructNeighbors();
+  }
+
  protected:
-  Eigen::Vector3d middlePoint(std::size_t point1_index,
-                              std::size_t point2_index) const;
   void constructNeighbors();
 
  public:
@@ -42,6 +54,14 @@ class IcosahedronDatabase {
 
  protected:
   static std::unordered_map<std::size_t, Icosahedron> icosahedrons;
+};
+
+class IcosahedronWithNeighborsDatabase {
+ public:
+  static const IcosahedronWithNeighbors& get(std::size_t num_subdiv);
+
+ protected:
+  static std::unordered_map<std::size_t, IcosahedronWithNeighbors> icosahedrons;
 };
 
 }  // namespace utils
