@@ -1031,6 +1031,7 @@ struct COAL_DLLAPI DistanceRequest : QueryRequest {
 
   COAL_COMPILER_DIAGNOSTIC_PUSH
   COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
+  DistanceRequest(const DistanceRequest& other) = default;
   DistanceRequest& operator=(const DistanceRequest& other) = default;
   COAL_COMPILER_DIAGNOSTIC_POP
 
