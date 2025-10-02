@@ -62,22 +62,36 @@ struct ClustersAlgorithm {
       const WarmStartMesh& warm_start_mesh,
       const std::vector<Eigen::Vector3d>& points) {
     Algorithm algo;
-    algo.warm_start_algo = UsedAlgorithm::fromPoints(warm_start_mesh.points);
+    // This algo will search closest point on all the warm start mesh
+    auto init_warm_start_algo =
+        UsedAlgorithm::fromPoints(warm_start_mesh.points);
     algo.clusters_algo.reserve(warm_start_mesh.points.size());
 
     std::vector<std::vector<Eigen::Vector3d>> clusters_points;
     clusters_points.resize(warm_start_mesh.points.size());
 
+    // Affect points to a cluster
     for (const auto& p : points) {
       auto [_, index] =
-          algo.warm_start_algo.supportWithIndex(p.template cast<Scalar>());
+          init_warm_start_algo.supportWithIndex(p.template cast<Scalar>());
       clusters_points[index].push_back(p);
     }
 
-    for (const auto& c_points : clusters_points) {
-      // TODO manage empty cluster ?
-      algo.clusters_algo.push_back(UsedAlgorithm::fromPoints(c_points));
+    // Store warm start mesh with at least one point attached to them.
+    // Only construct cluster if they is at least one point.
+    std::vector<Eigen::Vector3d> filtered_warm_start_points;
+    filtered_warm_start_points.reserve(warm_start_mesh.points.size());
+    for (std::size_t i = 0; i < clusters_points.size(); ++i) {
+      const auto& c_points = clusters_points[i];
+      if (c_points.size() != 0) {
+        filtered_warm_start_points.push_back(warm_start_mesh.points[i]);
+        algo.clusters_algo.push_back(UsedAlgorithm::fromPoints(c_points));
+      }
     }
+    // Create the warm start algorithm from filtered warm start mesh
+    algo.warm_start_algo =
+        UsedAlgorithm::fromPoints(filtered_warm_start_points);
+
     return algo;
   }
 
@@ -362,10 +376,48 @@ static void legacyLogAlgorithmBench(benchmark::State& state) {
 }
 
 template <typename Scalar>
+static void legacyLogWarmStartAlgorithmBench(benchmark::State& state) {
+  using Algorithm = LegacyLogAlgorithm<Scalar>;
+  // using InitAlgorithm = SOAHighwayAlgorithm<Scalar>;
+  using InitAlgorithm = LegacyLinearAlgorithm<Scalar>;
+
+  const auto num_subdiv = state.range(0);
+
+  auto ico = utils::IcosahedronWithNeighborsDatabase::get(
+      static_cast<std::size_t>(num_subdiv));
+  auto algo = Algorithm::fromPointsAndNeighbors(ico.points, ico.neighbors);
+  auto init_warm_start_algo = InitAlgorithm::fromPoints(ico.points);
+
+  auto warm_start_mesh = WarmStartMesh::construct(4, 3);
+  auto warm_start_algo = InitAlgorithm::fromPoints(warm_start_mesh.points);
+  std::vector<std::size_t> closest_index;
+  closest_index.reserve(warm_start_mesh.points.size());
+  for (const auto& p : warm_start_mesh.points) {
+    auto [_, index] =
+        init_warm_start_algo.supportWithIndex(p.template cast<Scalar>());
+    closest_index.push_back(index);
+  }
+
+  // auto vec = Algorithm::Vec3::UnitX();
+  auto vec = typename Algorithm::Vec3(static_cast<Scalar>(0.9),
+                                      static_cast<Scalar>(0.2),
+                                      static_cast<Scalar>(0.2))
+                 .normalized();
+
+  for (auto _ : state) {
+    auto [__, index] = warm_start_algo.supportWithIndex(vec);
+    benchmark::DoNotOptimize(index);
+    auto hint = closest_index[index];
+    auto res = algo.support(vec, hint);
+    benchmark::DoNotOptimize(res);
+  }
+}
+
+template <typename Scalar>
 static void SOAClusterAlgorithmBench(benchmark::State& state) {
   using Algorithm = ClustersAlgorithm<Scalar>;
 
-  auto warm_start_mesh = WarmStartMesh::construct(4, 5);
+  auto warm_start_mesh = WarmStartMesh::construct(10, 8);
 
   const auto target = state.range(0);
   const auto num_subdiv = state.range(1);
@@ -401,10 +453,12 @@ static void LinearCustomArgumentsHighway(benchmark::internal::Benchmark* b) {
   for (std::int64_t target : hwy::SupportedAndGeneratedTargets()) {
     if (target != HWY_SSSE3 && target != HWY_SSE4 && target != HWY_NEON_BF16) {
       // 4 subdivide doesn't fit into L1 cache 5112 points > 48KB
-      // b->Args({target, 0})
-      //     ->Args({target, 1})
-      //     ->Args({target, 2})
-      b->Args({target, 3})->Args({target, 4})->Args({target, 5});
+      b->Args({target, 0})
+          ->Args({target, 1})
+          ->Args({target, 2})
+          ->Args({target, 3})
+          ->Args({target, 4})
+          ->Args({target, 5});
     }
   }
 }
@@ -422,6 +476,10 @@ BENCHMARK(SOAHighwayLinearWithIndexAlgorithmBench<double>)
     ->Apply(LinearCustomArgumentsHighway);
 BENCHMARK(legacyLogAlgorithmBench<float>)->Apply(LogCustomArguments);
 BENCHMARK(legacyLogAlgorithmBench<double>)->Apply(LogCustomArguments);
+BENCHMARK(legacyLogWarmStartAlgorithmBench<float>)
+    ->Apply(LinearCustomArguments);
+BENCHMARK(legacyLogWarmStartAlgorithmBench<double>)
+    ->Apply(LinearCustomArguments);
 BENCHMARK(SOAClusterAlgorithmBench<float>)->Apply(LinearCustomArgumentsHighway);
 BENCHMARK(SOAClusterAlgorithmBench<double>)
     ->Apply(LinearCustomArgumentsHighway);
