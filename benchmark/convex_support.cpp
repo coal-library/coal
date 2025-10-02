@@ -273,9 +273,8 @@ static void legacyLogAlgorithmBench(benchmark::State& state) {
 
   auto ico = utils::IcosahedronWithNeighborsDatabase::get(
       static_cast<std::size_t>(state.range(1)));
-  auto init_algo = InitAlgorithm::fromPoints(ico.icosahedron.points);
-  auto algo =
-      Algorithm::fromPointsAndNeighbors(ico.icosahedron.points, ico.neighbors);
+  auto init_algo = InitAlgorithm::fromPoints(ico.points);
+  auto algo = Algorithm::fromPointsAndNeighbors(ico.points, ico.neighbors);
   Vec3 init_dir;
 
   switch (state.range(0)) {
