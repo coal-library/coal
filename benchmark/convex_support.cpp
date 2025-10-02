@@ -8,12 +8,51 @@
 
 #include <Eigen/Core>
 
+#include <boost/math/constants/constants.hpp>
+
 #include <limits>
 #include <vector>
 #include <cmath>
 
 namespace coal {
 namespace bench {
+
+template <typename _Scalar>
+struct WarmStartMesh {
+  using Scalar = _Scalar;
+  using Vec3 = Eigen::Vector<Scalar, 3>;
+
+  static WarmStartMesh construct(std::size_t points_horizontal,
+                                 std::size_t points_vertical) {
+    const auto half_pi = boost::math::constants::half_pi<Scalar>();
+    const auto pi = boost::math::constants::pi<Scalar>();
+    const auto two_pi = boost::math::constants::two_pi<Scalar>();
+    WarmStartMesh ws;
+    ws.points.reserve(points_horizontal * points_vertical);
+    for (std::size_t x = 0; x < points_horizontal; ++x) {
+      for (std::size_t y = 0; y < points_vertical; ++y) {
+        const Scalar horiz =
+            (static_cast<Scalar>(x) / static_cast<Scalar>(points_horizontal)) *
+            two_pi;
+        const Scalar vert =
+            -half_pi + (static_cast<Scalar>(y + 1) /
+                        static_cast<Scalar>(points_vertical + 1)) *
+                           pi;
+        const auto sin_horiz = std::sin(horiz);
+        const auto cos_horiz = std::cos(horiz);
+        const auto sin_vert = std::sin(vert);
+        const auto cos_vert = std::cos(vert);
+        ws.points.push_back(
+            Vec3(cos_horiz * cos_vert, sin_vert, sin_horiz * cos_vert));
+      }
+    }
+    ws.points.push_back(Vec3::UnitY());
+    ws.points.push_back(-Vec3::UnitY());
+    return ws;
+  }
+
+  std::vector<Vec3> points;
+};
 
 template <typename _Scalar>
 struct LegacyLinearAlgorithm {
