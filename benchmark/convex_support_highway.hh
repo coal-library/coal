@@ -14,6 +14,17 @@ float support(const float* HWY_RESTRICT x, const float* HWY_RESTRICT y,
 double support(const double* HWY_RESTRICT x, const double* HWY_RESTRICT y,
                const double* HWY_RESTRICT z, double x_dir, double y_dir,
                double z_dir, std::size_t count);
+std::tuple<float, std::size_t> supportWithIndex(const float* HWY_RESTRICT x,
+                                                const float* HWY_RESTRICT y,
+                                                const float* HWY_RESTRICT z,
+                                                float x_dir, float y_dir,
+                                                float z_dir, std::size_t count);
+std::tuple<double, std::size_t> supportWithIndex(const double* HWY_RESTRICT x,
+                                                 const double* HWY_RESTRICT y,
+                                                 const double* HWY_RESTRICT z,
+                                                 double x_dir, double y_dir,
+                                                 double z_dir,
+                                                 std::size_t count);
 
 template <typename Scalar>
 struct SOAHighwayAlgorithm {
@@ -24,6 +35,10 @@ struct SOAHighwayAlgorithm {
   Scalar support(const Vec3& dir) {
     return coal::bench::support(x.get(), y.get(), z.get(), dir.x(), dir.y(),
                                 dir.z(), count);
+  }
+  std::tuple<Scalar, std::size_t> supportWithIndex(const Vec3& dir) {
+    return coal::bench::supportWithIndex(x.get(), y.get(), z.get(), dir.x(),
+                                         dir.y(), dir.z(), count);
   }
 
   hwy::AlignedFreeUniquePtr<Scalar[]> x, y, z;

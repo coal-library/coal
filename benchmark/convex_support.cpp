@@ -266,6 +266,25 @@ static void SOAHighwayLinearAlgorithmBench(benchmark::State& state) {
 }
 
 template <typename Scalar>
+static void SOAHighwayLinearWithIndexAlgorithmBench(benchmark::State& state) {
+  using Algorithm = SOAHighwayAlgorithm<Scalar>;
+
+  const auto target = state.range(0);
+  const auto num_subdiv = state.range(1);
+
+  auto ico =
+      utils::IcosahedronDatabase::get(static_cast<std::size_t>(num_subdiv));
+  auto vec = Algorithm::Vec3::UnitX();
+  hwy::SetSupportedTargetsForTest(target);
+  auto algo = Algorithm::fromPoints(ico.points);
+  for (auto _ : state) {
+    auto res = algo.supportWithIndex(vec);
+    benchmark::DoNotOptimize(res);
+  }
+  hwy::SetSupportedTargetsForTest(0);
+}
+
+template <typename Scalar>
 static void legacyLogAlgorithmBench(benchmark::State& state) {
   using Algorithm = LegacyLogAlgorithm<Scalar>;
   using InitAlgorithm = LegacyLinearAlgorithm<Scalar>;
@@ -341,6 +360,10 @@ BENCHMARK(SOAFloatEigenLinearAlgorithmBench)->Apply(LinearCustomArguments);
 BENCHMARK(SOAHighwayLinearAlgorithmBench<float>)
     ->Apply(LinearCustomArgumentsHighway);
 BENCHMARK(SOAHighwayLinearAlgorithmBench<double>)
+    ->Apply(LinearCustomArgumentsHighway);
+BENCHMARK(SOAHighwayLinearWithIndexAlgorithmBench<float>)
+    ->Apply(LinearCustomArgumentsHighway);
+BENCHMARK(SOAHighwayLinearWithIndexAlgorithmBench<double>)
     ->Apply(LinearCustomArgumentsHighway);
 BENCHMARK(legacyLogAlgorithmBench<float>)->Apply(LogCustomArguments);
 BENCHMARK(legacyLogAlgorithmBench<double>)->Apply(LogCustomArguments);

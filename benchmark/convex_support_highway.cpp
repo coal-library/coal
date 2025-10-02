@@ -1,5 +1,6 @@
 #include "convex_support_highway.hh"
 
+#include <cstdint>
 #include <limits>
 
 #undef HWY_TARGET_INCLUDE
@@ -87,6 +88,89 @@ Scalar _support(const Scalar* HWY_RESTRICT x, const Scalar* HWY_RESTRICT y,
   return hn::ReduceMax(d, max_dot_v);
 }
 
+template <typename Scalar>
+std::tuple<Scalar, std::size_t> _supportWithIndex(const Scalar* HWY_RESTRICT x,
+                                                  const Scalar* HWY_RESTRICT y,
+                                                  const Scalar* HWY_RESTRICT z,
+                                                  Scalar x_dir, Scalar y_dir,
+                                                  Scalar z_dir,
+                                                  std::size_t count) {
+  using DF = hn::ScalableTag<Scalar>;
+  const DF d;
+  const size_t N = hn::Lanes(d);
+  using V = decltype(hn::Zero(d));
+
+  // Create unsigned integer Vector type with same number
+  // of lanes than DF
+  const hn::RebindToUnsigned<DF> dui;
+  using VUI = decltype(hn::Zero(dui));
+
+  const V x_dir_v = hn::Set(d, x_dir);
+  const V y_dir_v = hn::Set(d, y_dir);
+  const V z_dir_v = hn::Set(d, z_dir);
+
+  const VUI indices_increment_v = hn::Set(dui, 2 * N);
+
+  // Compute dot product
+  auto dot_product = [&](std::size_t i) -> V {
+    const V x_v_ = hn::Load(d, x + i);
+    const V dot_v1_ = x_v_ * x_dir_v;
+    const V y_v_ = hn::Load(d, y + i);
+    const V dot_v2_ = hn::MulAdd(y_v_, y_dir_v, dot_v1_);
+    const V z_v_ = hn::Load(d, z + i);
+    return hn::MulAdd(z_v_, z_dir_v, dot_v2_);
+  };
+
+  // Extract max dot product and corresponding max indices
+  auto max_dot_and_indices =
+      [&dui](const V& dot_v, const VUI& indices_v, const V& max_dot_v,
+             const VUI& max_indices_v) -> std::tuple<V, VUI> {
+    const auto mask_v = max_dot_v > dot_v;
+    // Max give better perf than using the mask
+    const V max_dot_v_tmp = hn::Max(max_dot_v, dot_v);
+    const VUI max_indices_v_tmp =
+        hn::IfThenElse(hn::RebindMask(dui, mask_v), max_indices_v, indices_v);
+    return std::make_tuple(max_dot_v_tmp, max_indices_v_tmp);
+  };
+
+  V max_dot_v_ilp1 = hn::Set(d, std::numeric_limits<Scalar>::min());
+  V max_dot_v_ilp2 = hn::Set(d, std::numeric_limits<Scalar>::min());
+  // Initialize indices with right index (0, 1, 2, ...)
+  VUI indices_v_ilp1 = hn::Iota(dui, 0);
+  VUI indices_v_ilp2 = hn::Iota(dui, N);
+  VUI max_indices_v_ilp1 = hn::Set(dui, 0);
+  VUI max_indices_v_ilp2 = hn::Set(dui, 0);
+  size_t i = 0;
+  // First pass with 2 ILP
+  for (; i + N * 2 <= count; i += N * 2) {
+    const V dot_v_ilp1 = dot_product(i);
+    std::tie(max_dot_v_ilp1, max_indices_v_ilp1) = max_dot_and_indices(
+        dot_v_ilp1, indices_v_ilp1, max_dot_v_ilp1, max_indices_v_ilp1);
+    indices_v_ilp1 += indices_increment_v;
+
+    const V dot_v_ilp2 = dot_product(i + 1 * N);
+    std::tie(max_dot_v_ilp2, max_indices_v_ilp2) = max_dot_and_indices(
+        dot_v_ilp2, indices_v_ilp2, max_dot_v_ilp2, max_indices_v_ilp2);
+    indices_v_ilp2 += indices_increment_v;
+  }
+  // Merge first  pass result
+  auto [max_dot_v, max_indices_v] = max_dot_and_indices(
+      max_dot_v_ilp1, max_indices_v_ilp1, max_dot_v_ilp2, max_indices_v_ilp2);
+
+  // Second pass with the remaining batch
+  if (i + N <= count) {
+    const V dot_v = dot_product(i);
+    std::tie(max_dot_v, max_indices_v) =
+        max_dot_and_indices(dot_v, indices_v_ilp1, max_dot_v, max_indices_v);
+  }
+
+  // Extract max scalar dot product and corresponding max indices
+  Scalar max_dot = hn::ReduceMax(d, max_dot_v);
+  const auto max_scalar_mask_v = max_dot_v == hn::Set(d, max_dot);
+  std::size_t best_index = hn::FindKnownFirstTrue(d, max_scalar_mask_v);
+  return std::make_tuple(max_dot, hn::ExtractLane(max_indices_v, best_index));
+}
+
 }  // namespace
 }  // namespace HWY_NAMESPACE
 }  // namespace bench
@@ -101,6 +185,8 @@ namespace {
 
 HWY_EXPORT_T(_supportFloat, _support<float>);
 HWY_EXPORT_T(_supportDouble, _support<double>);
+HWY_EXPORT_T(_supportWithIndexFloat, _supportWithIndex<float>);
+HWY_EXPORT_T(_supportWithIndexDouble, _supportWithIndex<double>);
 HWY_EXPORT_T(_fromPointsFloat, _fromPoints<float>);
 HWY_EXPORT_T(_fromPointsDouble, _fromPoints<double>);
 
@@ -117,6 +203,25 @@ double support(const double* HWY_RESTRICT x, const double* HWY_RESTRICT y,
                double z_dir, std::size_t count) {
   return HWY_DYNAMIC_DISPATCH_T(_supportDouble)(x, y, z, x_dir, y_dir, z_dir,
                                                 count);
+}
+
+std::tuple<float, std::size_t> supportWithIndex(const float* HWY_RESTRICT x,
+                                                const float* HWY_RESTRICT y,
+                                                const float* HWY_RESTRICT z,
+                                                float x_dir, float y_dir,
+                                                float z_dir,
+                                                std::size_t count) {
+  return HWY_DYNAMIC_DISPATCH_T(_supportWithIndexFloat)(x, y, z, x_dir, y_dir,
+                                                        z_dir, count);
+}
+std::tuple<double, std::size_t> supportWithIndex(const double* HWY_RESTRICT x,
+                                                 const double* HWY_RESTRICT y,
+                                                 const double* HWY_RESTRICT z,
+                                                 double x_dir, double y_dir,
+                                                 double z_dir,
+                                                 std::size_t count) {
+  return HWY_DYNAMIC_DISPATCH_T(_supportWithIndexDouble)(x, y, z, x_dir, y_dir,
+                                                         z_dir, count);
 }
 
 template <>
