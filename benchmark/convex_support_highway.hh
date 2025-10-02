@@ -32,11 +32,11 @@ struct SOAHighwayAlgorithm {
   using Algorithm = SOAHighwayAlgorithm<Scalar>;
 
   static Algorithm fromPoints(const std::vector<Eigen::Vector3d>& points);
-  Scalar support(const Vec3& dir) {
+  Scalar support(const Vec3& dir) const {
     return coal::bench::support(x.get(), y.get(), z.get(), dir.x(), dir.y(),
                                 dir.z(), count);
   }
-  std::tuple<Scalar, std::size_t> supportWithIndex(const Vec3& dir) {
+  std::tuple<Scalar, std::size_t> supportWithIndex(const Vec3& dir) const {
     return coal::bench::supportWithIndex(x.get(), y.get(), z.get(), dir.x(),
                                          dir.y(), dir.z(), count);
   }

@@ -13,45 +13,81 @@
 #include <limits>
 #include <vector>
 #include <cmath>
+#include <iostream>
 
 namespace coal {
 namespace bench {
 
-template <typename _Scalar>
 struct WarmStartMesh {
-  using Scalar = _Scalar;
-  using Vec3 = Eigen::Vector<Scalar, 3>;
-
   static WarmStartMesh construct(std::size_t points_horizontal,
                                  std::size_t points_vertical) {
-    const auto half_pi = boost::math::constants::half_pi<Scalar>();
-    const auto pi = boost::math::constants::pi<Scalar>();
-    const auto two_pi = boost::math::constants::two_pi<Scalar>();
+    const auto half_pi = boost::math::constants::half_pi<double>();
+    const auto pi = boost::math::constants::pi<double>();
+    const auto two_pi = boost::math::constants::two_pi<double>();
     WarmStartMesh ws;
     ws.points.reserve(points_horizontal * points_vertical);
     for (std::size_t x = 0; x < points_horizontal; ++x) {
       for (std::size_t y = 0; y < points_vertical; ++y) {
-        const Scalar horiz =
-            (static_cast<Scalar>(x) / static_cast<Scalar>(points_horizontal)) *
+        const double horiz =
+            (static_cast<double>(x) / static_cast<double>(points_horizontal)) *
             two_pi;
-        const Scalar vert =
-            -half_pi + (static_cast<Scalar>(y + 1) /
-                        static_cast<Scalar>(points_vertical + 1)) *
+        const double vert =
+            -half_pi + (static_cast<double>(y + 1) /
+                        static_cast<double>(points_vertical + 1)) *
                            pi;
         const auto sin_horiz = std::sin(horiz);
         const auto cos_horiz = std::cos(horiz);
         const auto sin_vert = std::sin(vert);
         const auto cos_vert = std::cos(vert);
-        ws.points.push_back(
-            Vec3(cos_horiz * cos_vert, sin_vert, sin_horiz * cos_vert));
+        ws.points.push_back(Eigen::Vector3d(cos_horiz * cos_vert, sin_vert,
+                                            sin_horiz * cos_vert));
       }
     }
-    ws.points.push_back(Vec3::UnitY());
-    ws.points.push_back(-Vec3::UnitY());
+    ws.points.push_back(Eigen::Vector3d::UnitY());
+    ws.points.push_back(-Eigen::Vector3d::UnitY());
     return ws;
   }
 
-  std::vector<Vec3> points;
+  std::vector<Eigen::Vector3d> points;
+};
+
+template <typename _Scalar>
+struct ClustersAlgorithm {
+  using Scalar = _Scalar;
+  using Vec3 = Eigen::Vector<Scalar, 3>;
+  using Algorithm = ClustersAlgorithm<Scalar>;
+  using UsedAlgorithm = SOAHighwayAlgorithm<Scalar>;
+
+  static Algorithm fromMeshAndPoints(
+      const WarmStartMesh& warm_start_mesh,
+      const std::vector<Eigen::Vector3d>& points) {
+    Algorithm algo;
+    algo.warm_start_algo = UsedAlgorithm::fromPoints(warm_start_mesh.points);
+    algo.clusters_algo.reserve(warm_start_mesh.points.size());
+
+    std::vector<std::vector<Eigen::Vector3d>> clusters_points;
+    clusters_points.resize(warm_start_mesh.points.size());
+
+    for (const auto& p : points) {
+      auto [_, index] =
+          algo.warm_start_algo.supportWithIndex(p.template cast<Scalar>());
+      clusters_points[index].push_back(p);
+    }
+
+    for (const auto& c_points : clusters_points) {
+      // TODO manage empty cluster ?
+      algo.clusters_algo.push_back(UsedAlgorithm::fromPoints(c_points));
+    }
+    return algo;
+  }
+
+  Scalar support(const Vec3& dir) const {
+    auto [_, index] = warm_start_algo.supportWithIndex(dir);
+    return clusters_algo[index].support(dir);
+  }
+
+  UsedAlgorithm warm_start_algo;
+  std::vector<UsedAlgorithm> clusters_algo;
 };
 
 template <typename _Scalar>
@@ -325,6 +361,27 @@ static void legacyLogAlgorithmBench(benchmark::State& state) {
   }
 }
 
+template <typename Scalar>
+static void SOAClusterAlgorithmBench(benchmark::State& state) {
+  using Algorithm = ClustersAlgorithm<Scalar>;
+
+  auto warm_start_mesh = WarmStartMesh::construct(4, 5);
+
+  const auto target = state.range(0);
+  const auto num_subdiv = state.range(1);
+
+  auto ico =
+      utils::IcosahedronDatabase::get(static_cast<std::size_t>(num_subdiv));
+  auto vec = Algorithm::Vec3::UnitX();
+  hwy::SetSupportedTargetsForTest(target);
+  auto algo = Algorithm::fromMeshAndPoints(warm_start_mesh, ico.points);
+  for (auto _ : state) {
+    auto res = algo.support(vec);
+    benchmark::DoNotOptimize(res);
+  }
+  hwy::SetSupportedTargetsForTest(0);
+}
+
 static void LinearCustomArguments(benchmark::internal::Benchmark* b) {
   // 4 subdivide doesn't fit into L1 cache 5112 points > 48KB
   b->Arg(0)->Arg(1)->Arg(2)->Arg(3)->Arg(4)->Arg(5);
@@ -344,12 +401,10 @@ static void LinearCustomArgumentsHighway(benchmark::internal::Benchmark* b) {
   for (std::int64_t target : hwy::SupportedAndGeneratedTargets()) {
     if (target != HWY_SSSE3 && target != HWY_SSE4 && target != HWY_NEON_BF16) {
       // 4 subdivide doesn't fit into L1 cache 5112 points > 48KB
-      b->Args({target, 0})
-          ->Args({target, 1})
-          ->Args({target, 2})
-          ->Args({target, 3})
-          ->Args({target, 4})
-          ->Args({target, 5});
+      // b->Args({target, 0})
+      //     ->Args({target, 1})
+      //     ->Args({target, 2})
+      b->Args({target, 3})->Args({target, 4})->Args({target, 5});
     }
   }
 }
@@ -367,6 +422,9 @@ BENCHMARK(SOAHighwayLinearWithIndexAlgorithmBench<double>)
     ->Apply(LinearCustomArgumentsHighway);
 BENCHMARK(legacyLogAlgorithmBench<float>)->Apply(LogCustomArguments);
 BENCHMARK(legacyLogAlgorithmBench<double>)->Apply(LogCustomArguments);
+BENCHMARK(SOAClusterAlgorithmBench<float>)->Apply(LinearCustomArgumentsHighway);
+BENCHMARK(SOAClusterAlgorithmBench<double>)
+    ->Apply(LinearCustomArgumentsHighway);
 
 }  // namespace bench
 }  // namespace coal
