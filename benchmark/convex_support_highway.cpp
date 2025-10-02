@@ -1,6 +1,5 @@
 #include "convex_support_highway.hh"
 
-#include <cstdint>
 #include <limits>
 
 #undef HWY_TARGET_INCLUDE
@@ -19,13 +18,14 @@ namespace {
 namespace hn = hwy::HWY_NAMESPACE;
 
 template <typename Scalar>
-SOAHighwayAlgorithm<Scalar> _fromIcosahedron(const utils::Icosahedron& ico) {
+SOAHighwayAlgorithm<Scalar> _fromPoints(
+    const std::vector<Eigen::Vector3d>& points) {
   using Algorithm = SOAHighwayAlgorithm<Scalar>;
 
   const hn::ScalableTag<Scalar> d;
   const std::size_t N = hn::Lanes(d);
-  const std::size_t remainder = ico.points.size() % N;
-  const std::size_t padded_size = ico.points.size() + remainder;
+  const std::size_t remainder = points.size() % N;
+  const std::size_t padded_size = points.size() + remainder;
 
   Algorithm algo;
   algo.x = hwy::AllocateAligned<Scalar>(padded_size);
@@ -33,15 +33,15 @@ SOAHighwayAlgorithm<Scalar> _fromIcosahedron(const utils::Icosahedron& ico) {
   algo.z = hwy::AllocateAligned<Scalar>(padded_size);
   algo.count = padded_size;
 
-  for (std::size_t i = 0; i < ico.points.size(); ++i) {
-    algo.x[i] = static_cast<Scalar>(ico.points[i].x());
-    algo.y[i] = static_cast<Scalar>(ico.points[i].y());
-    algo.z[i] = static_cast<Scalar>(ico.points[i].z());
+  for (std::size_t i = 0; i < points.size(); ++i) {
+    algo.x[i] = static_cast<Scalar>(points[i].x());
+    algo.y[i] = static_cast<Scalar>(points[i].y());
+    algo.z[i] = static_cast<Scalar>(points[i].z());
   }
-  for (std::size_t i = ico.points.size(); i < padded_size; ++i) {
-    algo.x[i] = static_cast<Scalar>(ico.points.back().x());
-    algo.y[i] = static_cast<Scalar>(ico.points.back().y());
-    algo.z[i] = static_cast<Scalar>(ico.points.back().z());
+  for (std::size_t i = points.size(); i < padded_size; ++i) {
+    algo.x[i] = static_cast<Scalar>(points.back().x());
+    algo.y[i] = static_cast<Scalar>(points.back().y());
+    algo.z[i] = static_cast<Scalar>(points.back().z());
   }
   return algo;
 }
@@ -101,8 +101,8 @@ namespace {
 
 HWY_EXPORT_T(_supportFloat, _support<float>);
 HWY_EXPORT_T(_supportDouble, _support<double>);
-HWY_EXPORT_T(_fromIcosahedronFloat, _fromIcosahedron<float>);
-HWY_EXPORT_T(_fromIcosahedronDouble, _fromIcosahedron<double>);
+HWY_EXPORT_T(_fromPointsFloat, _fromPoints<float>);
+HWY_EXPORT_T(_fromPointsDouble, _fromPoints<double>);
 
 }  // namespace
 
@@ -120,15 +120,15 @@ double support(const double* HWY_RESTRICT x, const double* HWY_RESTRICT y,
 }
 
 template <>
-SOAHighwayAlgorithm<float> SOAHighwayAlgorithm<float>::fromIcosahedron(
-    const utils::Icosahedron& ico) {
-  return HWY_DYNAMIC_DISPATCH_T(_fromIcosahedronFloat)(ico);
+SOAHighwayAlgorithm<float> SOAHighwayAlgorithm<float>::fromPoints(
+    const std::vector<Eigen::Vector3d>& points) {
+  return HWY_DYNAMIC_DISPATCH_T(_fromPointsFloat)(points);
 }
 
 template <>
-SOAHighwayAlgorithm<double> SOAHighwayAlgorithm<double>::fromIcosahedron(
-    const utils::Icosahedron& ico) {
-  return HWY_DYNAMIC_DISPATCH_T(_fromIcosahedronDouble)(ico);
+SOAHighwayAlgorithm<double> SOAHighwayAlgorithm<double>::fromPoints(
+    const std::vector<Eigen::Vector3d>& points) {
+  return HWY_DYNAMIC_DISPATCH_T(_fromPointsDouble)(points);
 }
 
 }  // namespace bench

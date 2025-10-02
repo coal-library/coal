@@ -1,13 +1,9 @@
 #ifndef COAL_BENCH_CONVEX_SUPPORT_HIGHWAY_HH
 #define COAL_BENCH_CONVEX_SUPPORT_HIGHWAY_HH
 
-#include "utils/icosahedron.hh"
-
 #include <hwy/aligned_allocator.h>
 
 #include <Eigen/Core>
-
-#include <cstdint>
 
 namespace coal {
 namespace bench {
@@ -24,7 +20,7 @@ struct SOAHighwayAlgorithm {
   using Vec3 = Eigen::Vector<Scalar, 3>;
   using Algorithm = SOAHighwayAlgorithm<Scalar>;
 
-  static Algorithm fromIcosahedron(const utils::Icosahedron& ico);
+  static Algorithm fromPoints(const std::vector<Eigen::Vector3d>& points);
   Scalar support(const Vec3& dir) {
     return coal::bench::support(x.get(), y.get(), z.get(), dir.x(), dir.y(),
                                 dir.z(), count);

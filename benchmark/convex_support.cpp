@@ -60,11 +60,11 @@ struct LegacyLinearAlgorithm {
   using Vec3 = Eigen::Vector<Scalar, 3>;
   using Algorithm = LegacyLinearAlgorithm;
 
-  static Algorithm fromIcosahedron(const utils::Icosahedron& ico) {
+  static Algorithm fromPoints(const std::vector<Eigen::Vector3d>& points) {
     Algorithm algo;
-    algo.points.reserve(ico.points.size());
-    for (std::size_t i = 0; i < ico.points.size(); ++i) {
-      algo.points.push_back(ico.points[i].cast<Scalar>());
+    algo.points.reserve(points.size());
+    for (std::size_t i = 0; i < points.size(); ++i) {
+      algo.points.push_back(points[i].cast<Scalar>());
     }
     return algo;
   }
@@ -103,14 +103,16 @@ struct LegacyLogAlgorithm {
   using NeighborIndexes = std::vector<std::size_t>;
   using Algorithm = LegacyLogAlgorithm;
 
-  static Algorithm fromIcosahedron(const utils::IcosahedronWithNeighbors& ico) {
+  static Algorithm fromPointsAndNeighbors(
+      const std::vector<Eigen::Vector3d>& points,
+      std::vector<NeighborIndexes> neighbors) {
     Algorithm algo;
-    algo.points.reserve(ico.icosahedron.points.size());
-    for (std::size_t i = 0; i < ico.icosahedron.points.size(); ++i) {
-      algo.points.push_back(ico.icosahedron.points[i].cast<Scalar>());
+    algo.points.reserve(points.size());
+    for (std::size_t i = 0; i < points.size(); ++i) {
+      algo.points.push_back(points[i].cast<Scalar>());
     }
-    algo.visited.resize(ico.icosahedron.points.size());
-    algo.neighbors = ico.neighbors;
+    algo.visited.resize(points.size());
+    algo.neighbors = std::move(neighbors);
     return algo;
   }
 
@@ -157,29 +159,29 @@ struct SOAFloatEigenLinearAlgorithm {
   using Vec3 = Eigen::Vector<Scalar, 3>;
   using Algorithm = SOAFloatEigenLinearAlgorithm;
 
-  static Algorithm fromIcosahedron(const utils::Icosahedron& ico) {
+  static Algorithm fromPoints(const std::vector<Eigen::Vector3d>& points) {
     Algorithm algo;
     std::size_t i = 0;
-    for (; (i + 4) < ico.points.size(); i += 4) {
+    for (; (i + 4) < points.size(); i += 4) {
       Array4 x, y, z;
-      x << static_cast<Scalar>(ico.points[i].x()),
-          static_cast<Scalar>(ico.points[i + 1].x()),
-          static_cast<Scalar>(ico.points[i + 2].x()),
-          static_cast<Scalar>(ico.points[i + 3].x());
-      y << static_cast<Scalar>(ico.points[i].y()),
-          static_cast<Scalar>(ico.points[i + 1].y()),
-          static_cast<Scalar>(ico.points[i + 2].y()),
-          static_cast<Scalar>(ico.points[i + 3].y());
-      z << static_cast<Scalar>(ico.points[i].z()),
-          static_cast<Scalar>(ico.points[i + 1].z()),
-          static_cast<Scalar>(ico.points[i + 2].z()),
-          static_cast<Scalar>(ico.points[i + 3].z());
+      x << static_cast<Scalar>(points[i].x()),
+          static_cast<Scalar>(points[i + 1].x()),
+          static_cast<Scalar>(points[i + 2].x()),
+          static_cast<Scalar>(points[i + 3].x());
+      y << static_cast<Scalar>(points[i].y()),
+          static_cast<Scalar>(points[i + 1].y()),
+          static_cast<Scalar>(points[i + 2].y()),
+          static_cast<Scalar>(points[i + 3].y());
+      z << static_cast<Scalar>(points[i].z()),
+          static_cast<Scalar>(points[i + 1].z()),
+          static_cast<Scalar>(points[i + 2].z()),
+          static_cast<Scalar>(points[i + 3].z());
       algo.x.push_back(x);
       algo.y.push_back(y);
       algo.z.push_back(z);
     }
-    for (; i < ico.points.size(); ++i) {
-      algo.remainder.push_back(ico.points[i].cast<Scalar>());
+    for (; i < points.size(); ++i) {
+      algo.remainder.push_back(points[i].cast<Scalar>());
     }
     return algo;
   }
@@ -224,7 +226,7 @@ static void legacyLinearAlgorithmBench(benchmark::State& state) {
   using Algorithm = LegacyLinearAlgorithm<Scalar>;
   auto ico =
       utils::IcosahedronDatabase::get(static_cast<std::size_t>(state.range(0)));
-  auto algo = Algorithm::fromIcosahedron(ico);
+  auto algo = Algorithm::fromPoints(ico.points);
   auto vec = Algorithm::Vec3::UnitX();
   for (auto _ : state) {
     auto res = algo.support(vec);
@@ -236,7 +238,7 @@ static void SOAFloatEigenLinearAlgorithmBench(benchmark::State& state) {
   using Algorithm = SOAFloatEigenLinearAlgorithm;
   auto ico =
       utils::IcosahedronDatabase::get(static_cast<std::size_t>(state.range(0)));
-  auto algo = Algorithm::fromIcosahedron(ico);
+  auto algo = Algorithm::fromPoints(ico.points);
   auto vec = Algorithm::Vec3::UnitX();
   for (auto _ : state) {
     auto res = algo.support(vec);
@@ -255,7 +257,7 @@ static void SOAHighwayLinearAlgorithmBench(benchmark::State& state) {
       utils::IcosahedronDatabase::get(static_cast<std::size_t>(num_subdiv));
   auto vec = Algorithm::Vec3::UnitX();
   hwy::SetSupportedTargetsForTest(target);
-  auto algo = Algorithm::fromIcosahedron(ico);
+  auto algo = Algorithm::fromPoints(ico.points);
   for (auto _ : state) {
     auto res = algo.support(vec);
     benchmark::DoNotOptimize(res);
@@ -271,8 +273,9 @@ static void legacyLogAlgorithmBench(benchmark::State& state) {
 
   auto ico = utils::IcosahedronWithNeighborsDatabase::get(
       static_cast<std::size_t>(state.range(1)));
-  auto init_algo = InitAlgorithm::fromIcosahedron(ico.icosahedron);
-  auto algo = Algorithm::fromIcosahedron(ico);
+  auto init_algo = InitAlgorithm::fromPoints(ico.icosahedron.points);
+  auto algo =
+      Algorithm::fromPointsAndNeighbors(ico.icosahedron.points, ico.neighbors);
   Vec3 init_dir;
 
   switch (state.range(0)) {
