@@ -17,14 +17,14 @@ namespace v2 {
 template <typename T>
 struct PickleVisitor : nb::def_visitor<PickleVisitor<T>> {
   template <class... Ts>
-  void execute(nb::class_<T, Ts...> &cl) {
+  void execute(nb::class_<T, Ts...>& cl) {
     using namespace nb::literals;
-    cl.def("__getstate__", [](const T &obj) -> std::string {
+    cl.def("__getstate__", [](const T& obj) -> std::string {
         std::stringstream ss;
         boost::archive::text_oarchive oa(ss);
         oa & obj;
         return ss.str();
-      }).def("__setstate__", [](T &obj, const std::string &state) {
+      }).def("__setstate__", [](T& obj, const std::string& state) {
       std::istringstream is(state);
       boost::archive::text_iarchive ia(is, boost::archive::no_codecvt);
       new (&obj) T();

@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(OBB_AABB_test) {
   std::cout << std::endl;
 }
 
-std::ostream *bench_stream = NULL;
+std::ostream* bench_stream = NULL;
 bool bs_nl = true;
 bool bs_hp = false;
 #define BENCHMARK(stream)                           \
@@ -272,11 +272,11 @@ std::vector<SplitMethodType> splitMethods = boost::assign::list_of(
 
 #define BV_STR_SPECIALIZATION(bv) \
   template <>                     \
-  const char *str<bv>() {         \
+  const char* str<bv>() {         \
     return #bv;                   \
   }
 template <typename BV>
-const char *str();
+const char* str();
 BV_STR_SPECIALIZATION(AABB)
 BV_STR_SPECIALIZATION(OBB)
 BV_STR_SPECIALIZATION(RSS)
@@ -312,7 +312,7 @@ COAL_COMPILER_DIAGNOSTIC_PUSH
 COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
 
 struct mesh_mesh_run_test {
-  mesh_mesh_run_test(const std::vector<Transform3s> &_transforms,
+  mesh_mesh_run_test(const std::vector<Transform3s>& _transforms,
                      const CollisionRequest _request)
       : transforms(_transforms),
         request(_request),
@@ -321,7 +321,7 @@ struct mesh_mesh_run_test {
         isInit(false),
         indent(0) {}
 
-  const std::vector<Transform3s> &transforms;
+  const std::vector<Transform3s>& transforms;
   const CollisionRequest request;
   bool enable_statistics, benchmark;
   std::vector<Contacts_t> contacts;
@@ -332,9 +332,9 @@ struct mesh_mesh_run_test {
 
   COAL_COMPILER_DIAGNOSTIC_POP
 
-  const char *getindent() {
+  const char* getindent() {
     assert(indent < 9);
-    static const char *t[] = {"",
+    static const char* t[] = {"",
                               "\t",
                               "\t\t",
                               "\t\t\t",
@@ -347,9 +347,9 @@ struct mesh_mesh_run_test {
   }
 
   template <typename BV>
-  void query(const std::vector<Transform3s> &transforms,
+  void query(const std::vector<Transform3s>& transforms,
              SplitMethodType splitMethod, const CollisionRequest request,
-             std::vector<Contacts_t> &contacts) {
+             std::vector<Contacts_t>& contacts) {
     BENCHMARK_HEADER("BV");
     BENCHMARK_HEADER("oriented");
     BENCHMARK_HEADER("Split method");
@@ -385,7 +385,7 @@ struct mesh_mesh_run_test {
       ++indent;
 
       for (std::size_t i = 0; i < transforms.size(); ++i) {
-        const Transform3s &tf1 = transforms[i];
+        const Transform3s& tf1 = transforms[i];
         timer.start();
 
         CollisionResult local_result;
@@ -437,9 +437,9 @@ struct mesh_mesh_run_test {
             request);
         node.enable_statistics = enable_statistics;
 
-        BVH_t *model1_tmp = new BVH_t(*model1);
+        BVH_t* model1_tmp = new BVH_t(*model1);
         Transform3s tf1_tmp = tf1;
-        BVH_t *model2_tmp = new BVH_t(*model2);
+        BVH_t* model2_tmp = new BVH_t(*model2);
         Transform3s tf2_tmp = tf2;
 
         bool success = initialize(node, *model1_tmp, tf1_tmp, *model2_tmp,

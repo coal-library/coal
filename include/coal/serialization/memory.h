@@ -10,7 +10,7 @@ namespace coal {
 namespace internal {
 template <typename T>
 struct memory_footprint_evaluator {
-  static size_t run(const T &) { return sizeof(T); }
+  static size_t run(const T&) { return sizeof(T); }
 };
 }  // namespace internal
 
@@ -21,7 +21,7 @@ struct memory_footprint_evaluator {
 ///
 /// \return the memory footprint of the input object.
 template <typename T>
-size_t computeMemoryFootprint(const T &object) {
+size_t computeMemoryFootprint(const T& object) {
   return internal::memory_footprint_evaluator<T>::run(object);
 }
 

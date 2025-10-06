@@ -21,7 +21,7 @@ using namespace nb::literals;
 
 COAL_COMPILER_DIAGNOSTIC_PUSH
 COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
-void exposeBroadPhase(nb::module_ &m) {
+void exposeBroadPhase(nb::module_& m) {
   CollisionCallBackBaseWrapper::expose(m);
   DistanceCallBackBaseWrapper::expose(m);
 
@@ -45,13 +45,13 @@ void exposeBroadPhase(nb::module_ &m) {
       .def("getCollisionPairs", &CollisionCallBackCollect::getCollisionPairs,
            nb::rv_policy::copy)
       .def("exist",
-           [](const CollisionCallBackCollect &self,
-              const CollisionCallBackCollect::CollisionPair &pair) {
+           [](const CollisionCallBackCollect& self,
+              const CollisionCallBackCollect::CollisionPair& pair) {
              return self.exist(pair);
            })
       .def("exist",
-           [](const CollisionCallBackCollect &self, CollisionObject *obj1,
-              CollisionObject *obj2) { return self.exist(obj1, obj2); });
+           [](const CollisionCallBackCollect& self, CollisionObject* obj1,
+              CollisionObject* obj2) { return self.exist(obj1, obj2); });
 
   nb::class_<CollisionData>(m, "CollisionData")
       .def(nb::init<>())
@@ -85,11 +85,11 @@ void exposeBroadPhase(nb::module_ &m) {
 
   // Specific case of SpatialHashingCollisionManager
   using HashTable =
-      detail::SimpleHashTable<AABB, CollisionObject *, detail::SpatialHash>;
+      detail::SimpleHashTable<AABB, CollisionObject*, detail::SpatialHash>;
   using Derived = SpatialHashingCollisionManager<HashTable>;
   nb::class_<Derived, BroadPhaseCollisionManager>(
       m, "SpatialHashingCollisionManager")
-      .def(nb::init<Scalar, const Vec3s &, const Vec3s &, unsigned int>(),
+      .def(nb::init<Scalar, const Vec3s&, const Vec3s&, unsigned int>(),
            "cell_size"_a, "scene_min"_a, "scene_max"_a,
            "default_table_size"_a = 1000);
 }

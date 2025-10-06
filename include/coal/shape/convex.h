@@ -76,30 +76,30 @@ class ConvexTpl : public ConvexBaseTpl<typename PolygonT::IndexType> {
 
   /// @brief Cast Convex to ConvexBaseTpl.
   /// This method should never be marked as virtual
-  Base &base() { return static_cast<Base &>(*this); }
+  Base& base() { return static_cast<Base&>(*this); }
 
   /// @brief Const cast Convex to ConvexBaseTpl.
   /// This method should never be marked as virtual
-  const Base &base() const { return static_cast<const Base &>(*this); }
+  const Base& base() const { return static_cast<const Base&>(*this); }
 
   /// @brief Copy constructor.
   /// The copy constructor only shallow copies the data (it copies the shared
   /// pointers but does not deep clones the data).
-  ConvexTpl(const ConvexTpl &other) { *this = other; }
+  ConvexTpl(const ConvexTpl& other) { *this = other; }
 
   /// @brief Copy operator.
   /// The copy operator only shallow copies the data (it copies the shared
   /// pointers but does not deep clones the data).
-  ConvexTpl &operator=(const ConvexTpl &other);
+  ConvexTpl& operator=(const ConvexTpl& other);
 
   // Clone (deep copy).
   COAL_DEPRECATED_MESSAGE(Use deepcopy instead.)
-  ConvexTpl *clone() const override { return this->deepcopy(); };
+  ConvexTpl* clone() const override { return this->deepcopy(); };
 
   // Deep copy of a Convex.
   // This method deep copies every field of the class.
-  ConvexTpl *deepcopy() const override {
-    ConvexTpl *copy = new ConvexTpl();
+  ConvexTpl* deepcopy() const override {
+    ConvexTpl* copy = new ConvexTpl();
     deepcopy(this, copy);
     return copy;
   }
@@ -145,8 +145,8 @@ class ConvexTpl : public ConvexBaseTpl<typename PolygonT::IndexType> {
   // Deep copy of a Convex.
   // This method deep copies every field of the class.
   template <typename OtherPolygonT>
-  static void deepcopy(const ConvexTpl<PolygonT> *source,
-                       ConvexTpl<OtherPolygonT> *copy);
+  static void deepcopy(const ConvexTpl<PolygonT>* source,
+                       ConvexTpl<OtherPolygonT>* copy);
 
   using Base::nneighbors_;
 };

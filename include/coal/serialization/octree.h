@@ -27,17 +27,17 @@ struct OcTreeAccessor : coal::OcTree {
 }  // namespace internal
 
 template <class Archive>
-void save_construct_data(Archive &ar, const coal::OcTree *octree_ptr,
+void save_construct_data(Archive& ar, const coal::OcTree* octree_ptr,
                          const unsigned int /*version*/) {
   const coal::Scalar resolution = octree_ptr->getResolution();
   ar << make_nvp("resolution", resolution);
 }
 
 template <class Archive>
-void save(Archive &ar, const coal::OcTree &octree,
+void save(Archive& ar, const coal::OcTree& octree,
           const unsigned int /*version*/) {
   typedef internal::OcTreeAccessor Accessor;
-  const Accessor &access = reinterpret_cast<const Accessor &>(octree);
+  const Accessor& access = reinterpret_cast<const Accessor&>(octree);
 
   std::ostringstream stream;
   access.tree->write(stream);
@@ -56,7 +56,7 @@ void save(Archive &ar, const coal::OcTree &octree,
 }
 
 template <class Archive>
-void load_construct_data(Archive &ar, coal::OcTree *octree_ptr,
+void load_construct_data(Archive& ar, coal::OcTree* octree_ptr,
                          const unsigned int /*version*/) {
   coal::Scalar resolution;
   ar >> make_nvp("resolution", resolution);
@@ -64,9 +64,9 @@ void load_construct_data(Archive &ar, coal::OcTree *octree_ptr,
 }
 
 template <class Archive>
-void load(Archive &ar, coal::OcTree &octree, const unsigned int /*version*/) {
+void load(Archive& ar, coal::OcTree& octree, const unsigned int /*version*/) {
   typedef internal::OcTreeAccessor Accessor;
-  Accessor &access = reinterpret_cast<Accessor &>(octree);
+  Accessor& access = reinterpret_cast<Accessor&>(octree);
 
   std::size_t tree_data_size;
   ar >> make_nvp("tree_data_size", tree_data_size);
@@ -78,9 +78,9 @@ void load(Archive &ar, coal::OcTree &octree, const unsigned int /*version*/) {
   ar >> make_nvp("tree_data", make_array(&stream_str[0], tree_data_size));
   std::istringstream stream(stream_str);
 
-  octomap::AbstractOcTree *new_tree = octomap::AbstractOcTree::read(stream);
+  octomap::AbstractOcTree* new_tree = octomap::AbstractOcTree::read(stream);
   access.tree = std::shared_ptr<const octomap::OcTree>(
-      dynamic_cast<octomap::OcTree *>(new_tree));
+      dynamic_cast<octomap::OcTree*>(new_tree));
 
   ar >> make_nvp("base", base_object<coal::CollisionGeometry>(octree));
   ar >> make_nvp("default_occupancy", access.default_occupancy);
@@ -89,7 +89,7 @@ void load(Archive &ar, coal::OcTree &octree, const unsigned int /*version*/) {
 }
 
 template <class Archive>
-void serialize(Archive &ar, coal::OcTree &octree, const unsigned int version) {
+void serialize(Archive& ar, coal::OcTree& octree, const unsigned int version) {
   split_free(ar, octree, version);
 }
 

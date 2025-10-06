@@ -58,51 +58,51 @@ struct BroadPhaseCollisionManagerWrapper
       bp::wrapper<BroadPhaseCollisionManager> {
   typedef BroadPhaseCollisionManager Base;
 
-  void registerObjects(const std::vector<CollisionObject *> &other_objs) {
+  void registerObjects(const std::vector<CollisionObject*>& other_objs) {
     this->get_override("registerObjects")(other_objs);
   }
-  void registerObject(CollisionObject *obj) {
+  void registerObject(CollisionObject* obj) {
     this->get_override("registerObjects")(obj);
   }
-  void unregisterObject(CollisionObject *obj) {
+  void unregisterObject(CollisionObject* obj) {
     this->get_override("unregisterObject")(obj);
   }
 
-  void update(const std::vector<CollisionObject *> &other_objs) {
+  void update(const std::vector<CollisionObject*>& other_objs) {
     this->get_override("update")(other_objs);
   }
-  void update(CollisionObject *obj) { this->get_override("update")(obj); }
+  void update(CollisionObject* obj) { this->get_override("update")(obj); }
   void update() { this->get_override("update")(); }
 
   void setup() { this->get_override("setup")(); }
   void clear() { this->get_override("clear")(); }
 
-  std::vector<CollisionObject *> getObjects() const {
+  std::vector<CollisionObject*> getObjects() const {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
     return this->get_override("getObjects")();
 #pragma GCC diagnostic pop
   }
 
-  void collide(CollisionCallBackBase *callback) const {
+  void collide(CollisionCallBackBase* callback) const {
     this->get_override("collide")(callback);
   }
-  void collide(CollisionObject *obj, CollisionCallBackBase *callback) const {
+  void collide(CollisionObject* obj, CollisionCallBackBase* callback) const {
     this->get_override("collide")(obj, callback);
   }
-  void collide(BroadPhaseCollisionManager *other_manager,
-               CollisionCallBackBase *callback) const {
+  void collide(BroadPhaseCollisionManager* other_manager,
+               CollisionCallBackBase* callback) const {
     this->get_override("collide")(other_manager, callback);
   }
 
-  void distance(DistanceCallBackBase *callback) const {
+  void distance(DistanceCallBackBase* callback) const {
     this->get_override("distance")(callback);
   }
-  void distance(CollisionObject *obj, DistanceCallBackBase *callback) const {
+  void distance(CollisionObject* obj, DistanceCallBackBase* callback) const {
     this->get_override("collide")(obj, callback);
   }
-  void distance(BroadPhaseCollisionManager *other_manager,
-                DistanceCallBackBase *callback) const {
+  void distance(BroadPhaseCollisionManager* other_manager,
+                DistanceCallBackBase* callback) const {
     this->get_override("collide")(other_manager, callback);
   }
 
@@ -135,15 +135,15 @@ struct BroadPhaseCollisionManagerWrapper
              doxygen::member_func_doc((void (Base::*)())(&Base::update)))
         .def("update",
              bp::pure_virtual((void (Base::*)(
-                 const std::vector<CollisionObject *> &))&Base::update),
+                 const std::vector<CollisionObject*>&))&Base::update),
              doxygen::member_func_doc((void (Base::*)(
-                 const std::vector<CollisionObject *> &))(&Base::update)),
+                 const std::vector<CollisionObject*>&))(&Base::update)),
              bp::with_custodian_and_ward_postcall<1, 2>())
         .def("update",
              bp::pure_virtual(
-                 (void (Base::*)(CollisionObject *obj))&Base::update),
+                 (void (Base::*)(CollisionObject* obj))&Base::update),
              doxygen::member_func_doc(
-                 (void (Base::*)(CollisionObject *obj))(&Base::update)),
+                 (void (Base::*)(CollisionObject* obj))(&Base::update)),
              bp::with_custodian_and_ward_postcall<1, 2>())
 
         .def("setup", bp::pure_virtual(&Base::setup),
@@ -155,59 +155,59 @@ struct BroadPhaseCollisionManagerWrapper
         .def("size", bp::pure_virtual(&Base::size),
              doxygen::member_func_doc(&Base::size))
 
-        .def("getObjects",
-             bp::pure_virtual(
-                 (std::vector<CollisionObject *> (Base::*)() const) &
-                 Base::getObjects),
-             doxygen::member_func_doc(
-                 (std::vector<CollisionObject *> (Base::*)() const) &
-                 Base::getObjects),
-             bp::with_custodian_and_ward_postcall<0, 1>())
+        .def(
+            "getObjects",
+            bp::pure_virtual((std::vector<CollisionObject*> (Base::*)() const) &
+                             Base::getObjects),
+            doxygen::member_func_doc(
+                (std::vector<CollisionObject*> (Base::*)() const) &
+                Base::getObjects),
+            bp::with_custodian_and_ward_postcall<0, 1>())
 
+        .def(
+            "collide",
+            bp::pure_virtual((void (Base::*)(CollisionCallBackBase*) const) &
+                             Base::collide),
+            doxygen::member_func_doc(
+                (void (Base::*)(CollisionCallBackBase*) const) & Base::collide))
         .def("collide",
-             bp::pure_virtual((void (Base::*)(CollisionCallBackBase *) const) &
+             bp::pure_virtual((void (Base::*)(CollisionObject*,
+                                              CollisionCallBackBase*) const) &
                               Base::collide),
              doxygen::member_func_doc(
-                 (void (Base::*)(CollisionCallBackBase *) const) &
-                 Base::collide))
-        .def("collide",
-             bp::pure_virtual((void (Base::*)(CollisionObject *,
-                                              CollisionCallBackBase *) const) &
-                              Base::collide),
-             doxygen::member_func_doc(
-                 (void (Base::*)(CollisionObject *, CollisionCallBackBase *)
+                 (void (Base::*)(CollisionObject*, CollisionCallBackBase*)
                       const) &
                  Base::collide))
         .def("collide",
-             bp::pure_virtual((void (Base::*)(BroadPhaseCollisionManager *,
-                                              CollisionCallBackBase *) const) &
+             bp::pure_virtual((void (Base::*)(BroadPhaseCollisionManager*,
+                                              CollisionCallBackBase*) const) &
                               Base::collide),
              doxygen::member_func_doc(
-                 (void (Base::*)(BroadPhaseCollisionManager *,
-                                 CollisionCallBackBase *) const) &
+                 (void (Base::*)(BroadPhaseCollisionManager*,
+                                 CollisionCallBackBase*) const) &
                  Base::collide))
 
+        .def(
+            "distance",
+            bp::pure_virtual((void (Base::*)(DistanceCallBackBase*) const) &
+                             Base::distance),
+            doxygen::member_func_doc(
+                (void (Base::*)(DistanceCallBackBase*) const) & Base::distance))
         .def("distance",
-             bp::pure_virtual((void (Base::*)(DistanceCallBackBase *) const) &
+             bp::pure_virtual((void (Base::*)(CollisionObject*,
+                                              DistanceCallBackBase*) const) &
                               Base::distance),
              doxygen::member_func_doc(
-                 (void (Base::*)(DistanceCallBackBase *) const) &
-                 Base::distance))
-        .def("distance",
-             bp::pure_virtual((void (Base::*)(CollisionObject *,
-                                              DistanceCallBackBase *) const) &
-                              Base::distance),
-             doxygen::member_func_doc(
-                 (void (Base::*)(CollisionObject *, DistanceCallBackBase *)
+                 (void (Base::*)(CollisionObject*, DistanceCallBackBase*)
                       const) &
                  Base::distance))
         .def("distance",
-             bp::pure_virtual((void (Base::*)(BroadPhaseCollisionManager *,
-                                              DistanceCallBackBase *) const) &
+             bp::pure_virtual((void (Base::*)(BroadPhaseCollisionManager*,
+                                              DistanceCallBackBase*) const) &
                               Base::distance),
              doxygen::member_func_doc(
-                 (void (Base::*)(BroadPhaseCollisionManager *,
-                                 DistanceCallBackBase *) const) &
+                 (void (Base::*)(BroadPhaseCollisionManager*,
+                                 DistanceCallBackBase*) const) &
                  Base::distance));
   }
 

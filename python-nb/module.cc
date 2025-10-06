@@ -15,7 +15,7 @@ inline constexpr bool checkVersionAtMost(int major, int minor, int patch) {
   return COAL_VERSION_AT_MOST(major, minor, patch);
 }
 
-void exposeVersion(nb::module_ &m) {
+void exposeVersion(nb::module_& m) {
   m.attr("__version__") = COAL_VERSION;
   m.attr("COAL_MAJOR_VERSION") = COAL_MAJOR_VERSION;
   m.attr("COAL_MINOR_VERSION") = COAL_MINOR_VERSION;
@@ -46,7 +46,7 @@ void exposeVersion(nb::module_ &m) {
         "by the input arguments.");
 }
 
-void exposeMeshLoader(nb::module_ &m) {
+void exposeMeshLoader(nb::module_& m) {
   using namespace coal;
   nb::handle cl_cur = nb::type<MeshLoader>();
   if (cl_cur.is_valid()) {
@@ -66,17 +66,17 @@ void exposeMeshLoader(nb::module_ &m) {
   }
 }
 
-void exposeMaths(nb::module_ &m);
-void exposeCollisionGeometries(nb::module_ &m);
-void exposeCollisionObject(nb::module_ &m);
-void exposeCollisionAPI(nb::module_ &m);
-void exposeContactPatchAPI(nb::module_ &m);
-void exposeDistanceAPI(nb::module_ &m);
-void exposeGJK(nb::module_ &m);
+void exposeMaths(nb::module_& m);
+void exposeCollisionGeometries(nb::module_& m);
+void exposeCollisionObject(nb::module_& m);
+void exposeCollisionAPI(nb::module_& m);
+void exposeContactPatchAPI(nb::module_& m);
+void exposeDistanceAPI(nb::module_& m);
+void exposeGJK(nb::module_& m);
 #ifdef COAL_HAS_OCTOMAP
-void exposeOctree(nb::module_ &m);
+void exposeOctree(nb::module_& m);
 #endif
-void exposeBroadPhase(nb::module_ &m);
+void exposeBroadPhase(nb::module_& m);
 
 NB_MODULE(COAL_PYTHON_LIBNAME, m) {
   exposeVersion(m);
