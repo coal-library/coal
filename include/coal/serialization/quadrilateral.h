@@ -12,12 +12,12 @@ namespace boost {
 namespace serialization {
 
 template <class Archive, typename Integer>
-void serialize(Archive &ar, coal::QuadrilateralTpl<Integer> &quadrilateral,
+void serialize(Archive& ar, coal::QuadrilateralTpl<Integer>& quadrilateral,
                const unsigned int /*version*/) {
-  ar &make_nvp("p0", quadrilateral[0]);
-  ar &make_nvp("p1", quadrilateral[1]);
-  ar &make_nvp("p2", quadrilateral[2]);
-  ar &make_nvp("p3", quadrilateral[3]);
+  ar& make_nvp("p0", quadrilateral[0]);
+  ar& make_nvp("p1", quadrilateral[1]);
+  ar& make_nvp("p2", quadrilateral[2]);
+  ar& make_nvp("p3", quadrilateral[3]);
 }
 
 }  // namespace serialization

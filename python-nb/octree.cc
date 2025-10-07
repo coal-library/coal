@@ -8,12 +8,12 @@
 using namespace coal;
 using namespace nb::literals;
 
-nb::bytes tobytes(const OcTree &self) {
+nb::bytes tobytes(const OcTree& self) {
   std::vector<uint8_t> bytes = self.tobytes();
-  return nb::bytes(reinterpret_cast<const char *>(bytes.data()), bytes.size());
+  return nb::bytes(reinterpret_cast<const char*>(bytes.data()), bytes.size());
 }
 
-void exposeOctree(nb::module_ &m) {
+void exposeOctree(nb::module_& m) {
   nb::class_<OcTree, CollisionGeometry>(m, "OcTree")
       .def(nb::init<Scalar>(), "resolution"_a)
       .def("clone", &OcTree::clone, nb::rv_policy::take_ownership)

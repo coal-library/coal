@@ -92,11 +92,11 @@ void exposeBroadPhase() {
                        bp::return_value_policy<bp::copy_const_reference>())
       .def(dv::member_func(
           "exist", (bool (CollisionCallBackCollect::*)(
-                       const CollisionCallBackCollect::CollisionPair &) const) &
+                       const CollisionCallBackCollect::CollisionPair&) const) &
                        CollisionCallBackCollect::exist))
       .def(dv::member_func("exist",
                            (bool (CollisionCallBackCollect::*)(
-                               CollisionObject *, CollisionObject *) const) &
+                               CollisionObject*, CollisionObject*) const) &
                                CollisionCallBackCollect::exist));
 
   StdPairConverter<CollisionCallBackCollect::CollisionPair>::registration();
@@ -129,13 +129,12 @@ void exposeBroadPhase() {
 
   // Specific case of SpatialHashingCollisionManager
   {
-    typedef detail::SimpleHashTable<AABB, CollisionObject *,
-                                    detail::SpatialHash>
+    typedef detail::SimpleHashTable<AABB, CollisionObject*, detail::SpatialHash>
         HashTable;
     typedef SpatialHashingCollisionManager<HashTable> Derived;
     bp::class_<Derived, bp::bases<BroadPhaseCollisionManager>>(
         "SpatialHashingCollisionManager", bp::no_init)
-        .def(dv::init<Derived, Scalar, const Vec3s &, const Vec3s &,
+        .def(dv::init<Derived, Scalar, const Vec3s&, const Vec3s&,
                       bp::optional<unsigned int>>());
   }
 }

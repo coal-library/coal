@@ -14,23 +14,23 @@ namespace boost {
 namespace serialization {
 
 template <class Archive>
-void serialize(Archive &ar, coal::HFNodeBase &node,
+void serialize(Archive& ar, coal::HFNodeBase& node,
                const unsigned int /*version*/) {
-  ar &make_nvp("first_child", node.first_child);
-  ar &make_nvp("x_id", node.x_id);
-  ar &make_nvp("x_size", node.x_size);
-  ar &make_nvp("y_id", node.y_id);
-  ar &make_nvp("y_size", node.y_size);
-  ar &make_nvp("max_height", node.max_height);
-  ar &make_nvp("contact_active_faces", node.contact_active_faces);
+  ar& make_nvp("first_child", node.first_child);
+  ar& make_nvp("x_id", node.x_id);
+  ar& make_nvp("x_size", node.x_size);
+  ar& make_nvp("y_id", node.y_id);
+  ar& make_nvp("y_size", node.y_size);
+  ar& make_nvp("max_height", node.max_height);
+  ar& make_nvp("contact_active_faces", node.contact_active_faces);
 }
 
 template <class Archive, typename BV>
-void serialize(Archive &ar, coal::HFNode<BV> &node,
+void serialize(Archive& ar, coal::HFNode<BV>& node,
                const unsigned int /*version*/) {
-  ar &make_nvp("base",
+  ar& make_nvp("base",
                boost::serialization::base_object<coal::HFNodeBase>(node));
-  ar &make_nvp("bv", node.bv);
+  ar& make_nvp("bv", node.bv);
 }
 
 namespace internal {
@@ -50,25 +50,25 @@ struct HeightFieldAccessor : coal::HeightField<BV> {
 }  // namespace internal
 
 template <class Archive, typename BV>
-void serialize(Archive &ar, coal::HeightField<BV> &hf_model,
+void serialize(Archive& ar, coal::HeightField<BV>& hf_model,
                const unsigned int /*version*/) {
-  ar &make_nvp(
+  ar& make_nvp(
       "base",
       boost::serialization::base_object<coal::CollisionGeometry>(hf_model));
 
   typedef internal::HeightFieldAccessor<BV> Accessor;
-  Accessor &access = reinterpret_cast<Accessor &>(hf_model);
+  Accessor& access = reinterpret_cast<Accessor&>(hf_model);
 
-  ar &make_nvp("x_dim", access.x_dim);
-  ar &make_nvp("y_dim", access.y_dim);
-  ar &make_nvp("heights", access.heights);
-  ar &make_nvp("min_height", access.min_height);
-  ar &make_nvp("max_height", access.max_height);
-  ar &make_nvp("x_grid", access.x_grid);
-  ar &make_nvp("y_grid", access.y_grid);
+  ar& make_nvp("x_dim", access.x_dim);
+  ar& make_nvp("y_dim", access.y_dim);
+  ar& make_nvp("heights", access.heights);
+  ar& make_nvp("min_height", access.min_height);
+  ar& make_nvp("max_height", access.max_height);
+  ar& make_nvp("x_grid", access.x_grid);
+  ar& make_nvp("y_grid", access.y_grid);
 
-  ar &make_nvp("bvs", access.bvs);
-  ar &make_nvp("num_bvs", access.num_bvs);
+  ar& make_nvp("bvs", access.bvs);
+  ar& make_nvp("num_bvs", access.num_bvs);
 }
 }  // namespace serialization
 }  // namespace boost

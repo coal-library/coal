@@ -96,8 +96,8 @@ BOOST_AUTO_TEST_CASE(box_sphere) {
                             patch_res);
   BOOST_CHECK(patch_res.numContactPatches() == 1);
   if (patch_res.numContactPatches() > 0 && col_res.isCollision()) {
-    const Contact &contact = col_res.getContact(0);
-    const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+    const Contact& contact = col_res.getContact(0);
+    const ContactPatch& contact_patch = patch_res.getContactPatch(0);
     BOOST_CHECK(contact_patch.size() == 1);
     const Scalar tol = Scalar(1e-8);
     EIGEN_VECTOR_IS_APPROX(contact_patch.getPoint(0), contact.pos, tol);
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(box_box) {
 
   if (patch_res1.numContactPatches() > 0 &&
       patch_res2.numContactPatches() > 0 && col_res.isCollision()) {
-    const Contact &contact = col_res.getContact(0);
+    const Contact& contact = col_res.getContact(0);
     const Scalar tol = Scalar(1e-6);
     EIGEN_VECTOR_IS_APPROX(contact.normal, Vec3s(0, 0, 1), tol);
 
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE(halfspace_box) {
 
   if (patch_res1.numContactPatches() > 0 &&
       patch_res2.numContactPatches() > 0 && col_res.isCollision()) {
-    const Contact &contact = col_res.getContact(0);
+    const Contact& contact = col_res.getContact(0);
     const Scalar tol = Scalar(1e-6);
     EIGEN_VECTOR_IS_APPROX(contact.normal, hspace.n, tol);
     EIGEN_VECTOR_IS_APPROX(hspace.n, Vec3s(0, 0, 1), tol);
@@ -253,7 +253,7 @@ BOOST_AUTO_TEST_CASE(halfspace_capsule) {
   BOOST_CHECK(patch_res.numContactPatches() == 1);
 
   if (patch_res.numContactPatches() > 0 && col_res.isCollision()) {
-    const Contact &contact = col_res.getContact(0);
+    const Contact& contact = col_res.getContact(0);
     const Scalar tol = Scalar(1e-6);
     EIGEN_VECTOR_IS_APPROX(contact.normal, hspace.n, tol);
 
@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE(halfspace_capsule) {
     const Vec3s capsule_end(0, 0, -capsule.halfLength);
     expected.addPoint(tf2.transform(capsule_end));
 
-    const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+    const ContactPatch& contact_patch = patch_res.getContactPatch(0);
     BOOST_CHECK(expected.tf == contact_patch.tf);
     BOOST_CHECK(expected.isSame(contact_patch, tol));
   }
@@ -284,7 +284,7 @@ BOOST_AUTO_TEST_CASE(halfspace_capsule) {
                             patch_res);
   BOOST_CHECK(patch_res.numContactPatches() == 1);
   if (patch_res.numContactPatches() > 0 && col_res.isCollision()) {
-    const Contact &contact = col_res.getContact(0);
+    const Contact& contact = col_res.getContact(0);
     const Scalar tol = Scalar(1e-6);
     EIGEN_VECTOR_IS_APPROX(contact.normal, hspace.n, tol);
 
@@ -297,7 +297,7 @@ BOOST_AUTO_TEST_CASE(halfspace_capsule) {
     const Vec3s capsule_end(0, 0, capsule.halfLength);
     expected.addPoint(tf2.transform(capsule_end));
 
-    const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+    const ContactPatch& contact_patch = patch_res.getContactPatch(0);
     BOOST_CHECK(expected.tf == contact_patch.tf);
     BOOST_CHECK(expected.isSame(contact_patch, tol));
   }
@@ -316,7 +316,7 @@ BOOST_AUTO_TEST_CASE(halfspace_capsule) {
                             patch_res);
   BOOST_CHECK(patch_res.numContactPatches() == 1);
   if (patch_res.numContactPatches() > 0 && col_res.isCollision()) {
-    const Contact &contact = col_res.getContact(0);
+    const Contact& contact = col_res.getContact(0);
     const Scalar tol = Scalar(1e-6);
     EIGEN_VECTOR_IS_APPROX(contact.normal, hspace.n, tol);
 
@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_CASE(halfspace_capsule) {
     expected.addPoint(tf2.transform(p1));
     expected.addPoint(tf2.transform(p2));
 
-    const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+    const ContactPatch& contact_patch = patch_res.getContactPatch(0);
     BOOST_CHECK(expected.tf == contact_patch.tf);
     BOOST_CHECK(expected.isSame(contact_patch, tol));
   }
@@ -365,7 +365,7 @@ BOOST_AUTO_TEST_CASE(halfspace_cone) {
   BOOST_CHECK(patch_res.numContactPatches() == 1);
 
   if (patch_res.numContactPatches() > 0 && col_res.isCollision()) {
-    const Contact &contact = col_res.getContact(0);
+    const Contact& contact = col_res.getContact(0);
     const Scalar tol = Scalar(1e-6);
     EIGEN_VECTOR_IS_APPROX(contact.normal, hspace.n, tol);
 
@@ -384,7 +384,7 @@ BOOST_AUTO_TEST_CASE(halfspace_cone) {
       expected.addPoint(tf2.transform(point_on_cone_base));
     }
 
-    const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+    const ContactPatch& contact_patch = patch_res.getContactPatch(0);
     BOOST_CHECK(expected.tf == contact_patch.tf);
     BOOST_CHECK(expected.isSame(contact_patch, tol));
   }
@@ -402,8 +402,8 @@ BOOST_AUTO_TEST_CASE(halfspace_cone) {
                             patch_res);
   BOOST_CHECK(patch_res.numContactPatches() == 1);
   if (patch_res.numContactPatches() > 0 && col_res.isCollision()) {
-    const Contact &contact = col_res.getContact(0);
-    const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+    const Contact& contact = col_res.getContact(0);
+    const ContactPatch& contact_patch = patch_res.getContactPatch(0);
     BOOST_CHECK(contact_patch.size() == 1);
     const Scalar tol = Scalar(1e-8);
     EIGEN_VECTOR_IS_APPROX(contact_patch.getPoint(0), contact.pos, tol);
@@ -438,8 +438,8 @@ BOOST_AUTO_TEST_CASE(halfspace_cone) {
                             patch_res);
   BOOST_CHECK(patch_res.numContactPatches() == 1);
   if (patch_res.numContactPatches() > 0 && col_res.isCollision()) {
-    const Contact &contact = col_res.getContact(0);
-    const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+    const Contact& contact = col_res.getContact(0);
+    const ContactPatch& contact_patch = patch_res.getContactPatch(0);
     BOOST_CHECK(contact_patch.size() == 1);
     const Scalar tol = Scalar(1e-8);
     EIGEN_VECTOR_IS_APPROX(contact_patch.getPoint(0), contact.pos, tol);
@@ -481,7 +481,7 @@ BOOST_AUTO_TEST_CASE(halfspace_cylinder) {
   BOOST_CHECK(col_res.isCollision());
 
   if (col_res.isCollision()) {
-    const Contact &contact = col_res.getContact(0);
+    const Contact& contact = col_res.getContact(0);
     const size_t expected_size = ContactPatch::default_preallocated_size;
     const Scalar tol = Scalar(1e-6);
     ContactPatch expected(expected_size);
@@ -509,7 +509,7 @@ BOOST_AUTO_TEST_CASE(halfspace_cylinder) {
 
     if (patch_res.numContactPatches() > 0) {
       EIGEN_VECTOR_IS_APPROX(contact.normal, hspace.n, tol);
-      const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+      const ContactPatch& contact_patch = patch_res.getContactPatch(0);
       BOOST_CHECK(expected.tf == contact_patch.tf);
       BOOST_CHECK(expected.isSame(contact_patch, tol));
     }
@@ -528,7 +528,7 @@ BOOST_AUTO_TEST_CASE(halfspace_cylinder) {
     BOOST_CHECK(patch_res.numContactPatches() == 1);
     if (patch_res.numContactPatches() > 0 && col_res.isCollision()) {
       EIGEN_VECTOR_IS_APPROX(contact.normal, hspace.n, tol);
-      const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+      const ContactPatch& contact_patch = patch_res.getContactPatch(0);
       BOOST_CHECK(expected.tf == contact_patch.tf);
       BOOST_CHECK(expected.isSame(contact_patch, tol));
     }
@@ -551,7 +551,7 @@ BOOST_AUTO_TEST_CASE(halfspace_cylinder) {
                             patch_res);
   BOOST_CHECK(patch_res.numContactPatches() == 1);
   if (col_res.isCollision() && patch_res.numContactPatches() > 0) {
-    const Contact &contact = col_res.getContact(0);
+    const Contact& contact = col_res.getContact(0);
     const Scalar tol = Scalar(1e-6);
 
     const size_t expected_size = 2;
@@ -565,7 +565,7 @@ BOOST_AUTO_TEST_CASE(halfspace_cylinder) {
     expected.addPoint(
         tf2.transform(Vec3s(cylinder.radius, 0, -cylinder.halfLength)));
 
-    const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+    const ContactPatch& contact_patch = patch_res.getContactPatch(0);
     BOOST_CHECK(expected.isSame(contact_patch, tol));
   }
 }
@@ -602,7 +602,7 @@ BOOST_AUTO_TEST_CASE(convex_convex) {
 
   if (patch_res1.numContactPatches() > 0 &&
       patch_res2.numContactPatches() > 0 && col_res.isCollision()) {
-    const Contact &contact = col_res.getContact(0);
+    const Contact& contact = col_res.getContact(0);
     const Scalar tol = Scalar(1e-6);
     EIGEN_VECTOR_IS_APPROX(contact.normal, Vec3s(0, 0, 1), tol);
 
@@ -679,7 +679,7 @@ BOOST_AUTO_TEST_CASE(edge_case_segment_segment) {
     BOOST_CHECK(patch_res.numContactPatches() == 1);
 
     if (patch_res.numContactPatches() > 0) {
-      const Contact &contact = col_res.getContact(0);
+      const Contact& contact = col_res.getContact(0);
       const Scalar tol = Scalar(1e-6);
 
       ContactPatch expected(expected_size);
@@ -692,7 +692,7 @@ BOOST_AUTO_TEST_CASE(edge_case_segment_segment) {
       expected.addPoint(expected_cp1);
       expected.addPoint(expected_cp2);
 
-      const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+      const ContactPatch& contact_patch = patch_res.getContactPatch(0);
       BOOST_CHECK(expected.isSame(contact_patch, tol));
     }
   }
@@ -730,7 +730,7 @@ BOOST_AUTO_TEST_CASE(edge_case_segment_segment) {
     BOOST_CHECK(patch_res.numContactPatches() == 1);
 
     if (patch_res.numContactPatches() > 0) {
-      const Contact &contact = col_res.getContact(0);
+      const Contact& contact = col_res.getContact(0);
       const Scalar tol = Scalar(1e-6);
 
       ContactPatch expected(expected_size);
@@ -741,7 +741,7 @@ BOOST_AUTO_TEST_CASE(edge_case_segment_segment) {
       expected.addPoint(expected_cp1);
       expected.addPoint(expected_cp2);
 
-      const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+      const ContactPatch& contact_patch = patch_res.getContactPatch(0);
       BOOST_CHECK(expected.isSame(contact_patch, tol));
     }
   }
@@ -779,7 +779,7 @@ BOOST_AUTO_TEST_CASE(edge_case_segment_segment) {
     BOOST_CHECK(patch_res.numContactPatches() == 1);
 
     if (patch_res.numContactPatches() > 0) {
-      const Contact &contact = col_res.getContact(0);
+      const Contact& contact = col_res.getContact(0);
       const Scalar tol = Scalar(1e-6);
 
       ContactPatch expected(expected_size);
@@ -790,7 +790,7 @@ BOOST_AUTO_TEST_CASE(edge_case_segment_segment) {
       expected.addPoint(expected_cp1);
       expected.addPoint(expected_cp2);
 
-      const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+      const ContactPatch& contact_patch = patch_res.getContactPatch(0);
       BOOST_CHECK(expected.isSame(contact_patch, tol));
     }
   }
@@ -845,7 +845,7 @@ BOOST_AUTO_TEST_CASE(edge_case_vertex_vertex) {
     BOOST_CHECK(patch_res.numContactPatches() == 1);
 
     if (patch_res.numContactPatches() > 0) {
-      const Contact &contact = col_res.getContact(0);
+      const Contact& contact = col_res.getContact(0);
       const Scalar tol = Scalar(1e-6);
 
       ContactPatch expected(expected_size);
@@ -855,7 +855,7 @@ BOOST_AUTO_TEST_CASE(edge_case_vertex_vertex) {
       expected.penetration_depth = contact.penetration_depth;
       expected.addPoint(expected_cp);
 
-      const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+      const ContactPatch& contact_patch = patch_res.getContactPatch(0);
       BOOST_CHECK(expected.isSame(contact_patch, tol));
     }
   }
@@ -893,7 +893,7 @@ BOOST_AUTO_TEST_CASE(edge_case_vertex_vertex) {
     BOOST_CHECK(patch_res.numContactPatches() == 1);
 
     if (patch_res.numContactPatches() > 0) {
-      const Contact &contact = col_res.getContact(0);
+      const Contact& contact = col_res.getContact(0);
       const Scalar tol = Scalar(1e-6);
 
       ContactPatch expected(expected_size);
@@ -903,7 +903,7 @@ BOOST_AUTO_TEST_CASE(edge_case_vertex_vertex) {
       expected.penetration_depth = contact.penetration_depth;
       expected.addPoint(expected_cp);
 
-      const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+      const ContactPatch& contact_patch = patch_res.getContactPatch(0);
       BOOST_CHECK(expected.isSame(contact_patch, tol));
     }
   }
@@ -941,7 +941,7 @@ BOOST_AUTO_TEST_CASE(edge_case_vertex_vertex) {
     BOOST_CHECK(patch_res.numContactPatches() == 1);
 
     if (patch_res.numContactPatches() > 0) {
-      const Contact &contact = col_res.getContact(0);
+      const Contact& contact = col_res.getContact(0);
       const Scalar tol = Scalar(1e-6);
 
       ContactPatch expected(expected_size);
@@ -951,7 +951,7 @@ BOOST_AUTO_TEST_CASE(edge_case_vertex_vertex) {
       expected.penetration_depth = contact.penetration_depth;
       expected.addPoint(expected_cp);
 
-      const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+      const ContactPatch& contact_patch = patch_res.getContactPatch(0);
       BOOST_CHECK(expected.isSame(contact_patch, tol));
     }
   }
@@ -1006,7 +1006,7 @@ BOOST_AUTO_TEST_CASE(edge_case_segment_face) {
     BOOST_CHECK(patch_res.numContactPatches() == 1);
 
     if (patch_res.numContactPatches() > 0) {
-      const Contact &contact = col_res.getContact(0);
+      const Contact& contact = col_res.getContact(0);
       const Scalar tol = Scalar(1e-6);
 
       ContactPatch expected(expected_size);
@@ -1017,7 +1017,7 @@ BOOST_AUTO_TEST_CASE(edge_case_segment_face) {
       expected.addPoint(expected_cp1);
       expected.addPoint(expected_cp2);
 
-      const ContactPatch &contact_patch = patch_res.getContactPatch(0);
+      const ContactPatch& contact_patch = patch_res.getContactPatch(0);
       BOOST_CHECK(expected.isSame(contact_patch, tol));
     }
   }

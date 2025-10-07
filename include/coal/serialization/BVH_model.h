@@ -26,7 +26,7 @@ struct BVHModelBaseAccessor : coal::BVHModelBase {
 }  // namespace internal
 
 template <class Archive>
-void save(Archive &ar, const coal::BVHModelBase &bvh_model,
+void save(Archive& ar, const coal::BVHModelBase& bvh_model,
           const unsigned int /*version*/) {
   using namespace coal;
   if (!(bvh_model.build_state == BVH_BUILD_STATE_PROCESSED ||
@@ -39,18 +39,18 @@ void save(Archive &ar, const coal::BVHModelBase &bvh_model,
         std::invalid_argument);
   }
 
-  ar &make_nvp(
+  ar& make_nvp(
       "base",
       boost::serialization::base_object<coal::CollisionGeometry>(bvh_model));
 
-  ar &make_nvp("num_vertices", bvh_model.num_vertices);
-  ar &make_nvp("vertices", bvh_model.vertices);
+  ar& make_nvp("num_vertices", bvh_model.num_vertices);
+  ar& make_nvp("vertices", bvh_model.vertices);
 
-  ar &make_nvp("num_tris", bvh_model.num_tris);
-  ar &make_nvp("tri_indices", bvh_model.tri_indices);
-  ar &make_nvp("build_state", bvh_model.build_state);
+  ar& make_nvp("num_tris", bvh_model.num_tris);
+  ar& make_nvp("tri_indices", bvh_model.tri_indices);
+  ar& make_nvp("build_state", bvh_model.build_state);
 
-  ar &make_nvp("prev_vertices", bvh_model.prev_vertices);
+  ar& make_nvp("prev_vertices", bvh_model.prev_vertices);
 
   //      if(bvh_model.convex)
   //      {
@@ -65,7 +65,7 @@ void save(Archive &ar, const coal::BVHModelBase &bvh_model,
 }
 
 template <class Archive>
-void load(Archive &ar, coal::BVHModelBase &bvh_model,
+void load(Archive& ar, coal::BVHModelBase& bvh_model,
           const unsigned int /*version*/) {
   using namespace coal;
 
@@ -100,20 +100,20 @@ struct BVHModelAccessor : coal::BVHModel<BV> {
 }  // namespace internal
 
 template <class Archive, typename BV>
-void serialize(Archive &ar, coal::BVHModel<BV> &bvh_model,
+void serialize(Archive& ar, coal::BVHModel<BV>& bvh_model,
                const unsigned int version) {
   split_free(ar, bvh_model, version);
 }
 
 template <class Archive, typename BV>
-void save(Archive &ar, const coal::BVHModel<BV> &bvh_model_,
+void save(Archive& ar, const coal::BVHModel<BV>& bvh_model_,
           const unsigned int /*version*/) {
   using namespace coal;
   typedef internal::BVHModelAccessor<BV> Accessor;
   typedef BVNode<BV> Node;
 
-  const Accessor &bvh_model = reinterpret_cast<const Accessor &>(bvh_model_);
-  ar &make_nvp("base",
+  const Accessor& bvh_model = reinterpret_cast<const Accessor&>(bvh_model_);
+  ar& make_nvp("base",
                boost::serialization::base_object<BVHModelBase>(bvh_model));
 
   //      if(bvh_model.primitive_indices)
@@ -156,28 +156,28 @@ void save(Archive &ar, const coal::BVHModel<BV> &bvh_model_,
 
   if (bvh_model.bvs.get()) {
     const bool with_bvs = true;
-    ar &make_nvp("with_bvs", with_bvs);
-    ar &make_nvp("num_bvs", bvh_model.num_bvs);
-    ar &make_nvp(
+    ar& make_nvp("with_bvs", with_bvs);
+    ar& make_nvp("num_bvs", bvh_model.num_bvs);
+    ar& make_nvp(
         "bvs",
         make_array(
-            reinterpret_cast<const char *>(bvh_model.bvs->data()),
+            reinterpret_cast<const char*>(bvh_model.bvs->data()),
             sizeof(Node) *
                 (std::size_t)bvh_model.num_bvs));  // Assuming BVs are POD.
   } else {
     const bool with_bvs = false;
-    ar &make_nvp("with_bvs", with_bvs);
+    ar& make_nvp("with_bvs", with_bvs);
   }
 }
 
 template <class Archive, typename BV>
-void load(Archive &ar, coal::BVHModel<BV> &bvh_model_,
+void load(Archive& ar, coal::BVHModel<BV>& bvh_model_,
           const unsigned int /*version*/) {
   using namespace coal;
   typedef internal::BVHModelAccessor<BV> Accessor;
   typedef BVNode<BV> Node;
 
-  Accessor &bvh_model = reinterpret_cast<Accessor &>(bvh_model_);
+  Accessor& bvh_model = reinterpret_cast<Accessor&>(bvh_model_);
 
   ar >> make_nvp("base",
                  boost::serialization::base_object<BVHModelBase>(bvh_model));
@@ -215,7 +215,7 @@ void load(Archive &ar, coal::BVHModel<BV> &bvh_model_,
     }
     if (num_bvs > 0) {
       ar >> make_nvp("bvs",
-                     make_array(reinterpret_cast<char *>(bvh_model.bvs->data()),
+                     make_array(reinterpret_cast<char*>(bvh_model.bvs->data()),
                                 sizeof(Node) * (std::size_t)num_bvs));
     } else
       bvh_model.bvs.reset();
@@ -230,7 +230,7 @@ namespace coal {
 namespace internal {
 template <typename BV>
 struct memory_footprint_evaluator<::coal::BVHModel<BV>> {
-  static size_t run(const ::coal::BVHModel<BV> &bvh_model) {
+  static size_t run(const ::coal::BVHModel<BV>& bvh_model) {
     return static_cast<size_t>(bvh_model.memUsage(false));
   }
 };

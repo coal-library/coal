@@ -12,11 +12,11 @@ namespace boost {
 namespace serialization {
 
 template <class Archive, typename Integer>
-void serialize(Archive &ar, coal::TriangleTpl<Integer> &triangle,
+void serialize(Archive& ar, coal::TriangleTpl<Integer>& triangle,
                const unsigned int /*version*/) {
-  ar &make_nvp("p0", triangle[0]);
-  ar &make_nvp("p1", triangle[1]);
-  ar &make_nvp("p2", triangle[2]);
+  ar& make_nvp("p0", triangle[0]);
+  ar& make_nvp("p1", triangle[1]);
+  ar& make_nvp("p2", triangle[2]);
 }
 
 }  // namespace serialization

@@ -986,12 +986,12 @@ struct COAL_DLLAPI DistanceRequest : QueryRequest {
   /// Nearest points are always computed and are the points of the shapes that
   /// achieve a distance of `DistanceResult::min_distance`.
   COAL_DEPRECATED_MESSAGE(
-      Nearest points are always computed : they are the points of the shapes
-          that achieve a distance of
+      Nearest points are always computed
+      : they are the points of the shapes that achieve a distance of
       `DistanceResult::min_distance`
-              .\n Use `enable_signed_distance` if you want to compute a signed
-                  minimum distance(and thus its corresponding nearest points)
-              .)
+          .\n Use `enable_signed_distance` if you want to compute a signed
+              minimum distance(and thus its corresponding nearest points)
+          .)
   bool enable_nearest_points;
 
   /// @brief whether to compute the penetration depth when objects are in
