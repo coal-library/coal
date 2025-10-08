@@ -26,7 +26,7 @@ SOAHighwayAlgorithm<Scalar> _fromPoints(
   const hn::ScalableTag<Scalar> d;
   const std::size_t N = hn::Lanes(d);
   const std::size_t remainder = points.size() % N;
-  const std::size_t padded_size = points.size() + remainder;
+  const std::size_t padded_size = points.size() + (N - remainder);
 
   Algorithm algo;
   algo.x = hwy::AllocateAligned<Scalar>(padded_size);

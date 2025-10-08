@@ -28,6 +28,27 @@ Eigen::Vector<Scalar, 3> fromSpherical(Scalar horiz, Scalar vert) {
                                   sin_horiz * cos_vert);
 }
 
+template <typename Scalar>
+EIGEN_DONT_INLINE static std::vector<Eigen::Vector<Scalar, 3>> sampleVector(
+    double horiz, double vert, double std_dev) {
+  using Vec3 = Eigen::Vector<Scalar, 3>;
+
+  std::mt19937 gen{1234};
+  std::normal_distribution d{0.0, std_dev};
+
+  constexpr std::size_t N = 50;
+  std::vector<Vec3> ret;
+  ret.reserve(N);
+
+  for (std::size_t i = 0; i < N; ++i) {
+    Scalar rand_horiz = static_cast<Scalar>(d(gen));
+    Scalar rand_vert = static_cast<Scalar>(d(gen));
+    ret.push_back(fromSpherical(static_cast<Scalar>(horiz) + rand_horiz,
+                                static_cast<Scalar>(vert) + rand_vert));
+  }
+  return ret;
+}
+
 struct WarmStartMesh {
   static WarmStartMesh construct(std::size_t points_horizontal,
                                  std::size_t points_vertical) {
@@ -103,6 +124,7 @@ struct LegacyLogWarmStart {
   using Scalar = _Scalar;
   using Vec3 = Eigen::Vector<Scalar, 3>;
   using SearchAlgorithm = LegacyLinearAlgorithm<Scalar>;
+  // using SearchAlgorithm = SOAHighwayAlgorithm<Scalar>;
 
   static LegacyLogWarmStart fromPoints(
       const std::vector<Eigen::Vector3d>& points) {
@@ -203,6 +225,66 @@ struct LegacyLogAlgorithm {
   std::vector<NeighborIndexes> neighbors;
   WarmStart warm_start;
   mutable std::vector<int8_t> visited;
+  mutable Vec3 last_dir = Vec3::Zero();
+};
+
+template <typename _Scalar>
+struct SOANeighborLogAlgorithm {
+  using Scalar = _Scalar;
+  using Vec3 = Eigen::Vector<Scalar, 3>;
+  using NeighborIndexes = std::vector<std::size_t>;
+  using WarmStart = LegacyLogWarmStart<Scalar>;
+  using SearchAlgorithm = SOAHighwayAlgorithm<Scalar>;
+  using Algorithm = SOANeighborLogAlgorithm;
+
+  static Algorithm fromPointsAndNeighbors(
+      const std::vector<Eigen::Vector3d>& points,
+      std::vector<NeighborIndexes> neighbors) {
+    Algorithm algo;
+
+    algo.warm_start = WarmStart::fromPoints(points);
+    algo.points_and_neighbors.reserve(points.size());
+    std::vector<Eigen::Vector3d> points_and_neighbors;
+    for (std::size_t i = 0; i < points.size(); ++i) {
+      points_and_neighbors.clear();
+      points_and_neighbors.push_back(points[i]);
+      const auto& point_neighbors = neighbors[i];
+      for (std::size_t j = 0; j < point_neighbors.size(); ++j) {
+        points_and_neighbors.push_back(points[point_neighbors[j]]);
+      }
+      algo.points_and_neighbors.push_back(
+          SearchAlgorithm::fromPoints(points_and_neighbors));
+    }
+    algo.neighbors = std::move(neighbors);
+    return algo;
+  }
+
+  std::tuple<Scalar, std::size_t> supportWithIndex(const Vec3& dir,
+                                                   std::size_t hint) const {
+    // Compute initial hint if dir is too far from last_dir
+    const Scalar use_warm_start_threshold = Scalar(0.9);
+    Vec3 dir_normalized = dir.normalized();
+    if (last_dir.isZero() ||
+        last_dir.dot(dir_normalized) < use_warm_start_threshold) {
+      hint = warm_start.hint(dir);
+    }
+    last_dir = dir_normalized;
+
+    std::size_t current_vertex_index = hint;
+
+    auto [max_dot, index] =
+        points_and_neighbors[current_vertex_index].supportWithIndex(dir);
+    while (index > 0) {
+      current_vertex_index = neighbors[current_vertex_index][index - 1];
+      std::tie(max_dot, index) =
+          points_and_neighbors[current_vertex_index].supportWithIndex(dir);
+    }
+    return std::make_tuple(max_dot, current_vertex_index);
+  }
+
+  std::vector<SearchAlgorithm> points_and_neighbors;
+  std::vector<NeighborIndexes> neighbors;
+  WarmStart warm_start;
   mutable Vec3 last_dir = Vec3::Zero();
 };
 
@@ -340,29 +422,31 @@ static void SOAHighwayLinearWithIndexAlgorithmBench(benchmark::State& state) {
 }
 
 template <typename Scalar>
-EIGEN_DONT_INLINE static std::vector<Eigen::Vector<Scalar, 3>> sampleVector(
-    double horiz, double vert, double std_dev) {
-  using Vec3 = Eigen::Vector<Scalar, 3>;
+static void legacyLogWarmStartAlgorithmBench(benchmark::State& state) {
+  using Algorithm = LegacyLogAlgorithm<Scalar>;
 
-  std::mt19937 gen{1234};
-  std::normal_distribution d{0.0, std_dev};
+  const auto std_dev = static_cast<double>(state.range(0)) / 100.;
+  const auto num_subdiv = state.range(1);
 
-  constexpr std::size_t N = 50;
-  std::vector<Vec3> ret;
-  ret.reserve(N);
+  auto ico = utils::IcosahedronWithNeighborsDatabase::get(
+      static_cast<std::size_t>(num_subdiv));
+  auto algo = Algorithm::fromPointsAndNeighbors(ico.points, ico.neighbors);
 
-  for (std::size_t i = 0; i < N; ++i) {
-    Scalar rand_horiz = static_cast<Scalar>(d(gen));
-    Scalar rand_vert = static_cast<Scalar>(d(gen));
-    ret.push_back(fromSpherical(static_cast<Scalar>(horiz) + rand_horiz,
-                                static_cast<Scalar>(vert) + rand_vert));
+  auto vecs = sampleVector<Scalar>(2., 2., std_dev);
+
+  std::size_t hint = 0;
+  std::size_t i = 0;
+  for (auto _ : state) {
+    auto res_hint = algo.supportWithIndex(vecs[i % vecs.size()], hint);
+    benchmark::DoNotOptimize(res_hint);
+    hint = std::get<1>(res_hint);
+    ++i;
   }
-  return ret;
 }
 
 template <typename Scalar>
-static void legacyLogWarmStartAlgorithmBench(benchmark::State& state) {
-  using Algorithm = LegacyLogAlgorithm<Scalar>;
+static void SOANeighborLogWarmStartAlgorithmBench(benchmark::State& state) {
+  using Algorithm = SOANeighborLogAlgorithm<Scalar>;
 
   const auto std_dev = static_cast<double>(state.range(0)) / 100.;
   const auto num_subdiv = state.range(1);
@@ -418,6 +502,10 @@ BENCHMARK(SOAHighwayLinearWithIndexAlgorithmBench<double>)
     ->Apply(LinearCustomArgumentsHighway);
 BENCHMARK(legacyLogWarmStartAlgorithmBench<float>)->Apply(LogCustomArguments);
 BENCHMARK(legacyLogWarmStartAlgorithmBench<double>)->Apply(LogCustomArguments);
+BENCHMARK(SOANeighborLogWarmStartAlgorithmBench<float>)
+    ->Apply(LogCustomArguments);
+BENCHMARK(SOANeighborLogWarmStartAlgorithmBench<double>)
+    ->Apply(LogCustomArguments);
 
 }  // namespace bench
 }  // namespace coal
