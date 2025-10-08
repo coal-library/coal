@@ -13,10 +13,20 @@
 #include <limits>
 #include <vector>
 #include <cmath>
-#include <iostream>
+#include <random>
 
 namespace coal {
 namespace bench {
+
+template <typename Scalar>
+Eigen::Vector<Scalar, 3> fromSpherical(Scalar horiz, Scalar vert) {
+  const auto sin_horiz = std::sin(horiz);
+  const auto cos_horiz = std::cos(horiz);
+  const auto sin_vert = std::sin(vert);
+  const auto cos_vert = std::cos(vert);
+  return Eigen::Vector<Scalar, 3>(cos_horiz * cos_vert, sin_vert,
+                                  sin_horiz * cos_vert);
+}
 
 struct WarmStartMesh {
   static WarmStartMesh construct(std::size_t points_horizontal,
@@ -35,12 +45,7 @@ struct WarmStartMesh {
             -half_pi + (static_cast<double>(y + 1) /
                         static_cast<double>(points_vertical + 1)) *
                            pi;
-        const auto sin_horiz = std::sin(horiz);
-        const auto cos_horiz = std::cos(horiz);
-        const auto sin_vert = std::sin(vert);
-        const auto cos_vert = std::cos(vert);
-        ws.points.push_back(Eigen::Vector3d(cos_horiz * cos_vert, sin_vert,
-                                            sin_horiz * cos_vert));
+        ws.points.push_back(fromSpherical(horiz, vert));
       }
     }
     ws.points.push_back(Eigen::Vector3d::UnitY());
@@ -49,59 +54,6 @@ struct WarmStartMesh {
   }
 
   std::vector<Eigen::Vector3d> points;
-};
-
-template <typename _Scalar>
-struct ClustersAlgorithm {
-  using Scalar = _Scalar;
-  using Vec3 = Eigen::Vector<Scalar, 3>;
-  using Algorithm = ClustersAlgorithm<Scalar>;
-  using UsedAlgorithm = SOAHighwayAlgorithm<Scalar>;
-
-  static Algorithm fromMeshAndPoints(
-      const WarmStartMesh& warm_start_mesh,
-      const std::vector<Eigen::Vector3d>& points) {
-    Algorithm algo;
-    // This algo will search closest point on all the warm start mesh
-    auto init_warm_start_algo =
-        UsedAlgorithm::fromPoints(warm_start_mesh.points);
-    algo.clusters_algo.reserve(warm_start_mesh.points.size());
-
-    std::vector<std::vector<Eigen::Vector3d>> clusters_points;
-    clusters_points.resize(warm_start_mesh.points.size());
-
-    // Affect points to a cluster
-    for (const auto& p : points) {
-      auto [_, index] =
-          init_warm_start_algo.supportWithIndex(p.template cast<Scalar>());
-      clusters_points[index].push_back(p);
-    }
-
-    // Store warm start mesh with at least one point attached to them.
-    // Only construct cluster if they is at least one point.
-    std::vector<Eigen::Vector3d> filtered_warm_start_points;
-    filtered_warm_start_points.reserve(warm_start_mesh.points.size());
-    for (std::size_t i = 0; i < clusters_points.size(); ++i) {
-      const auto& c_points = clusters_points[i];
-      if (c_points.size() != 0) {
-        filtered_warm_start_points.push_back(warm_start_mesh.points[i]);
-        algo.clusters_algo.push_back(UsedAlgorithm::fromPoints(c_points));
-      }
-    }
-    // Create the warm start algorithm from filtered warm start mesh
-    algo.warm_start_algo =
-        UsedAlgorithm::fromPoints(filtered_warm_start_points);
-
-    return algo;
-  }
-
-  Scalar support(const Vec3& dir) const {
-    auto [_, index] = warm_start_algo.supportWithIndex(dir);
-    return clusters_algo[index].support(dir);
-  }
-
-  UsedAlgorithm warm_start_algo;
-  std::vector<UsedAlgorithm> clusters_algo;
 };
 
 template <typename _Scalar>
@@ -147,16 +99,53 @@ struct LegacyLinearAlgorithm {
 };
 
 template <typename _Scalar>
+struct LegacyLogWarmStart {
+  using Scalar = _Scalar;
+  using Vec3 = Eigen::Vector<Scalar, 3>;
+  using SearchAlgorithm = LegacyLinearAlgorithm<Scalar>;
+
+  static LegacyLogWarmStart fromPoints(
+      const std::vector<Eigen::Vector3d>& points) {
+    LegacyLogWarmStart warm_start;
+    auto warm_start_mesh = WarmStartMesh::construct(4, 3);
+    auto init_search_algo = SearchAlgorithm::fromPoints(points);
+    warm_start.search_algo =
+        SearchAlgorithm::fromPoints(warm_start_mesh.points);
+    warm_start.closest_index.reserve(warm_start_mesh.points.size());
+
+    // Match warm_start_mesh points with geometry points
+    for (const auto& p : warm_start_mesh.points) {
+      auto [_, index] =
+          init_search_algo.supportWithIndex(p.template cast<Scalar>());
+      warm_start.closest_index.push_back(index);
+    }
+
+    return warm_start;
+  }
+
+  std::size_t hint(const Vec3& dir) const {
+    auto [__, index] = search_algo.supportWithIndex(dir);
+    return closest_index[index];
+  }
+
+  SearchAlgorithm search_algo;
+  std::vector<std::size_t> closest_index;
+};
+
+template <typename _Scalar>
 struct LegacyLogAlgorithm {
   using Scalar = _Scalar;
   using Vec3 = Eigen::Vector<Scalar, 3>;
   using NeighborIndexes = std::vector<std::size_t>;
+  using WarmStart = LegacyLogWarmStart<Scalar>;
   using Algorithm = LegacyLogAlgorithm;
 
   static Algorithm fromPointsAndNeighbors(
       const std::vector<Eigen::Vector3d>& points,
       std::vector<NeighborIndexes> neighbors) {
     Algorithm algo;
+
+    algo.warm_start = WarmStart::fromPoints(points);
     algo.points.reserve(points.size());
     for (std::size_t i = 0; i < points.size(); ++i) {
       algo.points.push_back(points[i].cast<Scalar>());
@@ -166,8 +155,19 @@ struct LegacyLogAlgorithm {
     return algo;
   }
 
-  Scalar support(const Vec3& dir, std::size_t hint) const {
+  std::tuple<Scalar, std::size_t> supportWithIndex(const Vec3& dir,
+                                                   std::size_t hint) const {
     std::fill(visited.begin(), visited.end(), false);
+
+    // Compute initial hint if dir is too far from last_dir
+    const Scalar use_warm_start_threshold = Scalar(0.9);
+    Vec3 dir_normalized = dir.normalized();
+    if (last_dir.isZero() ||
+        last_dir.dot(dir_normalized) < use_warm_start_threshold) {
+      hint = warm_start.hint(dir);
+    }
+    last_dir = dir_normalized;
+
     bool found = true;
     bool loose_check = true;
     std::size_t current_vertex_index = hint;
@@ -178,14 +178,17 @@ struct LegacyLogAlgorithm {
       found = false;
       for (const auto neighbor_index : n) {
         if (visited[neighbor_index]) continue;
+
         visited[neighbor_index] = true;
         const Scalar dot = points[neighbor_index].dot(dir);
         bool better = false;
         if (dot > max_dot) {
           better = true;
           loose_check = false;
-        } else if (loose_check && dot == max_dot)
+        } else if (loose_check && dot == max_dot) {
           better = true;
+        }
+
         if (better) {
           max_dot = dot;
           current_vertex_index = neighbor_index;
@@ -193,12 +196,14 @@ struct LegacyLogAlgorithm {
         }
       }
     }
-    return max_dot;
+    return std::make_tuple(max_dot, current_vertex_index);
   }
 
   std::vector<Vec3> points;
-  mutable std::vector<int8_t> visited;
   std::vector<NeighborIndexes> neighbors;
+  WarmStart warm_start;
+  mutable std::vector<int8_t> visited;
+  mutable Vec3 last_dir = Vec3::Zero();
 };
 
 struct SOAFloatEigenLinearAlgorithm {
@@ -335,124 +340,57 @@ static void SOAHighwayLinearWithIndexAlgorithmBench(benchmark::State& state) {
 }
 
 template <typename Scalar>
-static void legacyLogAlgorithmBench(benchmark::State& state) {
-  using Algorithm = LegacyLogAlgorithm<Scalar>;
-  using InitAlgorithm = LegacyLinearAlgorithm<Scalar>;
-  using Vec3 = typename InitAlgorithm::Vec3;
+EIGEN_DONT_INLINE static std::vector<Eigen::Vector<Scalar, 3>> sampleVector(
+    double horiz, double vert, double std_dev) {
+  using Vec3 = Eigen::Vector<Scalar, 3>;
 
-  auto ico = utils::IcosahedronWithNeighborsDatabase::get(
-      static_cast<std::size_t>(state.range(1)));
-  auto init_algo = InitAlgorithm::fromPoints(ico.points);
-  auto algo = Algorithm::fromPointsAndNeighbors(ico.points, ico.neighbors);
-  Vec3 init_dir;
+  std::mt19937 gen{1234};
+  std::normal_distribution d{0.0, std_dev};
 
-  switch (state.range(0)) {
-    case 0:
-      // Bad init
-      init_dir = -Vec3::UnitX();
-      break;
-    case 1:
-      // Medium init
-      init_dir = Vec3::UnitY();
-      break;
-    case 2:
-      // Good init
-      init_dir = Vec3(static_cast<Scalar>(0.9), static_cast<Scalar>(0.1),
-                      static_cast<Scalar>(0.1))
-                     .normalized();
-      ;
-      break;
-    default:
-      init_dir = Vec3::UnitX();
+  constexpr std::size_t N = 50;
+  std::vector<Vec3> ret;
+  ret.reserve(N);
+
+  for (std::size_t i = 0; i < N; ++i) {
+    Scalar rand_horiz = static_cast<Scalar>(d(gen));
+    Scalar rand_vert = static_cast<Scalar>(d(gen));
+    ret.push_back(fromSpherical(static_cast<Scalar>(horiz) + rand_horiz,
+                                static_cast<Scalar>(vert) + rand_vert));
   }
-  auto [_, hint] = init_algo.supportWithIndex(init_dir);
-
-  auto vec = Algorithm::Vec3::UnitX();
-
-  for (auto _ : state) {
-    auto res = algo.support(vec, hint);
-    benchmark::DoNotOptimize(res);
-  }
+  return ret;
 }
 
 template <typename Scalar>
 static void legacyLogWarmStartAlgorithmBench(benchmark::State& state) {
   using Algorithm = LegacyLogAlgorithm<Scalar>;
-  // using InitAlgorithm = SOAHighwayAlgorithm<Scalar>;
-  using InitAlgorithm = LegacyLinearAlgorithm<Scalar>;
 
-  const auto num_subdiv = state.range(0);
+  const auto std_dev = static_cast<double>(state.range(0)) / 100.;
+  const auto num_subdiv = state.range(1);
 
   auto ico = utils::IcosahedronWithNeighborsDatabase::get(
       static_cast<std::size_t>(num_subdiv));
   auto algo = Algorithm::fromPointsAndNeighbors(ico.points, ico.neighbors);
-  auto init_warm_start_algo = InitAlgorithm::fromPoints(ico.points);
 
-  auto warm_start_mesh = WarmStartMesh::construct(4, 3);
-  auto warm_start_algo = InitAlgorithm::fromPoints(warm_start_mesh.points);
-  std::vector<std::size_t> closest_index;
-  closest_index.reserve(warm_start_mesh.points.size());
-  for (const auto& p : warm_start_mesh.points) {
-    auto [_, index] =
-        init_warm_start_algo.supportWithIndex(p.template cast<Scalar>());
-    closest_index.push_back(index);
-  }
+  auto vecs = sampleVector<Scalar>(2., 2., std_dev);
 
-  // auto vec = Algorithm::Vec3::UnitX();
-  auto vec = typename Algorithm::Vec3(static_cast<Scalar>(0.9),
-                                      static_cast<Scalar>(0.2),
-                                      static_cast<Scalar>(0.2))
-                 .normalized();
-
+  std::size_t hint = 0;
+  std::size_t i = 0;
   for (auto _ : state) {
-    auto [__, index] = warm_start_algo.supportWithIndex(vec);
-    benchmark::DoNotOptimize(index);
-    auto hint = closest_index[index];
-    auto res = algo.support(vec, hint);
-    benchmark::DoNotOptimize(res);
+    auto res_hint = algo.supportWithIndex(vecs[i % vecs.size()], hint);
+    benchmark::DoNotOptimize(res_hint);
+    hint = std::get<1>(res_hint);
+    ++i;
   }
-}
-
-template <typename Scalar>
-static void SOAClusterAlgorithmBench(benchmark::State& state) {
-  using Algorithm = ClustersAlgorithm<Scalar>;
-
-  auto warm_start_mesh = WarmStartMesh::construct(10, 8);
-
-  const auto target = state.range(0);
-  const auto num_subdiv = state.range(1);
-
-  auto ico =
-      utils::IcosahedronDatabase::get(static_cast<std::size_t>(num_subdiv));
-  auto vec = Algorithm::Vec3::UnitX();
-  hwy::SetSupportedTargetsForTest(target);
-  auto algo = Algorithm::fromMeshAndPoints(warm_start_mesh, ico.points);
-  for (auto _ : state) {
-    auto res = algo.support(vec);
-    benchmark::DoNotOptimize(res);
-  }
-  hwy::SetSupportedTargetsForTest(0);
 }
 
 static void LinearCustomArguments(benchmark::internal::Benchmark* b) {
-  // 4 subdivide doesn't fit into L1 cache 5112 points > 48KB
+  // 5 subdivide doesn't fit into L1 cache (10242 points > 48KB)
   b->Arg(0)->Arg(1)->Arg(2)->Arg(3)->Arg(4)->Arg(5);
-}
-static void LogCustomArguments(benchmark::internal::Benchmark* b) {
-  for (int init : {0, 1, 2}) {
-    // 4 subdivide doesn't fit into L1 cache 5112 points > 48KB
-    b->Args({init, 0})
-        ->Args({init, 1})
-        ->Args({init, 2})
-        ->Args({init, 3})
-        ->Args({init, 4})
-        ->Args({init, 5});
-  }
 }
 static void LinearCustomArgumentsHighway(benchmark::internal::Benchmark* b) {
   for (std::int64_t target : hwy::SupportedAndGeneratedTargets()) {
     if (target != HWY_SSSE3 && target != HWY_SSE4 && target != HWY_NEON_BF16) {
-      // 4 subdivide doesn't fit into L1 cache 5112 points > 48KB
+      // 5 subdivide doesn't fit into L1 cache (10242 points > 48KB)
       b->Args({target, 0})
           ->Args({target, 1})
           ->Args({target, 2})
@@ -461,6 +399,10 @@ static void LinearCustomArgumentsHighway(benchmark::internal::Benchmark* b) {
           ->Args({target, 5});
     }
   }
+}
+static void LogCustomArguments(benchmark::internal::Benchmark* b) {
+  // 5 subdivide doesn't fit into L1 cache (10242 points > 48KB)
+  b->ArgsProduct({{0, 10, 1000}, {0, 1, 2, 3, 4, 5}});
 }
 
 BENCHMARK(legacyLinearAlgorithmBench<float>)->Apply(LinearCustomArguments);
@@ -474,15 +416,8 @@ BENCHMARK(SOAHighwayLinearWithIndexAlgorithmBench<float>)
     ->Apply(LinearCustomArgumentsHighway);
 BENCHMARK(SOAHighwayLinearWithIndexAlgorithmBench<double>)
     ->Apply(LinearCustomArgumentsHighway);
-BENCHMARK(legacyLogAlgorithmBench<float>)->Apply(LogCustomArguments);
-BENCHMARK(legacyLogAlgorithmBench<double>)->Apply(LogCustomArguments);
-BENCHMARK(legacyLogWarmStartAlgorithmBench<float>)
-    ->Apply(LinearCustomArguments);
-BENCHMARK(legacyLogWarmStartAlgorithmBench<double>)
-    ->Apply(LinearCustomArguments);
-BENCHMARK(SOAClusterAlgorithmBench<float>)->Apply(LinearCustomArgumentsHighway);
-BENCHMARK(SOAClusterAlgorithmBench<double>)
-    ->Apply(LinearCustomArgumentsHighway);
+BENCHMARK(legacyLogWarmStartAlgorithmBench<float>)->Apply(LogCustomArguments);
+BENCHMARK(legacyLogWarmStartAlgorithmBench<double>)->Apply(LogCustomArguments);
 
 }  // namespace bench
 }  // namespace coal
