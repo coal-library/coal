@@ -33,15 +33,18 @@ struct SOAHighwayAlgorithm {
 
   static Algorithm fromPoints(const std::vector<Eigen::Vector3d>& points);
   Scalar support(const Vec3& dir) const {
-    return coal::bench::support(x.get(), y.get(), z.get(), dir.x(), dir.y(),
-                                dir.z(), count);
+    return coal::bench::support(x.get(), y, z, dir.x(), dir.y(), dir.z(),
+                                count);
   }
   std::tuple<Scalar, std::size_t> supportWithIndex(const Vec3& dir) const {
-    return coal::bench::supportWithIndex(x.get(), y.get(), z.get(), dir.x(),
-                                         dir.y(), dir.z(), count);
+    return coal::bench::supportWithIndex(x.get(), y, z, dir.x(), dir.y(),
+                                         dir.z(), count);
   }
 
-  hwy::AlignedFreeUniquePtr<Scalar[]> x, y, z;
+  // Allocate all in data in x. y and z are pointing inside x buffer.
+  // Only work if count is a multiple of Lanes (misalignment or load split)
+  hwy::AlignedFreeUniquePtr<Scalar[]> x;
+  Scalar *y, *z;
   std::size_t count;
 };
 

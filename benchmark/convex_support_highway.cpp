@@ -29,9 +29,9 @@ SOAHighwayAlgorithm<Scalar> _fromPoints(
   const std::size_t padded_size = points.size() + (N - remainder);
 
   Algorithm algo;
-  algo.x = hwy::AllocateAligned<Scalar>(padded_size);
-  algo.y = hwy::AllocateAligned<Scalar>(padded_size);
-  algo.z = hwy::AllocateAligned<Scalar>(padded_size);
+  algo.x = hwy::AllocateAligned<Scalar>(padded_size * 3);
+  algo.y = algo.x.get() + padded_size;
+  algo.z = algo.x.get() + 2 * padded_size;
   algo.count = padded_size;
 
   for (std::size_t i = 0; i < points.size(); ++i) {
