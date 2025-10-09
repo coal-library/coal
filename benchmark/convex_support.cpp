@@ -229,6 +229,136 @@ struct LegacyLogAlgorithm {
 };
 
 template <typename _Scalar>
+struct SOALocalNeighborLogAlgorithm {
+  using Scalar = _Scalar;
+  using Vec3 = Eigen::Vector<Scalar, 3>;
+  using NeighborIndexes = std::vector<std::size_t>;
+  using WarmStart = LegacyLogWarmStart<Scalar>;
+  using SearchAlgorithm = SOAHighwayAlgorithm<Scalar>;
+  using Algorithm = SOALocalNeighborLogAlgorithm;
+
+  static Algorithm fromPointsAndNeighbors(
+      const std::vector<Eigen::Vector3d>& points,
+      std::vector<NeighborIndexes> neighbors) {
+    Algorithm algo;
+
+    algo.warm_start = WarmStart::fromPoints(points);
+    std::vector<Eigen::Vector3d> points_and_neighbors;
+    std::size_t max_neighbors = 0;
+    algo.points.reserve(points.size());
+    for (std::size_t i = 0; i < points.size(); ++i) {
+      algo.points.push_back(points[i].template cast<Scalar>());
+      max_neighbors = std::max(max_neighbors, neighbors[i].size());
+    }
+    points_and_neighbors.resize(max_neighbors + 1, Eigen::Vector3d::Zero());
+    algo.last_points_and_neighbors =
+        SearchAlgorithm::fromPoints(points_and_neighbors);
+    algo.neighbors = std::move(neighbors);
+    algo.visited.resize(points.size());
+    return algo;
+  }
+
+  void fillLocalPointsAndNeighbors(std::size_t current_point) const {
+    const auto& p = points[current_point];
+    last_points_and_neighbors.x[0] = p.x();
+    last_points_and_neighbors.y[0] = p.y();
+    last_points_and_neighbors.z[0] = p.z();
+    const auto& point_neighbors = neighbors[current_point];
+    for (std::size_t i = 0; i < point_neighbors.size(); ++i) {
+      const auto& pn = points[point_neighbors[i]];
+      last_points_and_neighbors.x[i + 1] = pn.x();
+      last_points_and_neighbors.y[i + 1] = pn.y();
+      last_points_and_neighbors.z[i + 1] = pn.z();
+    }
+    for (std::size_t i = point_neighbors.size() + 1;
+         i < last_points_and_neighbors.count; ++i) {
+      last_points_and_neighbors.x[i] = p.x();
+      last_points_and_neighbors.y[i] = p.y();
+      last_points_and_neighbors.z[i] = p.z();
+    }
+  }
+
+  std::tuple<Scalar, std::size_t> supportWithIndexLegacy(
+      const Vec3& dir, Scalar max_dot, std::size_t hint) const {
+    bool found = true;
+    bool loose_check = true;
+    std::size_t current_vertex_index = hint;
+    while (found) {
+      const NeighborIndexes& n = neighbors[current_vertex_index];
+      found = false;
+      for (const auto neighbor_index : n) {
+        if (visited[neighbor_index]) continue;
+
+        visited[neighbor_index] = true;
+        const Scalar dot = points[neighbor_index].dot(dir);
+        bool better = false;
+        if (dot > max_dot) {
+          better = true;
+          loose_check = false;
+        } else if (loose_check && dot == max_dot) {
+          better = true;
+        }
+
+        if (better) {
+          max_dot = dot;
+          current_vertex_index = neighbor_index;
+          found = true;
+        }
+      }
+    }
+    return std::make_tuple(max_dot, current_vertex_index);
+  }
+
+  std::tuple<Scalar, std::size_t> supportWithIndex(const Vec3& dir,
+                                                   std::size_t hint) const {
+    // Compute initial hint if dir is too far from last_dir
+    const Scalar use_warm_start_threshold = Scalar(0.9);
+    Vec3 dir_normalized = dir.normalized();
+    std::size_t current_vertex_index = hint;
+
+    Scalar max_dot;
+    if (last_dir.isZero() ||
+        last_dir.dot(dir_normalized) < use_warm_start_threshold) {
+      // Init or too far: we launch the legacy algorithm
+      current_vertex_index = warm_start.hint(dir);
+      std::fill(visited.begin(), visited.end(), false);
+      max_dot = points[current_vertex_index].dot(dir);
+      std::tie(max_dot, current_vertex_index) =
+          supportWithIndexLegacy(dir, max_dot, current_vertex_index);
+    } else {
+      // Near, we first look in the local buffer, then launch the legacy
+      // algorithm
+      std::size_t index;
+      std::tie(max_dot, index) =
+          last_points_and_neighbors.supportWithIndex(dir);
+      if (index > 0) {
+        const auto& n_init = neighbors[current_vertex_index];
+        current_vertex_index = n_init[index - 1];
+        std::fill(visited.begin(), visited.end(), false);
+        for (const auto neighbor_index : n_init) {
+          visited[neighbor_index] = true;
+        }
+        std::tie(max_dot, current_vertex_index) =
+            supportWithIndexLegacy(dir, max_dot, current_vertex_index);
+      }
+    }
+    last_dir = dir_normalized;
+
+    if (current_vertex_index != hint) {
+      fillLocalPointsAndNeighbors(current_vertex_index);
+    }
+    return std::make_tuple(max_dot, current_vertex_index);
+  }
+
+  std::vector<Vec3> points;
+  std::vector<NeighborIndexes> neighbors;
+  WarmStart warm_start;
+  mutable Vec3 last_dir = Vec3::Zero();
+  mutable SearchAlgorithm last_points_and_neighbors;
+  mutable std::vector<int8_t> visited;
+};
+
+template <typename _Scalar>
 struct SOANeighborLogAlgorithm {
   using Scalar = _Scalar;
   using Vec3 = Eigen::Vector<Scalar, 3>;
@@ -467,6 +597,30 @@ static void SOANeighborLogWarmStartAlgorithmBench(benchmark::State& state) {
   }
 }
 
+template <typename Scalar>
+static void SOALocalNeighborLogWarmStartAlgorithmBench(
+    benchmark::State& state) {
+  using Algorithm = SOALocalNeighborLogAlgorithm<Scalar>;
+
+  const auto std_dev = static_cast<double>(state.range(0)) / 100.;
+  const auto num_subdiv = state.range(1);
+
+  auto ico = utils::IcosahedronWithNeighborsDatabase::get(
+      static_cast<std::size_t>(num_subdiv));
+  auto algo = Algorithm::fromPointsAndNeighbors(ico.points, ico.neighbors);
+
+  auto vecs = sampleVector<Scalar>(2., 2., std_dev);
+
+  std::size_t hint = 0;
+  std::size_t i = 0;
+  for (auto _ : state) {
+    auto res_hint = algo.supportWithIndex(vecs[i % vecs.size()], hint);
+    benchmark::DoNotOptimize(res_hint);
+    hint = std::get<1>(res_hint);
+    ++i;
+  }
+}
+
 static void LinearCustomArguments(benchmark::internal::Benchmark* b) {
   // 5 subdivide doesn't fit into L1 cache (10242 points > 48KB)
   b->Arg(0)->Arg(1)->Arg(2)->Arg(3)->Arg(4)->Arg(5);
@@ -505,6 +659,10 @@ BENCHMARK(legacyLogWarmStartAlgorithmBench<double>)->Apply(LogCustomArguments);
 BENCHMARK(SOANeighborLogWarmStartAlgorithmBench<float>)
     ->Apply(LogCustomArguments);
 BENCHMARK(SOANeighborLogWarmStartAlgorithmBench<double>)
+    ->Apply(LogCustomArguments);
+BENCHMARK(SOALocalNeighborLogWarmStartAlgorithmBench<float>)
+    ->Apply(LogCustomArguments);
+BENCHMARK(SOALocalNeighborLogWarmStartAlgorithmBench<double>)
     ->Apply(LogCustomArguments);
 
 }  // namespace bench
