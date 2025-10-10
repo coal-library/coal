@@ -193,7 +193,6 @@ struct LegacyLogAlgorithm {
     bool found = true;
     bool loose_check = true;
     std::size_t current_vertex_index = hint;
-
     Scalar max_dot = points[current_vertex_index].dot(dir);
     while (found) {
       const NeighborIndexes& n = neighbors[current_vertex_index];
@@ -640,7 +639,7 @@ static void LinearCustomArgumentsHighway(benchmark::internal::Benchmark* b) {
 }
 static void LogCustomArguments(benchmark::internal::Benchmark* b) {
   // 5 subdivide doesn't fit into L1 cache (10242 points > 48KB)
-  b->ArgsProduct({{0, 10, 1000}, {0, 1, 2, 3, 4, 5}});
+  b->ArgsProduct({{0, 1, 10, 1000}, {0, 1, 2, 3, 4, 5}});
 }
 
 BENCHMARK(legacyLinearAlgorithmBench<float>)->Apply(LinearCustomArguments);
