@@ -1,5 +1,6 @@
 #include "convex_support_highway.hh"
 #include "utils/icosahedron.hh"
+#include "utils/sparse_set.hh"
 
 #include <hwy/targets.h>
 #include <hwy/aligned_allocator.h>
@@ -161,6 +162,7 @@ struct LegacyLogAlgorithm {
   using NeighborIndexes = std::vector<std::size_t>;
   using WarmStart = LegacyLogWarmStart<Scalar>;
   using Algorithm = LegacyLogAlgorithm;
+  using SparseSet = utils::SparseSet<std::size_t>;
 
   static Algorithm fromPointsAndNeighbors(
       const std::vector<Eigen::Vector3d>& points,
@@ -172,15 +174,14 @@ struct LegacyLogAlgorithm {
     for (std::size_t i = 0; i < points.size(); ++i) {
       algo.points.push_back(points[i].cast<Scalar>());
     }
-    algo.visited.resize(points.size());
+    algo.visited = SparseSet(points.size(), points.size());
     algo.neighbors = std::move(neighbors);
     return algo;
   }
 
   std::tuple<Scalar, std::size_t> supportWithIndex(const Vec3& dir,
                                                    std::size_t hint) const {
-    std::fill(visited.begin(), visited.end(), false);
-
+    visited.clear();
     // Compute initial hint if dir is too far from last_dir
     const Scalar use_warm_start_threshold = Scalar(0.9);
     Vec3 dir_normalized = dir.normalized();
@@ -198,9 +199,9 @@ struct LegacyLogAlgorithm {
       const NeighborIndexes& n = neighbors[current_vertex_index];
       found = false;
       for (const auto neighbor_index : n) {
-        if (visited[neighbor_index]) continue;
+        if (visited.contains(neighbor_index)) continue;
 
-        visited[neighbor_index] = true;
+        visited.insert(neighbor_index);
         const Scalar dot = points[neighbor_index].dot(dir);
         bool better = false;
         if (dot > max_dot) {
@@ -223,7 +224,7 @@ struct LegacyLogAlgorithm {
   std::vector<Vec3> points;
   std::vector<NeighborIndexes> neighbors;
   WarmStart warm_start;
-  mutable std::vector<int8_t> visited;
+  mutable SparseSet visited;
   mutable Vec3 last_dir = Vec3::Zero();
 };
 
@@ -235,6 +236,7 @@ struct SOALocalNeighborLogAlgorithm {
   using WarmStart = LegacyLogWarmStart<Scalar>;
   using SearchAlgorithm = SOAHighwayAlgorithm<Scalar>;
   using Algorithm = SOALocalNeighborLogAlgorithm;
+  using SparseSet = utils::SparseSet<std::size_t>;
 
   static Algorithm fromPointsAndNeighbors(
       const std::vector<Eigen::Vector3d>& points,
@@ -253,7 +255,7 @@ struct SOALocalNeighborLogAlgorithm {
     algo.last_points_and_neighbors =
         SearchAlgorithm::fromPoints(points_and_neighbors);
     algo.neighbors = std::move(neighbors);
-    algo.visited.resize(points.size());
+    algo.visited = SparseSet(points.size(), points.size());
     return algo;
   }
 
@@ -286,9 +288,9 @@ struct SOALocalNeighborLogAlgorithm {
       const NeighborIndexes& n = neighbors[current_vertex_index];
       found = false;
       for (const auto neighbor_index : n) {
-        if (visited[neighbor_index]) continue;
+        if (visited.contains(neighbor_index)) continue;
 
-        visited[neighbor_index] = true;
+        visited.insert(neighbor_index);
         const Scalar dot = points[neighbor_index].dot(dir);
         bool better = false;
         if (dot > max_dot) {
@@ -310,6 +312,7 @@ struct SOALocalNeighborLogAlgorithm {
 
   std::tuple<Scalar, std::size_t> supportWithIndex(const Vec3& dir,
                                                    std::size_t hint) const {
+    visited.clear();
     // Compute initial hint if dir is too far from last_dir
     const Scalar use_warm_start_threshold = Scalar(0.9);
     Vec3 dir_normalized = dir.normalized();
@@ -320,7 +323,6 @@ struct SOALocalNeighborLogAlgorithm {
         last_dir.dot(dir_normalized) < use_warm_start_threshold) {
       // Init or too far: we launch the legacy algorithm
       current_vertex_index = warm_start.hint(dir);
-      std::fill(visited.begin(), visited.end(), false);
       max_dot = points[current_vertex_index].dot(dir);
       std::tie(max_dot, current_vertex_index) =
           supportWithIndexLegacy(dir, max_dot, current_vertex_index);
@@ -333,9 +335,8 @@ struct SOALocalNeighborLogAlgorithm {
       if (index > 0) {
         const auto& n_init = neighbors[current_vertex_index];
         current_vertex_index = n_init[index - 1];
-        std::fill(visited.begin(), visited.end(), false);
         for (const auto neighbor_index : n_init) {
-          visited[neighbor_index] = true;
+          visited.insert(neighbor_index);
         }
         std::tie(max_dot, current_vertex_index) =
             supportWithIndexLegacy(dir, max_dot, current_vertex_index);
@@ -354,7 +355,7 @@ struct SOALocalNeighborLogAlgorithm {
   WarmStart warm_start;
   mutable Vec3 last_dir = Vec3::Zero();
   mutable SearchAlgorithm last_points_and_neighbors;
-  mutable std::vector<int8_t> visited;
+  mutable SparseSet visited;
 };
 
 template <typename _Scalar>
