@@ -10,21 +10,18 @@
   <maintainer email="louis.montaut@inria.fr">Louis Montaut</maintainer>
   <maintainer email="opensource@wolfgangmerkt.com">Wolfgang Merkt</maintainer>
   <maintainer email="guilhem.saurel@laas.fr">Guilhem Saurel</maintainer>
-  <license>BSD</license>
+  <license>BSD-3-Clause</license>
 
   <url type="website">https://github.com/coal-library/coal</url>
 
   <build_depend>git</build_depend>
   <build_depend>doxygen</build_depend>
+  <build_depend>jrl_cmakemodules</build_depend>
   <!-- pylatexenc dependency commented since pip packages are not available on the buildfarm -->
   <!--<build_depend>python3-pylatexenc</build_depend>-->
-  <build_depend condition="$ROS_PYTHON_VERSION == 2">python-lxml</build_depend>
   <build_depend condition="$ROS_PYTHON_VERSION == 3">python3-lxml</build_depend>
   <doc_depend>doxygen</doc_depend>
-  <doc_depend condition="$ROS_PYTHON_VERSION == 2">python-lxml</doc_depend>
   <doc_depend condition="$ROS_PYTHON_VERSION == 3">python3-lxml</doc_depend>
-  <depend condition="$ROS_PYTHON_VERSION == 2">python</depend>
-  <depend condition="$ROS_PYTHON_VERSION == 2">python-numpy</depend>
   <depend condition="$ROS_PYTHON_VERSION == 3">python3</depend>
   <depend condition="$ROS_PYTHON_VERSION == 3">python3-numpy</depend>
   <depend>eigen</depend>
