@@ -39,43 +39,31 @@
 #include "coal/internal/shape_shape_func.h"
 #include "../narrowphase/details.h"
 
-#include "coal/tracy.hh"
-
 namespace coal {
 
 namespace internal {
+template <>
+CoalScalar ShapeShapeDistance<ConvexBase, Plane>(
+    const CollisionGeometry* o1, const Transform3s& tf1,
+    const CollisionGeometry* o2, const Transform3s& tf2, const GJKSolver*,
+    const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+  const ConvexBase& s1 = static_cast<const ConvexBase&>(*o1);
+  const Plane& s2 = static_cast<const Plane&>(*o2);
+  const CoalScalar distance =
+      details::planeDistance(s2, tf2, s1, tf1, p2, p1, normal);
+  normal = -normal;
+  return distance;
+}
 
-#define ConvexPlaneShapeShapeDistance(ConvexBaseType)                        \
-  template <>                                                                \
-  Scalar ShapeShapeDistance<ConvexBaseType, Plane>(                          \
-      const CollisionGeometry* o1, const Transform3s& tf1,                   \
-      const CollisionGeometry* o2, const Transform3s& tf2, const GJKSolver*, \
-      const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {                     \
-    COAL_TRACY_ZONE_SCOPED_N(                                                \
-        "coal::internal::ShapeShapeDistance<ConvexBase, Plane>");            \
-    const ConvexBaseType& s1 = static_cast<const ConvexBaseType&>(*o1);      \
-    const Plane& s2 = static_cast<const Plane&>(*o2);                        \
-    const Scalar distance =                                                  \
-        details::planeDistance(s2, tf2, s1, tf1, p2, p1, normal);            \
-    normal = -normal;                                                        \
-    return distance;                                                         \
-  }                                                                          \
-                                                                             \
-  template <>                                                                \
-  Scalar ShapeShapeDistance<Plane, ConvexBaseType>(                          \
-      const CollisionGeometry* o1, const Transform3s& tf1,                   \
-      const CollisionGeometry* o2, const Transform3s& tf2, const GJKSolver*, \
-      const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {                     \
-    COAL_TRACY_ZONE_SCOPED_N(                                                \
-        "coal::internal::ShapeShapeDistance<Plane, ConvexBase>");            \
-    const Plane& s1 = static_cast<const Plane&>(*o1);                        \
-    const ConvexBaseType& s2 = static_cast<const ConvexBaseType&>(*o2);      \
-    return details::planeDistance(s1, tf1, s2, tf2, p1, p2, normal);         \
-  }
-
-ConvexPlaneShapeShapeDistance(ConvexBase16);
-ConvexPlaneShapeShapeDistance(ConvexBase32);
-
+template <>
+CoalScalar ShapeShapeDistance<Plane, ConvexBase>(
+    const CollisionGeometry* o1, const Transform3s& tf1,
+    const CollisionGeometry* o2, const Transform3s& tf2, const GJKSolver*,
+    const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+  const Plane& s1 = static_cast<const Plane&>(*o1);
+  const ConvexBase& s2 = static_cast<const ConvexBase&>(*o2);
+  return details::planeDistance(s1, tf1, s2, tf2, p1, p2, normal);
+}
 }  // namespace internal
 
 }  // namespace coal

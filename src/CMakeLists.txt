@@ -66,6 +66,7 @@ set(
   narrowphase/minkowski_difference.cpp
   narrowphase/support_functions.cpp
   narrowphase/details.h
+  shape/convex.cpp
   shape/geometric_shapes.cpp
   shape/geometric_shapes_utility.cpp
   distance/box_halfspace.cpp
@@ -148,25 +149,24 @@ if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
 endif()
 
 if(UNIX)
-  get_relative_rpath(${CMAKE_INSTALL_LIBDIR} ${PROJECT_NAME}_INSTALL_RPATH)
+  GET_RELATIVE_RPATH(${CMAKE_INSTALL_LIBDIR} ${PROJECT_NAME}_INSTALL_RPATH)
   set_target_properties(
     ${PROJECT_NAME}
     PROPERTIES INSTALL_RPATH "${${PROJECT_NAME}_INSTALL_RPATH}"
   )
 endif()
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 
-cxx_flags_by_compiler_frontend(MSVC "/bigobj" OUTPUT PUBLIC_OPTIONS FILTER)
+CXX_FLAGS_BY_COMPILER_FRONTEND(MSVC "/bigobj" OUTPUT PUBLIC_OPTIONS FILTER)
 target_compile_options(${PROJECT_NAME} PUBLIC ${PUBLIC_OPTIONS})
 
-cxx_flags_by_compiler_frontend(MSVC "NOMINMAX" OUTPUT PUBLIC_DEFINITIONS)
+CXX_FLAGS_BY_COMPILER_FRONTEND(MSVC "NOMINMAX" OUTPUT PUBLIC_DEFINITIONS)
 target_compile_definitions(${PROJECT_NAME} INTERFACE ${PUBLIC_DEFINITIONS})
 
 # IDE sources and headers sorting
-add_source_group(${LIBRARY_NAME}_SOURCES)
-add_header_group(PROJECT_HEADERS_FULL_PATH)
+ADD_SOURCE_GROUP(${LIBRARY_NAME}_SOURCES)
+ADD_HEADER_GROUP(PROJECT_HEADERS_FULL_PATH)
 
-modernize_target_link_libraries(
+MODERNIZE_TARGET_LINK_LIBRARIES(
   ${LIBRARY_NAME}
   SCOPE PRIVATE
   TARGETS assimp::assimp
@@ -186,15 +186,6 @@ if(COAL_ENABLE_LOGGING)
     ${LIBRARY_NAME}
     PUBLIC COAL_ENABLE_LOGGING BOOST_LOG_DYN_LINK
   )
-endif()
-
-if(COAL_USE_FLOAT_PRECISION)
-  target_compile_definitions(${LIBRARY_NAME} PUBLIC COAL_USE_FLOAT_PRECISION)
-endif()
-
-if(COAL_BUILD_WITH_TRACY)
-  target_compile_definitions(${LIBRARY_NAME} PUBLIC COAL_TRACY_ENABLE)
-  target_link_libraries(${LIBRARY_NAME} PUBLIC Tracy::TracyClient)
 endif()
 
 if(WIN32)
@@ -225,7 +216,7 @@ if(COAL_HAS_QHULL)
   target_link_libraries(${LIBRARY_NAME} PRIVATE Qhull::qhull_r Qhull::qhullcpp)
 endif()
 
-modernize_target_link_libraries(
+MODERNIZE_TARGET_LINK_LIBRARIES(
   ${PROJECT_NAME}
   SCOPE PUBLIC
   TARGETS Eigen3::Eigen
@@ -241,7 +232,7 @@ target_include_directories(
 )
 
 if(octomap_FOUND)
-  modernize_target_link_libraries(
+  MODERNIZE_TARGET_LINK_LIBRARIES(
     ${PROJECT_NAME}
     SCOPE PUBLIC
     TARGETS octomap

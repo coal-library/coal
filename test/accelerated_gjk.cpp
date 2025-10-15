@@ -46,18 +46,16 @@
 
 using coal::Box;
 using coal::Capsule;
+using coal::CoalScalar;
 using coal::constructPolytopeFromEllipsoid;
-using coal::ConvexTpl;
+using coal::Convex;
 using coal::Ellipsoid;
 using coal::GJKSolver;
 using coal::GJKVariant;
-using coal::Scalar;
 using coal::ShapeBase;
-using coal::SolverScalar;
 using coal::support_func_guess_t;
 using coal::Transform3s;
-using coal::Triangle32;
-using coal::Vec3ps;
+using coal::Triangle;
 using coal::Vec3s;
 using coal::details::GJK;
 using coal::details::MinkowskiDiff;
@@ -66,7 +64,7 @@ using std::size_t;
 
 BOOST_AUTO_TEST_CASE(set_gjk_variant) {
   GJKSolver solver;
-  GJK gjk(128, Scalar(1e-6));
+  GJK gjk(128, 1e-6);
   MinkowskiDiff shape;
 
   // Checking defaults
@@ -91,7 +89,7 @@ BOOST_AUTO_TEST_CASE(set_gjk_variant) {
 BOOST_AUTO_TEST_CASE(need_nesterov_normalize_support_direction) {
   Ellipsoid ellipsoid = Ellipsoid(1, 1, 1);
   Box box = Box(1, 1, 1);
-  ConvexTpl<Triangle32> cvx;
+  Convex<Triangle> cvx;
 
   MinkowskiDiff mink_diff1;
   mink_diff1.set<SupportOptions::NoSweptSphere>(&ellipsoid, &ellipsoid);
@@ -109,7 +107,7 @@ BOOST_AUTO_TEST_CASE(need_nesterov_normalize_support_direction) {
 void test_accelerated_gjk(const ShapeBase& shape0, const ShapeBase& shape1) {
   // Solvers
   unsigned int max_iterations = 128;
-  Scalar tolerance = Scalar(1e-6);
+  CoalScalar tolerance = 1e-6;
   GJK gjk(max_iterations, tolerance);
   GJK gjk_nesterov(max_iterations, tolerance);
   gjk_nesterov.gjk_variant = GJKVariant::NesterovAcceleration;
@@ -121,7 +119,7 @@ void test_accelerated_gjk(const ShapeBase& shape0, const ShapeBase& shape1) {
 
   // Generate random transforms
   size_t n = 1000;
-  Scalar extents[] = {-3., -3., 0, 3., 3., 3.};
+  CoalScalar extents[] = {-3., -3., 0, 3., 3., 3.};
   std::vector<Transform3s> transforms;
   generateRandomTransforms(extents, transforms, n);
   Transform3s identity = Transform3s::Identity();
@@ -139,30 +137,29 @@ void test_accelerated_gjk(const ShapeBase& shape0, const ShapeBase& shape1) {
                                                  transforms[i]);
 
     // Evaluate both solvers twice, make sure they give the same solution
-    GJK::Status res_gjk_1 = gjk.evaluate(
-        mink_diff, init_guess.cast<SolverScalar>(), init_support_guess);
-    Vec3ps ray_gjk = gjk.ray;
-    GJK::Status res_gjk_2 = gjk.evaluate(
-        mink_diff, init_guess.cast<SolverScalar>(), init_support_guess);
+    GJK::Status res_gjk_1 =
+        gjk.evaluate(mink_diff, init_guess, init_support_guess);
+    Vec3s ray_gjk = gjk.ray;
+    GJK::Status res_gjk_2 =
+        gjk.evaluate(mink_diff, init_guess, init_support_guess);
     BOOST_CHECK(res_gjk_1 == res_gjk_2);
-    EIGEN_VECTOR_IS_APPROX(ray_gjk, gjk.ray, SolverScalar(1e-8));
+    EIGEN_VECTOR_IS_APPROX(ray_gjk, gjk.ray, 1e-8);
 
     // --------------
     // -- Nesterov --
     // --------------
-    GJK::Status res_nesterov_gjk_1 = gjk_nesterov.evaluate(
-        mink_diff, init_guess.cast<SolverScalar>(), init_support_guess);
-    Vec3ps ray_nesterov = gjk_nesterov.ray;
-    GJK::Status res_nesterov_gjk_2 = gjk_nesterov.evaluate(
-        mink_diff, init_guess.cast<SolverScalar>(), init_support_guess);
+    GJK::Status res_nesterov_gjk_1 =
+        gjk_nesterov.evaluate(mink_diff, init_guess, init_support_guess);
+    Vec3s ray_nesterov = gjk_nesterov.ray;
+    GJK::Status res_nesterov_gjk_2 =
+        gjk_nesterov.evaluate(mink_diff, init_guess, init_support_guess);
     BOOST_CHECK(res_nesterov_gjk_1 == res_nesterov_gjk_2);
-    EIGEN_VECTOR_IS_APPROX(ray_nesterov, gjk_nesterov.ray, SolverScalar(1e-8));
+    EIGEN_VECTOR_IS_APPROX(ray_nesterov, gjk_nesterov.ray, 1e-8);
 
     // Make sure GJK and Nesterov accelerated GJK find the same distance between
     // the shapes
     BOOST_CHECK(res_nesterov_gjk_1 == res_gjk_1);
-    BOOST_CHECK_SMALL(fabs(ray_gjk.norm() - ray_nesterov.norm()),
-                      SolverScalar(1e-4));
+    BOOST_CHECK_SMALL(fabs(ray_gjk.norm() - ray_nesterov.norm()), 1e-4);
 
     // Make sure GJK and Nesterov accelerated GJK converges in a reasonable
     // amount of iterations
@@ -172,19 +169,18 @@ void test_accelerated_gjk(const ShapeBase& shape0, const ShapeBase& shape1) {
     // ------------
     // -- Polyak --
     // ------------
-    GJK::Status res_polyak_gjk_1 = gjk_polyak.evaluate(
-        mink_diff, init_guess.cast<SolverScalar>(), init_support_guess);
-    Vec3ps ray_polyak = gjk_polyak.ray;
-    GJK::Status res_polyak_gjk_2 = gjk_polyak.evaluate(
-        mink_diff, init_guess.cast<SolverScalar>(), init_support_guess);
+    GJK::Status res_polyak_gjk_1 =
+        gjk_polyak.evaluate(mink_diff, init_guess, init_support_guess);
+    Vec3s ray_polyak = gjk_polyak.ray;
+    GJK::Status res_polyak_gjk_2 =
+        gjk_polyak.evaluate(mink_diff, init_guess, init_support_guess);
     BOOST_CHECK(res_polyak_gjk_1 == res_polyak_gjk_2);
-    EIGEN_VECTOR_IS_APPROX(ray_polyak, gjk_polyak.ray, SolverScalar(1e-8));
+    EIGEN_VECTOR_IS_APPROX(ray_polyak, gjk_polyak.ray, 1e-8);
 
     // Make sure GJK and Polyak accelerated GJK find the same distance between
     // the shapes
     BOOST_CHECK(res_polyak_gjk_1 == res_gjk_1);
-    BOOST_CHECK_SMALL(fabs(ray_gjk.norm() - ray_polyak.norm()),
-                      SolverScalar(1e-4));
+    BOOST_CHECK_SMALL(fabs(ray_gjk.norm() - ray_polyak.norm()), 1e-4);
 
     // Make sure GJK and Polyak accelerated GJK converges in a reasonable
     // amount of iterations
@@ -194,18 +190,18 @@ void test_accelerated_gjk(const ShapeBase& shape0, const ShapeBase& shape1) {
 }
 
 BOOST_AUTO_TEST_CASE(ellipsoid_ellipsoid) {
-  Ellipsoid ellipsoid0 = Ellipsoid(Scalar(0.3), Scalar(0.4), Scalar(0.5));
-  Ellipsoid ellipsoid1 = Ellipsoid(Scalar(1.5), Scalar(1.4), Scalar(1.3));
+  Ellipsoid ellipsoid0 = Ellipsoid(0.3, 0.4, 0.5);
+  Ellipsoid ellipsoid1 = Ellipsoid(1.5, 1.4, 1.3);
 
   test_accelerated_gjk(ellipsoid0, ellipsoid1);
   test_accelerated_gjk(ellipsoid0, ellipsoid1);
 }
 
 BOOST_AUTO_TEST_CASE(ellipsoid_capsule) {
-  Ellipsoid ellipsoid0 = Ellipsoid(Scalar(0.5), Scalar(0.4), Scalar(0.3));
-  Ellipsoid ellipsoid1 = Ellipsoid(Scalar(1.5), Scalar(1.4), Scalar(1.3));
-  Capsule capsule0 = Capsule(Scalar(0.1), Scalar(0.3));
-  Capsule capsule1 = Capsule(Scalar(1.1), Scalar(1.3));
+  Ellipsoid ellipsoid0 = Ellipsoid(0.5, 0.4, 0.3);
+  Ellipsoid ellipsoid1 = Ellipsoid(1.5, 1.4, 1.3);
+  Capsule capsule0 = Capsule(0.1, 0.3);
+  Capsule capsule1 = Capsule(1.1, 1.3);
 
   test_accelerated_gjk(ellipsoid0, capsule0);
   test_accelerated_gjk(ellipsoid0, capsule1);
@@ -214,10 +210,10 @@ BOOST_AUTO_TEST_CASE(ellipsoid_capsule) {
 }
 
 BOOST_AUTO_TEST_CASE(ellipsoid_box) {
-  Ellipsoid ellipsoid0 = Ellipsoid(Scalar(0.5), Scalar(0.4), Scalar(0.3));
-  Ellipsoid ellipsoid1 = Ellipsoid(Scalar(1.5), Scalar(1.4), Scalar(1.3));
-  Box box0 = Box(Scalar(0.1), Scalar(0.2), Scalar(0.3));
-  Box box1 = Box(Scalar(1.1), Scalar(1.2), Scalar(1.3));
+  Ellipsoid ellipsoid0 = Ellipsoid(0.5, 0.4, 0.3);
+  Ellipsoid ellipsoid1 = Ellipsoid(1.5, 1.4, 1.3);
+  Box box0 = Box(0.1, 0.2, 0.3);
+  Box box1 = Box(1.1, 1.2, 1.3);
 
   test_accelerated_gjk(ellipsoid0, box0);
   test_accelerated_gjk(ellipsoid0, box1);
@@ -226,10 +222,10 @@ BOOST_AUTO_TEST_CASE(ellipsoid_box) {
 }
 
 BOOST_AUTO_TEST_CASE(ellipsoid_mesh) {
-  Ellipsoid ellipsoid0 = Ellipsoid(Scalar(0.5), Scalar(0.4), Scalar(0.3));
-  Ellipsoid ellipsoid1 = Ellipsoid(Scalar(1.5), Scalar(1.4), Scalar(1.3));
-  ConvexTpl<Triangle32> cvx0 = constructPolytopeFromEllipsoid(ellipsoid0);
-  ConvexTpl<Triangle32> cvx1 = constructPolytopeFromEllipsoid(ellipsoid1);
+  Ellipsoid ellipsoid0 = Ellipsoid(0.5, 0.4, 0.3);
+  Ellipsoid ellipsoid1 = Ellipsoid(1.5, 1.4, 1.3);
+  Convex<Triangle> cvx0 = constructPolytopeFromEllipsoid(ellipsoid0);
+  Convex<Triangle> cvx1 = constructPolytopeFromEllipsoid(ellipsoid1);
 
   test_accelerated_gjk(ellipsoid0, cvx0);
   test_accelerated_gjk(ellipsoid0, cvx1);
@@ -238,12 +234,12 @@ BOOST_AUTO_TEST_CASE(ellipsoid_mesh) {
 }
 
 BOOST_AUTO_TEST_CASE(capsule_mesh) {
-  Ellipsoid ellipsoid0 = Ellipsoid(Scalar(0.5), Scalar(0.4), Scalar(0.3));
-  Ellipsoid ellipsoid1 = Ellipsoid(Scalar(1.5), Scalar(1.4), Scalar(1.3));
-  ConvexTpl<Triangle32> cvx0 = constructPolytopeFromEllipsoid(ellipsoid0);
-  ConvexTpl<Triangle32> cvx1 = constructPolytopeFromEllipsoid(ellipsoid1);
-  Capsule capsule0 = Capsule(Scalar(0.1), Scalar(0.3));
-  Capsule capsule1 = Capsule(Scalar(1.1), Scalar(1.3));
+  Ellipsoid ellipsoid0 = Ellipsoid(0.5, 0.4, 0.3);
+  Ellipsoid ellipsoid1 = Ellipsoid(1.5, 1.4, 1.3);
+  Convex<Triangle> cvx0 = constructPolytopeFromEllipsoid(ellipsoid0);
+  Convex<Triangle> cvx1 = constructPolytopeFromEllipsoid(ellipsoid1);
+  Capsule capsule0 = Capsule(0.1, 0.3);
+  Capsule capsule1 = Capsule(1.1, 1.3);
 
   test_accelerated_gjk(capsule0, cvx0);
   test_accelerated_gjk(capsule0, cvx1);
@@ -252,8 +248,8 @@ BOOST_AUTO_TEST_CASE(capsule_mesh) {
 }
 
 BOOST_AUTO_TEST_CASE(capsule_capsule) {
-  Capsule capsule0 = Capsule(Scalar(0.1), Scalar(0.3));
-  Capsule capsule1 = Capsule(Scalar(1.1), Scalar(1.3));
+  Capsule capsule0 = Capsule(0.1, 0.3);
+  Capsule capsule1 = Capsule(1.1, 1.3);
 
   test_accelerated_gjk(capsule0, capsule0);
   test_accelerated_gjk(capsule1, capsule1);
@@ -261,20 +257,20 @@ BOOST_AUTO_TEST_CASE(capsule_capsule) {
 }
 
 BOOST_AUTO_TEST_CASE(box_box) {
-  Box box0 = Box(Scalar(0.1), Scalar(0.2), Scalar(0.3));
-  Box box1 = Box(Scalar(1.1), Scalar(1.2), Scalar(1.3));
+  Box box0 = Box(0.1, 0.2, 0.3);
+  Box box1 = Box(1.1, 1.2, 1.3);
   test_accelerated_gjk(box0, box0);
   test_accelerated_gjk(box0, box1);
   test_accelerated_gjk(box1, box1);
 }
 
 BOOST_AUTO_TEST_CASE(box_mesh) {
-  Box box0 = Box(Scalar(0.1), Scalar(0.2), Scalar(0.3));
-  Box box1 = Box(Scalar(1.1), Scalar(1.2), Scalar(1.3));
-  Ellipsoid ellipsoid0 = Ellipsoid(Scalar(0.5), Scalar(0.4), Scalar(0.3));
-  Ellipsoid ellipsoid1 = Ellipsoid(Scalar(1.5), Scalar(1.4), Scalar(1.3));
-  ConvexTpl<Triangle32> cvx0 = constructPolytopeFromEllipsoid(ellipsoid0);
-  ConvexTpl<Triangle32> cvx1 = constructPolytopeFromEllipsoid(ellipsoid1);
+  Box box0 = Box(0.1, 0.2, 0.3);
+  Box box1 = Box(1.1, 1.2, 1.3);
+  Ellipsoid ellipsoid0 = Ellipsoid(0.5, 0.4, 0.3);
+  Ellipsoid ellipsoid1 = Ellipsoid(1.5, 1.4, 1.3);
+  Convex<Triangle> cvx0 = constructPolytopeFromEllipsoid(ellipsoid0);
+  Convex<Triangle> cvx1 = constructPolytopeFromEllipsoid(ellipsoid1);
 
   test_accelerated_gjk(box0, cvx0);
   test_accelerated_gjk(box0, cvx1);
@@ -283,10 +279,10 @@ BOOST_AUTO_TEST_CASE(box_mesh) {
 }
 
 BOOST_AUTO_TEST_CASE(mesh_mesh) {
-  Ellipsoid ellipsoid0 = Ellipsoid(Scalar(0.5), Scalar(0.4), Scalar(0.3));
-  Ellipsoid ellipsoid1 = Ellipsoid(Scalar(1.5), Scalar(1.4), Scalar(1.3));
-  ConvexTpl<Triangle32> cvx0 = constructPolytopeFromEllipsoid(ellipsoid0);
-  ConvexTpl<Triangle32> cvx1 = constructPolytopeFromEllipsoid(ellipsoid1);
+  Ellipsoid ellipsoid0 = Ellipsoid(0.5, 0.4, 0.3);
+  Ellipsoid ellipsoid1 = Ellipsoid(1.5, 1.4, 1.3);
+  Convex<Triangle> cvx0 = constructPolytopeFromEllipsoid(ellipsoid0);
+  Convex<Triangle> cvx1 = constructPolytopeFromEllipsoid(ellipsoid1);
 
   test_accelerated_gjk(cvx0, cvx0);
   test_accelerated_gjk(cvx0, cvx1);

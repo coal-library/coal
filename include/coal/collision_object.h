@@ -76,9 +76,7 @@ enum NODE_TYPE {
   GEOM_CAPSULE,
   GEOM_CONE,
   GEOM_CYLINDER,
-  GEOM_CONVEX16,
-  GEOM_CONVEX32,
-  GEOM_CONVEX = GEOM_CONVEX32,
+  GEOM_CONVEX,
   GEOM_PLANE,
   GEOM_HALFSPACE,
   GEOM_TRIANGLE,
@@ -96,7 +94,7 @@ enum NODE_TYPE {
 class COAL_DLLAPI CollisionGeometry {
  public:
   CollisionGeometry()
-      : aabb_center(Vec3s::Constant((std::numeric_limits<Scalar>::max)())),
+      : aabb_center(Vec3s::Constant((std::numeric_limits<CoalScalar>::max)())),
         aabb_radius(-1),
         cost_density(1),
         threshold_occupied(1),
@@ -153,7 +151,7 @@ class COAL_DLLAPI CollisionGeometry {
   Vec3s aabb_center;
 
   /// @brief AABB radius
-  Scalar aabb_radius;
+  CoalScalar aabb_radius;
 
   /// @brief AABB in local coordinate, used for tight AABB when only translation
   /// transform
@@ -163,13 +161,13 @@ class COAL_DLLAPI CollisionGeometry {
   void* user_data;
 
   /// @brief collision cost for unit volume
-  Scalar cost_density;
+  CoalScalar cost_density;
 
   /// @brief threshold for occupied ( >= is occupied)
-  Scalar threshold_occupied;
+  CoalScalar threshold_occupied;
 
   /// @brief threshold for free (<= is free)
-  Scalar threshold_free;
+  CoalScalar threshold_free;
 
   /// @brief compute center of mass
   virtual Vec3s computeCOM() const { return Vec3s::Zero(); }
@@ -180,13 +178,13 @@ class COAL_DLLAPI CollisionGeometry {
   }
 
   /// @brief compute the volume
-  virtual Scalar computeVolume() const { return 0; }
+  virtual CoalScalar computeVolume() const { return 0; }
 
   /// @brief compute the inertia matrix, related to the com
   virtual Matrix3s computeMomentofInertiaRelatedToCOM() const {
     Matrix3s C = computeMomentofInertia();
     Vec3s com = computeCOM();
-    Scalar V = computeVolume();
+    CoalScalar V = computeVolume();
 
     return (Matrix3s() << C(0, 0) - V * (com[1] * com[1] + com[2] * com[2]),
             C(0, 1) + V * com[0] * com[1], C(0, 2) + V * com[0] * com[2],

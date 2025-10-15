@@ -43,21 +43,19 @@
 #include "coal/shape/geometric_shapes_traits.h"
 #include "coal/narrowphase/narrowphase_defaults.h"
 
-#include "coal/tracy.hh"
-
 namespace coal {
 
 namespace details {
 
 void GJK::initialize() {
-  distance_upper_bound = (std::numeric_limits<SolverScalar>::max)();
+  distance_upper_bound = (std::numeric_limits<CoalScalar>::max)();
   gjk_variant = GJKVariant::DefaultGJK;
   convergence_criterion = GJKConvergenceCriterion::Default;
   convergence_criterion_type = GJKConvergenceCriterionType::Relative;
   reset(max_iterations, tolerance);
 }
 
-void GJK::reset(size_t max_iterations_, SolverScalar tolerance_) {
+void GJK::reset(size_t max_iterations_, CoalScalar tolerance_) {
   max_iterations = max_iterations_;
   tolerance = tolerance_;
   COAL_ASSERT(tolerance_ > 0, "Tolerance must be positive.",
@@ -69,7 +67,7 @@ void GJK::reset(size_t max_iterations_, SolverScalar tolerance_) {
   iterations_momentum_stop = 0;
 }
 
-Vec3ps GJK::getGuessFromSimplex() const { return ray; }
+Vec3s GJK::getGuessFromSimplex() const { return ray; }
 
 namespace details {
 
@@ -92,25 +90,24 @@ namespace details {
 //   w0 = alpha * w[0].w0 + (1 - alpha) * w[1].w0
 //   w1 = alpha * w[0].w1 + (1 - alpha) * w[1].w1
 // clang-format on
-// TODO
-void getClosestPoints(const GJK::Simplex& simplex, Vec3ps& w0, Vec3ps& w1) {
+void getClosestPoints(const GJK::Simplex& simplex, Vec3s& w0, Vec3s& w1) {
   GJK::SimplexV* const* vs = simplex.vertex;
 
   for (GJK::vertex_id_t i = 0; i < simplex.rank; ++i) {
     assert(vs[i]->w.isApprox(vs[i]->w0 - vs[i]->w1));
   }
 
-  Project<SolverScalar>::ProjectResult projection;
+  Project::ProjectResult projection;
   switch (simplex.rank) {
     case 1:
       w0 = vs[0]->w0;
       w1 = vs[0]->w1;
       return;
     case 2: {
-      const Vec3ps &a = vs[0]->w, a0 = vs[0]->w0, a1 = vs[0]->w1, b = vs[1]->w,
-                   b0 = vs[1]->w0, b1 = vs[1]->w1;
-      SolverScalar la, lb;
-      Vec3ps N(b - a);
+      const Vec3s &a = vs[0]->w, a0 = vs[0]->w0, a1 = vs[0]->w1, b = vs[1]->w,
+                  b0 = vs[1]->w0, b1 = vs[1]->w1;
+      CoalScalar la, lb;
+      Vec3s N(b - a);
       la = N.dot(-a);
       if (la <= 0) {
         assert(false);
@@ -133,12 +130,11 @@ void getClosestPoints(const GJK::Simplex& simplex, Vec3ps& w0, Vec3ps& w1) {
       return;
     case 3:
       // TODO avoid the reprojection
-      projection = Project<SolverScalar>::projectTriangleOrigin(
-          vs[0]->w, vs[1]->w, vs[2]->w);
+      projection = Project::projectTriangleOrigin(vs[0]->w, vs[1]->w, vs[2]->w);
       break;
     case 4:  // We are in collision.
-      projection = Project<SolverScalar>::projectTetrahedraOrigin(
-          vs[0]->w, vs[1]->w, vs[2]->w, vs[3]->w);
+      projection = Project::projectTetrahedraOrigin(vs[0]->w, vs[1]->w,
+                                                    vs[2]->w, vs[3]->w);
       break;
     default:
       COAL_THROW_PRETTY("The simplex rank must be in [ 1, 4 ]",
@@ -159,16 +155,15 @@ void getClosestPoints(const GJK::Simplex& simplex, Vec3ps& w0, Vec3ps& w1) {
 /// The normal should follow coal convention: it points from shape0 to
 /// shape1.
 template <bool Separated>
-void inflate(const MinkowskiDiff& shape, const Vec3ps& normal, Vec3ps& w0,
-             Vec3ps& w1) {
+void inflate(const MinkowskiDiff& shape, const Vec3s& normal, Vec3s& w0,
+             Vec3s& w1) {
 #ifndef NDEBUG
-  const SolverScalar dummy_precision =
-      Eigen::NumTraits<SolverScalar>::dummy_precision();
+  const CoalScalar dummy_precision =
+      Eigen::NumTraits<CoalScalar>::dummy_precision();
   assert((normal.norm() - 1) < dummy_precision);
 #endif
 
-  const Eigen::Array<SolverScalar, 1, 2>& I(
-      shape.swept_sphere_radius.cast<SolverScalar>());
+  const Eigen::Array<CoalScalar, 1, 2>& I(shape.swept_sphere_radius);
   Eigen::Array<bool, 1, 2> inflate(I > 0);
   if (!inflate.any()) return;
 
@@ -178,10 +173,10 @@ void inflate(const MinkowskiDiff& shape, const Vec3ps& normal, Vec3ps& w0,
 
 }  // namespace details
 
-void GJK::getWitnessPointsAndNormal(const MinkowskiDiff& shape, Vec3ps& w0,
-                                    Vec3ps& w1, Vec3ps& normal) const {
+void GJK::getWitnessPointsAndNormal(const MinkowskiDiff& shape, Vec3s& w0,
+                                    Vec3s& w1, Vec3s& normal) const {
   details::getClosestPoints(*simplex, w0, w1);
-  if ((w1 - w0).norm() > Eigen::NumTraits<SolverScalar>::dummy_precision()) {
+  if ((w1 - w0).norm() > Eigen::NumTraits<CoalScalar>::dummy_precision()) {
     normal = (w1 - w0).normalized();
   } else {
     normal = -this->ray.normalized();
@@ -189,13 +184,12 @@ void GJK::getWitnessPointsAndNormal(const MinkowskiDiff& shape, Vec3ps& w0,
   details::inflate<true>(shape, normal, w0, w1);
 }
 
-GJK::Status GJK::evaluate(const MinkowskiDiff& shape_, const Vec3ps& guess,
+GJK::Status GJK::evaluate(const MinkowskiDiff& shape_, const Vec3s& guess,
                           const support_func_guess_t& supportHint) {
-  COAL_TRACY_ZONE_SCOPED_N("coal::details::GJK::evaluate");
-  SolverScalar alpha = 0;
+  CoalScalar alpha = 0;
   iterations = 0;
-  const SolverScalar swept_sphere_radius = shape_.swept_sphere_radius.sum();
-  const SolverScalar upper_bound = distance_upper_bound + swept_sphere_radius;
+  const CoalScalar swept_sphere_radius = shape_.swept_sphere_radius.sum();
+  const CoalScalar upper_bound = distance_upper_bound + swept_sphere_radius;
 
   free_v[0] = &store_v[0];
   free_v[1] = &store_v[1];
@@ -210,19 +204,19 @@ GJK::Status GJK::evaluate(const MinkowskiDiff& shape_, const Vec3ps& guess,
   simplices[current].rank = 0;
   support_hint = supportHint;
 
-  SolverScalar rl = guess.norm();
+  CoalScalar rl = guess.norm();
   if (rl < tolerance) {
-    ray = Vec3ps(-1, 0, 0);
+    ray = Vec3s(-1, 0, 0);
     rl = 1;
   } else
     ray = guess;
 
   // Momentum
   GJKVariant current_gjk_variant = gjk_variant;
-  Vec3ps w = ray;
-  Vec3ps dir = ray;
-  Vec3ps y;
-  SolverScalar momentum;
+  Vec3s w = ray;
+  Vec3s dir = ray;
+  Vec3s y;
+  CoalScalar momentum;
   bool normalize_support_direction = shape->normalize_support_direction;
   do {
     vertex_id_t next = (vertex_id_t)(1 - current);
@@ -258,9 +252,9 @@ GJK::Status GJK::evaluate(const MinkowskiDiff& shape_, const Vec3ps& guess,
         // strictly-convex shapes This corresponds to most use cases.
         if (normalize_support_direction) {
           momentum =
-              (SolverScalar(iterations) + 2) / (SolverScalar(iterations) + 3);
+              (CoalScalar(iterations) + 2) / (CoalScalar(iterations) + 3);
           y = momentum * ray + (1 - momentum) * w;
-          SolverScalar y_norm = y.norm();
+          CoalScalar y_norm = y.norm();
           // ray is the point of the Minkowski difference which currently the
           // closest to the origin. Therefore, y.norm() > ray.norm() Hence, if
           // check A above has not stopped the algorithm, we necessarily have
@@ -269,14 +263,14 @@ GJK::Status GJK::evaluate(const MinkowskiDiff& shape_, const Vec3ps& guess,
           dir = momentum * dir / dir.norm() + (1 - momentum) * y / y_norm;
         } else {
           momentum =
-              (SolverScalar(iterations) + 1) / (SolverScalar(iterations) + 3);
+              (CoalScalar(iterations) + 1) / (CoalScalar(iterations) + 3);
           y = momentum * ray + (1 - momentum) * w;
           dir = momentum * dir + (1 - momentum) * y;
         }
         break;
 
       case PolyakAcceleration:
-        momentum = 1 / (SolverScalar(iterations) + 1);
+        momentum = 1 / (CoalScalar(iterations) + 1);
         dir = momentum * dir + (1 - momentum) * ray;
         break;
 
@@ -292,7 +286,7 @@ GJK::Status GJK::evaluate(const MinkowskiDiff& shape_, const Vec3ps& guess,
     w = curr_simplex.vertex[curr_simplex.rank - 1]->w;
 
     // check B: no collision if omega > 0
-    SolverScalar omega = dir.dot(w) / dir.norm();
+    CoalScalar omega = dir.dot(w) / dir.norm();
     if (omega > upper_bound) {
       distance = omega - swept_sphere_radius;
       status = NoCollisionEarlyStopped;
@@ -301,7 +295,7 @@ GJK::Status GJK::evaluate(const MinkowskiDiff& shape_, const Vec3ps& guess,
 
     // Check to remove acceleration
     if (current_gjk_variant != DefaultGJK) {
-      SolverScalar frank_wolfe_duality_gap = 2 * ray.dot(ray - w);
+      CoalScalar frank_wolfe_duality_gap = 2 * ray.dot(ray - w);
       if (frank_wolfe_duality_gap - tolerance <= 0) {
         removeVertex(simplices[current]);
         current_gjk_variant = DefaultGJK;  // move back to classic GJK
@@ -376,9 +370,8 @@ GJK::Status GJK::evaluate(const MinkowskiDiff& shape_, const Vec3ps& guess,
   return status;
 }
 
-bool GJK::checkConvergence(const Vec3ps& w, const SolverScalar& rl,
-                           SolverScalar& alpha,
-                           const SolverScalar& omega) const {
+bool GJK::checkConvergence(const Vec3s& w, const CoalScalar& rl,
+                           CoalScalar& alpha, const CoalScalar& omega) const {
   // x^* is the optimal solution (projection of origin onto the Minkowski
   // difference).
   //  x^k is the current iterate (x^k = `ray` in the code).
@@ -389,13 +382,13 @@ bool GJK::checkConvergence(const Vec3ps& w, const SolverScalar& rl,
       // alpha is the distance to the best separating hyperplane found so far
       alpha = std::max(alpha, omega);
       // ||x^*|| - ||x^k|| <= diff
-      const SolverScalar diff = rl - alpha;
+      const CoalScalar diff = rl - alpha;
       return ((diff - (tolerance + tolerance * rl)) <= 0);
     } break;
 
     case DualityGap: {
       // ||x^* - x^k||^2 <= diff
-      const SolverScalar diff = 2 * ray.dot(ray - w);
+      const CoalScalar diff = 2 * ray.dot(ray - w);
       switch (convergence_criterion_type) {
         case Absolute:
           return ((diff - tolerance) <= 0);
@@ -413,7 +406,7 @@ bool GJK::checkConvergence(const Vec3ps& w, const SolverScalar& rl,
       // alpha is the distance to the best separating hyperplane found so far
       alpha = std::max(alpha, omega);
       // ||x^* - x^k||^2 <= diff
-      const SolverScalar diff = rl * rl - alpha * alpha;
+      const CoalScalar diff = rl * rl - alpha * alpha;
       switch (convergence_criterion_type) {
         case Absolute:
           return ((diff - tolerance) <= 0);
@@ -436,14 +429,14 @@ inline void GJK::removeVertex(Simplex& simplex) {
   free_v[nfree++] = simplex.vertex[--simplex.rank];
 }
 
-inline void GJK::appendVertex(Simplex& simplex, const Vec3ps& v,
+inline void GJK::appendVertex(Simplex& simplex, const Vec3s& v,
                               support_func_guess_t& hint) {
   simplex.vertex[simplex.rank] = free_v[--nfree];  // set the memory
   getSupport(v, *simplex.vertex[simplex.rank++], hint);
 }
 
 bool GJK::encloseOrigin() {
-  Vec3ps axis(Vec3ps::Zero());
+  Vec3s axis(Vec3s::Zero());
   support_func_guess_t hint = support_func_guess_t::Zero();
   switch (simplex->rank) {
     case 1:
@@ -460,10 +453,10 @@ bool GJK::encloseOrigin() {
       }
       break;
     case 2: {
-      Vec3ps d = simplex->vertex[1]->w - simplex->vertex[0]->w;
+      Vec3s d = simplex->vertex[1]->w - simplex->vertex[0]->w;
       for (int i = 0; i < 3; ++i) {
         axis[i] = 1;
-        Vec3ps p = d.cross(axis);
+        Vec3s p = d.cross(axis);
         if (!p.isZero()) {
           appendVertex(*simplex, p, hint);
           if (encloseOrigin()) return true;
@@ -500,7 +493,7 @@ bool GJK::encloseOrigin() {
 }
 
 inline void originToPoint(const GJK::Simplex& current, GJK::vertex_id_t a,
-                          const Vec3ps& A, GJK::Simplex& next, Vec3ps& ray) {
+                          const Vec3s& A, GJK::Simplex& next, Vec3s& ray) {
   // A is the closest to the origin
   ray = A;
   next.vertex[0] = current.vertex[a];
@@ -508,10 +501,9 @@ inline void originToPoint(const GJK::Simplex& current, GJK::vertex_id_t a,
 }
 
 inline void originToSegment(const GJK::Simplex& current, GJK::vertex_id_t a,
-                            GJK::vertex_id_t b, const Vec3ps& A,
-                            const Vec3ps& B, const Vec3ps& AB,
-                            const SolverScalar& ABdotAO, GJK::Simplex& next,
-                            Vec3ps& ray) {
+                            GJK::vertex_id_t b, const Vec3s& A, const Vec3s& B,
+                            const Vec3s& AB, const CoalScalar& ABdotAO,
+                            GJK::Simplex& next, Vec3s& ray) {
   // ray = - ( AB ^ AO ) ^ AB = (AB.B) A + (-AB.A) B
   ray = AB.dot(B) * A + ABdotAO * B;
 
@@ -525,8 +517,8 @@ inline void originToSegment(const GJK::Simplex& current, GJK::vertex_id_t a,
 
 inline bool originToTriangle(const GJK::Simplex& current, GJK::vertex_id_t a,
                              GJK::vertex_id_t b, GJK::vertex_id_t c,
-                             const Vec3ps& ABC, const SolverScalar& ABCdotAO,
-                             GJK::Simplex& next, Vec3ps& ray) {
+                             const Vec3s& ABC, const CoalScalar& ABCdotAO,
+                             GJK::Simplex& next, Vec3s& ray) {
   next.rank = 3;
   next.vertex[2] = current.vertex[a];
 
@@ -552,11 +544,11 @@ inline bool originToTriangle(const GJK::Simplex& current, GJK::vertex_id_t a,
 bool GJK::projectLineOrigin(const Simplex& current, Simplex& next) {
   const vertex_id_t a = 1, b = 0;
   // A is the last point we added.
-  const Vec3ps& A = current.vertex[a]->w;
-  const Vec3ps& B = current.vertex[b]->w;
+  const Vec3s& A = current.vertex[a]->w;
+  const Vec3s& B = current.vertex[b]->w;
 
-  const Vec3ps AB = B - A;
-  const SolverScalar d = AB.dot(-A);
+  const Vec3s AB = B - A;
+  const CoalScalar d = AB.dot(-A);
   assert(d <= AB.squaredNorm());
 
   if (d == 0) {
@@ -580,19 +572,19 @@ bool GJK::projectLineOrigin(const Simplex& current, Simplex& next) {
 bool GJK::projectTriangleOrigin(const Simplex& current, Simplex& next) {
   const vertex_id_t a = 2, b = 1, c = 0;
   // A is the last point we added.
-  const Vec3ps &A = current.vertex[a]->w, B = current.vertex[b]->w,
-               C = current.vertex[c]->w;
+  const Vec3s &A = current.vertex[a]->w, B = current.vertex[b]->w,
+              C = current.vertex[c]->w;
 
-  const Vec3ps AB = B - A, AC = C - A, ABC = AB.cross(AC);
+  const Vec3s AB = B - A, AC = C - A, ABC = AB.cross(AC);
 
-  SolverScalar edgeAC2o = ABC.cross(AC).dot(-A);
+  CoalScalar edgeAC2o = ABC.cross(AC).dot(-A);
   if (edgeAC2o >= 0) {
-    SolverScalar towardsC = AC.dot(-A);
+    CoalScalar towardsC = AC.dot(-A);
     if (towardsC >= 0) {  // Region 1
       originToSegment(current, a, c, A, C, AC, towardsC, next, ray);
       free_v[nfree++] = current.vertex[b];
     } else {  // Region 4 or 5
-      SolverScalar towardsB = AB.dot(-A);
+      CoalScalar towardsB = AB.dot(-A);
       if (towardsB < 0) {  // Region 5
         // A is the closest to the origin
         originToPoint(current, a, A, next, ray);
@@ -602,9 +594,9 @@ bool GJK::projectTriangleOrigin(const Simplex& current, Simplex& next) {
       free_v[nfree++] = current.vertex[c];
     }
   } else {
-    SolverScalar edgeAB2o = AB.cross(ABC).dot(-A);
+    CoalScalar edgeAB2o = AB.cross(ABC).dot(-A);
     if (edgeAB2o >= 0) {  // Region 4 or 5
-      SolverScalar towardsB = AB.dot(-A);
+      CoalScalar towardsB = AB.dot(-A);
       if (towardsB < 0) {  // Region 5
         // A is the closest to the origin
         originToPoint(current, a, A, next, ray);
@@ -622,34 +614,34 @@ bool GJK::projectTriangleOrigin(const Simplex& current, Simplex& next) {
 bool GJK::projectTetrahedraOrigin(const Simplex& current, Simplex& next) {
   // The code of this function was generated using doc/gjk.py
   const vertex_id_t a = 3, b = 2, c = 1, d = 0;
-  const Vec3ps& A(current.vertex[a]->w);
-  const Vec3ps& B(current.vertex[b]->w);
-  const Vec3ps& C(current.vertex[c]->w);
-  const Vec3ps& D(current.vertex[d]->w);
-  const SolverScalar aa = A.squaredNorm();
-  const SolverScalar da = D.dot(A);
-  const SolverScalar db = D.dot(B);
-  const SolverScalar dc = D.dot(C);
-  const SolverScalar dd = D.dot(D);
-  const SolverScalar da_aa = da - aa;
-  const SolverScalar ca = C.dot(A);
-  const SolverScalar cb = C.dot(B);
-  const SolverScalar cc = C.dot(C);
-  const SolverScalar& cd = dc;
-  const SolverScalar ca_aa = ca - aa;
-  const SolverScalar ba = B.dot(A);
-  const SolverScalar bb = B.dot(B);
-  const SolverScalar& bc = cb;
-  const SolverScalar& bd = db;
-  const SolverScalar ba_aa = ba - aa;
-  const SolverScalar ba_ca = ba - ca;
-  const SolverScalar ca_da = ca - da;
-  const SolverScalar da_ba = da - ba;
-  const Vec3ps a_cross_b = A.cross(B);
-  const Vec3ps a_cross_c = A.cross(C);
+  const Vec3s& A(current.vertex[a]->w);
+  const Vec3s& B(current.vertex[b]->w);
+  const Vec3s& C(current.vertex[c]->w);
+  const Vec3s& D(current.vertex[d]->w);
+  const CoalScalar aa = A.squaredNorm();
+  const CoalScalar da = D.dot(A);
+  const CoalScalar db = D.dot(B);
+  const CoalScalar dc = D.dot(C);
+  const CoalScalar dd = D.dot(D);
+  const CoalScalar da_aa = da - aa;
+  const CoalScalar ca = C.dot(A);
+  const CoalScalar cb = C.dot(B);
+  const CoalScalar cc = C.dot(C);
+  const CoalScalar& cd = dc;
+  const CoalScalar ca_aa = ca - aa;
+  const CoalScalar ba = B.dot(A);
+  const CoalScalar bb = B.dot(B);
+  const CoalScalar& bc = cb;
+  const CoalScalar& bd = db;
+  const CoalScalar ba_aa = ba - aa;
+  const CoalScalar ba_ca = ba - ca;
+  const CoalScalar ca_da = ca - da;
+  const CoalScalar da_ba = da - ba;
+  const Vec3s a_cross_b = A.cross(B);
+  const Vec3s a_cross_c = A.cross(C);
 
-  const SolverScalar dummy_precision(
-      3 * std::sqrt(std::numeric_limits<SolverScalar>::epsilon()));
+  const CoalScalar dummy_precision(
+      3 * std::sqrt(std::numeric_limits<CoalScalar>::epsilon()));
   COAL_UNUSED_VARIABLE(dummy_precision);
 
 #define REGION_INSIDE()               \
@@ -1020,7 +1012,7 @@ bool GJK::projectTetrahedraOrigin(const Simplex& current, Simplex& next) {
 
 void EPA::initialize() { reset(max_iterations, tolerance); }
 
-void EPA::reset(size_t max_iterations_, SolverScalar tolerance_) {
+void EPA::reset(size_t max_iterations_, CoalScalar tolerance_) {
   max_iterations = max_iterations_;
   tolerance = tolerance_;
   // EPA creates only 2 faces and 1 vertex per iteration.
@@ -1046,27 +1038,26 @@ void EPA::reset(size_t max_iterations_, SolverScalar tolerance_) {
 }
 
 bool EPA::getEdgeDist(SimplexFace* face, const SimplexVertex& a,
-                      const SimplexVertex& b, SolverScalar& dist) {
-  Vec3ps ab = b.w - a.w;
-  Vec3ps n_ab = ab.cross(face->n);
-  SolverScalar a_dot_nab = a.w.dot(n_ab);
+                      const SimplexVertex& b, CoalScalar& dist) {
+  Vec3s ab = b.w - a.w;
+  Vec3s n_ab = ab.cross(face->n);
+  CoalScalar a_dot_nab = a.w.dot(n_ab);
 
   if (a_dot_nab < 0)  // the origin is on the outside part of ab
   {
     // following is similar to projectOrigin for two points
     // however, as we dont need to compute the parameterization, dont need to
     // compute 0 or 1
-    SolverScalar a_dot_ab = a.w.dot(ab);
-    SolverScalar b_dot_ab = b.w.dot(ab);
+    CoalScalar a_dot_ab = a.w.dot(ab);
+    CoalScalar b_dot_ab = b.w.dot(ab);
 
     if (a_dot_ab > 0)
       dist = a.w.norm();
     else if (b_dot_ab < 0)
       dist = b.w.norm();
     else {
-      dist = std::sqrt(
-          std::max(a.w.squaredNorm() - a_dot_ab * a_dot_ab / ab.squaredNorm(),
-                   SolverScalar(0)));
+      dist = std::sqrt(std::max(
+          a.w.squaredNorm() - a_dot_ab * a_dot_ab / ab.squaredNorm(), 0.));
     }
 
     return true;
@@ -1090,15 +1081,15 @@ EPA::SimplexFace* EPA::newFace(size_t id_a, size_t id_b, size_t id_c,
     const SimplexVertex& c = sv_store[id_c];
     face->n = (b.w - a.w).cross(c.w - a.w);
 
-    if (face->n.norm() > Eigen::NumTraits<SolverScalar>::epsilon()) {
+    if (face->n.norm() > Eigen::NumTraits<CoalScalar>::epsilon()) {
       face->n.normalize();
 
       // If the origin projects outside the face, skip it in the
       // `findClosestFace` method.
       // The origin always projects inside the closest face.
-      SolverScalar a_dot_nab = a.w.dot((b.w - a.w).cross(face->n));
-      SolverScalar b_dot_nbc = b.w.dot((c.w - b.w).cross(face->n));
-      SolverScalar c_dot_nca = c.w.dot((a.w - c.w).cross(face->n));
+      CoalScalar a_dot_nab = a.w.dot((b.w - a.w).cross(face->n));
+      CoalScalar b_dot_nbc = b.w.dot((c.w - b.w).cross(face->n));
+      CoalScalar c_dot_nca = c.w.dot((a.w - c.w).cross(face->n));
       if (a_dot_nab >= -tolerance &&  //
           b_dot_nbc >= -tolerance &&  //
           c_dot_nca >= -tolerance) {
@@ -1107,7 +1098,7 @@ EPA::SimplexFace* EPA::newFace(size_t id_a, size_t id_b, size_t id_c,
       } else {
         // We will never check this face, so we don't care about
         // its true distance to the origin.
-        face->d = std::numeric_limits<SolverScalar>::max();
+        face->d = std::numeric_limits<CoalScalar>::max();
         face->ignore = true;
       }
 
@@ -1150,10 +1141,10 @@ EPA::SimplexFace* EPA::newFace(size_t id_a, size_t id_b, size_t id_c,
 /** @brief Find the best polytope face to split */
 EPA::SimplexFace* EPA::findClosestFace() {
   SimplexFace* minf = hull.root;
-  SolverScalar mind = std::numeric_limits<SolverScalar>::max();
+  CoalScalar mind = std::numeric_limits<CoalScalar>::max();
   for (SimplexFace* f = minf; f; f = f->next_face) {
     if (f->ignore) continue;
-    SolverScalar sqd = f->d * f->d;
+    CoalScalar sqd = f->d * f->d;
     if (sqd < mind) {
       minf = f;
       mind = sqd;
@@ -1163,8 +1154,7 @@ EPA::SimplexFace* EPA::findClosestFace() {
   return minf;
 }
 
-EPA::Status EPA::evaluate(GJK& gjk, const Vec3ps& guess) {
-  COAL_TRACY_ZONE_SCOPED_N("coal::details::EPA::evaluate");
+EPA::Status EPA::evaluate(GJK& gjk, const Vec3s& guess) {
   GJK::Simplex& simplex = *gjk.getSimplex();
   support_hint = gjk.support_hint;
 
@@ -1257,8 +1247,8 @@ EPA::Status EPA::evaluate(GJK& gjk, const Vec3ps& guess) {
         const SimplexVertex& vf1 = sv_store[closest_face->vertex_id[0]];
         const SimplexVertex& vf2 = sv_store[closest_face->vertex_id[1]];
         const SimplexVertex& vf3 = sv_store[closest_face->vertex_id[2]];
-        SolverScalar fdist = closest_face->n.dot(w.w - vf1.w);
-        SolverScalar wnorm = w.w.norm();
+        CoalScalar fdist = closest_face->n.dot(w.w - vf1.w);
+        CoalScalar wnorm = w.w.norm();
         // TODO(louis): we might want to use tol_abs and tol_rel; this might
         // obfuscate the code for the user though.
         if (fdist <= tolerance + tolerance * wnorm) {
@@ -1315,11 +1305,11 @@ EPA::Status EPA::evaluate(GJK& gjk, const Vec3ps& guess) {
   // TODO: define a better normal
   assert(simplex.rank == 1 && simplex.vertex[0]->w.isZero(gjk.getTolerance()));
   normal = -guess;
-  SolverScalar nl = normal.norm();
+  CoalScalar nl = normal.norm();
   if (nl > 0)
     normal /= nl;
   else
-    normal = Vec3ps(1, 0, 0);
+    normal = Vec3s(1, 0, 0);
   depth = 0;
   result.rank = 1;
   result.vertex[0] = simplex.vertex[0];
@@ -1418,8 +1408,8 @@ bool EPA::expand(size_t pass, const SimplexVertex& w, SimplexFace* f, size_t e,
   // recursive nature of `expand`, it is safer to go through the first case.
   // This is because `expand` can potentially loop indefinitly if the
   // Minkowski difference is very flat (hence the check above).
-  const SolverScalar dummy_precision(
-      3 * std::sqrt(std::numeric_limits<SolverScalar>::epsilon()));
+  const CoalScalar dummy_precision(
+      3 * std::sqrt(std::numeric_limits<CoalScalar>::epsilon()));
   const SimplexVertex& vf = sv_store[f->vertex_id[e]];
   if (f->n.dot(w.w - vf.w) < dummy_precision) {
     // case 1: the support point is "below" `f`.
@@ -1459,10 +1449,10 @@ bool EPA::expand(size_t pass, const SimplexVertex& w, SimplexFace* f, size_t e,
   return false;
 }
 
-void EPA::getWitnessPointsAndNormal(const MinkowskiDiff& shape, Vec3ps& w0,
-                                    Vec3ps& w1, Vec3ps& normal) const {
+void EPA::getWitnessPointsAndNormal(const MinkowskiDiff& shape, Vec3s& w0,
+                                    Vec3s& w1, Vec3s& normal) const {
   details::getClosestPoints(result, w0, w1);
-  if ((w0 - w1).norm() > Eigen::NumTraits<SolverScalar>::dummy_precision()) {
+  if ((w0 - w1).norm() > Eigen::NumTraits<CoalScalar>::dummy_precision()) {
     if (this->depth >= 0) {
       // The shapes are in collision.
       normal = (w0 - w1).normalized();
@@ -1478,18 +1468,14 @@ void EPA::getWitnessPointsAndNormal(const MinkowskiDiff& shape, Vec3ps& w0,
 
 }  // namespace details
 
-template <typename IndexType>
-void ConvexBaseTpl<IndexType>::buildSupportWarmStart() {
-  typedef ConvexBaseTpl<IndexType> ConvexBaseType;
-  if (this->points->size() <
-      ConvexBaseType::num_vertices_large_convex_threshold) {
+void ConvexBase::buildSupportWarmStart() {
+  if (this->points->size() < ConvexBase::num_vertices_large_convex_threshold) {
     return;
   }
 
-  this->support_warm_starts.points.reserve(
-      ConvexBaseType::num_support_warm_starts);
+  this->support_warm_starts.points.reserve(ConvexBase::num_support_warm_starts);
   this->support_warm_starts.indices.reserve(
-      ConvexBaseType::num_support_warm_starts);
+      ConvexBase::num_support_warm_starts);
 
   Vec3s axiis(0, 0, 0);
   details::ShapeSupportData support_data;
@@ -1498,8 +1484,8 @@ void ConvexBaseTpl<IndexType>::buildSupportWarmStart() {
     axiis(i) = 1;
     {
       Vec3s support;
-      coal::details::getShapeSupport<false, IndexType>(
-          this, axiis, support, support_hint, support_data);
+      coal::details::getShapeSupport<false>(this, axiis, support, support_hint,
+                                            support_data);
       this->support_warm_starts.points.emplace_back(support);
       this->support_warm_starts.indices.emplace_back(support_hint);
     }
@@ -1507,8 +1493,8 @@ void ConvexBaseTpl<IndexType>::buildSupportWarmStart() {
     axiis(i) = -1;
     {
       Vec3s support;
-      coal::details::getShapeSupport<false, IndexType>(
-          this, axiis, support, support_hint, support_data);
+      coal::details::getShapeSupport<false>(this, axiis, support, support_hint,
+                                            support_data);
       this->support_warm_starts.points.emplace_back(support);
       this->support_warm_starts.indices.emplace_back(support_hint);
     }
@@ -1524,33 +1510,28 @@ void ConvexBaseTpl<IndexType>::buildSupportWarmStart() {
   for (size_t ei_index = 0; ei_index < 4; ++ei_index) {
     {
       Vec3s support;
-      coal::details::getShapeSupport<false, IndexType>(
-          this, eis[ei_index], support, support_hint, support_data);
+      coal::details::getShapeSupport<false>(this, eis[ei_index], support,
+                                            support_hint, support_data);
       this->support_warm_starts.points.emplace_back(support);
       this->support_warm_starts.indices.emplace_back(support_hint);
     }
 
     {
       Vec3s support;
-      coal::details::getShapeSupport<false, IndexType>(
-          this, -eis[ei_index], support, support_hint, support_data);
+      coal::details::getShapeSupport<false>(this, -eis[ei_index], support,
+                                            support_hint, support_data);
       this->support_warm_starts.points.emplace_back(support);
       this->support_warm_starts.indices.emplace_back(support_hint);
     }
   }
 
   if (this->support_warm_starts.points.size() !=
-          ConvexBaseType::num_support_warm_starts ||
+          ConvexBase::num_support_warm_starts ||
       this->support_warm_starts.indices.size() !=
-          ConvexBaseType::num_support_warm_starts) {
+          ConvexBase::num_support_warm_starts) {
     COAL_THROW_PRETTY("Wrong number of support warm starts.",
                       std::runtime_error);
   }
 }
-
-template void COAL_DLLAPI
-ConvexBaseTpl<Triangle16::IndexType>::buildSupportWarmStart();
-template void COAL_DLLAPI
-ConvexBaseTpl<Triangle32::IndexType>::buildSupportWarmStart();
 
 }  // namespace coal

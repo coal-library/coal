@@ -30,11 +30,11 @@
 using namespace coal;
 
 bool verbose = false;
-Scalar DELTA = Scalar(0.001);
+CoalScalar DELTA = 0.001;
 
 template <typename BV>
 void makeModel(const std::vector<Vec3s>& vertices,
-               const std::vector<Triangle32>& triangles,
+               const std::vector<Triangle>& triangles,
                SplitMethodType split_method, BVHModel<BV>& model);
 
 template <typename BV, typename TraversalNode>
@@ -79,7 +79,7 @@ struct traits<OBBRSS> {
 
 template <typename BV>
 void makeModel(const std::vector<Vec3s>& vertices,
-               const std::vector<Triangle32>& triangles,
+               const std::vector<Triangle>& triangles,
                SplitMethodType split_method, BVHModel<BV>& model) {
   model.bv_splitter.reset(new BVSplitter<BV>(split_method));
   model.bv_splitter.reset(new BVSplitter<BV>(split_method));
@@ -167,7 +167,7 @@ double run<OBB>(const std::vector<Transform3s>& tf,
 
 int main(int, char*[]) {
   std::vector<Vec3s> p1, p2;
-  std::vector<Triangle32> t1, t2;
+  std::vector<Triangle> t1, t2;
   boost::filesystem::path path(TEST_RESOURCES_DIR);
   loadOBJFile((path / "env.obj").string().c_str(), p1, t1);
   loadOBJFile((path / "rob.obj").string().c_str(), p2, t2);
@@ -208,7 +208,7 @@ int main(int, char*[]) {
   makeModel(p2, t2, SPLIT_METHOD_MEDIAN, ms_obbrss[1][SPLIT_METHOD_MEDIAN]);
 
   std::vector<Transform3s> transforms;  // t0
-  Scalar extents[] = {-3000, -3000, -3000, 3000, 3000, 3000};
+  CoalScalar extents[] = {-3000, -3000, -3000, 3000, 3000, 3000};
   std::size_t n = 10000;
 
   generateRandomTransforms(extents, transforms, n);

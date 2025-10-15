@@ -57,7 +57,7 @@ BVHModel<BV>* BVHExtract(const BVHModel<BV>& model, const Transform3s& pose,
 
   GJKSolver gjk;
   // Early-stop GJK as soon as a separating plane is found
-  gjk.gjk.setDistanceEarlyBreak(Scalar(1e-3));
+  gjk.gjk.setDistanceEarlyBreak(1e-3);
 
   // Check what triangles should be kept.
   // TODO use the BV hierarchy
@@ -65,9 +65,9 @@ BVHModel<BV>* BVHExtract(const BVHModel<BV>& model, const Transform3s& pose,
   std::vector<bool> keep_tri(model.num_tris, false);
   unsigned int ntri = 0;
   const std::vector<Vec3s>& model_vertices_ = *(model.vertices);
-  const std::vector<Triangle32>& model_tri_indices_ = *(model.tri_indices);
+  const std::vector<Triangle>& model_tri_indices_ = *(model.tri_indices);
   for (unsigned int i = 0; i < model.num_tris; ++i) {
-    const Triangle32& t = model_tri_indices_[i];
+    const Triangle& t = model_tri_indices_[i];
 
     bool keep_this_tri =
         keep_vertex[t[0]] || keep_vertex[t[1]] || keep_vertex[t[2]];
@@ -88,7 +88,7 @@ BVHModel<BV>* BVHExtract(const BVHModel<BV>& model, const Transform3s& pose,
       const DistanceRequest distanceRequest(enable_nearest_points,
                                             compute_penetration);
       DistanceResult distanceResult;
-      const Scalar distance = ShapeShapeDistance<Box, TriangleP>(
+      const CoalScalar distance = ShapeShapeDistance<Box, TriangleP>(
           &box, box_pose, &tri, Transform3s(), &gjk, distanceRequest,
           distanceResult);
       bool is_collision =
@@ -120,7 +120,7 @@ BVHModel<BV>* BVHExtract(const BVHModel<BV>& model, const Transform3s& pose,
     }
   }
   assert(new_model->num_tris == 0);
-  std::vector<Triangle32>& new_model_tri_indices_ = *(new_model->tri_indices);
+  std::vector<Triangle>& new_model_tri_indices_ = *(new_model->tri_indices);
   for (unsigned int i = 0; i < keep_tri.size(); ++i) {
     if (keep_tri[i]) {
       new_model_tri_indices_[new_model->num_tris].set(
@@ -179,14 +179,14 @@ BVHModel<KDOP<24> >* BVHExtract(const BVHModel<KDOP<24> >& model,
   return details::BVHExtract(model, pose, aabb);
 }
 
-void getCovariance(Vec3s* ps, Vec3s* ps2, Triangle32* ts, unsigned int* indices,
+void getCovariance(Vec3s* ps, Vec3s* ps2, Triangle* ts, unsigned int* indices,
                    unsigned int n, Matrix3s& M) {
   Vec3s S1(Vec3s::Zero());
   Vec3s S2[3] = {Vec3s::Zero(), Vec3s::Zero(), Vec3s::Zero()};
 
   if (ts) {
     for (unsigned int i = 0; i < n; ++i) {
-      const Triangle32& t = (indices) ? ts[indices[i]] : ts[i];
+      const Triangle& t = (indices) ? ts[indices[i]] : ts[i];
 
       const Vec3s& p1 = ps[t[0]];
       const Vec3s& p2 = ps[t[1]];
@@ -246,12 +246,12 @@ void getCovariance(Vec3s* ps, Vec3s* ps2, Triangle32* ts, unsigned int* indices,
 
   unsigned int n_points = ((ps2) ? 2 : 1) * ((ts) ? 3 : 1) * n;
 
-  M(0, 0) = S2[0][0] - S1[0] * S1[0] / Scalar(n_points);
-  M(1, 1) = S2[1][1] - S1[1] * S1[1] / Scalar(n_points);
-  M(2, 2) = S2[2][2] - S1[2] * S1[2] / Scalar(n_points);
-  M(0, 1) = S2[0][1] - S1[0] * S1[1] / Scalar(n_points);
-  M(1, 2) = S2[1][2] - S1[1] * S1[2] / Scalar(n_points);
-  M(0, 2) = S2[0][2] - S1[0] * S1[2] / Scalar(n_points);
+  M(0, 0) = S2[0][0] - S1[0] * S1[0] / n_points;
+  M(1, 1) = S2[1][1] - S1[1] * S1[1] / n_points;
+  M(2, 2) = S2[2][2] - S1[2] * S1[2] / n_points;
+  M(0, 1) = S2[0][1] - S1[0] * S1[1] / n_points;
+  M(1, 2) = S2[1][2] - S1[1] * S1[2] / n_points;
+  M(0, 2) = S2[0][2] - S1[0] * S1[2] / n_points;
   M(1, 0) = M(0, 1);
   M(2, 0) = M(0, 2);
   M(2, 1) = M(1, 2);
@@ -260,26 +260,26 @@ void getCovariance(Vec3s* ps, Vec3s* ps2, Triangle32* ts, unsigned int* indices,
 /** @brief Compute the RSS bounding volume parameters: radius, rectangle size
  * and the origin. The bounding volume axes are known.
  */
-void getRadiusAndOriginAndRectangleSize(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
+void getRadiusAndOriginAndRectangleSize(Vec3s* ps, Vec3s* ps2, Triangle* ts,
                                         unsigned int* indices, unsigned int n,
                                         const Matrix3s& axes, Vec3s& origin,
-                                        Scalar l[2], Scalar& r) {
+                                        CoalScalar l[2], CoalScalar& r) {
   bool indirect_index = true;
   if (!indices) indirect_index = false;
 
   unsigned int size_P = ((ps2) ? 2 : 1) * ((ts) ? 3 : 1) * n;
 
-  Scalar(*P)[3] = new Scalar[size_P][3];
+  CoalScalar(*P)[3] = new CoalScalar[size_P][3];
 
   int P_id = 0;
 
   if (ts) {
     for (unsigned int i = 0; i < n; ++i) {
       unsigned int index = indirect_index ? indices[i] : i;
-      const Triangle32& t = ts[index];
+      const Triangle& t = ts[index];
 
-      for (Triangle32::IndexType j = 0; j < 3; ++j) {
-        Triangle32::IndexType point_id = t[j];
+      for (Triangle::index_type j = 0; j < 3; ++j) {
+        Triangle::index_type point_id = t[j];
         const Vec3s& p = ps[point_id];
         Vec3s v(p[0], p[1], p[2]);
         P[P_id][0] = axes.col(0).dot(v);
@@ -289,8 +289,8 @@ void getRadiusAndOriginAndRectangleSize(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
       }
 
       if (ps2) {
-        for (Triangle32::IndexType j = 0; j < 3; ++j) {
-          Triangle32::IndexType point_id = t[j];
+        for (Triangle::index_type j = 0; j < 3; ++j) {
+          Triangle::index_type point_id = t[j];
           const Vec3s& p = ps2[point_id];
           // FIXME Is this right ?????
           Vec3s v(p[0], p[1], p[2]);
@@ -322,34 +322,34 @@ void getRadiusAndOriginAndRectangleSize(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
     }
   }
 
-  Scalar minx, maxx, miny, maxy, minz, maxz;
+  CoalScalar minx, maxx, miny, maxy, minz, maxz;
 
-  Scalar cz, radsqr;
+  CoalScalar cz, radsqr;
 
   minz = maxz = P[0][2];
 
   for (unsigned int i = 1; i < size_P; ++i) {
-    Scalar z_value = P[i][2];
+    CoalScalar z_value = P[i][2];
     if (z_value < minz)
       minz = z_value;
     else if (z_value > maxz)
       maxz = z_value;
   }
 
-  r = (Scalar)0.5 * (maxz - minz);
+  r = (CoalScalar)0.5 * (maxz - minz);
   radsqr = r * r;
-  cz = (Scalar)0.5 * (maxz + minz);
+  cz = (CoalScalar)0.5 * (maxz + minz);
 
   // compute an initial norm of rectangle along x direction
 
   // find minx and maxx as starting points
 
   unsigned int minindex = 0, maxindex = 0;
-  Scalar mintmp, maxtmp;
+  CoalScalar mintmp, maxtmp;
   mintmp = maxtmp = P[0][0];
 
   for (unsigned int i = 1; i < size_P; ++i) {
-    Scalar x_value = P[i][0];
+    CoalScalar x_value = P[i][0];
     if (x_value < mintmp) {
       minindex = i;
       mintmp = x_value;
@@ -359,22 +359,22 @@ void getRadiusAndOriginAndRectangleSize(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
     }
   }
 
-  Scalar x, dz;
+  CoalScalar x, dz;
   dz = P[minindex][2] - cz;
-  minx = P[minindex][0] + std::sqrt(std::max<Scalar>(radsqr - dz * dz, 0));
+  minx = P[minindex][0] + std::sqrt(std::max<CoalScalar>(radsqr - dz * dz, 0));
   dz = P[maxindex][2] - cz;
-  maxx = P[maxindex][0] - std::sqrt(std::max<Scalar>(radsqr - dz * dz, 0));
+  maxx = P[maxindex][0] - std::sqrt(std::max<CoalScalar>(radsqr - dz * dz, 0));
 
   // grow minx/maxx
 
   for (unsigned int i = 0; i < size_P; ++i) {
     if (P[i][0] < minx) {
       dz = P[i][2] - cz;
-      x = P[i][0] + std::sqrt(std::max<Scalar>(radsqr - dz * dz, 0));
+      x = P[i][0] + std::sqrt(std::max<CoalScalar>(radsqr - dz * dz, 0));
       if (x < minx) minx = x;
     } else if (P[i][0] > maxx) {
       dz = P[i][2] - cz;
-      x = P[i][0] - std::sqrt(std::max<Scalar>(radsqr - dz * dz, 0));
+      x = P[i][0] - std::sqrt(std::max<CoalScalar>(radsqr - dz * dz, 0));
       if (x > maxx) maxx = x;
     }
   }
@@ -386,7 +386,7 @@ void getRadiusAndOriginAndRectangleSize(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
   minindex = maxindex = 0;
   mintmp = maxtmp = P[0][1];
   for (unsigned int i = 1; i < size_P; ++i) {
-    Scalar y_value = P[i][1];
+    CoalScalar y_value = P[i][1];
     if (y_value < mintmp) {
       minindex = i;
       mintmp = y_value;
@@ -396,30 +396,30 @@ void getRadiusAndOriginAndRectangleSize(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
     }
   }
 
-  Scalar y;
+  CoalScalar y;
   dz = P[minindex][2] - cz;
-  miny = P[minindex][1] + std::sqrt(std::max<Scalar>(radsqr - dz * dz, 0));
+  miny = P[minindex][1] + std::sqrt(std::max<CoalScalar>(radsqr - dz * dz, 0));
   dz = P[maxindex][2] - cz;
-  maxy = P[maxindex][1] - std::sqrt(std::max<Scalar>(radsqr - dz * dz, 0));
+  maxy = P[maxindex][1] - std::sqrt(std::max<CoalScalar>(radsqr - dz * dz, 0));
 
   // grow miny/maxy
 
   for (unsigned int i = 0; i < size_P; ++i) {
     if (P[i][1] < miny) {
       dz = P[i][2] - cz;
-      y = P[i][1] + std::sqrt(std::max<Scalar>(radsqr - dz * dz, 0));
+      y = P[i][1] + std::sqrt(std::max<CoalScalar>(radsqr - dz * dz, 0));
       if (y < miny) miny = y;
     } else if (P[i][1] > maxy) {
       dz = P[i][2] - cz;
-      y = P[i][1] - std::sqrt(std::max<Scalar>(radsqr - dz * dz, 0));
+      y = P[i][1] - std::sqrt(std::max<CoalScalar>(radsqr - dz * dz, 0));
       if (y > maxy) maxy = y;
     }
   }
 
   // corners may have some points which are not covered - grow lengths if
   // necessary quite conservative (can be improved)
-  Scalar dx, dy, u, t;
-  Scalar a = std::sqrt((Scalar)0.5);
+  CoalScalar dx, dy, u, t;
+  CoalScalar a = std::sqrt((CoalScalar)0.5);
   for (unsigned int i = 0; i < size_P; ++i) {
     if (P[i][0] > maxx) {
       if (P[i][1] > maxy) {
@@ -428,7 +428,7 @@ void getRadiusAndOriginAndRectangleSize(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
         u = dx * a + dy * a;
         t = (a * u - dx) * (a * u - dx) + (a * u - dy) * (a * u - dy) +
             (cz - P[i][2]) * (cz - P[i][2]);
-        u = u - std::sqrt(std::max<Scalar>(radsqr - t, 0));
+        u = u - std::sqrt(std::max<CoalScalar>(radsqr - t, 0));
         if (u > 0) {
           maxx += u * a;
           maxy += u * a;
@@ -439,7 +439,7 @@ void getRadiusAndOriginAndRectangleSize(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
         u = dx * a - dy * a;
         t = (a * u - dx) * (a * u - dx) + (-a * u - dy) * (-a * u - dy) +
             (cz - P[i][2]) * (cz - P[i][2]);
-        u = u - std::sqrt(std::max<Scalar>(radsqr - t, 0));
+        u = u - std::sqrt(std::max<CoalScalar>(radsqr - t, 0));
         if (u > 0) {
           maxx += u * a;
           miny -= u * a;
@@ -452,7 +452,7 @@ void getRadiusAndOriginAndRectangleSize(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
         u = dy * a - dx * a;
         t = (-a * u - dx) * (-a * u - dx) + (a * u - dy) * (a * u - dy) +
             (cz - P[i][2]) * (cz - P[i][2]);
-        u = u - std::sqrt(std::max<Scalar>(radsqr - t, 0));
+        u = u - std::sqrt(std::max<CoalScalar>(radsqr - t, 0));
         if (u > 0) {
           minx -= u * a;
           maxy += u * a;
@@ -463,7 +463,7 @@ void getRadiusAndOriginAndRectangleSize(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
         u = -dx * a - dy * a;
         t = (-a * u - dx) * (-a * u - dx) + (-a * u - dy) * (-a * u - dy) +
             (cz - P[i][2]) * (cz - P[i][2]);
-        u = u - std::sqrt(std::max<Scalar>(radsqr - t, 0));
+        u = u - std::sqrt(std::max<CoalScalar>(radsqr - t, 0));
         if (u > 0) {
           minx -= u * a;
           miny -= u * a;
@@ -474,8 +474,8 @@ void getRadiusAndOriginAndRectangleSize(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
 
   origin.noalias() = axes * Vec3s(minx, miny, cz);
 
-  l[0] = std::max<Scalar>(maxx - minx, 0);
-  l[1] = std::max<Scalar>(maxy - miny, 0);
+  l[0] = std::max<CoalScalar>(maxx - minx, 0);
+  l[1] = std::max<CoalScalar>(maxy - miny, 0);
 
   delete[] P;
 }
@@ -490,7 +490,7 @@ static inline void getExtentAndCenter_pointcloud(Vec3s* ps, Vec3s* ps2,
   bool indirect_index = true;
   if (!indices) indirect_index = false;
 
-  Scalar real_max = (std::numeric_limits<Scalar>::max)();
+  CoalScalar real_max = (std::numeric_limits<CoalScalar>::max)();
 
   Vec3s min_coord(real_max, real_max, real_max);
   Vec3s max_coord(-real_max, -real_max, -real_max);
@@ -525,25 +525,24 @@ static inline void getExtentAndCenter_pointcloud(Vec3s* ps, Vec3s* ps2,
 /** @brief Compute the bounding volume extent and center for a set or subset of
  * points. The bounding volume axes are known.
  */
-static inline void getExtentAndCenter_mesh(Vec3s* ps, Vec3s* ps2,
-                                           Triangle32* ts,
+static inline void getExtentAndCenter_mesh(Vec3s* ps, Vec3s* ps2, Triangle* ts,
                                            unsigned int* indices,
                                            unsigned int n, Matrix3s& axes,
                                            Vec3s& center, Vec3s& extent) {
   bool indirect_index = true;
   if (!indices) indirect_index = false;
 
-  Scalar real_max = (std::numeric_limits<Scalar>::max)();
+  CoalScalar real_max = (std::numeric_limits<CoalScalar>::max)();
 
   Vec3s min_coord(real_max, real_max, real_max);
   Vec3s max_coord(-real_max, -real_max, -real_max);
 
   for (unsigned int i = 0; i < n; ++i) {
     unsigned int index = indirect_index ? indices[i] : i;
-    const Triangle32& t = ts[index];
+    const Triangle& t = ts[index];
 
-    for (Triangle32::IndexType j = 0; j < 3; ++j) {
-      Triangle32::IndexType point_id = t[j];
+    for (Triangle::index_type j = 0; j < 3; ++j) {
+      Triangle::index_type point_id = t[j];
       const Vec3s& p = ps[point_id];
       Vec3s proj(axes.transpose() * p);
 
@@ -554,8 +553,8 @@ static inline void getExtentAndCenter_mesh(Vec3s* ps, Vec3s* ps2,
     }
 
     if (ps2) {
-      for (Triangle32::IndexType j = 0; j < 3; ++j) {
-        Triangle32::IndexType point_id = t[j];
+      for (Triangle::index_type j = 0; j < 3; ++j) {
+        Triangle::index_type point_id = t[j];
         const Vec3s& p = ps2[point_id];
         Vec3s proj(axes.transpose() * p);
 
@@ -574,7 +573,7 @@ static inline void getExtentAndCenter_mesh(Vec3s* ps, Vec3s* ps2,
   extent.noalias() = (max_coord - min_coord) / 2;
 }
 
-void getExtentAndCenter(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
+void getExtentAndCenter(Vec3s* ps, Vec3s* ps2, Triangle* ts,
                         unsigned int* indices, unsigned int n, Matrix3s& axes,
                         Vec3s& center, Vec3s& extent) {
   if (ts)
@@ -584,44 +583,46 @@ void getExtentAndCenter(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
 }
 
 void circumCircleComputation(const Vec3s& a, const Vec3s& b, const Vec3s& c,
-                             Vec3s& center, Scalar& radius) {
+                             Vec3s& center, CoalScalar& radius) {
   Vec3s e1 = a - c;
   Vec3s e2 = b - c;
-  Scalar e1_len2 = e1.squaredNorm();
-  Scalar e2_len2 = e2.squaredNorm();
+  CoalScalar e1_len2 = e1.squaredNorm();
+  CoalScalar e2_len2 = e2.squaredNorm();
   Vec3s e3 = e1.cross(e2);
-  Scalar e3_len2 = e3.squaredNorm();
+  CoalScalar e3_len2 = e3.squaredNorm();
   radius = e1_len2 * e2_len2 * (e1 - e2).squaredNorm() / e3_len2;
-  radius = std::sqrt(radius) * Scalar(0.5);
+  radius = std::sqrt(radius) * 0.5;
 
   center = (e2 * e1_len2 - e1 * e2_len2).cross(e3) * (0.5 * 1 / e3_len2) + c;
 }
 
-static inline Scalar maximumDistance_mesh(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
-                                          unsigned int* indices, unsigned int n,
-                                          const Vec3s& query) {
+static inline CoalScalar maximumDistance_mesh(Vec3s* ps, Vec3s* ps2,
+                                              Triangle* ts,
+                                              unsigned int* indices,
+                                              unsigned int n,
+                                              const Vec3s& query) {
   bool indirect_index = true;
   if (!indices) indirect_index = false;
 
-  Scalar maxD = 0;
+  CoalScalar maxD = 0;
   for (unsigned int i = 0; i < n; ++i) {
     unsigned int index = indirect_index ? indices[i] : i;
-    const Triangle32& t = ts[index];
+    const Triangle& t = ts[index];
 
-    for (Triangle32::IndexType j = 0; j < 3; ++j) {
-      Triangle32::IndexType point_id = t[j];
+    for (Triangle::index_type j = 0; j < 3; ++j) {
+      Triangle::index_type point_id = t[j];
       const Vec3s& p = ps[point_id];
 
-      Scalar d = (p - query).squaredNorm();
+      CoalScalar d = (p - query).squaredNorm();
       if (d > maxD) maxD = d;
     }
 
     if (ps2) {
-      for (Triangle32::IndexType j = 0; j < 3; ++j) {
-        Triangle32::IndexType point_id = t[j];
+      for (Triangle::index_type j = 0; j < 3; ++j) {
+        Triangle::index_type point_id = t[j];
         const Vec3s& p = ps2[point_id];
 
-        Scalar d = (p - query).squaredNorm();
+        CoalScalar d = (p - query).squaredNorm();
         if (d > maxD) maxD = d;
       }
     }
@@ -630,24 +631,24 @@ static inline Scalar maximumDistance_mesh(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
   return std::sqrt(maxD);
 }
 
-static inline Scalar maximumDistance_pointcloud(Vec3s* ps, Vec3s* ps2,
-                                                unsigned int* indices,
-                                                unsigned int n,
-                                                const Vec3s& query) {
+static inline CoalScalar maximumDistance_pointcloud(Vec3s* ps, Vec3s* ps2,
+                                                    unsigned int* indices,
+                                                    unsigned int n,
+                                                    const Vec3s& query) {
   bool indirect_index = true;
   if (!indices) indirect_index = false;
 
-  Scalar maxD = 0;
+  CoalScalar maxD = 0;
   for (unsigned int i = 0; i < n; ++i) {
     unsigned int index = indirect_index ? indices[i] : i;
 
     const Vec3s& p = ps[index];
-    Scalar d = (p - query).squaredNorm();
+    CoalScalar d = (p - query).squaredNorm();
     if (d > maxD) maxD = d;
 
     if (ps2) {
       const Vec3s& v = ps2[index];
-      Scalar d = (v - query).squaredNorm();
+      CoalScalar d = (v - query).squaredNorm();
       if (d > maxD) maxD = d;
     }
   }
@@ -655,9 +656,9 @@ static inline Scalar maximumDistance_pointcloud(Vec3s* ps, Vec3s* ps2,
   return std::sqrt(maxD);
 }
 
-Scalar maximumDistance(Vec3s* ps, Vec3s* ps2, Triangle32* ts,
-                       unsigned int* indices, unsigned int n,
-                       const Vec3s& query) {
+CoalScalar maximumDistance(Vec3s* ps, Vec3s* ps2, Triangle* ts,
+                           unsigned int* indices, unsigned int n,
+                           const Vec3s& query) {
   if (ts)
     return maximumDistance_mesh(ps, ps2, ts, indices, n, query);
   else

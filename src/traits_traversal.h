@@ -18,7 +18,7 @@ namespace coal {
 // TraversalTraitsCollision for collision_func_matrix.cpp
 
 template <typename TypeA, typename TypeB>
-struct COAL_LOCAL TraversalTraitsCollision {};
+struct COAL_LOCAL TraversalTraitsCollision{};
 
 #ifdef COAL_HAS_OCTOMAP
 
@@ -62,7 +62,7 @@ struct COAL_LOCAL TraversalTraitsCollision<HeightField<T_HF>, OcTree> {
 // TraversalTraitsDistance for distance_func_matrix.cpp
 
 template <typename TypeA, typename TypeB>
-struct COAL_LOCAL TraversalTraitsDistance {};
+struct COAL_LOCAL TraversalTraitsDistance{};
 
 #ifdef COAL_HAS_OCTOMAP
 

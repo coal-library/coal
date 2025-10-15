@@ -54,15 +54,15 @@ static inline void lineSegmentPointClosestToPoint(const Vec3s& p,
   Vec3s v = s2 - s1;
   Vec3s w = p - s1;
 
-  Scalar c1 = w.dot(v);
-  Scalar c2 = v.dot(v);
+  CoalScalar c1 = w.dot(v);
+  CoalScalar c2 = v.dot(v);
 
   if (c1 <= 0) {
     sp = s1;
   } else if (c2 <= c1) {
     sp = s2;
   } else {
-    Scalar b = c1 / c2;
+    CoalScalar b = c1 / c2;
     Vec3s Pb = s1 + v * b;
     sp = Pb;
   }
@@ -72,9 +72,11 @@ static inline void lineSegmentPointClosestToPoint(const Vec3s& p,
 /// @param p2 witness point on the Capsule.
 /// @param normal pointing from shape 1 to shape 2 (sphere to capsule).
 /// @return the distance between the two shapes (negative if penetration).
-inline Scalar sphereCapsuleDistance(const Sphere& s1, const Transform3s& tf1,
-                                    const Capsule& s2, const Transform3s& tf2,
-                                    Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+inline CoalScalar sphereCapsuleDistance(const Sphere& s1,
+                                        const Transform3s& tf1,
+                                        const Capsule& s2,
+                                        const Transform3s& tf2, Vec3s& p1,
+                                        Vec3s& p2, Vec3s& normal) {
   Vec3s pos1(tf2.transform(Vec3s(0., 0., s2.halfLength)));
   Vec3s pos2(tf2.transform(Vec3s(0., 0., -s2.halfLength)));
   Vec3s s_c = tf1.getTranslation();
@@ -83,12 +85,12 @@ inline Scalar sphereCapsuleDistance(const Sphere& s1, const Transform3s& tf1,
 
   lineSegmentPointClosestToPoint(s_c, pos1, pos2, segment_point);
   normal = segment_point - s_c;
-  Scalar norm(normal.norm());
-  Scalar r1 = s1.radius + s1.getSweptSphereRadius();
-  Scalar r2 = s2.radius + s2.getSweptSphereRadius();
-  Scalar dist = norm - r1 - r2;
+  CoalScalar norm(normal.norm());
+  CoalScalar r1 = s1.radius + s1.getSweptSphereRadius();
+  CoalScalar r2 = s2.radius + s2.getSweptSphereRadius();
+  CoalScalar dist = norm - r1 - r2;
 
-  static const Scalar eps(std::numeric_limits<Scalar>::epsilon());
+  static const CoalScalar eps(std::numeric_limits<CoalScalar>::epsilon());
   if (norm > eps) {
     normal.normalize();
   } else {
@@ -103,13 +105,15 @@ inline Scalar sphereCapsuleDistance(const Sphere& s1, const Transform3s& tf1,
 /// @param p2 witness point on the Cylinder.
 /// @param normal pointing from shape 1 to shape 2 (sphere to cylinder).
 /// @return the distance between the two shapes (negative if penetration).
-inline Scalar sphereCylinderDistance(const Sphere& s1, const Transform3s& tf1,
-                                     const Cylinder& s2, const Transform3s& tf2,
-                                     Vec3s& p1, Vec3s& p2, Vec3s& normal) {
-  static const Scalar eps(sqrt(std::numeric_limits<Scalar>::epsilon()));
-  Scalar r1(s1.radius);
-  Scalar r2(s2.radius);
-  Scalar lz2(s2.halfLength);
+inline CoalScalar sphereCylinderDistance(const Sphere& s1,
+                                         const Transform3s& tf1,
+                                         const Cylinder& s2,
+                                         const Transform3s& tf2, Vec3s& p1,
+                                         Vec3s& p2, Vec3s& normal) {
+  static const CoalScalar eps(sqrt(std::numeric_limits<CoalScalar>::epsilon()));
+  CoalScalar r1(s1.radius);
+  CoalScalar r2(s2.radius);
+  CoalScalar lz2(s2.halfLength);
   // boundaries of the cylinder axis
   Vec3s A(tf2.transform(Vec3s(0, 0, -lz2)));
   Vec3s B(tf2.transform(Vec3s(0, 0, lz2)));
@@ -122,14 +126,14 @@ inline Scalar sphereCylinderDistance(const Sphere& s1, const Transform3s& tf1,
   assert((B - A - (s2.halfLength * 2) * u).norm() < eps);
   Vec3s AS(S - A);
   // abscissa of S on cylinder axis with A as the origin
-  Scalar s(u.dot(AS));
+  CoalScalar s(u.dot(AS));
   Vec3s P(A + s * u);
   Vec3s PS(S - P);
-  Scalar dPS = PS.norm();
+  CoalScalar dPS = PS.norm();
   // Normal to cylinder axis such that plane (A, u, v) contains sphere
   // center
   Vec3s v(0, 0, 0);
-  Scalar dist;
+  CoalScalar dist;
   if (dPS > eps) {
     // S is not on cylinder axis
     v = (1 / dPS) * PS;
@@ -145,7 +149,7 @@ inline Scalar sphereCylinderDistance(const Sphere& s1, const Transform3s& tf1,
       // closest point on cylinder is on cylinder circle basis
       p2 = A + r2 * v;
       Vec3s Sp2(p2 - S);
-      Scalar dSp2 = Sp2.norm();
+      CoalScalar dSp2 = Sp2.norm();
       if (dSp2 > eps) {
         normal = (1 / dSp2) * Sp2;
         p1 = S + r1 * normal;
@@ -178,7 +182,7 @@ inline Scalar sphereCylinderDistance(const Sphere& s1, const Transform3s& tf1,
       // closest point on cylinder is on cylinder circle basis
       p2 = B + r2 * v;
       Vec3s Sp2(p2 - S);
-      Scalar dSp2 = Sp2.norm();
+      CoalScalar dSp2 = Sp2.norm();
       if (dSp2 > eps) {
         normal = (1 / dSp2) * Sp2;
         p1 = S + r1 * normal;
@@ -195,8 +199,8 @@ inline Scalar sphereCylinderDistance(const Sphere& s1, const Transform3s& tf1,
   }
 
   // Take swept-sphere radius into account
-  const Scalar ssr1 = s1.getSweptSphereRadius();
-  const Scalar ssr2 = s2.getSweptSphereRadius();
+  const CoalScalar ssr1 = s1.getSweptSphereRadius();
+  const CoalScalar ssr2 = s2.getSweptSphereRadius();
   if (ssr1 > 0 || ssr2 > 0) {
     p1 += ssr1 * normal;
     p2 -= ssr2 * normal;
@@ -210,19 +214,19 @@ inline Scalar sphereCylinderDistance(const Sphere& s1, const Transform3s& tf1,
 /// @param p2 witness point on the second Sphere.
 /// @param normal pointing from shape 1 to shape 2 (sphere1 to sphere2).
 /// @return the distance between the two spheres (negative if penetration).
-inline Scalar sphereSphereDistance(const Sphere& s1, const Transform3s& tf1,
-                                   const Sphere& s2, const Transform3s& tf2,
-                                   Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+inline CoalScalar sphereSphereDistance(const Sphere& s1, const Transform3s& tf1,
+                                       const Sphere& s2, const Transform3s& tf2,
+                                       Vec3s& p1, Vec3s& p2, Vec3s& normal) {
   const coal::Vec3s& center1 = tf1.getTranslation();
   const coal::Vec3s& center2 = tf2.getTranslation();
-  Scalar r1 = (s1.radius + s1.getSweptSphereRadius());
-  Scalar r2 = (s2.radius + s2.getSweptSphereRadius());
+  CoalScalar r1 = (s1.radius + s1.getSweptSphereRadius());
+  CoalScalar r2 = (s2.radius + s2.getSweptSphereRadius());
 
   Vec3s c1c2 = center2 - center1;
-  Scalar cdist = c1c2.norm();
+  CoalScalar cdist = c1c2.norm();
   Vec3s unit(1, 0, 0);
-  if (cdist > Eigen::NumTraits<Scalar>::epsilon()) unit = c1c2 / cdist;
-  Scalar dist = cdist - r1 - r2;
+  if (cdist > Eigen::NumTraits<CoalScalar>::epsilon()) unit = c1c2 / cdist;
+  CoalScalar dist = cdist - r1 - r2;
   normal = unit;
   p1.noalias() = center1 + r1 * unit;
   p2.noalias() = center2 - r2 * unit;
@@ -230,14 +234,14 @@ inline Scalar sphereSphereDistance(const Sphere& s1, const Transform3s& tf1,
 }
 
 /** @brief the minimum distance from a point to a line */
-inline Scalar segmentSqrDistance(const Vec3s& from, const Vec3s& to,
-                                 const Vec3s& p, Vec3s& nearest) {
+inline CoalScalar segmentSqrDistance(const Vec3s& from, const Vec3s& to,
+                                     const Vec3s& p, Vec3s& nearest) {
   Vec3s diff = p - from;
   Vec3s v = to - from;
-  Scalar t = v.dot(diff);
+  CoalScalar t = v.dot(diff);
 
   if (t > 0) {
-    Scalar dotVV = v.squaredNorm();
+    CoalScalar dotVV = v.squaredNorm();
     if (t < dotVV) {
       t /= dotVV;
       diff -= v * t;
@@ -267,7 +271,7 @@ inline bool projectInTriangle(const Vec3s& p1, const Vec3s& p2, const Vec3s& p3,
   Vec3s edge2_normal(edge2.cross(normal));
   Vec3s edge3_normal(edge3.cross(normal));
 
-  Scalar r1, r2, r3;
+  CoalScalar r1, r2, r3;
   r1 = edge1_normal.dot(p1_to_p);
   r2 = edge2_normal.dot(p2_to_p);
   r3 = edge3_normal.dot(p3_to_p);
@@ -281,10 +285,11 @@ inline bool projectInTriangle(const Vec3s& p1, const Vec3s& p2, const Vec3s& p3,
 /// @param p2 witness point on the second Sphere.
 /// @param normal pointing from shape 1 to shape 2 (sphere1 to sphere2).
 /// @return the distance between the two shapes (negative if penetration).
-inline Scalar sphereTriangleDistance(const Sphere& s, const Transform3s& tf1,
-                                     const TriangleP& tri,
-                                     const Transform3s& tf2, Vec3s& p1,
-                                     Vec3s& p2, Vec3s& normal) {
+inline CoalScalar sphereTriangleDistance(const Sphere& s,
+                                         const Transform3s& tf1,
+                                         const TriangleP& tri,
+                                         const Transform3s& tf2, Vec3s& p1,
+                                         Vec3s& p2, Vec3s& normal) {
   const Vec3s& P1 = tf2.transform(tri.a);
   const Vec3s& P2 = tf2.transform(tri.b);
   const Vec3s& P3 = tf2.transform(tri.c);
@@ -296,15 +301,15 @@ inline Scalar sphereTriangleDistance(const Sphere& s, const Transform3s& tf1,
   // object with a swept-sphere radius of r2 is equivalent to comparing the
   // first object with a swept-sphere radius of r1 + r2 against the second
   // object with a swept-sphere radius of 0.
-  const Scalar& radius =
+  const CoalScalar& radius =
       s.radius + s.getSweptSphereRadius() + tri.getSweptSphereRadius();
   assert(radius >= 0);
   assert(s.radius >= 0);
   Vec3s p1_to_center = center - P1;
-  Scalar distance_from_plane = p1_to_center.dot(tri_normal);
+  CoalScalar distance_from_plane = p1_to_center.dot(tri_normal);
   Vec3s closest_point(
-      Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN()));
-  Scalar min_distance_sqr, distance_sqr;
+      Vec3s::Constant(std::numeric_limits<CoalScalar>::quiet_NaN()));
+  CoalScalar min_distance_sqr, distance_sqr;
 
   if (distance_from_plane < 0) {
     distance_from_plane *= -1;
@@ -334,7 +339,7 @@ inline Scalar sphereTriangleDistance(const Sphere& s, const Transform3s& tf1,
   normal = (closest_point - center).normalized();
   p1 = center + normal * (s.radius + s.getSweptSphereRadius());
   p2 = closest_point - normal * tri.getSweptSphereRadius();
-  const Scalar distance = std::sqrt(min_distance_sqr) - radius;
+  const CoalScalar distance = std::sqrt(min_distance_sqr) - radius;
   return distance;
 }
 
@@ -342,9 +347,9 @@ inline Scalar sphereTriangleDistance(const Sphere& s, const Transform3s& tf1,
 /// @param p2 closest (or most penetrating) point on the shape,
 /// @param normal the halfspace normal.
 /// @return the distance between the two shapes (negative if penetration).
-inline Scalar halfspaceDistance(const Halfspace& h, const Transform3s& tf1,
-                                const ShapeBase& s, const Transform3s& tf2,
-                                Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+inline CoalScalar halfspaceDistance(const Halfspace& h, const Transform3s& tf1,
+                                    const ShapeBase& s, const Transform3s& tf2,
+                                    Vec3s& p1, Vec3s& p2, Vec3s& normal) {
   // TODO(louis): handle multiple contact points when the halfspace normal is
   // parallel to the shape's surface (every primitive except sphere and
   // ellipsoid).
@@ -361,12 +366,12 @@ inline Scalar halfspaceDistance(const Halfspace& h, const Transform3s& tf1,
       getSupport<details::SupportOptions::WithSweptSphere>(&s, -n_2, hint);
   p2 = tf2.transform(p2);
 
-  const Scalar dist = new_h.signedDistance(p2);
+  const CoalScalar dist = new_h.signedDistance(p2);
   p1.noalias() = p2 - dist * new_h.n;
   normal.noalias() = new_h.n;
 
-  const Scalar dummy_precision =
-      std::sqrt(Eigen::NumTraits<Scalar>::dummy_precision());
+  const CoalScalar dummy_precision =
+      std::sqrt(Eigen::NumTraits<CoalScalar>::dummy_precision());
   COAL_UNUSED_VARIABLE(dummy_precision);
   assert(new_h.distance(p1) <= dummy_precision);
   return dist;
@@ -376,9 +381,9 @@ inline Scalar halfspaceDistance(const Halfspace& h, const Transform3s& tf1,
 /// @param p2 closest (or most penetrating) point on the shape,
 /// @param normal the halfspace normal.
 /// @return the distance between the two shapes (negative if penetration).
-inline Scalar planeDistance(const Plane& plane, const Transform3s& tf1,
-                            const ShapeBase& s, const Transform3s& tf2,
-                            Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+inline CoalScalar planeDistance(const Plane& plane, const Transform3s& tf1,
+                                const ShapeBase& s, const Transform3s& tf2,
+                                Vec3s& p1, Vec3s& p2, Vec3s& normal) {
   // TODO(louis): handle multiple contact points when the plane normal is
   // parallel to the shape's surface (every primitive except sphere and
   // ellipsoid).
@@ -401,14 +406,14 @@ inline Scalar planeDistance(const Plane& plane, const Transform3s& tf1,
       getSupport<details::SupportOptions::WithSweptSphere>(&s, -n_h2, hint);
   p2h2 = tf2.transform(p2h2);
 
-  Scalar dist1 = new_h[0].signedDistance(p2h1);
-  Scalar dist2 = new_h[1].signedDistance(p2h2);
+  CoalScalar dist1 = new_h[0].signedDistance(p2h1);
+  CoalScalar dist2 = new_h[1].signedDistance(p2h2);
 
-  const Scalar dummy_precision =
-      std::sqrt(Eigen::NumTraits<Scalar>::dummy_precision());
+  const CoalScalar dummy_precision =
+      std::sqrt(Eigen::NumTraits<CoalScalar>::dummy_precision());
   COAL_UNUSED_VARIABLE(dummy_precision);
 
-  Scalar dist;
+  CoalScalar dist;
   if (dist1 >= dist2) {
     dist = dist1;
     p2.noalias() = p2h1;
@@ -430,9 +435,9 @@ inline Scalar planeDistance(const Plane& plane, const Transform3s& tf1,
 /// @param ps the witness point on the sphere.
 /// @param normal pointing from box to sphere
 /// @return the distance between the two shapes (negative if penetration).
-inline Scalar boxSphereDistance(const Box& b, const Transform3s& tfb,
-                                const Sphere& s, const Transform3s& tfs,
-                                Vec3s& pb, Vec3s& ps, Vec3s& normal) {
+inline CoalScalar boxSphereDistance(const Box& b, const Transform3s& tfb,
+                                    const Sphere& s, const Transform3s& tfs,
+                                    Vec3s& pb, Vec3s& ps, Vec3s& normal) {
   const Vec3s& os = tfs.getTranslation();
   const Vec3s& ob = tfb.getTranslation();
   const Matrix3s& Rb = tfb.getRotation();
@@ -442,9 +447,9 @@ inline Scalar boxSphereDistance(const Box& b, const Transform3s& tfb,
   bool outside = false;
   const Vec3s os_in_b_frame(Rb.transpose() * (os - ob));
   int axis = -1;
-  Scalar min_d = (std::numeric_limits<Scalar>::max)();
+  CoalScalar min_d = (std::numeric_limits<CoalScalar>::max)();
   for (int i = 0; i < 3; ++i) {
-    Scalar facedist;
+    CoalScalar facedist;
     if (os_in_b_frame(i) < -b.halfSide(i)) {  // outside
       pb.noalias() -= b.halfSide(i) * Rb.col(i);
       outside = true;
@@ -461,9 +466,9 @@ inline Scalar boxSphereDistance(const Box& b, const Transform3s& tfb,
     }
   }
   normal = pb - os;
-  Scalar pdist = normal.norm();
-  Scalar dist;    // distance between sphere and box
-  if (outside) {  // pb is on the box
+  CoalScalar pdist = normal.norm();
+  CoalScalar dist;  // distance between sphere and box
+  if (outside) {    // pb is on the box
     dist = pdist - s.radius;
     normal /= -pdist;
   } else {  // pb is inside the box
@@ -481,8 +486,8 @@ inline Scalar boxSphereDistance(const Box& b, const Transform3s& tfb,
   }
 
   // Take swept-sphere radius into account
-  const Scalar ssrb = b.getSweptSphereRadius();
-  const Scalar ssrs = s.getSweptSphereRadius();
+  const CoalScalar ssrb = b.getSweptSphereRadius();
+  const CoalScalar ssrs = s.getSweptSphereRadius();
   if (ssrb > 0 || ssrs > 0) {
     pb += ssrb * normal;
     ps -= ssrs * normal;
@@ -504,36 +509,36 @@ inline Scalar boxSphereDistance(const Box& b, const Transform3s& tfb,
 /// The points p1 and p2 are the same point and represent the origin of the
 /// intersection line between the objects. The normal is the direction of this
 /// line.
-inline Scalar halfspaceHalfspaceDistance(const Halfspace& s1,
-                                         const Transform3s& tf1,
-                                         const Halfspace& s2,
-                                         const Transform3s& tf2, Vec3s& p1,
-                                         Vec3s& p2, Vec3s& normal) {
+inline CoalScalar halfspaceHalfspaceDistance(const Halfspace& s1,
+                                             const Transform3s& tf1,
+                                             const Halfspace& s2,
+                                             const Transform3s& tf2, Vec3s& p1,
+                                             Vec3s& p2, Vec3s& normal) {
   Halfspace new_s1 = transform(s1, tf1);
   Halfspace new_s2 = transform(s2, tf2);
 
-  Scalar distance;
+  CoalScalar distance;
   Vec3s dir = (new_s1.n).cross(new_s2.n);
-  Scalar dir_sq_norm = dir.squaredNorm();
+  CoalScalar dir_sq_norm = dir.squaredNorm();
 
-  if (dir_sq_norm < std::numeric_limits<Scalar>::epsilon())  // parallel
+  if (dir_sq_norm < std::numeric_limits<CoalScalar>::epsilon())  // parallel
   {
     if (new_s1.n.dot(new_s2.n) > 0) {
       // If the two halfspaces have the same normal, one is inside the other
       // and they can't be separated. They have inifinte penetration depth.
-      distance = -(std::numeric_limits<Scalar>::max)();
+      distance = -(std::numeric_limits<CoalScalar>::max)();
       if (new_s1.d <= new_s2.d) {
         normal = new_s1.n;
         p1 = normal * distance;
         p2 = new_s2.n * new_s2.d;
         assert(new_s2.distance(p2) <=
-               Eigen::NumTraits<Scalar>::dummy_precision());
+               Eigen::NumTraits<CoalScalar>::dummy_precision());
       } else {
         normal = -new_s1.n;
         p1 << new_s1.n * new_s1.d;
         p2 = -(normal * distance);
         assert(new_s1.distance(p1) <=
-               Eigen::NumTraits<Scalar>::dummy_precision());
+               Eigen::NumTraits<CoalScalar>::dummy_precision());
       }
     } else {
       distance = -(new_s1.d + new_s2.d);
@@ -545,7 +550,7 @@ inline Scalar halfspaceHalfspaceDistance(const Halfspace& s1,
     // If the halfspaces are not parallel, they are in collision.
     // Their distance, in the sens of the norm of separation vector, is infinite
     // (it's impossible to find a translation which separates them)
-    distance = -(std::numeric_limits<Scalar>::max)();
+    distance = -(std::numeric_limits<CoalScalar>::max)();
     // p1 and p2 are the same point, corresponding to a point on the
     // intersection line between the two objects. Normal is the direction of
     // that line.
@@ -557,8 +562,8 @@ inline Scalar halfspaceHalfspaceDistance(const Halfspace& s1,
   }
 
   // Take swept-sphere radius into account
-  const Scalar ssr1 = s1.getSweptSphereRadius();
-  const Scalar ssr2 = s2.getSweptSphereRadius();
+  const CoalScalar ssr1 = s1.getSweptSphereRadius();
+  const CoalScalar ssr2 = s2.getSweptSphereRadius();
   if (ssr1 > 0 || ssr2 > 0) {
     p1 += ssr1 * normal;
     p2 -= ssr2 * normal;
@@ -580,31 +585,34 @@ inline Scalar halfspaceHalfspaceDistance(const Halfspace& s1,
 /// The points p1 and p2 are the same point and represent the origin of the
 /// intersection line between the objects. The normal is the direction of this
 /// line.
-inline Scalar halfspacePlaneDistance(const Halfspace& s1,
-                                     const Transform3s& tf1, const Plane& s2,
-                                     const Transform3s& tf2, Vec3s& p1,
-                                     Vec3s& p2, Vec3s& normal) {
+inline CoalScalar halfspacePlaneDistance(const Halfspace& s1,
+                                         const Transform3s& tf1,
+                                         const Plane& s2,
+                                         const Transform3s& tf2, Vec3s& p1,
+                                         Vec3s& p2, Vec3s& normal) {
   Halfspace new_s1 = transform(s1, tf1);
   Plane new_s2 = transform(s2, tf2);
 
-  Scalar distance;
+  CoalScalar distance;
   Vec3s dir = (new_s1.n).cross(new_s2.n);
-  Scalar dir_sq_norm = dir.squaredNorm();
+  CoalScalar dir_sq_norm = dir.squaredNorm();
 
-  if (dir_sq_norm < std::numeric_limits<Scalar>::epsilon())  // parallel
+  if (dir_sq_norm < std::numeric_limits<CoalScalar>::epsilon())  // parallel
   {
     normal = new_s1.n;
     distance = new_s1.n.dot(new_s2.n) > 0 ? (new_s2.d - new_s1.d)
                                           : -(new_s1.d + new_s2.d);
     p1 = new_s1.n * new_s1.d;
     p2 = new_s2.n * new_s2.d;
-    assert(new_s1.distance(p1) <= Eigen::NumTraits<Scalar>::dummy_precision());
-    assert(new_s2.distance(p2) <= Eigen::NumTraits<Scalar>::dummy_precision());
+    assert(new_s1.distance(p1) <=
+           Eigen::NumTraits<CoalScalar>::dummy_precision());
+    assert(new_s2.distance(p2) <=
+           Eigen::NumTraits<CoalScalar>::dummy_precision());
   } else {
     // If the halfspace and plane are not parallel, they are in collision.
     // Their distance, in the sens of the norm of separation vector, is infinite
     // (it's impossible to find a translation which separates them)
-    distance = -(std::numeric_limits<Scalar>::max)();
+    distance = -(std::numeric_limits<CoalScalar>::max)();
     // p1 and p2 are the same point, corresponding to a point on the
     // intersection line between the two objects. Normal is the direction of
     // that line.
@@ -616,8 +624,8 @@ inline Scalar halfspacePlaneDistance(const Halfspace& s1,
   }
 
   // Take swept-sphere radius into account
-  const Scalar ssr1 = s1.getSweptSphereRadius();
-  const Scalar ssr2 = s2.getSweptSphereRadius();
+  const CoalScalar ssr1 = s1.getSweptSphereRadius();
+  const CoalScalar ssr2 = s2.getSweptSphereRadius();
   if (ssr1 > 0 || ssr2 > 0) {
     p1 += ssr1 * normal;
     p2 -= ssr2 * normal;
@@ -639,25 +647,27 @@ inline Scalar halfspacePlaneDistance(const Halfspace& s1,
 /// The points p1 and p2 are the same point and represent the origin of the
 /// intersection line between the objects. The normal is the direction of this
 /// line.
-inline Scalar planePlaneDistance(const Plane& s1, const Transform3s& tf1,
-                                 const Plane& s2, const Transform3s& tf2,
-                                 Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+inline CoalScalar planePlaneDistance(const Plane& s1, const Transform3s& tf1,
+                                     const Plane& s2, const Transform3s& tf2,
+                                     Vec3s& p1, Vec3s& p2, Vec3s& normal) {
   Plane new_s1 = transform(s1, tf1);
   Plane new_s2 = transform(s2, tf2);
 
-  Scalar distance;
+  CoalScalar distance;
   Vec3s dir = (new_s1.n).cross(new_s2.n);
-  Scalar dir_sq_norm = dir.squaredNorm();
+  CoalScalar dir_sq_norm = dir.squaredNorm();
 
-  if (dir_sq_norm < std::numeric_limits<Scalar>::epsilon())  // parallel
+  if (dir_sq_norm < std::numeric_limits<CoalScalar>::epsilon())  // parallel
   {
     p1 = new_s1.n * new_s1.d;
     p2 = new_s2.n * new_s2.d;
-    assert(new_s1.distance(p1) <= Eigen::NumTraits<Scalar>::dummy_precision());
-    assert(new_s2.distance(p2) <= Eigen::NumTraits<Scalar>::dummy_precision());
+    assert(new_s1.distance(p1) <=
+           Eigen::NumTraits<CoalScalar>::dummy_precision());
+    assert(new_s2.distance(p2) <=
+           Eigen::NumTraits<CoalScalar>::dummy_precision());
     distance = (p1 - p2).norm();
 
-    if (distance > Eigen::NumTraits<Scalar>::dummy_precision()) {
+    if (distance > Eigen::NumTraits<CoalScalar>::dummy_precision()) {
       normal = (p2 - p1).normalized();
     } else {
       normal = new_s1.n;
@@ -666,7 +676,7 @@ inline Scalar planePlaneDistance(const Plane& s1, const Transform3s& tf1,
     // If the planes are not parallel, they are in collision.
     // Their distance, in the sens of the norm of separation vector, is infinite
     // (it's impossible to find a translation which separates them)
-    distance = -(std::numeric_limits<Scalar>::max)();
+    distance = -(std::numeric_limits<CoalScalar>::max)();
     // p1 and p2 are the same point, corresponding to a point on the
     // intersection line between the two objects. Normal is the direction of
     // that line.
@@ -678,8 +688,8 @@ inline Scalar planePlaneDistance(const Plane& s1, const Transform3s& tf1,
   }
 
   // Take swept-sphere radius into account
-  const Scalar ssr1 = s1.getSweptSphereRadius();
-  const Scalar ssr2 = s2.getSweptSphereRadius();
+  const CoalScalar ssr1 = s1.getSweptSphereRadius();
+  const CoalScalar ssr2 = s2.getSweptSphereRadius();
   if (ssr1 > 0 || ssr2 > 0) {
     p1 += ssr1 * normal;
     p2 -= ssr2 * normal;
@@ -690,15 +700,15 @@ inline Scalar planePlaneDistance(const Plane& s1, const Transform3s& tf1,
 }
 
 /// See the prototype below
-inline Scalar computePenetration(const Vec3s& P1, const Vec3s& P2,
-                                 const Vec3s& P3, const Vec3s& Q1,
-                                 const Vec3s& Q2, const Vec3s& Q3,
-                                 Vec3s& normal) {
+inline CoalScalar computePenetration(const Vec3s& P1, const Vec3s& P2,
+                                     const Vec3s& P3, const Vec3s& Q1,
+                                     const Vec3s& Q2, const Vec3s& Q3,
+                                     Vec3s& normal) {
   Vec3s u((P2 - P1).cross(P3 - P1));
   normal = u.normalized();
-  Scalar depth1((P1 - Q1).dot(normal));
-  Scalar depth2((P1 - Q2).dot(normal));
-  Scalar depth3((P1 - Q3).dot(normal));
+  CoalScalar depth1((P1 - Q1).dot(normal));
+  CoalScalar depth2((P1 - Q2).dot(normal));
+  CoalScalar depth3((P1 - Q3).dot(normal));
   return std::max(depth1, std::max(depth2, depth3));
 }
 
@@ -709,11 +719,11 @@ inline Scalar computePenetration(const Vec3s& P1, const Vec3s& P2,
 //
 // Note that we compute here an upper bound of the penetration distance,
 // not the exact value.
-inline Scalar computePenetration(const Vec3s& P1, const Vec3s& P2,
-                                 const Vec3s& P3, const Vec3s& Q1,
-                                 const Vec3s& Q2, const Vec3s& Q3,
-                                 const Transform3s& tf1, const Transform3s& tf2,
-                                 Vec3s& normal) {
+inline CoalScalar computePenetration(const Vec3s& P1, const Vec3s& P2,
+                                     const Vec3s& P3, const Vec3s& Q1,
+                                     const Vec3s& Q2, const Vec3s& Q3,
+                                     const Transform3s& tf1,
+                                     const Transform3s& tf2, Vec3s& normal) {
   Vec3s globalP1(tf1.transform(P1));
   Vec3s globalP2(tf1.transform(P2));
   Vec3s globalP3(tf1.transform(P3));

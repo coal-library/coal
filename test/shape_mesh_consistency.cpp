@@ -48,7 +48,7 @@ using namespace coal;
 
 #define BOOST_CHECK_FALSE(p) BOOST_CHECK(!(p))
 
-Scalar extents[6] = {0, 0, 0, 10, 10, 10};
+CoalScalar extents[6] = {0, 0, 0, 10, 10, 10};
 
 BOOST_AUTO_TEST_CASE(consistency_distance_spheresphere) {
   Sphere s1(20);

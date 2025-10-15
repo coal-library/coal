@@ -45,7 +45,7 @@
 namespace coal {
 
 /// @brief Clip value between a and b
-void clipToRange(Scalar& val, Scalar a, Scalar b) {
+void clipToRange(CoalScalar& val, CoalScalar a, CoalScalar b) {
   if (val < a)
     val = a;
   else if (val > b)
@@ -63,9 +63,9 @@ void clipToRange(Scalar& val, Scalar a, Scalar b) {
 /// of each segment. "T" in the dot products is the vector betweeen Pa and Pb.
 /// Reference: "On fast computation of distance between line segments." Vladimir
 /// J. Lumelsky, in Information Processing Letters, no. 21, pages 55-61, 1985.
-void segCoords(Scalar& t, Scalar& u, Scalar a, Scalar b, Scalar A_dot_B,
-               Scalar A_dot_T, Scalar B_dot_T) {
-  Scalar denom = 1 - A_dot_B * A_dot_B;
+void segCoords(CoalScalar& t, CoalScalar& u, CoalScalar a, CoalScalar b,
+               CoalScalar A_dot_B, CoalScalar A_dot_T, CoalScalar B_dot_T) {
+  CoalScalar denom = 1 - A_dot_B * A_dot_B;
 
   if (denom == 0)
     t = 0;
@@ -91,11 +91,12 @@ void segCoords(Scalar& t, Scalar& u, Scalar a, Scalar b, Scalar A_dot_B,
 /// Pa + A*t, 0 <= t <= a, is within the half space
 /// determined by the point Pa and the direction Anorm.
 /// A,B, and Anorm are unit vectors. T is the vector between Pa and Pb.
-bool inVoronoi(Scalar a, Scalar b, Scalar Anorm_dot_B, Scalar Anorm_dot_T,
-               Scalar A_dot_B, Scalar A_dot_T, Scalar B_dot_T) {
+bool inVoronoi(CoalScalar a, CoalScalar b, CoalScalar Anorm_dot_B,
+               CoalScalar Anorm_dot_T, CoalScalar A_dot_B, CoalScalar A_dot_T,
+               CoalScalar B_dot_T) {
   if (fabs(Anorm_dot_B) < 1e-7) return false;
 
-  Scalar t, u, v;
+  CoalScalar t, u, v;
 
   u = -Anorm_dot_T / Anorm_dot_B;
   clipToRange(u, 0, b);
@@ -116,17 +117,18 @@ bool inVoronoi(Scalar a, Scalar b, Scalar Anorm_dot_B, Scalar Anorm_dot_T,
 /// @brief Distance between two oriented rectangles; P and Q (optional return
 /// values) are the closest points in the rectangles, both are in the local
 /// frame of the first rectangle.
-Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
-                    const Scalar b[2], Vec3s* P = NULL, Vec3s* Q = NULL) {
-  Scalar A0_dot_B0, A0_dot_B1, A1_dot_B0, A1_dot_B1;
+CoalScalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab,
+                        const CoalScalar a[2], const CoalScalar b[2],
+                        Vec3s* P = NULL, Vec3s* Q = NULL) {
+  CoalScalar A0_dot_B0, A0_dot_B1, A1_dot_B0, A1_dot_B1;
 
   A0_dot_B0 = Rab(0, 0);
   A0_dot_B1 = Rab(0, 1);
   A1_dot_B0 = Rab(1, 0);
   A1_dot_B1 = Rab(1, 1);
 
-  Scalar aA0_dot_B0, aA0_dot_B1, aA1_dot_B0, aA1_dot_B1;
-  Scalar bA0_dot_B0, bA0_dot_B1, bA1_dot_B0, bA1_dot_B1;
+  CoalScalar aA0_dot_B0, aA0_dot_B1, aA1_dot_B0, aA1_dot_B1;
+  CoalScalar bA0_dot_B0, bA0_dot_B1, bA1_dot_B0, bA1_dot_B1;
 
   aA0_dot_B0 = a[0] * A0_dot_B0;
   aA0_dot_B1 = a[0] * A0_dot_B1;
@@ -140,13 +142,13 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
   Vec3s Tba(Rab.transpose() * Tab);
 
   Vec3s S;
-  Scalar t, u;
+  CoalScalar t, u;
 
   // determine if any edge pair contains the closest points
 
-  Scalar ALL_x, ALU_x, AUL_x, AUU_x;
-  Scalar BLL_x, BLU_x, BUL_x, BUU_x;
-  Scalar LA1_lx, LA1_ux, UA1_lx, UA1_ux, LB1_lx, LB1_ux, UB1_lx, UB1_ux;
+  CoalScalar ALL_x, ALU_x, AUL_x, AUU_x;
+  CoalScalar BLL_x, BLU_x, BUL_x, BUU_x;
+  CoalScalar LA1_lx, LA1_ux, UA1_lx, UA1_ux, LB1_lx, LB1_ux, UB1_lx, UB1_ux;
 
   ALL_x = -Tba[0];
   ALU_x = ALL_x + aA1_dot_B0;
@@ -275,14 +277,14 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
     }
   }
 
-  Scalar ALL_y, ALU_y, AUL_y, AUU_y;
+  CoalScalar ALL_y, ALU_y, AUL_y, AUU_y;
 
   ALL_y = -Tba[1];
   ALU_y = ALL_y + aA1_dot_B1;
   AUL_y = ALL_y + aA0_dot_B1;
   AUU_y = ALU_y + aA0_dot_B1;
 
-  Scalar LA1_ly, LA1_uy, UA1_ly, UA1_uy, LB0_lx, LB0_ux, UB0_lx, UB0_ux;
+  CoalScalar LA1_ly, LA1_uy, UA1_ly, UA1_uy, LB0_lx, LB0_ux, UB0_lx, UB0_ux;
 
   if (ALL_y < ALU_y) {
     LA1_ly = ALL_y;
@@ -402,14 +404,14 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
     }
   }
 
-  Scalar BLL_y, BLU_y, BUL_y, BUU_y;
+  CoalScalar BLL_y, BLU_y, BUL_y, BUU_y;
 
   BLL_y = Tab[1];
   BLU_y = BLL_y + bA1_dot_B1;
   BUL_y = BLL_y + bA1_dot_B0;
   BUU_y = BLU_y + bA1_dot_B0;
 
-  Scalar LA0_lx, LA0_ux, UA0_lx, UA0_ux, LB1_ly, LB1_uy, UB1_ly, UB1_uy;
+  CoalScalar LA0_lx, LA0_ux, UA0_lx, UA0_ux, LB1_ly, LB1_uy, UB1_ly, UB1_uy;
 
   if (ALL_x < AUL_x) {
     LA0_lx = ALL_x;
@@ -528,7 +530,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
     }
   }
 
-  Scalar LA0_ly, LA0_uy, UA0_ly, UA0_uy, LB0_ly, LB0_uy, UB0_ly, UB0_uy;
+  CoalScalar LA0_ly, LA0_uy, UA0_ly, UA0_uy, LB0_ly, LB0_uy, UB0_ly, UB0_uy;
 
   if (ALL_y < AUL_y) {
     LA0_ly = ALL_y;
@@ -650,7 +652,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
 
   // no edges passed, take max separation along face normals
 
-  Scalar sep1, sep2;
+  CoalScalar sep1, sep2;
 
   if (Tab[2] > 0.0) {
     sep1 = Tab[2];
@@ -705,7 +707,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
     }
   }
 
-  Scalar sep = (sep1 > sep2 ? sep1 : sep2);
+  CoalScalar sep = (sep1 > sep2 ? sep1 : sep2);
   return (sep > 0 ? sep : 0);
 }
 
@@ -720,7 +722,7 @@ bool RSS::overlap(const RSS& other) const {
   /// Now compute R1'R2
   Matrix3s R(axes.transpose() * other.axes);
 
-  Scalar dist = rectDistance(R, T, length, other.length);
+  CoalScalar dist = rectDistance(R, T, length, other.length);
   return (dist <= (radius + other.radius));
 }
 
@@ -735,12 +737,12 @@ bool overlap(const Matrix3s& R0, const Vec3s& T0, const RSS& b1,
   Vec3s T(b1.axes.transpose() * Ttemp);
   Matrix3s R(b1.axes.transpose() * R0.transpose() * b2.axes);
 
-  Scalar dist = rectDistance(R, T, b1.length, b2.length);
+  CoalScalar dist = rectDistance(R, T, b1.length, b2.length);
   return (dist <= (b1.radius + b2.radius));
 }
 
 bool overlap(const Matrix3s& R0, const Vec3s& T0, const RSS& b1, const RSS& b2,
-             const CollisionRequest& request, Scalar& sqrDistLowerBound) {
+             const CollisionRequest& request, CoalScalar& sqrDistLowerBound) {
   // ROb2 = R0 . b2
   // where b2 = [ b2.axis [0] | b2.axis [1] | b2.axis [2] ]
 
@@ -750,8 +752,8 @@ bool overlap(const Matrix3s& R0, const Vec3s& T0, const RSS& b1, const RSS& b2,
   Vec3s T(b1.axes.transpose() * Ttemp);
   Matrix3s R(b1.axes.transpose() * R0.transpose() * b2.axes);
 
-  Scalar dist = rectDistance(R, T, b1.length, b2.length) - b1.radius -
-                b2.radius - request.security_margin;
+  CoalScalar dist = rectDistance(R, T, b1.length, b2.length) - b1.radius -
+                    b2.radius - request.security_margin;
   if (dist <= 0) return true;
   sqrDistLowerBound = dist * dist;
   return false;
@@ -760,10 +762,10 @@ bool overlap(const Matrix3s& R0, const Vec3s& T0, const RSS& b1, const RSS& b2,
 bool RSS::contain(const Vec3s& p) const {
   Vec3s local_p = p - Tr;
   // FIXME: Vec3s proj (axes.transpose() * local_p);
-  Scalar proj0 = local_p.dot(axes.col(0));
-  Scalar proj1 = local_p.dot(axes.col(1));
-  Scalar proj2 = local_p.dot(axes.col(2));
-  Scalar abs_proj2 = fabs(proj2);
+  CoalScalar proj0 = local_p.dot(axes.col(0));
+  CoalScalar proj1 = local_p.dot(axes.col(1));
+  CoalScalar proj2 = local_p.dot(axes.col(2));
+  CoalScalar abs_proj2 = fabs(proj2);
   Vec3s proj(proj0, proj1, proj2);
 
   /// projection is within the rectangle
@@ -772,17 +774,17 @@ bool RSS::contain(const Vec3s& p) const {
     return (abs_proj2 < radius);
   } else if ((proj0 < length[0]) && (proj0 > 0) &&
              ((proj1 < 0) || (proj1 > length[1]))) {
-    Scalar y = (proj1 > 0) ? length[1] : 0;
+    CoalScalar y = (proj1 > 0) ? length[1] : 0;
     Vec3s v(proj0, y, 0);
     return ((proj - v).squaredNorm() < radius * radius);
   } else if ((proj1 < length[1]) && (proj1 > 0) &&
              ((proj0 < 0) || (proj0 > length[0]))) {
-    Scalar x = (proj0 > 0) ? length[0] : 0;
+    CoalScalar x = (proj0 > 0) ? length[0] : 0;
     Vec3s v(x, proj1, 0);
     return ((proj - v).squaredNorm() < radius * radius);
   } else {
-    Scalar x = (proj0 > 0) ? length[0] : 0;
-    Scalar y = (proj1 > 0) ? length[1] : 0;
+    CoalScalar x = (proj0 > 0) ? length[0] : 0;
+    CoalScalar y = (proj1 > 0) ? length[1] : 0;
     Vec3s v(x, y, 0);
     return ((proj - v).squaredNorm() < radius * radius);
   }
@@ -790,10 +792,10 @@ bool RSS::contain(const Vec3s& p) const {
 
 RSS& RSS::operator+=(const Vec3s& p) {
   Vec3s local_p = p - Tr;
-  Scalar proj0 = local_p.dot(axes.col(0));
-  Scalar proj1 = local_p.dot(axes.col(1));
-  Scalar proj2 = local_p.dot(axes.col(2));
-  Scalar abs_proj2 = fabs(proj2);
+  CoalScalar proj0 = local_p.dot(axes.col(0));
+  CoalScalar proj1 = local_p.dot(axes.col(1));
+  CoalScalar proj2 = local_p.dot(axes.col(2));
+  CoalScalar abs_proj2 = fabs(proj2);
   Vec3s proj(proj0, proj1, proj2);
 
   // projection is within the rectangle
@@ -802,78 +804,76 @@ RSS& RSS::operator+=(const Vec3s& p) {
     if (abs_proj2 < radius)
       ;  // do nothing
     else {
-      const Scalar half = Scalar(0.5);
-      radius = half * (radius + abs_proj2);  // enlarge the r
+      radius = 0.5 * (radius + abs_proj2);  // enlarge the r
       // change RSS origin position
       if (proj2 > 0)
-        Tr[2] += half * (abs_proj2 - radius);
+        Tr[2] += 0.5 * (abs_proj2 - radius);
       else
-        Tr[2] -= half * (abs_proj2 - radius);
+        Tr[2] -= 0.5 * (abs_proj2 - radius);
     }
   } else if ((proj0 < length[0]) && (proj0 > 0) &&
              ((proj1 < 0) || (proj1 > length[1]))) {
-    Scalar y = (proj1 > 0) ? length[1] : 0;
+    CoalScalar y = (proj1 > 0) ? length[1] : 0;
     Vec3s v(proj0, y, 0);
-    Scalar new_r_sqr = (proj - v).squaredNorm();
+    CoalScalar new_r_sqr = (proj - v).squaredNorm();
     if (new_r_sqr < radius * radius)
       ;  // do nothing
     else {
       if (abs_proj2 < radius) {
-        Scalar delta_y =
+        CoalScalar delta_y =
             -std::sqrt(radius * radius - proj2 * proj2) + fabs(proj1 - y);
         length[1] += delta_y;
         if (proj1 < 0) Tr[1] -= delta_y;
       } else {
-        Scalar delta_y = fabs(proj1 - y);
+        CoalScalar delta_y = fabs(proj1 - y);
         length[1] += delta_y;
         if (proj1 < 0) Tr[1] -= delta_y;
 
-        const Scalar half = Scalar(0.5);
         if (proj2 > 0)
-          Tr[2] += half * (abs_proj2 - radius);
+          Tr[2] += 0.5 * (abs_proj2 - radius);
         else
-          Tr[2] -= half * (abs_proj2 - radius);
+          Tr[2] -= 0.5 * (abs_proj2 - radius);
       }
     }
   } else if ((proj1 < length[1]) && (proj1 > 0) &&
              ((proj0 < 0) || (proj0 > length[0]))) {
-    Scalar x = (proj0 > 0) ? length[0] : 0;
+    CoalScalar x = (proj0 > 0) ? length[0] : 0;
     Vec3s v(x, proj1, 0);
-    Scalar new_r_sqr = (proj - v).squaredNorm();
+    CoalScalar new_r_sqr = (proj - v).squaredNorm();
     if (new_r_sqr < radius * radius)
       ;  // do nothing
     else {
       if (abs_proj2 < radius) {
-        Scalar delta_x =
+        CoalScalar delta_x =
             -std::sqrt(radius * radius - proj2 * proj2) + fabs(proj0 - x);
         length[0] += delta_x;
         if (proj0 < 0) Tr[0] -= delta_x;
       } else {
-        Scalar delta_x = fabs(proj0 - x);
+        CoalScalar delta_x = fabs(proj0 - x);
         length[0] += delta_x;
         if (proj0 < 0) Tr[0] -= delta_x;
 
-        const Scalar half = Scalar(0.5);
         if (proj2 > 0)
-          Tr[2] += half * (abs_proj2 - radius);
+          Tr[2] += 0.5 * (abs_proj2 - radius);
         else
-          Tr[2] -= half * (abs_proj2 - radius);
+          Tr[2] -= 0.5 * (abs_proj2 - radius);
       }
     }
   } else {
-    Scalar x = (proj0 > 0) ? length[0] : 0;
-    Scalar y = (proj1 > 0) ? length[1] : 0;
+    CoalScalar x = (proj0 > 0) ? length[0] : 0;
+    CoalScalar y = (proj1 > 0) ? length[1] : 0;
     Vec3s v(x, y, 0);
-    Scalar new_r_sqr = (proj - v).squaredNorm();
+    CoalScalar new_r_sqr = (proj - v).squaredNorm();
     if (new_r_sqr < radius * radius)
       ;  // do nothing
     else {
       if (abs_proj2 < radius) {
-        Scalar diag = std::sqrt(new_r_sqr - proj2 * proj2);
-        Scalar delta_diag = -std::sqrt(radius * radius - proj2 * proj2) + diag;
+        CoalScalar diag = std::sqrt(new_r_sqr - proj2 * proj2);
+        CoalScalar delta_diag =
+            -std::sqrt(radius * radius - proj2 * proj2) + diag;
 
-        Scalar delta_x = delta_diag / diag * fabs(proj0 - x);
-        Scalar delta_y = delta_diag / diag * fabs(proj1 - y);
+        CoalScalar delta_x = delta_diag / diag * fabs(proj0 - x);
+        CoalScalar delta_y = delta_diag / diag * fabs(proj1 - y);
         length[0] += delta_x;
         length[1] += delta_y;
 
@@ -882,8 +882,8 @@ RSS& RSS::operator+=(const Vec3s& p) {
           Tr[1] -= delta_y;
         }
       } else {
-        Scalar delta_x = fabs(proj0 - x);
-        Scalar delta_y = fabs(proj1 - y);
+        CoalScalar delta_x = fabs(proj0 - x);
+        CoalScalar delta_y = fabs(proj1 - y);
 
         length[0] += delta_x;
         length[1] += delta_y;
@@ -893,11 +893,10 @@ RSS& RSS::operator+=(const Vec3s& p) {
           Tr[1] -= delta_y;
         }
 
-        const Scalar half = Scalar(0.5);
         if (proj2 > 0)
-          Tr[2] += half * (abs_proj2 - radius);
+          Tr[2] += 0.5 * (abs_proj2 - radius);
         else
-          Tr[2] -= half * (abs_proj2 - radius);
+          Tr[2] -= 0.5 * (abs_proj2 - radius);
       }
     }
   }
@@ -943,7 +942,7 @@ RSS RSS::operator+(const RSS& other) const {
 
   Matrix3s M;  // row first matrix
   Vec3s E[3];  // row first eigen-vectors
-  Scalar s[3] = {0, 0, 0};
+  CoalScalar s[3] = {0, 0, 0};
 
   getCovariance(v, NULL, NULL, NULL, 16, M);
   eigen(M, s, E);
@@ -980,28 +979,28 @@ RSS RSS::operator+(const RSS& other) const {
   return bv;
 }
 
-Scalar RSS::distance(const RSS& other, Vec3s* P, Vec3s* Q) const {
+CoalScalar RSS::distance(const RSS& other, Vec3s* P, Vec3s* Q) const {
   // compute what transform [R,T] that takes us from cs1 to cs2.
   // [R,T] = [R1,T1]'[R2,T2] = [R1',-R1'T][R2,T2] = [R1'R2, R1'(T2-T1)]
   // First compute the rotation part, then translation part
   Matrix3s R(axes.transpose() * other.axes);
   Vec3s T(axes.transpose() * (other.Tr - Tr));
 
-  Scalar dist = rectDistance(R, T, length, other.length, P, Q);
+  CoalScalar dist = rectDistance(R, T, length, other.length, P, Q);
   dist -= (radius + other.radius);
-  return (dist < (Scalar)0.0) ? (Scalar)0.0 : dist;
+  return (dist < (CoalScalar)0.0) ? (CoalScalar)0.0 : dist;
 }
 
-Scalar distance(const Matrix3s& R0, const Vec3s& T0, const RSS& b1,
-                const RSS& b2, Vec3s* P, Vec3s* Q) {
+CoalScalar distance(const Matrix3s& R0, const Vec3s& T0, const RSS& b1,
+                    const RSS& b2, Vec3s* P, Vec3s* Q) {
   Matrix3s R(b1.axes.transpose() * R0 * b2.axes);
   Vec3s Ttemp(R0 * b2.Tr + T0 - b1.Tr);
 
   Vec3s T(b1.axes.transpose() * Ttemp);
 
-  Scalar dist = rectDistance(R, T, b1.length, b2.length, P, Q);
+  CoalScalar dist = rectDistance(R, T, b1.length, b2.length, P, Q);
   dist -= (b1.radius + b2.radius);
-  return (dist < (Scalar)0.0) ? (Scalar)0.0 : dist;
+  return (dist < (CoalScalar)0.0) ? (CoalScalar)0.0 : dist;
 }
 
 RSS translate(const RSS& bv, const Vec3s& t) {

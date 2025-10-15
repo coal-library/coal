@@ -53,10 +53,10 @@ namespace details {
 struct COAL_DLLAPI GJK {
   struct COAL_DLLAPI SimplexV {
     /// @brief support vector for shape 0 and 1.
-    Vec3ps w0, w1;
+    Vec3s w0, w1;
     /// @brief support vector (i.e., the furthest point on the shape along the
     /// support direction)
-    Vec3ps w;
+    Vec3s w;
   };
 
   typedef unsigned char vertex_id_t;
@@ -101,28 +101,28 @@ struct COAL_DLLAPI GJK {
   };
 
  public:
-  SolverScalar distance_upper_bound;
+  CoalScalar distance_upper_bound;
   Status status;
   GJKVariant gjk_variant;
   GJKConvergenceCriterion convergence_criterion;
   GJKConvergenceCriterionType convergence_criterion_type;
 
   MinkowskiDiff const* shape;
-  Vec3ps ray;
+  Vec3s ray;
   support_func_guess_t support_hint;
   /// @brief The distance between the two shapes, computed by GJK.
   /// If the distance is below GJK's threshold, the shapes are in collision in
   /// the eyes of GJK. If `distance_upper_bound` is set to a value lower than
   /// infinity, GJK will early stop as soon as it finds `distance` to be greater
   /// than `distance_upper_bound`.
-  SolverScalar distance;
+  CoalScalar distance;
   Simplex* simplex;  // Pointer to the result of the last run of GJK.
 
  private:
   // max_iteration and tolerance are made private
   // because they are meant to be set by the `reset` function.
   size_t max_iterations;
-  SolverScalar tolerance;
+  CoalScalar tolerance;
 
   SimplexV store_v[4];
   SimplexV* free_v[4];
@@ -140,7 +140,7 @@ struct COAL_DLLAPI GJK {
   /// with some vertices closer than this threshold.
   ///
   /// Suggested values are 100 iterations and a tolerance of 1e-6.
-  GJK(size_t max_iterations_, SolverScalar tolerance_)
+  GJK(size_t max_iterations_, CoalScalar tolerance_)
       : max_iterations(max_iterations_), tolerance(tolerance_) {
     COAL_ASSERT(tolerance_ > 0, "Tolerance must be positive.",
                 std::invalid_argument);
@@ -150,21 +150,18 @@ struct COAL_DLLAPI GJK {
   /// @brief resets the GJK algorithm, preparing it for a new run.
   /// Other than the maximum number of iterations and the tolerance,
   /// this function does **not** modify the parameters of the GJK algorithm.
-  void reset(size_t max_iterations_, SolverScalar tolerance_);
+  void reset(size_t max_iterations_, CoalScalar tolerance_);
 
   /// @brief GJK algorithm, given the initial value guess
   Status evaluate(
-      const MinkowskiDiff& shape, const Vec3ps& guess,
+      const MinkowskiDiff& shape, const Vec3s& guess,
       const support_func_guess_t& supportHint = support_func_guess_t::Zero());
 
   /// @brief apply the support function along a direction, the result is return
   /// in sv
-  inline void getSupport(const Vec3ps& d, SimplexV& sv,
+  inline void getSupport(const Vec3s& d, SimplexV& sv,
                          support_func_guess_t& hint) const {
-    Vec3s w0, w1;
-    shape->support(d.cast<Scalar>(), w0, w1, hint);
-    sv.w0 = w0.cast<SolverScalar>();
-    sv.w1 = w1.cast<SolverScalar>();
+    shape->support(d, sv.w0, sv.w1, hint);
     sv.w = sv.w0 - sv.w1;
   }
 
@@ -184,30 +181,30 @@ struct COAL_DLLAPI GJK {
   /// @param[out] w1 is the witness point on shape1.
   /// @param[out] normal is the normal of the separating plane found by
   /// GJK. It points from shape0 to shape1.
-  void getWitnessPointsAndNormal(const MinkowskiDiff& shape, Vec3ps& w0,
-                                 Vec3ps& w1, Vec3ps& normal) const;
+  void getWitnessPointsAndNormal(const MinkowskiDiff& shape, Vec3s& w0,
+                                 Vec3s& w1, Vec3s& normal) const;
 
   /// @brief get the guess from current simplex
-  Vec3ps getGuessFromSimplex() const;
+  Vec3s getGuessFromSimplex() const;
 
   /// @brief Distance threshold for early break.
   /// GJK stops when it proved the distance is more than this threshold.
   /// @note The closest points will be erroneous in this case.
   ///       If you want the closest points, set this to infinity (the default).
-  void setDistanceEarlyBreak(const SolverScalar& dup) {
+  void setDistanceEarlyBreak(const CoalScalar& dup) {
     distance_upper_bound = dup;
   }
 
   /// @brief Convergence check used to stop GJK when shapes are not in
   /// collision.
-  bool checkConvergence(const Vec3ps& w, const SolverScalar& rl,
-                        SolverScalar& alpha, const SolverScalar& omega) const;
+  bool checkConvergence(const Vec3s& w, const CoalScalar& rl, CoalScalar& alpha,
+                        const CoalScalar& omega) const;
 
   /// @brief Get the max number of iterations of GJK.
   size_t getNumMaxIterations() const { return max_iterations; }
 
   /// @brief Get the tolerance of GJK.
-  SolverScalar getTolerance() const { return tolerance; }
+  CoalScalar getTolerance() const { return tolerance; }
 
   /// @brief Get the number of iterations of the last run of GJK.
   size_t getNumIterations() const { return iterations; }
@@ -228,7 +225,7 @@ struct COAL_DLLAPI GJK {
   inline void removeVertex(Simplex& simplex);
 
   /// @brief append one vertex to the simplex
-  inline void appendVertex(Simplex& simplex, const Vec3ps& v,
+  inline void appendVertex(Simplex& simplex, const Vec3s& v,
                            support_func_guess_t& hint);
 
   /// @brief Project origin (0) onto line a-b
@@ -261,8 +258,8 @@ struct COAL_DLLAPI GJK {
 struct COAL_DLLAPI EPA {
   typedef GJK::SimplexV SimplexVertex;
   struct COAL_DLLAPI SimplexFace {
-    Vec3ps n;
-    SolverScalar d;
+    Vec3s n;
+    CoalScalar d;
     bool ignore;          // If the origin does not project inside the face, we
                           // ignore this face.
     size_t vertex_id[3];  // Index of vertex in sv_store.
@@ -275,7 +272,7 @@ struct COAL_DLLAPI EPA {
                               // (with 0 <= i <= 2).
     size_t pass;
 
-    SimplexFace() : n(Vec3ps::Zero()), ignore(false) {};
+    SimplexFace() : n(Vec3s::Zero()), ignore(false) {};
   };
 
   /// @brief The simplex list of EPA is a linked list of faces.
@@ -345,16 +342,16 @@ struct COAL_DLLAPI EPA {
  public:
   Status status;
   GJK::Simplex result;
-  Vec3ps normal;
+  Vec3s normal;
   support_func_guess_t support_hint;
-  SolverScalar depth;
+  CoalScalar depth;
   SimplexFace* closest_face;
 
  private:
   // max_iteration and tolerance are made private
   // because they are meant to be set by the `reset` function.
   size_t max_iterations;
-  SolverScalar tolerance;
+  CoalScalar tolerance;
 
   std::vector<SimplexVertex> sv_store;
   std::vector<SimplexFace> fc_store;
@@ -363,7 +360,7 @@ struct COAL_DLLAPI EPA {
   size_t iterations;
 
  public:
-  EPA(size_t max_iterations_, SolverScalar tolerance_)
+  EPA(size_t max_iterations_, CoalScalar tolerance_)
       : max_iterations(max_iterations_), tolerance(tolerance_) {
     initialize();
   }
@@ -388,7 +385,7 @@ struct COAL_DLLAPI EPA {
   size_t getNumMaxFaces() const { return fc_store.size(); }
 
   /// @brief Get the tolerance of EPA.
-  SolverScalar getTolerance() const { return tolerance; }
+  CoalScalar getTolerance() const { return tolerance; }
 
   /// @brief Get the number of iterations of the last run of EPA.
   size_t getNumIterations() const { return iterations; }
@@ -407,12 +404,12 @@ struct COAL_DLLAPI EPA {
   /// @note calling this function destroys the previous state of EPA.
   /// In the future, we may want to copy it instead, i.e. when EPA will
   /// be (properly) warm-startable.
-  void reset(size_t max_iterations, SolverScalar tolerance);
+  void reset(size_t max_iterations, CoalScalar tolerance);
 
   /// \return a Status which can be demangled using (status & Valid) or
   ///         (status & Failed). The other values provide a more detailled
   ///         status
-  Status evaluate(GJK& gjk, const Vec3ps& guess);
+  Status evaluate(GJK& gjk, const Vec3s& guess);
 
   /// Get the witness points on each object, and the corresponding normal.
   /// @param[in] shape is the Minkowski difference of the two shapes.
@@ -421,8 +418,8 @@ struct COAL_DLLAPI EPA {
   /// @param[in] normal is the normal found by EPA. It points from shape0 to
   /// shape1. The normal is used to correct the witness points on the shapes if
   /// the shapes have a non-zero swept-sphere radius.
-  void getWitnessPointsAndNormal(const MinkowskiDiff& shape, Vec3ps& w0,
-                                 Vec3ps& w1, Vec3ps& normal) const;
+  void getWitnessPointsAndNormal(const MinkowskiDiff& shape, Vec3s& w0,
+                                 Vec3s& w1, Vec3s& normal) const;
 
  private:
   /// @brief Allocates memory for the EPA algorithm.
@@ -431,7 +428,7 @@ struct COAL_DLLAPI EPA {
   void initialize();
 
   bool getEdgeDist(SimplexFace* face, const SimplexVertex& a,
-                   const SimplexVertex& b, SolverScalar& dist);
+                   const SimplexVertex& b, CoalScalar& dist);
 
   /// @brief Add a new face to the polytope.
   /// This function sets the `ignore` flag to `true` if the origin does not

@@ -51,7 +51,7 @@ namespace details {
 ///
 /// @note The Minkowski difference is expressed in the frame of the first shape.
 struct COAL_DLLAPI MinkowskiDiff {
-  typedef Eigen::Array<Scalar, 1, 2> Array2;
+  typedef Eigen::Array<CoalScalar, 1, 2> Array2d;
 
   /// @brief points to two shapes
   const ShapeBase* shapes[2];
@@ -71,7 +71,7 @@ struct COAL_DLLAPI MinkowskiDiff {
   /// @brief The radii of the sphere swepted around each shape of the Minkowski
   /// difference. The 2 values correspond to the swept-sphere radius of shape 0
   /// and shape 1.
-  Array2 swept_sphere_radius;
+  Array2d swept_sphere_radius;
 
   /// @brief Wether or not to use the normalize heuristic in the GJK Nesterov
   /// acceleration. This setting is only applied if the Nesterov acceleration in
@@ -93,7 +93,7 @@ struct COAL_DLLAPI MinkowskiDiff {
   /// will be expressed in the world frame.
   /// @param shape0 the first shape.
   /// @param shape1 the second shape.
-  /// @tparam _SupportOptions is a value of the SupportOptions enum. If set to
+  /// @tparam SupportOptions is a value of the SupportOptions enum. If set to
   /// `WithSweptSphere`, the support computation will take into account the
   /// swept sphere radius of the shapes. If set to `NoSweptSphere`, where
   /// this information is simply stored in the Minkowski's difference
@@ -123,7 +123,7 @@ struct COAL_DLLAPI MinkowskiDiff {
   /// @param shape1 the second shape.
   /// @param tf0 the transformation of the first shape.
   /// @param tf1 the transformation of the second shape.
-  /// @tparam _SupportOptions see `set(const ShapeBase*, const
+  /// @tparam `SupportOptions` see `set(const ShapeBase*, const
   /// ShapeBase*)` for more details.
   template <int _SupportOptions = SupportOptions::NoSweptSphere>
   void set(const ShapeBase* shape0, const ShapeBase* shape1,
@@ -136,7 +136,7 @@ struct COAL_DLLAPI MinkowskiDiff {
   /// @param dir support direction.
   /// @param hint used to initialize the search when shape is a ConvexBase
   /// object.
-  /// @tparam _SupportOptions see `set(const ShapeBase*, const
+  /// @tparam `SupportOptions` see `set(const ShapeBase*, const
   /// ShapeBase*)` for more details.
   template <int _SupportOptions = SupportOptions::NoSweptSphere>
   inline Vec3s support0(const Vec3s& dir, int& hint) const {
@@ -153,7 +153,7 @@ struct COAL_DLLAPI MinkowskiDiff {
   /// tranform from shape1 to shape0).
   /// @param dir support direction.
   /// @param hint used to initialize the search when shape is a ConvexBase.
-  /// @tparam _SupportOptions see `set(const ShapeBase*, const
+  /// @tparam `SupportOptions` see `set(const ShapeBase*, const
   /// ShapeBase*)` for more details.
   template <int _SupportOptions = SupportOptions::NoSweptSphere>
   inline Vec3s support1(const Vec3s& dir, int& hint) const {

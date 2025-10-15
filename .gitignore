@@ -2,8 +2,7 @@ build*/
 Xcode/*
 *~
 *.pyc
-.cache/
-__pycache__/
+
 
 # pixi environments
 .pixi

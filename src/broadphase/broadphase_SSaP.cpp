@@ -36,7 +36,6 @@
 /** @author Jia Pan */
 
 #include "coal/broadphase/broadphase_SSaP.h"
-#include "coal/tracy.hh"
 
 namespace coal {
 
@@ -184,7 +183,7 @@ bool SSaPCollisionManager::checkDis(
     typename std::vector<CollisionObject*>::const_iterator pos_start,
     typename std::vector<CollisionObject*>::const_iterator pos_end,
     CollisionObject* obj, DistanceCallBackBase* callback,
-    Scalar& min_dist) const {
+    CoalScalar& min_dist) const {
   while (pos_start < pos_end) {
     if (*pos_start != obj)  // no distance between the same object
     {
@@ -201,9 +200,6 @@ bool SSaPCollisionManager::checkDis(
 //==============================================================================
 void SSaPCollisionManager::collide(CollisionObject* obj,
                                    CollisionCallBackBase* callback) const {
-  COAL_TRACY_ZONE_SCOPED_N(
-      "coal::SSaPCollisionManager::collide(CollisionObject*, "
-      "CollisionCallBackBase*)");
   callback->init();
   if (size() == 0) return;
 
@@ -257,24 +253,21 @@ bool SSaPCollisionManager::collide_(CollisionObject* obj,
 //==============================================================================
 void SSaPCollisionManager::distance(CollisionObject* obj,
                                     DistanceCallBackBase* callback) const {
-  COAL_TRACY_ZONE_SCOPED_N(
-      "coal::SSaPCollisionManager::distance(CollisionObject*, "
-      "DistanceCallBackBase*)");
   callback->init();
   if (size() == 0) return;
 
-  Scalar min_dist = (std::numeric_limits<Scalar>::max)();
+  CoalScalar min_dist = (std::numeric_limits<CoalScalar>::max)();
   distance_(obj, callback, min_dist);
 }
 
 //==============================================================================
 bool SSaPCollisionManager::distance_(CollisionObject* obj,
                                      DistanceCallBackBase* callback,
-                                     Scalar& min_dist) const {
+                                     CoalScalar& min_dist) const {
   static const unsigned int CUTOFF = 100;
   Vec3s delta = (obj->getAABB().max_ - obj->getAABB().min_) * 0.5;
   Vec3s dummy_vector = obj->getAABB().max_;
-  if (min_dist < (std::numeric_limits<Scalar>::max)())
+  if (min_dist < (std::numeric_limits<CoalScalar>::max)())
     dummy_vector += Vec3s(min_dist, min_dist, min_dist);
 
   typename std::vector<CollisionObject*>::const_iterator pos_start1 =
@@ -291,7 +284,7 @@ bool SSaPCollisionManager::distance_(CollisionObject* obj,
       objs_z.end();
 
   int status = 1;
-  Scalar old_min_distance;
+  CoalScalar old_min_distance;
 
   while (1) {
     old_min_distance = min_dist;
@@ -335,7 +328,7 @@ bool SSaPCollisionManager::distance_(CollisionObject* obj,
     if (dist_res) return true;
 
     if (status == 1) {
-      if (old_min_distance < (std::numeric_limits<Scalar>::max)())
+      if (old_min_distance < (std::numeric_limits<CoalScalar>::max)())
         break;
       else {
         // from infinity to a finite one, only need one additional loop
@@ -348,7 +341,7 @@ bool SSaPCollisionManager::distance_(CollisionObject* obj,
         {
           if (dummy_vector.isApprox(
                   obj->getAABB().max_,
-                  std::numeric_limits<Scalar>::epsilon() * 100))
+                  std::numeric_limits<CoalScalar>::epsilon() * 100))
             dummy_vector = dummy_vector + delta;
           else
             dummy_vector = dummy_vector * 2 - obj->getAABB().max_;
@@ -374,12 +367,12 @@ int SSaPCollisionManager::selectOptimalAxis(
     typename std::vector<CollisionObject*>::const_iterator& it_beg,
     typename std::vector<CollisionObject*>::const_iterator& it_end) {
   /// simple sweep and prune method
-  Scalar delta_x = (objs_x[objs_x.size() - 1])->getAABB().min_[0] -
-                   (objs_x[0])->getAABB().min_[0];
-  Scalar delta_y = (objs_x[objs_y.size() - 1])->getAABB().min_[1] -
-                   (objs_y[0])->getAABB().min_[1];
-  Scalar delta_z = (objs_z[objs_z.size() - 1])->getAABB().min_[2] -
-                   (objs_z[0])->getAABB().min_[2];
+  CoalScalar delta_x = (objs_x[objs_x.size() - 1])->getAABB().min_[0] -
+                       (objs_x[0])->getAABB().min_[0];
+  CoalScalar delta_y = (objs_x[objs_y.size() - 1])->getAABB().min_[1] -
+                       (objs_y[0])->getAABB().min_[1];
+  CoalScalar delta_z = (objs_z[objs_z.size() - 1])->getAABB().min_[2] -
+                       (objs_z[0])->getAABB().min_[2];
 
   int axis = 0;
   if (delta_y > delta_x && delta_y > delta_z)
@@ -407,8 +400,6 @@ int SSaPCollisionManager::selectOptimalAxis(
 
 //==============================================================================
 void SSaPCollisionManager::collide(CollisionCallBackBase* callback) const {
-  COAL_TRACY_ZONE_SCOPED_N(
-      "coal::SSaPCollisionManager::collide(CollisionCallBackBase*)");
   callback->init();
   if (size() == 0) return;
 
@@ -456,15 +447,13 @@ void SSaPCollisionManager::collide(CollisionCallBackBase* callback) const {
 
 //==============================================================================
 void SSaPCollisionManager::distance(DistanceCallBackBase* callback) const {
-  COAL_TRACY_ZONE_SCOPED_N(
-      "coal::SSaPCollisionManager::distance(DistanceCallBackBase*)");
   callback->init();
   if (size() == 0) return;
 
   typename std::vector<CollisionObject*>::const_iterator it, it_end;
   selectOptimalAxis(objs_x, objs_y, objs_z, it, it_end);
 
-  Scalar min_dist = (std::numeric_limits<Scalar>::max)();
+  CoalScalar min_dist = (std::numeric_limits<CoalScalar>::max)();
   for (; it != it_end; ++it) {
     if (distance_(*it, callback, min_dist)) return;
   }
@@ -473,9 +462,6 @@ void SSaPCollisionManager::distance(DistanceCallBackBase* callback) const {
 //==============================================================================
 void SSaPCollisionManager::collide(BroadPhaseCollisionManager* other_manager_,
                                    CollisionCallBackBase* callback) const {
-  COAL_TRACY_ZONE_SCOPED_N(
-      "coal::SSaPCollisionManager::collide(BroadPhaseCollisionManager*, "
-      "CollisionCallBackBase*)");
   callback->init();
   SSaPCollisionManager* other_manager =
       static_cast<SSaPCollisionManager*>(other_manager_);
@@ -501,9 +487,6 @@ void SSaPCollisionManager::collide(BroadPhaseCollisionManager* other_manager_,
 //==============================================================================
 void SSaPCollisionManager::distance(BroadPhaseCollisionManager* other_manager_,
                                     DistanceCallBackBase* callback) const {
-  COAL_TRACY_ZONE_SCOPED_N(
-      "coal::SSaPCollisionManager::distance(BroadPhaseCollisionManager*, "
-      "DistanceCallBackBase*)");
   callback->init();
   SSaPCollisionManager* other_manager =
       static_cast<SSaPCollisionManager*>(other_manager_);
@@ -515,7 +498,7 @@ void SSaPCollisionManager::distance(BroadPhaseCollisionManager* other_manager_,
     return;
   }
 
-  Scalar min_dist = (std::numeric_limits<Scalar>::max)();
+  CoalScalar min_dist = (std::numeric_limits<CoalScalar>::max)();
   typename std::vector<CollisionObject*>::const_iterator it, end;
   if (this->size() < other_manager->size()) {
     for (it = objs_x.begin(), end = objs_x.end(); it != end; ++it)

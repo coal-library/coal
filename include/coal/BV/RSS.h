@@ -64,10 +64,10 @@ struct COAL_DLLAPI RSS {
   Vec3s Tr;
 
   /// @brief Side lengths of rectangle
-  Scalar length[2];
+  CoalScalar length[2];
 
   /// @brief Radius of sphere summed with rectangle to form RSS
-  Scalar radius;
+  CoalScalar radius;
 
   ///  @brief Default constructor with default values
   RSS() : axes(Matrix3s::Zero()), Tr(Vec3s::Zero()), radius(-1) {
@@ -93,14 +93,14 @@ struct COAL_DLLAPI RSS {
 
   /// Not implemented
   bool overlap(const RSS& other, const CollisionRequest&,
-               Scalar& sqrDistLowerBound) const {
-    sqrDistLowerBound = std::numeric_limits<Scalar>::quiet_NaN();
+               CoalScalar& sqrDistLowerBound) const {
+    sqrDistLowerBound = sqrt(-1);
     return overlap(other);
   }
 
   /// @brief the distance between two RSS; P and Q, if not NULL, return the
   /// nearest points
-  Scalar distance(const RSS& other, Vec3s* P = NULL, Vec3s* Q = NULL) const;
+  CoalScalar distance(const RSS& other, Vec3s* P = NULL, Vec3s* Q = NULL) const;
 
   /// @brief A simple way to merge the RSS and a point, not compact.
   /// @todo This function may have some bug.
@@ -116,7 +116,7 @@ struct COAL_DLLAPI RSS {
   RSS operator+(const RSS& other) const;
 
   /// @brief Size of the RSS (used in BV_Splitter to order two RSSs)
-  inline Scalar size() const {
+  inline CoalScalar size() const {
     return (std::sqrt(length[0] * length[0] + length[1] * length[1]) +
             2 * radius);
   }
@@ -125,18 +125,18 @@ struct COAL_DLLAPI RSS {
   inline const Vec3s& center() const { return Tr; }
 
   /// @brief Width of the RSS
-  inline Scalar width() const { return length[0] + 2 * radius; }
+  inline CoalScalar width() const { return length[0] + 2 * radius; }
 
   /// @brief Height of the RSS
-  inline Scalar height() const { return length[1] + 2 * radius; }
+  inline CoalScalar height() const { return length[1] + 2 * radius; }
 
   /// @brief Depth of the RSS
-  inline Scalar depth() const { return 2 * radius; }
+  inline CoalScalar depth() const { return 2 * radius; }
 
   /// @brief Volume of the RSS
-  inline Scalar volume() const {
+  inline CoalScalar volume() const {
     return (length[0] * length[1] * 2 * radius +
-            4 * boost::math::constants::pi<Scalar>() * radius * radius *
+            4 * boost::math::constants::pi<CoalScalar>() * radius * radius *
                 radius);
   }
 
@@ -148,15 +148,14 @@ struct COAL_DLLAPI RSS {
   }
 };
 
-/** @} */  // end of Bounding_Volume
-
 /// @brief distance between two RSS bounding volumes
 /// P and Q (optional return values) are the closest points in the rectangles,
 /// not the RSS. But the direction P - Q is the correct direction for cloest
 /// points Notice that P and Q are both in the local frame of the first RSS (not
 /// global frame and not even the local frame of object 1)
-COAL_DLLAPI Scalar distance(const Matrix3s& R0, const Vec3s& T0, const RSS& b1,
-                            const RSS& b2, Vec3s* P = NULL, Vec3s* Q = NULL);
+COAL_DLLAPI CoalScalar distance(const Matrix3s& R0, const Vec3s& T0,
+                                const RSS& b1, const RSS& b2, Vec3s* P = NULL,
+                                Vec3s* Q = NULL);
 
 /// @brief Check collision between two RSSs, b1 is in configuration (R0, T0) and
 /// b2 is in identity.
@@ -167,7 +166,7 @@ COAL_DLLAPI bool overlap(const Matrix3s& R0, const Vec3s& T0, const RSS& b1,
 /// b2 is in identity.
 COAL_DLLAPI bool overlap(const Matrix3s& R0, const Vec3s& T0, const RSS& b1,
                          const RSS& b2, const CollisionRequest& request,
-                         Scalar& sqrDistLowerBound);
+                         CoalScalar& sqrDistLowerBound);
 
 }  // namespace coal
 

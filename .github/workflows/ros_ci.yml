@@ -9,18 +9,22 @@ on:
     paths-ignore:
       - .gitlab-ci.yml
       - .gitignore
-      - '**.md'
+      - '*.md'
       - CITATION.*
       - LICENSE
       - .pre-commit-config.yaml
+      - CHANGELOG.md
+      - development/*.md
   pull_request:
     paths-ignore:
       - .gitlab-ci.yml
       - .gitignore
-      - '**.md'
+      - '*.md'
       - CITATION.*
       - LICENSE
       - .pre-commit-config.yaml
+      - CHANGELOG.md
+      - development/*.md
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -48,7 +52,7 @@ jobs:
       #    path: ${{ env.CCACHE_DIR }}
       #    key: ccache-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}
       # Run industrial_ci
-      - uses: 'ros-industrial/industrial_ci@e3d16c224caf4832cf68e74093eb70f3a979b4cc'
+      - uses: 'ros-industrial/industrial_ci@3e67ec54d63496e076267392148a26229740befc'
         env: ${{ matrix.env }}
 
   check:

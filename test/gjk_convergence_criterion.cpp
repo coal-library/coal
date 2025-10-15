@@ -47,15 +47,13 @@
 #include "utility.h"
 
 using coal::Box;
+using coal::CoalScalar;
 using coal::GJKConvergenceCriterion;
 using coal::GJKConvergenceCriterionType;
 using coal::GJKSolver;
-using coal::Scalar;
 using coal::ShapeBase;
-using coal::SolverScalar;
 using coal::support_func_guess_t;
 using coal::Transform3s;
-using coal::Vec3ps;
 using coal::Vec3s;
 using coal::details::GJK;
 using coal::details::MinkowskiDiff;
@@ -63,7 +61,7 @@ using std::size_t;
 
 BOOST_AUTO_TEST_CASE(set_cv_criterion) {
   GJKSolver solver;
-  GJK gjk(128, Scalar(1e-6));
+  GJK gjk(128, 1e-6);
 
   // Checking defaults
   BOOST_CHECK(solver.gjk.convergence_criterion ==
@@ -96,16 +94,16 @@ void test_gjk_cv_criterion(const ShapeBase& shape0, const ShapeBase& shape1,
   // Solvers
   unsigned int max_iterations = 128;
   // by default GJK uses the VDB convergence criterion, which is relative.
-  GJK gjk1(max_iterations, Scalar(1e-6));
+  GJK gjk1(max_iterations, 1e-6);
 
-  Scalar tol;
+  CoalScalar tol;
   switch (cv_type) {
     // need to lower the tolerance when absolute
     case GJKConvergenceCriterionType::Absolute:
-      tol = Scalar(1e-8);
+      tol = 1e-8;
       break;
     case GJKConvergenceCriterionType::Relative:
-      tol = Scalar(1e-6);
+      tol = 1e-6;
       break;
     default:
       throw std::logic_error("Wrong convergence criterion type");
@@ -124,7 +122,7 @@ void test_gjk_cv_criterion(const ShapeBase& shape0, const ShapeBase& shape1,
 
   // Generate random transforms
   size_t n = 1000;
-  Scalar extents[] = {-3., -3., 0, 3., 3., 3.};
+  CoalScalar extents[] = {-3., -3., 0, 3., 3., 3.};
   std::vector<Transform3s> transforms;
   generateRandomTransforms(extents, transforms, n);
   Transform3s identity = Transform3s::Identity();
@@ -138,42 +136,36 @@ void test_gjk_cv_criterion(const ShapeBase& shape0, const ShapeBase& shape1,
   for (size_t i = 0; i < n; ++i) {
     mink_diff.set<false>(&shape0, &shape1, identity, transforms[i]);
 
-    GJK::Status res1 = gjk1.evaluate(mink_diff, init_guess.cast<SolverScalar>(),
-                                     init_support_guess);
+    GJK::Status res1 = gjk1.evaluate(mink_diff, init_guess, init_support_guess);
     BOOST_CHECK(gjk1.getNumIterations() <= max_iterations);
-    Vec3ps ray1 = gjk1.ray;
-    res1 = gjk1.evaluate(mink_diff, init_guess.cast<SolverScalar>(),
-                         init_support_guess);
+    Vec3s ray1 = gjk1.ray;
+    res1 = gjk1.evaluate(mink_diff, init_guess, init_support_guess);
     BOOST_CHECK(res1 != GJK::Status::Failed);
-    EIGEN_VECTOR_IS_APPROX(gjk1.ray, ray1, SolverScalar(1e-8));
+    EIGEN_VECTOR_IS_APPROX(gjk1.ray, ray1, 1e-8);
 
-    GJK::Status res2 = gjk2.evaluate(mink_diff, init_guess.cast<SolverScalar>(),
-                                     init_support_guess);
+    GJK::Status res2 = gjk2.evaluate(mink_diff, init_guess, init_support_guess);
     BOOST_CHECK(gjk2.getNumIterations() <= max_iterations);
-    Vec3ps ray2 = gjk2.ray;
-    res2 = gjk2.evaluate(mink_diff, init_guess.cast<SolverScalar>(),
-                         init_support_guess);
+    Vec3s ray2 = gjk2.ray;
+    res2 = gjk2.evaluate(mink_diff, init_guess, init_support_guess);
     BOOST_CHECK(res2 != GJK::Status::Failed);
-    EIGEN_VECTOR_IS_APPROX(gjk2.ray, ray2, SolverScalar(1e-8));
+    EIGEN_VECTOR_IS_APPROX(gjk2.ray, ray2, 1e-8);
 
-    GJK::Status res3 = gjk3.evaluate(mink_diff, init_guess.cast<SolverScalar>(),
-                                     init_support_guess);
+    GJK::Status res3 = gjk3.evaluate(mink_diff, init_guess, init_support_guess);
     BOOST_CHECK(gjk3.getNumIterations() <= max_iterations);
-    Vec3ps ray3 = gjk3.ray;
-    res3 = gjk3.evaluate(mink_diff, init_guess.cast<SolverScalar>(),
-                         init_support_guess);
+    Vec3s ray3 = gjk3.ray;
+    res3 = gjk3.evaluate(mink_diff, init_guess, init_support_guess);
     BOOST_CHECK(res3 != GJK::Status::Failed);
-    EIGEN_VECTOR_IS_APPROX(gjk3.ray, ray3, SolverScalar(1e-8));
+    EIGEN_VECTOR_IS_APPROX(gjk3.ray, ray3, 1e-8);
 
     // check that solutions are close enough
-    EIGEN_VECTOR_IS_APPROX(gjk1.ray, gjk2.ray, SolverScalar(1e-4));
-    EIGEN_VECTOR_IS_APPROX(gjk1.ray, gjk3.ray, SolverScalar(1e-4));
+    EIGEN_VECTOR_IS_APPROX(gjk1.ray, gjk2.ray, 1e-4);
+    EIGEN_VECTOR_IS_APPROX(gjk1.ray, gjk3.ray, 1e-4);
   }
 }
 
 BOOST_AUTO_TEST_CASE(cv_criterion_same_solution) {
-  Box box0 = Box(Scalar(0.1), Scalar(0.2), Scalar(0.3));
-  Box box1 = Box(Scalar(1.1), Scalar(1.2), Scalar(1.3));
+  Box box0 = Box(0.1, 0.2, 0.3);
+  Box box1 = Box(1.1, 1.2, 1.3);
   test_gjk_cv_criterion(box0, box1, GJKConvergenceCriterionType::Absolute);
   test_gjk_cv_criterion(box0, box1, GJKConvergenceCriterionType::Relative);
 }

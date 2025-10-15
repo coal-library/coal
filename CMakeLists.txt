@@ -1,31 +1,36 @@
 #
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2014-2025 CNRS-LAAS, INRIA Author: Florent Lamiraux, Joseph
-# Mirabel All rights reserved.
+#  Copyright (c) 2014-2025 CNRS-LAAS, INRIA
+#  Author: Florent Lamiraux, Joseph Mirabel
+#  All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
 #
-# * Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
-# * Redistributions in binary form must reproduce the above copyright notice,
-#   this list of conditions and the following disclaimer in the documentation
-#   and/or other materials provided with the distribution.
-# * Neither the name of CNRS-LAAS. nor the names of its contributors may be used
-#   to endorse or promote products derived from this software without specific
-#   prior written permission.
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#   * Redistributions in binary form must reproduce the above
+#     copyright notice, this list of conditions and the following
+#     disclaimer in the documentation and/or other materials provided
+#     with the distribution.
+#   * Neither the name of CNRS-LAAS. nor the names of its
+#     contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#  POSSIBILITY OF SUCH DAMAGE.
 
 cmake_minimum_required(VERSION 3.22)
 set(CXX_DISABLE_WERROR TRUE)
@@ -69,16 +74,6 @@ option(
   "Make Coal retro-compatible with HPP-FCL."
   FALSE
 )
-option(
-  COAL_USE_FLOAT_PRECISION
-  "Use float precision (32-bit) instead of the default double precision (64-bit)"
-  FALSE
-)
-option(
-  COAL_BUILD_WITH_TRACY
-  "Build with tracy profiler for performance analysis"
-  FALSE
-)
 
 # Check if the submodule cmake have been initialized
 set(JRL_CMAKE_MODULES "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -105,9 +100,9 @@ else()
   endif()
 endif()
 
-# Use BoostConfig module distributed by boost library instead of using FindBoost
-# module distributed by CMake. There is one unresolved issue with FindBoost and
-# clang-cl so we deactivate it in this case.
+# Use BoostConfig module distributed by boost library instead of using FindBoost module distributed
+# by CMake.
+# There is one unresolved issue with FindBoost and clang-cl so we deactivate it in this case.
 if(NOT WIN32 OR NOT ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
   if(POLICY CMP0167)
     cmake_policy(SET CMP0167 NEW)
@@ -118,14 +113,13 @@ if(NOT WIN32 OR NOT ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
 endif()
 
 include("${JRL_CMAKE_MODULES}/base.cmake")
-compute_project_args(PROJECT_ARGS LANGUAGES CXX)
+COMPUTE_PROJECT_ARGS(PROJECT_ARGS LANGUAGES CXX)
 project(${PROJECT_NAME} ${PROJECT_ARGS})
 
 include("${JRL_CMAKE_MODULES}/boost.cmake")
 include("${JRL_CMAKE_MODULES}/python.cmake")
 include("${JRL_CMAKE_MODULES}/apple.cmake")
 include("${JRL_CMAKE_MODULES}/ide.cmake")
-include("${JRL_CMAKE_MODULES}/tracy.cmake")
 include(CMakeDependentOption)
 
 set(
@@ -144,64 +138,48 @@ function(set_standard_output_directory target)
   )
 endfunction()
 
-set_default_cmake_build_type("RelWithDebInfo")
+SET_DEFAULT_CMAKE_BUILD_TYPE("RelWithDebInfo")
 
 # If needed, fix CMake policy for APPLE systems
-apply_default_apple_configuration()
+APPLY_DEFAULT_APPLE_CONFIGURATION()
 
 cmake_dependent_option(
-  COAL_PYTHON_NANOBIND
-  "Build the nanobind-based bindings."
+  GENERATE_PYTHON_STUBS
+  "Generate the Python stubs associated to the Python library"
   OFF
   BUILD_PYTHON_INTERFACE
   OFF
 )
-# Stubs only optional for legacy Boost.Python bindings
-if(NOT COAL_PYTHON_NANOBIND)
-  cmake_dependent_option(
-    GENERATE_PYTHON_STUBS
-    "Generate the Python stubs for the Python bindings (only for legacy Boost.Python bindings)"
-    OFF
-    BUILD_PYTHON_INTERFACE
-    OFF
-  )
+
+ADD_PROJECT_DEPENDENCY(Eigen3 REQUIRED PKG_CONFIG_REQUIRES "eigen3 >= 3.0.0")
+
+if(BUILD_PYTHON_INTERFACE)
+  set(PYTHON_COMPONENTS Interpreter Development.Module NumPy)
+  FINDPYTHON(REQUIRED)
+  ADD_PROJECT_PRIVATE_DEPENDENCY(eigenpy 2.9.2 REQUIRED)
 endif()
-
-add_project_dependency(Eigen3 REQUIRED PKG_CONFIG_REQUIRES "eigen3 >= 3.0.0")
-
-# -- tracy profiling (optional)
-if(COAL_BUILD_WITH_TRACY)
-  # assume it is installed somewhere
-  add_project_dependency(Tracy REQUIRED)
-  set_target_properties(
-    Tracy::TracyClient
-    PROPERTIES POSITION_INDEPENDENT_CODE True
-  )
-endif(COAL_BUILD_WITH_TRACY)
 
 # Required dependencies
-set_boost_default_options()
-export_boost_default_options()
-add_project_dependency(
-  Boost
-  REQUIRED
-  serialization
-  filesystem
-)
+SET_BOOST_DEFAULT_OPTIONS()
+EXPORT_BOOST_DEFAULT_OPTIONS()
+ADD_PROJECT_DEPENDENCY(Boost REQUIRED serialization filesystem)
 if(COAL_ENABLE_LOGGING)
-  add_project_dependency(Boost REQUIRED log)
+  ADD_PROJECT_DEPENDENCY(Boost REQUIRED log)
 endif()
+if(BUILD_PYTHON_INTERFACE)
+  find_package(Boost REQUIRED COMPONENTS system)
+endif(BUILD_PYTHON_INTERFACE)
 
 if(Boost_VERSION_STRING VERSION_LESS 1.81)
   # Default C++ version should be C++11
-  check_minimal_cxx_standard(11 ENFORCE)
+  CHECK_MINIMAL_CXX_STANDARD(11 ENFORCE)
 else()
   # Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)
-  check_minimal_cxx_standard(14 ENFORCE)
+  CHECK_MINIMAL_CXX_STANDARD(14 ENFORCE)
 endif()
 
 # Optional dependencies
-add_project_dependency(octomap 1.8.0 PKG_CONFIG_REQUIRES "octomap >= 1.8")
+ADD_PROJECT_DEPENDENCY(octomap 1.8.0 PKG_CONFIG_REQUIRES "octomap >= 1.8")
 if(octomap_FOUND)
   set(COAL_HAS_OCTOMAP TRUE)
   string(REPLACE "." ";" VERSION_LIST ${octomap_VERSION})
@@ -272,13 +250,11 @@ set(
   include/coal/narrowphase/gjk.h
   include/coal/narrowphase/narrowphase_defaults.h
   include/coal/narrowphase/minkowski_difference.h
-  include/coal/narrowphase/support_data.h
   include/coal/narrowphase/support_functions.h
   include/coal/shape/convex.h
-  include/coal/shape/convex.hxx
+  include/coal/shape/details/convex.hxx
   include/coal/shape/geometric_shape_to_BVH_model.h
   include/coal/shape/geometric_shapes.h
-  include/coal/shape/geometric_shapes.hxx
   include/coal/shape/geometric_shapes_traits.h
   include/coal/shape/geometric_shapes_utility.h
   include/coal/distance_func_matrix.h
@@ -310,7 +286,6 @@ set(
   include/coal/internal/shape_shape_func.h
   include/coal/internal/shape_shape_contact_patch_func.h
   include/coal/internal/intersect.h
-  include/coal/internal/intersect.hxx
   include/coal/internal/tools.h
   include/coal/internal/traversal_node_base.h
   include/coal/internal/traversal_node_bvh_shape.h
@@ -443,9 +418,7 @@ if(
     include/hpp/fcl/narrowphase/minkowski_difference.h
     include/hpp/fcl/narrowphase/narrowphase_defaults.h
     include/hpp/fcl/narrowphase/narrowphase.h
-    include/hpp/fcl/narrowphase/support_data.h
     include/hpp/fcl/narrowphase/support_functions.h
-    include/hpp/fcl/narrowphase/support_functions.hxx
     include/hpp/fcl/octree.h
     include/hpp/fcl/serialization/AABB.h
     include/hpp/fcl/serialization/archive.h
@@ -472,9 +445,8 @@ if(
     include/hpp/fcl/serialization/transform.h
     include/hpp/fcl/serialization/triangle.h
     include/hpp/fcl/shape/convex.h
-    include/hpp/fcl/shape/convex.hxx
+    include/hpp/fcl/shape/details/convex.hxx
     include/hpp/fcl/shape/geometric_shapes.h
-    include/hpp/fcl/shape/geometric_shapes.hxx
     include/hpp/fcl/shape/geometric_shapes_traits.h
     include/hpp/fcl/shape/geometric_shapes_utility.h
     include/hpp/fcl/shape/geometric_shape_to_BVH_model.h
@@ -482,10 +454,12 @@ if(
     include/hpp/fcl/warning.hh
   )
   list(APPEND ${PROJECT_NAME}_HEADERS ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS})
-  header_install(
-    COMPONENT hpp-fcl-compatibility
-    ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS}
-  )
+  if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
+    HEADER_INSTALL(
+      COMPONENT hpp-fcl-compatibility
+      ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS}
+    )
+  endif()
 endif()
 
 if(COAL_HAS_OCTOMAP)
@@ -504,7 +478,7 @@ if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
 endif()
 if(BUILD_PYTHON_INTERFACE)
   if(BUILD_STANDALONE_PYTHON_INTERFACE)
-    add_project_dependency(${PROJECT_NAME} REQUIRED CONFIG)
+    ADD_PROJECT_DEPENDENCY(${PROJECT_NAME} REQUIRED CONFIG)
   endif()
   add_custom_target(${PROJECT_NAME}_python)
   set_target_properties(
@@ -513,14 +487,14 @@ if(BUILD_PYTHON_INTERFACE)
   )
   if(COAL_PYTHON_NANOBIND)
     find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
-    # jrl-cmakemodules use PYTHON_EXECUTABLE defined in FINDPYTHON macro. Since
-    # we doesn't call it in this branch, we must redefine it.
+    # jrl-cmakemodules use PYTHON_EXECUTABLE defined in FINDPYTHON macro.
+    # Since we doesn't call it in this branch, we must redefine it.
     set(PYTHON_EXECUTABLE ${Python_EXECUTABLE})
     add_subdirectory(python-nb)
   else()
     set(PYTHON_COMPONENTS Interpreter Development.Module NumPy)
-    findpython(REQUIRED)
-    add_project_private_dependency(eigenpy 2.9.2 REQUIRED)
+    FINDPYTHON(REQUIRED)
+    ADD_PROJECT_PRIVATE_DEPENDENCY(eigenpy 2.9.2 REQUIRED)
     add_subdirectory(python)
   endif()
 endif()
@@ -528,10 +502,10 @@ if(BUILD_TESTING)
   add_subdirectory(test)
 endif(BUILD_TESTING)
 
-pkg_config_append_libs("coal")
+PKG_CONFIG_APPEND_LIBS("coal")
 if(COAL_HAS_OCTOMAP)
   # FCL_HAVE_OCTOMAP kept for backward compatibility reasons.
-  pkg_config_append_cflags(
+  PKG_CONFIG_APPEND_CFLAGS(
     "-DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DFCL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=${OCTOMAP_MAJOR_VERSION} -DOCTOMAP_MINOR_VERSION=${OCTOMAP_MINOR_VERSION} -DOCTOMAP_PATCH_VERSION=${OCTOMAP_PATCH_VERSION}"
   )
 endif(COAL_HAS_OCTOMAP)
@@ -554,7 +528,7 @@ if(
     COMPONENT hpp-fcl-compatibility
   )
   include("${JRL_CMAKE_MODULES}/install-helpers.cmake")
-  add_install_target(NAME hpp-fcl-compatibility COMPONENT hpp-fcl-compatibility)
+  ADD_INSTALL_TARGET(NAME hpp-fcl-compatibility COMPONENT hpp-fcl-compatibility)
 endif()
 
-setup_project_finalize()
+SETUP_PROJECT_FINALIZE()

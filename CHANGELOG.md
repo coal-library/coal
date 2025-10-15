@@ -6,10 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [3.0.2] - 1980-01-01
+
 ### Added
 - CMake: add COAL_DISABLE_HPP_FCL_WARNINGS option ([#709](https://github.com/coal-library/coal/pull/709))
 - CMake: add support for BUILD_STANDALONE_PYTHON_INTERFACE ([#658](https://github.com/coal-library/coal/pull/658))
-- broadphase: add functional API for collision and distance callbacks ([#724](https://github.com/coal-library/coal/pull/724))
+- Docker images `ghcr.io/coal-library/coal` ([#737](https://github.com/coal-library/coal/pull/737))
 
 ### Removed
 - Remove constraints on supported doxygen version to generate the python documentation ([#681](https://github.com/coal-library/coal/pull/681))
@@ -17,30 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove qhull submodule, as ubuntu 20.04 is EoL ([#704](https://github.com/coal-library/coal/pull/704))
 - Removed support for octomap < 1.8 ([#727](https://github.com/coal-library/coal/pull/727))
 
-### Added
-- Added a second set of Python bindings based on nanobind ([#659](https://github.com/coal-library/coal/pull/659))
-
 ### Changed
 - Formatted all CMake listfiles using gersemi, add gersemi to pre-commit configuration ([#657](https://github.com/coal-library/coal/pull/657/files))
-- Float precision ([#665](https://github.com/coal-library/coal/pull/665))
-  - Rename `CoalScalar` to `Scalar`
-  - Add option to switch between (default) double precision and float precision
-  - Changed all the uses of `double` to `Scalar` in Coal
-  - Fixed all the compilation warnings when compiling the library using float precision
-- Tracy profiling ([#668](https://github.com/coal-library/coal/pull/668))
-  - added cmake option `COAL_BUILD_WITH_TRACY`
-  - put tracy scoped zones in broadphase and primitive shapes collision/distance queries
-- Use double precision for GJK/EPA when coal is compiled in float ([#674](https://github.com/coal-library/coal/pull/674))
-  - Everything is in float in coal (including the support functions), except the computations inside GJK/EPA
-  - Allows GJK/EPA to avoid limitation of float precision
-- Renamed PyPI package from coal-library to coal ([#675](https://github.com/coal-library/coal/pull/675))
-- Fixed malloc in COAL_ASSERT ([#687](https://github.com/coal-library/coal/pull/687))
-- Introducing `Convex16` and `Convex32` to store neighbors and polygons indices as `uint16` or `uint32` ([#682](https://github.com/coal-library/coal/pull/682), [#716](https://github.com/coal-library/coal/pull/716)).
-  - Along with #665, this allows to divide by two the memory footprint of `Convex`.
-
-### Fixed
-- Fix doc parsing via doxygen scripts ([#678](https://github.com/coal-library/coal/pull/678) [#699](https://github.com/coal-library/coal/pull/699))
-- Correctly calculate AABB for pruned octrees ([#741](https://github.com/coal-library/coal/pull/741))
 
 ## [3.0.1] - 2025-02-12
 
@@ -578,7 +558,8 @@ Now Eigen is at the heart of linear algebra computations.
 First release
 
 
-[Unreleased]: https://github.com/coal-library/coal/compare/v3.0.1...HEAD
+[Unreleased]: https://github.com/coal-library/coal/compare/v3.0.2...HEAD
+[3.0.2]: https://github.com/coal-library/coal/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/coal-library/coal/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/coal-library/coal/compare/v2.4.5...v3.0.0
 [2.4.5]: https://github.com/coal-library/coal/compare/v2.4.4...v2.4.5

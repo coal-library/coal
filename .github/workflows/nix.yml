@@ -2,60 +2,31 @@ name: "CI - Nix"
 
 on:
   push:
-    branches:
-      - devel
-  pull_request:
-    branches:
-      - devel
-
+    paths-ignore:
+      - .gitlab-ci.yml
+      - .gitignore
+      - '*.md'
+      - CITATION.*
+      - LICENSE
+      - colcon.pkg
+      - .pre-commit-config.yaml
+      - CHANGELOG.md
+      - development/*.md
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  nix-full:
-    runs-on: "${{ matrix.os }}-latest"
-    strategy:
-      matrix:
-        os: [ubuntu, macos]
-        py: [bp, nb]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v31
-      - uses: cachix/cachix-action@v16
-        with:
-          name: gepetto
-          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-      - run: nix build -L .#coal-full-${{ matrix.py }}
-
-  nix-split:
+  nix:
     runs-on: "${{ matrix.os }}-latest"
     strategy:
       matrix:
         os: [ubuntu, macos]
     steps:
       - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v31
-      - uses: cachix/cachix-action@v16
+      - uses: cachix/install-nix-action@v27
+      - uses: cachix/cachix-action@v15
         with:
           name: gepetto
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-      - run: nix build -L .#coal-cpp
-      - run: nix build -L .#coal-bp
-      - run: nix build -L .#coal-nb
-
-  check:
-    if: always()
-    name: check-macos-linux-nix
-
-    needs:
-      - nix-full
-      - nix-split
-
-    runs-on: Ubuntu-latest
-
-    steps:
-      - name: Decide whether the needed jobs succeeded or failed
-        uses: re-actors/alls-green@release/v1
-        with:
-          jobs: ${{ toJSON(needs) }}
+      - run: nix build -L

@@ -86,10 +86,10 @@ struct COAL_DLLAPI OBB {
   /// @retval sqrDistLowerBound squared lower bound on distance between boxes if
   ///         they do not overlap.
   bool overlap(const OBB& other, const CollisionRequest& request,
-               Scalar& sqrDistLowerBound) const;
+               CoalScalar& sqrDistLowerBound) const;
 
   /// @brief Distance between two OBBs, not implemented.
-  Scalar distance(const OBB& other, Vec3s* P = NULL, Vec3s* Q = NULL) const;
+  CoalScalar distance(const OBB& other, Vec3s* P = NULL, Vec3s* Q = NULL) const;
 
   /// @brief A simple way to merge the OBB and a point (the result is not
   /// compact).
@@ -106,25 +106,23 @@ struct COAL_DLLAPI OBB {
   OBB operator+(const OBB& other) const;
 
   /// @brief Size of the OBB (used in BV_Splitter to order two OBBs)
-  inline Scalar size() const { return extent.squaredNorm(); }
+  inline CoalScalar size() const { return extent.squaredNorm(); }
 
   /// @brief Center of the OBB
   inline const Vec3s& center() const { return To; }
 
   /// @brief Width of the OBB.
-  inline Scalar width() const { return 2 * extent[0]; }
+  inline CoalScalar width() const { return 2 * extent[0]; }
 
   /// @brief Height of the OBB.
-  inline Scalar height() const { return 2 * extent[1]; }
+  inline CoalScalar height() const { return 2 * extent[1]; }
 
   /// @brief Depth of the OBB
-  inline Scalar depth() const { return 2 * extent[2]; }
+  inline CoalScalar depth() const { return 2 * extent[2]; }
 
   /// @brief Volume of the OBB
-  inline Scalar volume() const { return width() * height() * depth(); }
+  inline CoalScalar volume() const { return width() * height() * depth(); }
 };
-
-/** @} */  // end of Bounding_Volume
 
 /// @brief Translate the OBB bv
 COAL_DLLAPI OBB translate(const OBB& bv, const Vec3s& t);
@@ -138,7 +136,7 @@ COAL_DLLAPI bool overlap(const Matrix3s& R0, const Vec3s& T0, const OBB& b1,
 /// b2 is in identity.
 COAL_DLLAPI bool overlap(const Matrix3s& R0, const Vec3s& T0, const OBB& b1,
                          const OBB& b2, const CollisionRequest& request,
-                         Scalar& sqrDistLowerBound);
+                         CoalScalar& sqrDistLowerBound);
 
 /// Check collision between two boxes
 /// @param B, T orientation and position of first box,

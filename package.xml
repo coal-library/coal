@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>coal</name>
-  <version>3.0.1</version>
+  <version>3.0.2</version>
   <description>An extension of the Flexible Collision Library.</description>
   <!-- The maintainer listed here is for the ROS release to receive emails for the buildfarm.
   Please check the repository URL for full list of authors and maintainers. -->
@@ -32,9 +32,6 @@
   <depend>assimp</depend>
   <depend>liboctomap-dev</depend>
   <depend>eigenpy</depend>
-  <!-- TODO: finish release of nanoeigenpy on ROS -->
-  <!-- <depend>nanobind-dev</depend> -->
-  <!-- <depend>nanoeigenpy</depend> -->
 
   <!-- The following tag is recommended by REP-136 -->
   <exec_depend condition="$ROS_VERSION == 1">catkin</exec_depend>

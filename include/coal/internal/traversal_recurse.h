@@ -53,10 +53,11 @@ namespace coal {
 /// @retval sqrDistLowerBound squared lower bound on distance between objects.
 void collisionRecurse(CollisionTraversalNodeBase* node, unsigned int b1,
                       unsigned int b2, BVHFrontList* front_list,
-                      Scalar& sqrDistLowerBound);
+                      CoalScalar& sqrDistLowerBound);
 
 void collisionNonRecurse(CollisionTraversalNodeBase* node,
-                         BVHFrontList* front_list, Scalar& sqrDistLowerBound);
+                         BVHFrontList* front_list,
+                         CoalScalar& sqrDistLowerBound);
 
 /// @brief Recurse function for distance
 void distanceRecurse(DistanceTraversalNodeBase* node, unsigned int b1,

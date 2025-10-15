@@ -40,8 +40,6 @@
 #include "coal/data_types.h"
 #include "coal/shape/geometric_shapes_traits.h"
 
-#include "coal/tracy.hh"
-
 namespace coal {
 
 // ============================================================================
@@ -81,7 +79,6 @@ void ContactPatchSolver::computePatch(const ShapeType1& s1,
                                       const Transform3s& tf2,
                                       const Contact& contact,
                                       ContactPatch& contact_patch) const {
-  COAL_TRACY_ZONE_SCOPED_N("coal::ContactPatchSolver::computePatch");
   // Note: `ContactPatch` is an alias for `SupportSet`.
   // Step 1
   constructContactPatchFrameFromContact(contact, contact_patch);
@@ -132,7 +129,7 @@ void ContactPatchSolver::computePatch(const ShapeType1& s1,
   }
 
   // `eps` is be used to check strict positivity of determinants.
-  const Scalar eps = Eigen::NumTraits<Scalar>::dummy_precision();
+  const CoalScalar eps = Eigen::NumTraits<CoalScalar>::dummy_precision();
   using Polygon = SupportSet::Polygon;
 
   if ((this->support_set_shape1.size() == 2) &&
@@ -148,7 +145,7 @@ void ContactPatchSolver::computePatch(const ShapeType1& s1,
     const Vec2s& c = pts2[0];
     const Vec2s& d = pts2[1];
 
-    const Scalar det =
+    const CoalScalar det =
         (b(0) - a(0)) * (d(1) - c(1)) >= (b(1) - a(1)) * (d(0) - c(0));
     if ((std::abs(det) > eps) || ((c - d).squaredNorm() < eps) ||
         ((b - a).squaredNorm() < eps)) {
@@ -157,17 +154,17 @@ void ContactPatchSolver::computePatch(const ShapeType1& s1,
     }
 
     const Vec2s cd = (d - c);
-    const Scalar l = cd.squaredNorm();
+    const CoalScalar l = cd.squaredNorm();
     Polygon& patch = contact_patch.points();
 
     // Project a onto [c, d]
-    Scalar t1 = (a - c).dot(cd);
+    CoalScalar t1 = (a - c).dot(cd);
     t1 = (t1 >= l) ? 1.0 : ((t1 <= 0) ? 0.0 : (t1 / l));
     const Vec2s p1 = c + t1 * cd;
     patch.emplace_back(p1);
 
     // Project b onto [c, d]
-    Scalar t2 = (b - c).dot(cd);
+    CoalScalar t2 = (b - c).dot(cd);
     t2 = (t2 >= l) ? 1.0 : ((t2 <= 0) ? 0.0 : (t2 / l));
     const Vec2s p2 = c + t2 * cd;
     if ((p1 - p2).squaredNorm() >= eps) {
@@ -239,8 +236,8 @@ void ContactPatchSolver::computePatch(const ShapeType1& s1,
       const Vec2s ap1 = p1 - a;
       const Vec2s ap2 = p2 - a;
 
-      const Scalar det1 = ab(0) * ap1(1) - ab(1) * ap1(0);
-      const Scalar det2 = ab(0) * ap2(1) - ab(1) * ap2(0);
+      const CoalScalar det1 = ab(0) * ap1(1) - ab(1) * ap1(0);
+      const CoalScalar det2 = ab(0) * ap2(1) - ab(1) * ap2(0);
 
       if (det1 < 0 && det2 < 0) {
         // Both p1 and p2 are outside the clipping polygon, i.e. there is no
@@ -298,8 +295,8 @@ void ContactPatchSolver::computePatch(const ShapeType1& s1,
         const Vec2s ap1 = p1 - a;
         const Vec2s ap2 = p2 - a;
 
-        const Scalar det1 = ab(0) * ap1(1) - ab(1) * ap1(0);
-        const Scalar det2 = ab(0) * ap2(1) - ab(1) * ap2(0);
+        const CoalScalar det1 = ab(0) * ap1(1) - ab(1) * ap1(0);
+        const CoalScalar det2 = ab(0) * ap2(1) - ab(1) * ap2(0);
 
         if (det1 < 0 && det2 < 0) {
           // No intersection. Continue to next segment of previous.
@@ -413,13 +410,13 @@ inline Vec2s ContactPatchSolver::computeLineSegmentIntersection(
     const Vec2s& a, const Vec2s& b, const Vec2s& c, const Vec2s& d) {
   const Vec2s ab = b - a;
   const Vec2s n(-ab(1), ab(0));
-  const Scalar denominator = n.dot(c - d);
-  if (std::abs(denominator) < std::numeric_limits<Scalar>::epsilon()) {
+  const CoalScalar denominator = n.dot(c - d);
+  if (std::abs(denominator) < std::numeric_limits<double>::epsilon()) {
     return d;
   }
-  const Scalar nominator = n.dot(a - d);
-  Scalar alpha = nominator / denominator;
-  alpha = std::min<Scalar>(1.0, std::max<Scalar>(0.0, alpha));
+  const CoalScalar nominator = n.dot(a - d);
+  CoalScalar alpha = nominator / denominator;
+  alpha = std::min<double>(1.0, std::max<CoalScalar>(0.0, alpha));
   return alpha * c + (1 - alpha) * d;
 }
 

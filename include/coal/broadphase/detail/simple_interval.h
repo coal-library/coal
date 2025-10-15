@@ -53,7 +53,7 @@ struct COAL_DLLAPI SimpleInterval {
   virtual void print();
 
   /// @brief interval is defined as [low, high]
-  Scalar low, high;
+  CoalScalar low, high;
 };
 
 }  // namespace detail

@@ -53,9 +53,9 @@ namespace utf = boost::unit_test::framework;
 template <typename BV>
 bool collide_front_list_Test(const Transform3s& tf1, const Transform3s& tf2,
                              const std::vector<Vec3s>& vertices1,
-                             const std::vector<Triangle32>& triangles1,
+                             const std::vector<Triangle>& triangles1,
                              const std::vector<Vec3s>& vertices2,
-                             const std::vector<Triangle32>& triangles2,
+                             const std::vector<Triangle>& triangles2,
                              SplitMethodType split_method, bool refit_bottomup,
                              bool verbose);
 
@@ -63,31 +63,31 @@ template <typename BV, typename TraversalNode>
 bool collide_front_list_Test_Oriented(const Transform3s& tf1,
                                       const Transform3s& tf2,
                                       const std::vector<Vec3s>& vertices1,
-                                      const std::vector<Triangle32>& triangles1,
+                                      const std::vector<Triangle>& triangles1,
                                       const std::vector<Vec3s>& vertices2,
-                                      const std::vector<Triangle32>& triangles2,
+                                      const std::vector<Triangle>& triangles2,
                                       SplitMethodType split_method,
                                       bool verbose);
 
 template <typename BV>
 bool collide_Test(const Transform3s& tf, const std::vector<Vec3s>& vertices1,
-                  const std::vector<Triangle32>& triangles1,
+                  const std::vector<Triangle>& triangles1,
                   const std::vector<Vec3s>& vertices2,
-                  const std::vector<Triangle32>& triangles2,
+                  const std::vector<Triangle>& triangles2,
                   SplitMethodType split_method, bool verbose);
 
 // TODO: randomly still have some runtime error
 BOOST_AUTO_TEST_CASE(front_list) {
   std::vector<Vec3s> p1, p2;
-  std::vector<Triangle32> t1, t2;
+  std::vector<Triangle> t1, t2;
   boost::filesystem::path path(TEST_RESOURCES_DIR);
   loadOBJFile((path / "env.obj").string().c_str(), p1, t1);
   loadOBJFile((path / "rob.obj").string().c_str(), p2, t2);
 
   std::vector<Transform3s> transforms;   // t0
   std::vector<Transform3s> transforms2;  // t1
-  Scalar extents[] = {-3000, -3000, 0, 3000, 3000, 3000};
-  Scalar delta_trans[] = {1, 1, 1};
+  CoalScalar extents[] = {-3000, -3000, 0, 3000, 3000, 3000};
+  CoalScalar delta_trans[] = {1, 1, 1};
 #ifndef NDEBUG  // if debug mode
   std::size_t n = 2;
 #else
@@ -96,8 +96,8 @@ BOOST_AUTO_TEST_CASE(front_list) {
   n = getNbRun(utf::master_test_suite().argc, utf::master_test_suite().argv, n);
   bool verbose = false;
 
-  generateRandomTransforms(extents, delta_trans, Scalar(0.005 * 2 * 3.1415),
-                           transforms, transforms2, n);
+  generateRandomTransforms(extents, delta_trans, 0.005 * 2 * 3.1415, transforms,
+                           transforms2, n);
 
   bool res, res2;
 
@@ -272,9 +272,9 @@ BOOST_AUTO_TEST_CASE(front_list) {
 template <typename BV>
 bool collide_front_list_Test(const Transform3s& tf1, const Transform3s& tf2,
                              const std::vector<Vec3s>& vertices1,
-                             const std::vector<Triangle32>& triangles1,
+                             const std::vector<Triangle>& triangles1,
                              const std::vector<Vec3s>& vertices2,
-                             const std::vector<Triangle32>& triangles2,
+                             const std::vector<Triangle>& triangles2,
                              SplitMethodType split_method, bool refit_bottomup,
                              bool verbose) {
   BVHModel<BV> m1;
@@ -339,9 +339,9 @@ template <typename BV, typename TraversalNode>
 bool collide_front_list_Test_Oriented(const Transform3s& tf1,
                                       const Transform3s& tf2,
                                       const std::vector<Vec3s>& vertices1,
-                                      const std::vector<Triangle32>& triangles1,
+                                      const std::vector<Triangle>& triangles1,
                                       const std::vector<Vec3s>& vertices2,
-                                      const std::vector<Triangle32>& triangles2,
+                                      const std::vector<Triangle>& triangles2,
                                       SplitMethodType split_method,
                                       bool verbose) {
   BVHModel<BV> m1;
@@ -393,9 +393,9 @@ bool collide_front_list_Test_Oriented(const Transform3s& tf1,
 
 template <typename BV>
 bool collide_Test(const Transform3s& tf, const std::vector<Vec3s>& vertices1,
-                  const std::vector<Triangle32>& triangles1,
+                  const std::vector<Triangle>& triangles1,
                   const std::vector<Vec3s>& vertices2,
-                  const std::vector<Triangle32>& triangles2,
+                  const std::vector<Triangle>& triangles2,
                   SplitMethodType split_method, bool verbose) {
   BVHModel<BV> m1;
   BVHModel<BV> m2;

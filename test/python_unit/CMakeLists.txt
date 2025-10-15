@@ -7,22 +7,11 @@ set(
   pickling
 )
 
-if(COAL_PYTHON_NANOBIND)
-  set(PYTHON_BINDINGS_BINARY_DIR "python-nb")
-else()
-  set(PYTHON_BINDINGS_BINARY_DIR "python")
-endif()
-
-message(
-  STATUS
-  "  Python tests will be run with Python executable at ${Python_EXECUTABLE}"
-)
-
-add_dependencies(build_tests ${PROJECT_NAME}_python)
+add_dependencies(build_tests ${PROJECT_NAME}_pywrap)
 foreach(TEST ${${PROJECT_NAME}_PYTHON_TESTS})
-  add_python_unit_test(
+  ADD_PYTHON_UNIT_TEST(
     "${PROJECT_NAME}-py-${TEST}"
     "test/python_unit/${TEST}.py"
-    ${PYTHON_BINDINGS_BINARY_DIR}
+    "python"
   )
 endforeach()

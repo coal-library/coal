@@ -82,11 +82,11 @@ struct COAL_DLLAPI DistanceCallBackBase {
   /// @param[in] o2 Collision object #2.
   /// @param[out] dist Distance between the two collision geometries.
   virtual bool distance(CollisionObject* o1, CollisionObject* o2,
-                        Scalar& dist) = 0;
+                        CoalScalar& dist) = 0;
 
   /// @brief Functor call associated to the distance operation.
   virtual bool operator()(CollisionObject* o1, CollisionObject* o2,
-                          Scalar& dist) {
+                          CoalScalar& dist) {
     return distance(o1, o2, dist);
   }
 };

@@ -33,9 +33,6 @@ class TestGeometryPickling(TestCase):
         box = coal.Box(1.0, 2.0, 3.0)
         self.pickling(box)
 
-        trans = coal.Transform3s(np.array((0, 0, 0)))
-        self.pickling(trans)
-
         sphere = coal.Sphere(1.0)
         self.pickling(sphere)
 

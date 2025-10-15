@@ -42,8 +42,8 @@
 namespace coal {
 void collisionRecurse(CollisionTraversalNodeBase* node, unsigned int b1,
                       unsigned int b2, BVHFrontList* front_list,
-                      Scalar& sqrDistLowerBound) {
-  Scalar sqrDistLowerBound1 = 0, sqrDistLowerBound2 = 0;
+                      CoalScalar& sqrDistLowerBound) {
+  CoalScalar sqrDistLowerBound1 = 0, sqrDistLowerBound2 = 0;
   bool l1 = node->isFirstNodeLeaf(b1);
   bool l2 = node->isSecondNodeLeaf(b2);
   if (l1 && l2) {
@@ -84,15 +84,16 @@ void collisionRecurse(CollisionTraversalNodeBase* node, unsigned int b1,
 }
 
 void collisionNonRecurse(CollisionTraversalNodeBase* node,
-                         BVHFrontList* front_list, Scalar& sqrDistLowerBound) {
+                         BVHFrontList* front_list,
+                         CoalScalar& sqrDistLowerBound) {
   typedef std::pair<unsigned int, unsigned int> BVPair_t;
   // typedef std::stack<BVPair_t, std::vector<BVPair_t> > Stack_t;
   typedef std::vector<BVPair_t> Stack_t;
 
   Stack_t pairs;
   pairs.reserve(1000);
-  sqrDistLowerBound = std::numeric_limits<Scalar>::infinity();
-  Scalar sdlb = std::numeric_limits<Scalar>::infinity();
+  sqrDistLowerBound = std::numeric_limits<CoalScalar>::infinity();
+  CoalScalar sdlb = std::numeric_limits<CoalScalar>::infinity();
 
   pairs.push_back(BVPair_t(0, 0));
 
@@ -174,8 +175,8 @@ void distanceRecurse(DistanceTraversalNodeBase* node, unsigned int b1,
     c2 = (unsigned int)node->getSecondRightChild(b2);
   }
 
-  Scalar d1 = node->BVDistanceLowerBound(a1, a2);
-  Scalar d2 = node->BVDistanceLowerBound(c1, c2);
+  CoalScalar d1 = node->BVDistanceLowerBound(a1, a2);
+  CoalScalar d2 = node->BVDistanceLowerBound(c1, c2);
 
   if (d2 < d1) {
     if (!node->canStop(d2))
@@ -203,18 +204,18 @@ void distanceRecurse(DistanceTraversalNodeBase* node, unsigned int b1,
 /** @brief Bounding volume test structure */
 struct COAL_LOCAL BVT {
   /** @brief distance between bvs */
-  Scalar d;
+  CoalScalar d;
 
   /** @brief bv indices for a pair of bvs in two models */
   unsigned int b1, b2;
 };
 
 /** @brief Comparer between two BVT */
-struct COAL_LOCAL BVT_Comparer {
-  bool operator()(const BVT& lhs, const BVT& rhs) const {
-    return lhs.d > rhs.d;
-  }  // namespace coal
-};
+struct COAL_LOCAL BVT_Comparer{bool operator()(const BVT& lhs, const BVT& rhs)
+                                   const {return lhs.d > rhs.d;
+}  // namespace coal
+}
+;
 
 struct COAL_LOCAL BVTQ {
   BVTQ() : qsize(2) {}
@@ -307,7 +308,8 @@ void propagateBVHFrontListCollisionRecurse(CollisionTraversalNodeBase* node,
                                            const CollisionRequest& /*request*/,
                                            CollisionResult& result,
                                            BVHFrontList* front_list) {
-  Scalar sqrDistLowerBound = -1, sqrDistLowerBound1 = 0, sqrDistLowerBound2 = 0;
+  CoalScalar sqrDistLowerBound = -1, sqrDistLowerBound1 = 0,
+             sqrDistLowerBound2 = 0;
   BVHFrontList::iterator front_iter;
   BVHFrontList append;
   for (front_iter = front_list->begin(); front_iter != front_list->end();

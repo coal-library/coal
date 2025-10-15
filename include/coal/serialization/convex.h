@@ -17,15 +17,14 @@ namespace boost {
 namespace serialization {
 
 namespace internal {
-template <typename IndexType>
-struct ConvexBaseAccessor : coal::ConvexBaseTpl<IndexType> {
-  typedef coal::ConvexBaseTpl<IndexType> Base;
+struct ConvexBaseAccessor : coal::ConvexBase {
+  typedef coal::ConvexBase Base;
 };
 
 }  // namespace internal
 
-template <class Archive, typename IndexType>
-void serialize(Archive& ar, coal::ConvexBaseTpl<IndexType>& convex_base,
+template <class Archive>
+void serialize(Archive& ar, coal::ConvexBase& convex_base,
                const unsigned int /*version*/) {
   using namespace coal;
 
@@ -62,7 +61,7 @@ void serialize(Archive& ar, coal::ConvexBaseTpl<IndexType>& convex_base,
         convex_base.normals.reset(
             new std::vector<Vec3s>(convex_base.num_normals_and_offsets));
         convex_base.offsets.reset(
-            new std::vector<Scalar>(convex_base.num_normals_and_offsets));
+            new std::vector<CoalScalar>(convex_base.num_normals_and_offsets));
       }
     }
 
@@ -74,23 +73,23 @@ void serialize(Archive& ar, coal::ConvexBaseTpl<IndexType>& convex_base,
     }
   }
 
-  typedef Eigen::Matrix<Scalar, 3, Eigen::Dynamic> MatrixPoints;
+  typedef Eigen::Matrix<CoalScalar, 3, Eigen::Dynamic> MatrixPoints;
   if (convex_base.num_points > 0) {
     Eigen::Map<MatrixPoints> points_map(
-        reinterpret_cast<Scalar*>(convex_base.points->data()), 3,
+        reinterpret_cast<CoalScalar*>(convex_base.points->data()), 3,
         convex_base.num_points);
     ar& make_nvp("points", points_map);
   }
 
-  typedef Eigen::Matrix<Scalar, 1, Eigen::Dynamic> VecOfReals;
+  typedef Eigen::Matrix<CoalScalar, 1, Eigen::Dynamic> VecOfReals;
   if (convex_base.num_normals_and_offsets > 0) {
     Eigen::Map<MatrixPoints> normals_map(
-        reinterpret_cast<Scalar*>(convex_base.normals->data()), 3,
+        reinterpret_cast<CoalScalar*>(convex_base.normals->data()), 3,
         convex_base.num_normals_and_offsets);
     ar& make_nvp("normals", normals_map);
 
     Eigen::Map<VecOfReals> offsets_map(
-        reinterpret_cast<Scalar*>(convex_base.offsets->data()), 1,
+        reinterpret_cast<CoalScalar*>(convex_base.offsets->data()), 1,
         convex_base.num_normals_and_offsets);
     ar& make_nvp("offsets", offsets_map);
   }
@@ -98,7 +97,7 @@ void serialize(Archive& ar, coal::ConvexBaseTpl<IndexType>& convex_base,
   typedef Eigen::Matrix<int, 1, Eigen::Dynamic> VecOfInts;
   if (num_warm_start_supports > 0) {
     Eigen::Map<MatrixPoints> warm_start_support_points_map(
-        reinterpret_cast<Scalar*>(
+        reinterpret_cast<CoalScalar*>(
             convex_base.support_warm_starts.points.data()),
         3, num_warm_start_supports);
     ar& make_nvp("warm_start_support_points", warm_start_support_points_map);
@@ -116,22 +115,21 @@ void serialize(Archive& ar, coal::ConvexBaseTpl<IndexType>& convex_base,
 
 namespace internal {
 template <typename PolygonT>
-struct ConvexAccessor : coal::ConvexTpl<PolygonT> {
-  typedef coal::ConvexTpl<PolygonT> Base;
+struct ConvexAccessor : coal::Convex<PolygonT> {
+  typedef coal::Convex<PolygonT> Base;
   using Base::fillNeighbors;
 };
 
 }  // namespace internal
 
 template <class Archive, typename PolygonT>
-void serialize(Archive& ar, coal::ConvexTpl<PolygonT>& convex_,
+void serialize(Archive& ar, coal::Convex<PolygonT>& convex_,
                const unsigned int /*version*/) {
   using namespace coal;
   typedef internal::ConvexAccessor<PolygonT> Accessor;
-  typedef ConvexBaseTpl<typename PolygonT::IndexType> Base;
 
   Accessor& convex = reinterpret_cast<Accessor&>(convex_);
-  ar& make_nvp("base", boost::serialization::base_object<Base>(convex_));
+  ar& make_nvp("base", boost::serialization::base_object<ConvexBase>(convex_));
 
   const unsigned int num_polygons_previous = convex.num_polygons;
   ar& make_nvp("num_polygons", convex.num_polygons);
@@ -150,10 +148,8 @@ void serialize(Archive& ar, coal::ConvexTpl<PolygonT>& convex_,
 }  // namespace serialization
 }  // namespace boost
 
-COAL_SERIALIZATION_DECLARE_EXPORT(coal::ConvexTpl<coal::Triangle16>)
-COAL_SERIALIZATION_DECLARE_EXPORT(coal::ConvexTpl<coal::Triangle32>)
-COAL_SERIALIZATION_DECLARE_EXPORT(coal::ConvexTpl<coal::Quadrilateral16>)
-COAL_SERIALIZATION_DECLARE_EXPORT(coal::ConvexTpl<coal::Quadrilateral32>)
+COAL_SERIALIZATION_DECLARE_EXPORT(coal::Convex<coal::Triangle>)
+COAL_SERIALIZATION_DECLARE_EXPORT(coal::Convex<coal::Quadrilateral>)
 
 namespace coal {
 

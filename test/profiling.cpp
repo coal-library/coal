@@ -45,7 +45,7 @@ bool supportedPair(const CollisionGeometry* o1, const CollisionGeometry* o2) {
 template <typename BV /*, SplitMethodType split_method*/>
 CollisionGeometryPtr_t objToGeom(const std::string& filename) {
   std::vector<Vec3s> pt;
-  std::vector<Triangle32> tri;
+  std::vector<Triangle> tri;
   loadOBJFile(filename.c_str(), pt, tri);
 
   BVHModel<BV>* model(new BVHModel<BV>());
@@ -117,7 +117,7 @@ size_t Ntransform = 1;
 #else
 size_t Ntransform = 100;
 #endif
-Scalar limit = 20;
+CoalScalar limit = 20;
 bool verbose = false;
 
 #define OUT(x) \
@@ -140,7 +140,7 @@ void handleParam(int& iarg, const int& argc, char** argv,
       iarg += 2;
     } else if (a == "-limit") {
       CHECK_PARAM_NB(1, limit);
-      limit = Scalar(atof(argv[iarg + 1]));
+      limit = atof(argv[iarg + 1]);
       iarg += 2;
     } else if (a == "-verbose") {
       verbose = true;
@@ -150,10 +150,9 @@ void handleParam(int& iarg, const int& argc, char** argv,
     }
   }
 }
-#define CREATE_SHAPE_2(var, Name)                                            \
-  CHECK_PARAM_NB(2, Name);                                                   \
-  var.reset(                                                                 \
-      new Name(Scalar(atof(argv[iarg + 1])), Scalar(atof(argv[iarg + 2])))); \
+#define CREATE_SHAPE_2(var, Name)                                  \
+  CHECK_PARAM_NB(2, Name);                                         \
+  var.reset(new Name(atof(argv[iarg + 1]), atof(argv[iarg + 2]))); \
   iarg += 3;
 Geometry makeGeomFromParam(int& iarg, const int& argc, char** argv) {
   if (iarg >= argc) throw std::invalid_argument("An argument is required.");
@@ -162,13 +161,13 @@ Geometry makeGeomFromParam(int& iarg, const int& argc, char** argv) {
   CollisionGeometryPtr_t o;
   if (a == "-box") {
     CHECK_PARAM_NB(3, Box);
-    o.reset(new Box(Scalar(atof(argv[iarg + 1])), Scalar(atof(argv[iarg + 2])),
-                    Scalar(atof(argv[iarg + 3]))));
+    o.reset(new Box(atof(argv[iarg + 1]), atof(argv[iarg + 2]),
+                    atof(argv[iarg + 3])));
     iarg += 4;
     type = "box";
   } else if (a == "-sphere") {
     CHECK_PARAM_NB(1, Sphere);
-    o.reset(new Sphere(Scalar(atof(argv[iarg + 1]))));
+    o.reset(new Sphere(atof(argv[iarg + 1])));
     iarg += 2;
     type = "sphere";
   } else if (a == "-mesh") {
@@ -191,11 +190,10 @@ Geometry makeGeomFromParam(int& iarg, const int& argc, char** argv) {
     iarg += 3;
     if (iarg < argc && strcmp(argv[iarg], "crop") == 0) {
       CHECK_PARAM_NB(6, Crop);
-      coal::AABB aabb(
-          Vec3s(Scalar(atof(argv[iarg + 1])), Scalar(atof(argv[iarg + 2])),
-                Scalar(atof(argv[iarg + 3]))),
-          Vec3s(Scalar(atof(argv[iarg + 4])), Scalar(atof(argv[iarg + 5])),
-                Scalar(atof(argv[iarg + 6]))));
+      coal::AABB aabb(Vec3s(atof(argv[iarg + 1]), atof(argv[iarg + 2]),
+                            atof(argv[iarg + 3])),
+                      Vec3s(atof(argv[iarg + 4]), atof(argv[iarg + 5]),
+                            atof(argv[iarg + 6])));
       OUT("Cropping " << aabb.min_.transpose() << " ---- "
                       << aabb.max_.transpose() << " ...");
       o->computeLocalAABB();
@@ -233,14 +231,14 @@ int main(int argc, char** argv) {
     Geometry first = makeGeomFromParam(iarg, argc, argv);
     Geometry second = makeGeomFromParam(iarg, argc, argv);
 
-    Scalar extents[] = {-limit, -limit, -limit, limit, limit, limit};
+    CoalScalar extents[] = {-limit, -limit, -limit, limit, limit, limit};
     generateRandomTransforms(extents, transforms, Ntransform);
     printResultHeaders();
     Results results(Ntransform);
     collide(transforms, first.o.get(), second.o.get(), request, results);
     printResults(first, second, results);
   } else {
-    Scalar extents[] = {-limit, -limit, -limit, limit, limit, limit};
+    CoalScalar extents[] = {-limit, -limit, -limit, limit, limit, limit};
     generateRandomTransforms(extents, transforms, Ntransform);
     boost::filesystem::path path(TEST_RESOURCES_DIR);
 

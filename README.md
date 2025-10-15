@@ -79,6 +79,12 @@ Coal can be installed from the [conda-forge channel](https://anaconda.org/conda-
 conda install coal -c conda-forge
 ```
 
+### Docker
+
+```
+docker run --rm -it ghcr.io/coal-library/coal:devel
+```
+
 ## Build
 
 You can find build instruction [here](./development/build.md).

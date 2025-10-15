@@ -53,29 +53,29 @@ using namespace coal;
 namespace utf = boost::unit_test::framework;
 
 bool verbose = false;
-Scalar DELTA = Scalar(0.001);
+CoalScalar DELTA = 0.001;
 
 template <typename BV>
 void distance_Test(const Transform3s& tf, const std::vector<Vec3s>& vertices1,
-                   const std::vector<Triangle32>& triangles1,
+                   const std::vector<Triangle>& triangles1,
                    const std::vector<Vec3s>& vertices2,
-                   const std::vector<Triangle32>& triangles2,
+                   const std::vector<Triangle>& triangles2,
                    SplitMethodType split_method, unsigned int qsize,
                    DistanceRes& distance_result, bool verbose = true);
 
 bool collide_Test_OBB(const Transform3s& tf,
                       const std::vector<Vec3s>& vertices1,
-                      const std::vector<Triangle32>& triangles1,
+                      const std::vector<Triangle>& triangles1,
                       const std::vector<Vec3s>& vertices2,
-                      const std::vector<Triangle32>& triangles2,
+                      const std::vector<Triangle>& triangles2,
                       SplitMethodType split_method, bool verbose);
 
 template <typename BV, typename TraversalNode>
 void distance_Test_Oriented(const Transform3s& tf,
                             const std::vector<Vec3s>& vertices1,
-                            const std::vector<Triangle32>& triangles1,
+                            const std::vector<Triangle>& triangles1,
                             const std::vector<Vec3s>& vertices2,
-                            const std::vector<Triangle32>& triangles2,
+                            const std::vector<Triangle>& triangles2,
                             SplitMethodType split_method, unsigned int qsize,
                             DistanceRes& distance_result, bool verbose = true);
 
@@ -88,13 +88,13 @@ inline bool nearlyEqual(const Vec3s& a, const Vec3s& b) {
 
 BOOST_AUTO_TEST_CASE(mesh_distance) {
   std::vector<Vec3s> p1, p2;
-  std::vector<Triangle32> t1, t2;
+  std::vector<Triangle> t1, t2;
   boost::filesystem::path path(TEST_RESOURCES_DIR);
   loadOBJFile((path / "env.obj").string().c_str(), p1, t1);
   loadOBJFile((path / "rob.obj").string().c_str(), p2, t2);
 
   std::vector<Transform3s> transforms;  // t0
-  Scalar extents[] = {-3000, -3000, 0, 3000, 3000, 3000};
+  CoalScalar extents[] = {-3000, -3000, 0, 3000, 3000, 3000};
 #ifndef NDEBUG  // if debug mode
   std::size_t n = 1;
 #else
@@ -470,9 +470,9 @@ BOOST_AUTO_TEST_CASE(mesh_distance) {
 template <typename BV, typename TraversalNode>
 void distance_Test_Oriented(const Transform3s& tf,
                             const std::vector<Vec3s>& vertices1,
-                            const std::vector<Triangle32>& triangles1,
+                            const std::vector<Triangle>& triangles1,
                             const std::vector<Vec3s>& vertices2,
-                            const std::vector<Triangle32>& triangles2,
+                            const std::vector<Triangle>& triangles2,
                             SplitMethodType split_method, unsigned int qsize,
                             DistanceRes& distance_result, bool verbose) {
   BVHModel<BV> m1;
@@ -517,9 +517,9 @@ void distance_Test_Oriented(const Transform3s& tf,
 
 template <typename BV>
 void distance_Test(const Transform3s& tf, const std::vector<Vec3s>& vertices1,
-                   const std::vector<Triangle32>& triangles1,
+                   const std::vector<Triangle>& triangles1,
                    const std::vector<Vec3s>& vertices2,
-                   const std::vector<Triangle32>& triangles2,
+                   const std::vector<Triangle>& triangles2,
                    SplitMethodType split_method, unsigned int qsize,
                    DistanceRes& distance_result, bool verbose) {
   BVHModel<BV> m1;
@@ -567,9 +567,9 @@ void distance_Test(const Transform3s& tf, const std::vector<Vec3s>& vertices1,
 
 bool collide_Test_OBB(const Transform3s& tf,
                       const std::vector<Vec3s>& vertices1,
-                      const std::vector<Triangle32>& triangles1,
+                      const std::vector<Triangle>& triangles1,
                       const std::vector<Vec3s>& vertices2,
-                      const std::vector<Triangle32>& triangles2,
+                      const std::vector<Triangle>& triangles2,
                       SplitMethodType split_method, bool verbose) {
   BVHModel<OBB> m1;
   BVHModel<OBB> m2;

@@ -67,7 +67,7 @@ inline OBB merge_largedist(const OBB& b1, const OBB& b2) {
   computeVertices(b2, vertex + 8);
   Matrix3s M;
   Vec3s E[3];
-  Scalar s[3] = {0, 0, 0};
+  CoalScalar s[3] = {0, 0, 0};
 
   // obb axes
   b.axes.col(0).noalias() = (b1.To - b2.To).normalized();
@@ -115,14 +115,14 @@ inline OBB merge_largedist(const OBB& b1, const OBB& b2) {
 inline OBB merge_smalldist(const OBB& b1, const OBB& b2) {
   OBB b;
   b.To = (b1.To + b2.To) * 0.5;
-  Quats q0(b1.axes), q1(b2.axes);
+  Quatf q0(b1.axes), q1(b2.axes);
   if (q0.dot(q1) < 0) q1.coeffs() *= -1;
 
-  Quats q((q0.coeffs() + q1.coeffs()).normalized());
+  Quatf q((q0.coeffs() + q1.coeffs()).normalized());
   b.axes = q.toRotationMatrix();
 
   Vec3s vertex[8], diff;
-  Scalar real_max = (std::numeric_limits<Scalar>::max)();
+  CoalScalar real_max = (std::numeric_limits<CoalScalar>::max)();
   Vec3s pmin(real_max, real_max, real_max);
   Vec3s pmax(-real_max, -real_max, -real_max);
 
@@ -130,7 +130,7 @@ inline OBB merge_smalldist(const OBB& b1, const OBB& b2) {
   for (int i = 0; i < 8; ++i) {
     diff = vertex[i] - b.To;
     for (int j = 0; j < 3; ++j) {
-      Scalar dot = diff.dot(b.axes.col(j));
+      CoalScalar dot = diff.dot(b.axes.col(j));
       if (dot > pmax[j])
         pmax[j] = dot;
       else if (dot < pmin[j])
@@ -142,7 +142,7 @@ inline OBB merge_smalldist(const OBB& b1, const OBB& b2) {
   for (int i = 0; i < 8; ++i) {
     diff = vertex[i] - b.To;
     for (int j = 0; j < 3; ++j) {
-      Scalar dot = diff.dot(b.axes.col(j));
+      CoalScalar dot = diff.dot(b.axes.col(j));
       if (dot > pmax[j])
         pmax[j] = dot;
       else if (dot < pmin[j])
@@ -152,7 +152,7 @@ inline OBB merge_smalldist(const OBB& b1, const OBB& b2) {
 
   for (int j = 0; j < 3; ++j) {
     b.To.noalias() += (b.axes.col(j) * (0.5 * (pmax[j] + pmin[j])));
-    b.extent[j] = Scalar(0.5) * (pmax[j] - pmin[j]);
+    b.extent[j] = 0.5 * (pmax[j] - pmin[j]);
   }
 
   return b;
@@ -160,8 +160,8 @@ inline OBB merge_smalldist(const OBB& b1, const OBB& b2) {
 
 bool obbDisjoint(const Matrix3s& B, const Vec3s& T, const Vec3s& a,
                  const Vec3s& b) {
-  Scalar t, s;
-  const Scalar reps = Scalar(1e-6);
+  CoalScalar t, s;
+  const CoalScalar reps = 1e-6;
 
   Matrix3s Bf(B.array().abs() + reps);
   // Bf += reps;
@@ -286,20 +286,20 @@ bool obbDisjoint(const Matrix3s& B, const Vec3s& T, const Vec3s& a,
 }
 
 namespace internal {
-inline Scalar obbDisjoint_check_A_axis(const Vec3s& T, const Vec3s& a,
-                                       const Vec3s& b, const Matrix3s& Bf) {
+inline CoalScalar obbDisjoint_check_A_axis(const Vec3s& T, const Vec3s& a,
+                                           const Vec3s& b, const Matrix3s& Bf) {
   // |T| - |B| * b - a
   Vec3s AABB_corner(T.cwiseAbs() - a);
   AABB_corner.noalias() -= Bf * b;
-  return AABB_corner.array().max(Scalar(0)).matrix().squaredNorm();
+  return AABB_corner.array().max(CoalScalar(0)).matrix().squaredNorm();
 }
 
-inline Scalar obbDisjoint_check_B_axis(const Matrix3s& B, const Vec3s& T,
-                                       const Vec3s& a, const Vec3s& b,
-                                       const Matrix3s& Bf) {
+inline CoalScalar obbDisjoint_check_B_axis(const Matrix3s& B, const Vec3s& T,
+                                           const Vec3s& a, const Vec3s& b,
+                                           const Matrix3s& Bf) {
   // Bf = |B|
   // | B^T T| - Bf^T * a - b
-  Scalar s, t = 0;
+  CoalScalar s, t = 0;
   s = std::abs(B.col(0).dot(T)) - Bf.col(0).dot(a) - b[0];
   if (s > 0) t += s * s;
   s = std::abs(B.col(1).dot(T)) - Bf.col(1).dot(a) - b[1];
@@ -310,28 +310,27 @@ inline Scalar obbDisjoint_check_B_axis(const Matrix3s& B, const Vec3s& T,
 }
 
 template <int ib, int jb = (ib + 1) % 3, int kb = (ib + 2) % 3>
-struct COAL_LOCAL obbDisjoint_check_Ai_cross_Bi {
-  static inline bool run(int ia, int ja, int ka, const Matrix3s& B,
-                         const Vec3s& T, const Vec3s& a, const Vec3s& b,
-                         const Matrix3s& Bf, const Scalar& breakDistance2,
-                         Scalar& squaredLowerBoundDistance) {
-    Scalar sinus2 = 1 - Bf(ia, ib) * Bf(ia, ib);
-    if (sinus2 < 1e-6) return false;
+struct COAL_LOCAL obbDisjoint_check_Ai_cross_Bi{static inline bool run(
+    int ia, int ja, int ka, const Matrix3s& B, const Vec3s& T, const Vec3s& a,
+    const Vec3s& b, const Matrix3s& Bf, const CoalScalar& breakDistance2,
+    CoalScalar& squaredLowerBoundDistance){CoalScalar sinus2 =
+                                               1 - Bf(ia, ib) * Bf(ia, ib);
+if (sinus2 < 1e-6) return false;
 
-    const Scalar s = T[ka] * B(ja, ib) - T[ja] * B(ka, ib);
+const CoalScalar s = T[ka] * B(ja, ib) - T[ja] * B(ka, ib);
 
-    const Scalar diff = fabs(s) - (a[ja] * Bf(ka, ib) + a[ka] * Bf(ja, ib) +
+const CoalScalar diff = fabs(s) - (a[ja] * Bf(ka, ib) + a[ka] * Bf(ja, ib) +
                                    b[jb] * Bf(ia, kb) + b[kb] * Bf(ia, jb));
-    // We need to divide by the norm || Aia x Bib ||
-    // As ||Aia|| = ||Bib|| = 1, (Aia | Bib)^2  = cosine^2
-    if (diff > 0) {
-      squaredLowerBoundDistance = diff * diff / sinus2;
-      if (squaredLowerBoundDistance > breakDistance2) {
-        return true;
-      }
-    }
-    return false;
-  }  // namespace internal
+// We need to divide by the norm || Aia x Bib ||
+// As ||Aia|| = ||Bib|| = 1, (Aia | Bib)^2  = cosine^2
+if (diff > 0) {
+  squaredLowerBoundDistance = diff * diff / sinus2;
+  if (squaredLowerBoundDistance > breakDistance2) {
+    return true;
+  }
+}
+return false;
+}  // namespace internal
 };  // namespace coal
 }  // namespace internal
 
@@ -344,22 +343,23 @@ struct COAL_LOCAL obbDisjoint_check_Ai_cross_Bi {
 bool obbDisjointAndLowerBoundDistance(const Matrix3s& B, const Vec3s& T,
                                       const Vec3s& a_, const Vec3s& b_,
                                       const CollisionRequest& request,
-                                      Scalar& squaredLowerBoundDistance) {
+                                      CoalScalar& squaredLowerBoundDistance) {
   assert(request.security_margin >
              -2 * (std::min)(a_.minCoeff(), b_.minCoeff()) -
-                 10 * Eigen::NumTraits<Scalar>::epsilon() &&
+                 10 * Eigen::NumTraits<CoalScalar>::epsilon() &&
          "A negative security margin could not be lower than the OBB extent.");
-  //  const Scalar breakDistance(request.break_distance +
+  //  const CoalScalar breakDistance(request.break_distance +
   //                               request.security_margin);
-  const Scalar breakDistance2 = request.break_distance * request.break_distance;
+  const CoalScalar breakDistance2 =
+      request.break_distance * request.break_distance;
 
   Matrix3s Bf(B.cwiseAbs());
   const Vec3s a((a_ + Vec3s::Constant(request.security_margin / 2))
                     .array()
-                    .max(Scalar(0)));
+                    .max(CoalScalar(0)));
   const Vec3s b((b_ + Vec3s::Constant(request.security_margin / 2))
                     .array()
-                    .max(Scalar(0)));
+                    .max(CoalScalar(0)));
 
   // Corner of b axis aligned bounding box the closest to the origin
   squaredLowerBoundDistance = internal::obbDisjoint_check_A_axis(T, a, b, Bf);
@@ -402,7 +402,7 @@ bool OBB::overlap(const OBB& other) const {
 }
 
 bool OBB::overlap(const OBB& other, const CollisionRequest& request,
-                  Scalar& sqrDistLowerBound) const {
+                  CoalScalar& sqrDistLowerBound) const {
   /// compute what transform [R,T] that takes us from cs1 to cs2.
   /// [R,T] = [R1,T1]'[R2,T2] = [R1',-R1'T][R2,T2] = [R1'R2, R1'(T2-T1)]
   /// First compute the rotation part, then translation part
@@ -423,7 +423,7 @@ bool OBB::overlap(const OBB& other, const CollisionRequest& request,
 
 bool OBB::contain(const Vec3s& p) const {
   Vec3s local_p(p - To);
-  Scalar proj = local_p.dot(axes.col(0));
+  CoalScalar proj = local_p.dot(axes.col(0));
   if ((proj > extent[0]) || (proj < -extent[0])) return false;
 
   proj = local_p.dot(axes.col(1));
@@ -447,8 +447,8 @@ OBB& OBB::operator+=(const Vec3s& p) {
 
 OBB OBB::operator+(const OBB& other) const {
   Vec3s center_diff = To - other.To;
-  Scalar max_extent = std::max(std::max(extent[0], extent[1]), extent[2]);
-  Scalar max_extent2 =
+  CoalScalar max_extent = std::max(std::max(extent[0], extent[1]), extent[2]);
+  CoalScalar max_extent2 =
       std::max(std::max(other.extent[0], other.extent[1]), other.extent[2]);
   if (center_diff.norm() > 2 * (max_extent + max_extent2)) {
     return merge_largedist(*this, other);
@@ -457,7 +457,8 @@ OBB OBB::operator+(const OBB& other) const {
   }
 }
 
-Scalar OBB::distance(const OBB& /*other*/, Vec3s* /*P*/, Vec3s* /*Q*/) const {
+CoalScalar OBB::distance(const OBB& /*other*/, Vec3s* /*P*/,
+                         Vec3s* /*Q*/) const {
   std::cerr << "OBB distance not implemented!" << std::endl;
   return 0.0;
 }
@@ -472,7 +473,7 @@ bool overlap(const Matrix3s& R0, const Vec3s& T0, const OBB& b1,
 }
 
 bool overlap(const Matrix3s& R0, const Vec3s& T0, const OBB& b1, const OBB& b2,
-             const CollisionRequest& request, Scalar& sqrDistLowerBound) {
+             const CollisionRequest& request, CoalScalar& sqrDistLowerBound) {
   Vec3s Ttemp(R0.transpose() * (b2.To - T0) - b1.To);
   Vec3s T(b1.axes.transpose() * Ttemp);
   Matrix3s R(b1.axes.transpose() * R0.transpose() * b2.axes);

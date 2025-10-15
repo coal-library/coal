@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(test_collision_data) {
   CollisionResult collision_result;
   collision_result.addContact(contact);
   collision_result.addContact(contact);
-  collision_result.distance_lower_bound = Scalar(0.1);
+  collision_result.distance_lower_bound = 0.1;
   collision_result.normal.setOnes();
   collision_result.nearest_points[0].setRandom();
   collision_result.nearest_points[1].setRandom();
@@ -282,14 +282,14 @@ BOOST_AUTO_TEST_CASE(test_collision_data) {
   {
     // Serializing contact patches.
     const Halfspace hspace(0, 0, 1, 0);
-    const Scalar radius = 0.25;
-    const Scalar height = 1.;
+    const CoalScalar radius = 0.25;
+    const CoalScalar height = 1.;
     const Cylinder cylinder(radius, height);
 
     const Transform3s tf1;
     Transform3s tf2;
     // set translation to have a collision
-    const Scalar offset = Scalar(0.001);
+    const CoalScalar offset = 0.001;
     tf2.setTranslation(Vec3s(0, 0, height / 2 - offset));
 
     const size_t num_max_contact = 1;
@@ -327,7 +327,7 @@ void checkEqualStdVector(const std::vector<T>& v1, const std::vector<T>& v2) {
 
 BOOST_AUTO_TEST_CASE(test_BVHModel) {
   std::vector<Vec3s> p1, p2;
-  std::vector<Triangle32> t1, t2;
+  std::vector<Triangle> t1, t2;
   boost::filesystem::path path(TEST_RESOURCES_DIR);
 
   loadOBJFile((path / "env.obj").string().c_str(), p1, t1);
@@ -368,7 +368,7 @@ BOOST_AUTO_TEST_CASE(test_BVHModel) {
 #ifdef COAL_HAS_QHULL
 BOOST_AUTO_TEST_CASE(test_Convex) {
   std::vector<Vec3s> p1;
-  std::vector<Triangle32> t1;
+  std::vector<Triangle> t1;
   boost::filesystem::path path(TEST_RESOURCES_DIR);
 
   loadOBJFile((path / "env.obj").string().c_str(), p1, t1);
@@ -381,12 +381,11 @@ BOOST_AUTO_TEST_CASE(test_Convex) {
 
   m1.buildConvexHull(true);
 
-  ConvexTpl<Triangle32>& convex =
-      static_cast<ConvexTpl<Triangle32>&>(*m1.convex.get());
+  Convex<Triangle>& convex = static_cast<Convex<Triangle>&>(*m1.convex.get());
 
   // Test Convex
   {
-    ConvexTpl<Triangle32> convex_copy;
+    Convex<Triangle> convex_copy;
     test_serialization(convex, convex_copy);
   }
 
@@ -398,29 +397,28 @@ BOOST_AUTO_TEST_CASE(test_Convex) {
     // const boost::filesystem::path txt_filename = tmp_dir / "file.txt";
     // const boost::filesystem::path bin_filename = tmp_dir / "file.bin";
     const boost::filesystem::path xml_filename = tmp_dir / "file.xml";
-    ConvexTpl<Triangle32> convex_copy;
+    Convex<Triangle> convex_copy;
 
     std::shared_ptr<CollisionGeometry> ptr =
-        std::make_shared<ConvexTpl<Triangle32>>(convex);
+        std::make_shared<Convex<Triangle>>(convex);
     BOOST_CHECK(ptr.get());
     const std::string filename = xml_filename.string();
     const std::string tag_name = "CollisionGeometry";
     coal::serialization::saveToXML(ptr, filename, tag_name);
-    BOOST_CHECK(
-        check(*reinterpret_cast<ConvexTpl<Triangle32>*>(ptr.get()), convex));
+    BOOST_CHECK(check(*reinterpret_cast<Convex<Triangle>*>(ptr.get()), convex));
 
     std::shared_ptr<CollisionGeometry> other_ptr = nullptr;
     BOOST_CHECK(!other_ptr.get());
     coal::serialization::loadFromXML(other_ptr, filename, tag_name);
-    BOOST_CHECK(check(
-        convex, *reinterpret_cast<ConvexTpl<Triangle32>*>(other_ptr.get())));
+    BOOST_CHECK(
+        check(convex, *reinterpret_cast<Convex<Triangle>*>(other_ptr.get())));
   }
 }
 #endif
 
 BOOST_AUTO_TEST_CASE(test_HeightField) {
-  const Scalar min_altitude = -1.;
-  const Scalar x_dim = 1., y_dim = 2.;
+  const CoalScalar min_altitude = -1.;
+  const CoalScalar x_dim = 1., y_dim = 2.;
   const Eigen::DenseIndex nx = 100, ny = 200;
   const MatrixXs heights = MatrixXs::Random(ny, nx);
 
@@ -511,7 +509,7 @@ BOOST_AUTO_TEST_CASE(test_shapes) {
     test_serialization(plane, plane_copy);
   }
 
-#ifdef COAL_HAS_QHULL
+#ifdef HPP_FCL_HAS_QHULL
   {
     const size_t num_points = 500;
     std::shared_ptr<std::vector<Vec3s>> points =
@@ -520,9 +518,9 @@ BOOST_AUTO_TEST_CASE(test_shapes) {
     for (size_t i = 0; i < num_points; i++) {
       points->emplace_back(Vec3s::Random());
     }
-    using Convex = ConvexTpl<Triangle32>;
+    using Convex = Convex<Triangle>;
     std::unique_ptr<Convex> convex =
-        std::unique_ptr<Convex>(static_cast<Convex*>(ConvexBase32::convexHull(
+        std::unique_ptr<Convex>(static_cast<Convex*>(ConvexBase::convexHull(
             points, static_cast<unsigned int>(points->size()), true)));
     convex->setSweptSphereRadius(1.);
     convex->computeLocalAABB();
@@ -535,7 +533,7 @@ BOOST_AUTO_TEST_CASE(test_shapes) {
 
 #ifdef COAL_HAS_OCTOMAP
 BOOST_AUTO_TEST_CASE(test_octree) {
-  const Scalar resolution = Scalar(1e-2);
+  const CoalScalar resolution = 1e-2;
   const MatrixX3s points = MatrixX3s::Random(1000, 3);
   OcTreePtr_t octree_ptr = makeOctree(points, resolution);
   const OcTree& octree = *octree_ptr.get();
@@ -577,7 +575,7 @@ BOOST_AUTO_TEST_CASE(test_memory_footprint) {
   BOOST_CHECK(sizeof(Sphere) == computeMemoryFootprint(sphere));
 
   std::vector<Vec3s> p1;
-  std::vector<Triangle32> t1;
+  std::vector<Triangle> t1;
   boost::filesystem::path path(TEST_RESOURCES_DIR);
 
   loadOBJFile((path / "env.obj").string().c_str(), p1, t1);

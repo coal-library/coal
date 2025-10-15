@@ -40,7 +40,7 @@
 #include "coal/distance_func_matrix.h"
 #include "coal/narrowphase/narrowphase.h"
 
-#include "coal/tracy.hh"
+#include <iostream>
 
 namespace coal {
 
@@ -49,17 +49,16 @@ DistanceFunctionMatrix& getDistanceFunctionLookTable() {
   return table;
 }
 
-Scalar distance(const CollisionObject* o1, const CollisionObject* o2,
-                const DistanceRequest& request, DistanceResult& result) {
+CoalScalar distance(const CollisionObject* o1, const CollisionObject* o2,
+                    const DistanceRequest& request, DistanceResult& result) {
   return distance(o1->collisionGeometryPtr(), o1->getTransform(),
                   o2->collisionGeometryPtr(), o2->getTransform(), request,
                   result);
 }
 
-Scalar distance(const CollisionGeometry* o1, const Transform3s& tf1,
-                const CollisionGeometry* o2, const Transform3s& tf2,
-                const DistanceRequest& request, DistanceResult& result) {
-  COAL_TRACY_ZONE_SCOPED_N("coal::distance");
+CoalScalar distance(const CollisionGeometry* o1, const Transform3s& tf1,
+                    const CollisionGeometry* o2, const Transform3s& tf2,
+                    const DistanceRequest& request, DistanceResult& result) {
   GJKSolver solver(request);
 
   const DistanceFunctionMatrix& looktable = getDistanceFunctionLookTable();
@@ -69,7 +68,7 @@ Scalar distance(const CollisionGeometry* o1, const Transform3s& tf1,
   OBJECT_TYPE object_type2 = o2->getObjectType();
   NODE_TYPE node_type2 = o2->getNodeType();
 
-  Scalar res = (std::numeric_limits<Scalar>::max)();
+  CoalScalar res = (std::numeric_limits<CoalScalar>::max)();
 
   if (object_type1 == OT_GEOM &&
       (object_type2 == OT_BVH || object_type2 == OT_HFIELD)) {
@@ -136,11 +135,10 @@ ComputeDistance::ComputeDistance(const CollisionGeometry* o1,
     func = looktable.distance_matrix[node_type1][node_type2];
 }
 
-Scalar ComputeDistance::run(const Transform3s& tf1, const Transform3s& tf2,
-                            const DistanceRequest& request,
-                            DistanceResult& result) const {
-  COAL_TRACY_ZONE_SCOPED_N("coal::ComputeDistance::run");
-  Scalar res;
+CoalScalar ComputeDistance::run(const Transform3s& tf1, const Transform3s& tf2,
+                                const DistanceRequest& request,
+                                DistanceResult& result) const {
+  CoalScalar res;
 
   if (swap_geoms) {
     res = func(o2, tf2, o1, tf1, &solver, request, result);
@@ -158,13 +156,13 @@ Scalar ComputeDistance::run(const Transform3s& tf1, const Transform3s& tf2,
   return res;
 }
 
-Scalar ComputeDistance::operator()(const Transform3s& tf1,
-                                   const Transform3s& tf2,
-                                   const DistanceRequest& request,
-                                   DistanceResult& result) const {
+CoalScalar ComputeDistance::operator()(const Transform3s& tf1,
+                                       const Transform3s& tf2,
+                                       const DistanceRequest& request,
+                                       DistanceResult& result) const {
   solver.set(request);
 
-  Scalar res;
+  CoalScalar res;
   if (request.enable_timings) {
     Timer timer;
     res = run(tf1, tf2, request, result);
