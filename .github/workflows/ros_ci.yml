@@ -35,6 +35,7 @@ jobs:
         env:
           - {ROS_DISTRO: humble}
           - {ROS_DISTRO: jazzy}
+          - {ROS_DISTRO: kilted}
           - {ROS_DISTRO: rolling}
     env:
       #CCACHE_DIR: /github/home/.ccache # Enable ccache
