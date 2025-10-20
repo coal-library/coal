@@ -149,24 +149,24 @@ if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
 endif()
 
 if(UNIX)
-  GET_RELATIVE_RPATH(${CMAKE_INSTALL_LIBDIR} ${PROJECT_NAME}_INSTALL_RPATH)
+  get_relative_rpath(${CMAKE_INSTALL_LIBDIR} ${PROJECT_NAME}_INSTALL_RPATH)
   set_target_properties(
     ${PROJECT_NAME}
     PROPERTIES INSTALL_RPATH "${${PROJECT_NAME}_INSTALL_RPATH}"
   )
 endif()
 
-CXX_FLAGS_BY_COMPILER_FRONTEND(MSVC "/bigobj" OUTPUT PUBLIC_OPTIONS FILTER)
+cxx_flags_by_compiler_frontend(MSVC "/bigobj" OUTPUT PUBLIC_OPTIONS FILTER)
 target_compile_options(${PROJECT_NAME} PUBLIC ${PUBLIC_OPTIONS})
 
-CXX_FLAGS_BY_COMPILER_FRONTEND(MSVC "NOMINMAX" OUTPUT PUBLIC_DEFINITIONS)
+cxx_flags_by_compiler_frontend(MSVC "NOMINMAX" OUTPUT PUBLIC_DEFINITIONS)
 target_compile_definitions(${PROJECT_NAME} INTERFACE ${PUBLIC_DEFINITIONS})
 
 # IDE sources and headers sorting
-ADD_SOURCE_GROUP(${LIBRARY_NAME}_SOURCES)
-ADD_HEADER_GROUP(PROJECT_HEADERS_FULL_PATH)
+add_source_group(${LIBRARY_NAME}_SOURCES)
+add_header_group(PROJECT_HEADERS_FULL_PATH)
 
-MODERNIZE_TARGET_LINK_LIBRARIES(
+modernize_target_link_libraries(
   ${LIBRARY_NAME}
   SCOPE PRIVATE
   TARGETS assimp::assimp
@@ -216,7 +216,7 @@ if(COAL_HAS_QHULL)
   target_link_libraries(${LIBRARY_NAME} PRIVATE Qhull::qhull_r Qhull::qhullcpp)
 endif()
 
-MODERNIZE_TARGET_LINK_LIBRARIES(
+modernize_target_link_libraries(
   ${PROJECT_NAME}
   SCOPE PUBLIC
   TARGETS Eigen3::Eigen
@@ -232,7 +232,7 @@ target_include_directories(
 )
 
 if(octomap_FOUND)
-  MODERNIZE_TARGET_LINK_LIBRARIES(
+  modernize_target_link_libraries(
     ${PROJECT_NAME}
     SCOPE PUBLIC
     TARGETS octomap
