@@ -110,6 +110,25 @@ void exposeMaths() {
       .def(dv::init<Transform3s, const Vec3s&>())
       .def(dv::init<Transform3s, const Transform3s&>())
 
+      .add_property(
+          "translation",
+          bp::make_function(
+              +[](Transform3s& self) -> Vec3s& { return self.translation(); },
+              bp::return_internal_reference<>()),
+          bp::make_function(+[](Transform3s& self, const Vec3s& t) -> void {
+            self.translation() = t;
+          }),
+          doxygen::class_attrib_doc<Transform3s>("translation"))
+      .add_property(
+          "rotation",
+          bp::make_function(
+              +[](Transform3s& self) -> Matrix3s& { return self.rotation(); },
+              bp::return_internal_reference<>()),
+          bp::make_function(+[](Transform3s& self, const Matrix3s& R) -> void {
+            self.rotation() = R;
+          }),
+          doxygen::class_attrib_doc<Transform3s>("rotation"))
+
       .def(dv::member_func("getQuatRotation", &Transform3s::getQuatRotation))
       .def("getTranslation", &Transform3s::getTranslation,
            doxygen::member_func_doc(&Transform3s::getTranslation),
@@ -119,7 +138,7 @@ void exposeMaths() {
       .def("isIdentity", &Transform3s::isIdentity,
            (bp::arg("self"),
             bp::arg("prec") = Eigen::NumTraits<Scalar>::dummy_precision()),
-           doxygen::member_func_doc(&Transform3s::getTranslation))
+           doxygen::member_func_doc(&Transform3s::isIdentity))
 
       .def(dv::member_func("setQuatRotation", &Transform3s::setQuatRotation))
       .def("setTranslation", &Transform3s::setTranslation<Vec3s>)

@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Correctly calculate AABB for pruned octrees ([#741](https://github.com/coal-library/coal/pull/741))
 - Fix contact counting in octree collision detection with ShapeShapeCollide ([#746](https://github.com/coal-library/coal/pull/746))
 - Fix sqrDistLowerBound in octree traversal with height field ([#753](https://github.com/coal-library/coal/pull/753))
+- Fix contact patch computation by enforcing CCW construction of support sets ([#772](https://github.com/coal-library/coal/pull/772))
 
 ### Changed
 

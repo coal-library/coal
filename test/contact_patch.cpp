@@ -570,6 +570,74 @@ BOOST_AUTO_TEST_CASE(halfspace_cylinder) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(cylinder_box) {
+  const Scalar radius = Scalar(0.25);
+  const Scalar length = Scalar(1.0);
+  const Cylinder cylinder(radius, length);
+  Transform3s tf_cylinder;
+  tf_cylinder.setIdentity();
+  const Scalar penetration = -Scalar(0.02);
+  tf_cylinder.translation() = Vec3s(0, 0, cylinder.halfLength + penetration);
+
+  const Scalar halfside = 0.5;
+  const Box box(2 * halfside * Vec3s::Ones());
+  const Transform3s tf_box;
+
+  const CollisionRequest col_req;
+  CollisionResult col_res;
+  coal::collide(&cylinder, tf_cylinder, &box, tf_box, col_req, col_res);
+
+  BOOST_REQUIRE(col_res.isCollision());
+
+  const ContactPatchRequest patch_req(col_req);
+  ContactPatchResult patch_res(patch_req);
+  coal::computeContactPatch(&cylinder, tf_cylinder, &box, tf_box, col_res,
+                            patch_req, patch_res);
+
+  // The cylinder lower circle is parallel and touching the box's upper face.
+  // The radius of the cylinder is smaller than the halfside of the box.
+  // Thus there should be ContactPatch::default_preallocated_size points in the
+  // contact patch.
+  BOOST_REQUIRE_EQUAL(patch_res.numContactPatches(), 1);
+  const ContactPatch& patch = patch_res.getContactPatch(0);
+  BOOST_REQUIRE_GE(patch.size(), static_cast<size_t>(
+                                     ContactPatch::default_preallocated_size));
+}
+
+BOOST_AUTO_TEST_CASE(cylinder_convex) {
+  const Scalar radius = Scalar(0.25);
+  const Scalar length = Scalar(1.0);
+  const Cylinder cylinder(radius, length);
+  Transform3s tf_cylinder;
+  tf_cylinder.setIdentity();
+  const Scalar penetration = -Scalar(0.02);
+  tf_cylinder.translation() = Vec3s(0, 0, cylinder.halfLength + penetration);
+
+  const Scalar halfside = 0.5;
+  const ConvexTpl<Quadrilateral32> box = buildBox(halfside, halfside, halfside);
+  const Transform3s tf_box;
+
+  const CollisionRequest col_req;
+  CollisionResult col_res;
+  coal::collide(&cylinder, tf_cylinder, &box, tf_box, col_req, col_res);
+
+  BOOST_REQUIRE(col_res.isCollision());
+
+  const ContactPatchRequest patch_req(col_req);
+  ContactPatchResult patch_res(patch_req);
+  coal::computeContactPatch(&cylinder, tf_cylinder, &box, tf_box, col_res,
+                            patch_req, patch_res);
+
+  // The cylinder lower circle is parallel and touching the box's upper face.
+  // The radius of the cylinder is smaller than the halfside of the box.
+  // Thus there should be ContactPatch::default_preallocated_size points in the
+  // contact patch.
+  BOOST_REQUIRE_EQUAL(patch_res.numContactPatches(), 1);
+  const ContactPatch& patch = patch_res.getContactPatch(0);
+  BOOST_REQUIRE_GE(patch.size(), static_cast<size_t>(
+                                     ContactPatch::default_preallocated_size));
+}
+
 BOOST_AUTO_TEST_CASE(convex_convex) {
   const Scalar halfside = 0.5;
   const ConvexTpl<Quadrilateral32> box1(buildBox(halfside, halfside, halfside));
