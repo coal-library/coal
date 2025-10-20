@@ -38,6 +38,7 @@ set(
   collision.cpp
   contact_patch.cpp
   contact_patch/contact_patch_solver.cpp
+  contact_patch/contact_patch_simplifier.cpp
   contact_patch_func_matrix.cpp
   distance_func_matrix.cpp
   collision_data.cpp
