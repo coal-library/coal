@@ -37,6 +37,8 @@
 #ifndef COAL_CONTACT_PATCH_SOLVER_HXX
 #define COAL_CONTACT_PATCH_SOLVER_HXX
 
+#include <algorithm>
+
 #include "coal/data_types.h"
 #include "coal/shape/geometric_shapes_traits.h"
 
@@ -122,6 +124,27 @@ void ContactPatchSolver::computePatch(const ShapeType1& s1,
                           this->supports_data[1],
                           this->num_samples_curved_shapes,
                           this->patch_tolerance);
+
+  const auto enforce_ccw_orientation = [](SupportSet& support_set) {
+    auto& polygon = support_set.points();
+    if (polygon.size() < 3) {
+      return;
+    }
+
+    Scalar twice_area = Scalar(0);
+    for (size_t i = 0; i < polygon.size(); ++i) {
+      const Vec2s& p = polygon[i];
+      const Vec2s& q = polygon[(i + 1) % polygon.size()];
+      twice_area += p(0) * q(1) - q(0) * p(1);
+    }
+
+    if (twice_area < Scalar(0)) {
+      std::reverse(polygon.begin(), polygon.end());
+    }
+  };
+
+  enforce_ccw_orientation(this->support_set_shape1);
+  enforce_ccw_orientation(this->support_set_shape2);
 
   // We can immediatly return if one of the support set has only
   // one point.
