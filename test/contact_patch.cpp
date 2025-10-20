@@ -225,6 +225,84 @@ BOOST_AUTO_TEST_CASE(halfspace_box) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(cylinder_plane_simplification) {
+  const Scalar radius = Scalar(0.25);
+  const Scalar length = Scalar(1.0);
+  const Cylinder cylinder(radius, length);
+  const Halfspace plane(Vec3s(0, 0, 1), Scalar(0));
+
+  Transform3s tf_cylinder;
+  tf_cylinder.setIdentity();
+  const Scalar penetration = -Scalar(0.02);
+  tf_cylinder.translation() = Vec3s(0, 0, cylinder.halfLength + penetration);
+
+  const Transform3s tf_plane;
+
+  const CollisionRequest col_req;
+  CollisionResult col_res;
+  coal::collide(&cylinder, tf_cylinder, &plane, tf_plane, col_req, col_res);
+
+  BOOST_REQUIRE(col_res.isCollision());
+
+  const ContactPatchRequest patch_req(col_req);
+  ContactPatchResult patch_res(patch_req);
+  coal::computeContactPatch(&cylinder, tf_cylinder, &plane, tf_plane, col_res,
+                            patch_req, patch_res);
+
+  BOOST_REQUIRE_EQUAL(patch_res.numContactPatches(), 1);
+  const ContactPatch& patch = patch_res.getContactPatch(0);
+  BOOST_REQUIRE_GE(patch.size(), static_cast<size_t>(6));
+
+  const Scalar tol = Scalar(1e-8);
+  BOOST_CHECK(
+      patch.tf.translation().isApprox(Vec3s(0, 0, penetration / 2), tol));
+  BOOST_CHECK_SMALL(std::abs(patch.penetration_depth - penetration), tol);
+
+  const auto point_subset_check = [&](const ContactPatch& reduced,
+                                      const size_t target) {
+    BOOST_CHECK_EQUAL(reduced.size(), target);
+    BOOST_CHECK(reduced.tf.translation().isApprox(patch.tf.translation(), tol));
+    BOOST_CHECK(reduced.tf.rotation().isApprox(patch.tf.rotation(), tol));
+    BOOST_CHECK_SMALL(
+        std::abs(reduced.penetration_depth - patch.penetration_depth), tol);
+
+    for (size_t i = 0; i < reduced.size(); ++i) {
+      bool found = false;
+      for (size_t j = 0; j < patch.size(); ++j) {
+        if (reduced.point(i).isApprox(patch.point(j), tol)) {
+          found = true;
+          break;
+        }
+      }
+      BOOST_CHECK(found);
+    }
+  };
+
+  ContactPatchSimplifierGreedy greedy;
+  ContactPatch greedy_out(patch.size());
+  greedy.compute(patch, 4, greedy_out);
+  point_subset_check(greedy_out, 4);
+
+  greedy.compute(patch, 3, greedy_out);
+  point_subset_check(greedy_out, 3);
+
+  ContactPatch patch_inplace = patch;
+  greedy.simplify(patch_inplace, 4);
+  point_subset_check(patch_inplace, 4);
+
+  ContactPatchSimplifierMaxArea max_area;
+  ContactPatch max_out(patch.size());
+  max_area.compute(patch, 4, max_out);
+  point_subset_check(max_out, 4);
+
+  max_area.compute(patch, 2, max_out);
+  point_subset_check(max_out, 2);
+
+  ContactPatch max_inplace = patch;
+  max_area.simplify(max_inplace, 3);
+  point_subset_check(max_inplace, 3);
+}
+
 BOOST_AUTO_TEST_CASE(halfspace_capsule) {
   const Halfspace hspace(0, 0, 1, 0);
   const Scalar radius = Scalar(0.25);
