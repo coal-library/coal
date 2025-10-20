@@ -119,7 +119,7 @@ void exposeMaths() {
       .def("isIdentity", &Transform3s::isIdentity,
            (bp::arg("self"),
             bp::arg("prec") = Eigen::NumTraits<Scalar>::dummy_precision()),
-           doxygen::member_func_doc(&Transform3s::getTranslation))
+           doxygen::member_func_doc(&Transform3s::isIdentity))
 
       .def(dv::member_func("setQuatRotation", &Transform3s::setQuatRotation))
       .def("setTranslation", &Transform3s::setTranslation<Vec3s>)
