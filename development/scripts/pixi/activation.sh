@@ -12,11 +12,17 @@ unset LDFLAGS
 
 if [[ $host_alias == *"apple"* ]];
 then
+  # Conda compilers look automatically inside this directory but clangd is unaware of it
+  # without this flag
+  export CXXFLAGS="-isystem $CONDA_PREFIX/include"
   # On OSX setting the rpath and -L it's important to use the conda libc++ instead of the system one.
   # If conda-forge use install_name_tool to package some libs, -headerpad_max_install_names is then mandatory
   export LDFLAGS="-Wl,-headerpad_max_install_names -Wl,-rpath,$CONDA_PREFIX/lib -L$CONDA_PREFIX/lib"
 elif [[ $host_alias == *"linux"* ]];
 then
+  # Conda compilers look automatically inside this directory but clangd is unaware of it
+  # without this flag
+  export CXXFLAGS="-isystem $CONDA_PREFIX/include"
   # On GNU/Linux, I don't know if these flags are mandatory with g++ but
   # it allow to use clang++ as compiler
   export LDFLAGS="-Wl,-rpath,$CONDA_PREFIX/lib -Wl,-rpath-link,$CONDA_PREFIX/lib -L$CONDA_PREFIX/lib"
@@ -39,3 +45,4 @@ export COAL_BUILD_TYPE=${COAL_BUILD_TYPE:=Release}
 export COAL_PYTHON_STUBS=${COAL_PYTHON_STUBS:=ON}
 export COAL_PYTHON_NANOBIND=${COAL_PYTHON_NANOBIND:=ON}
 export COAL_HAS_QHULL=${COAL_HAS_QHULL:=OFF}
+export COAL_BUILD_BENCHMARK=${COAL_BUILD_BENCHMARK:=OFF}
