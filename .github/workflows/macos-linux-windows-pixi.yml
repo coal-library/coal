@@ -54,6 +54,10 @@ jobs:
             cxx_options: ''
             build_type: Release
           - os: windows-latest
+            environment: all-boost-python
+            cxx_options: ''
+            build_type: Release
+          - os: windows-latest
             environment: all-clang-cl
             cxx_options: ''
             build_type: Release
