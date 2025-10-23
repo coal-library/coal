@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added a second set of Python bindings based on nanobind ([#659](https://github.com/coal-library/coal/pull/659))
 - ROS: jrl_cmakemodules dependency + kilted CI ([#769](https://github.com/coal-library/coal/pull/769))
 - Added `SUFFIX_SO_VERSION` CMake option, default `OFF` ([#770](https://github.com/coal-library/coal/pull/770))
+- Add pixi-build support ([#774](https://github.com/coal-library/coal/pull/774))
 
 ### Removed
 - Remove direct dependency to ([#744](https://github.com/coal-library/coal/pull/744)):
@@ -25,9 +26,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix contact counting in octree collision detection with ShapeShapeCollide ([#746](https://github.com/coal-library/coal/pull/746))
 - Fix sqrDistLowerBound in octree traversal with height field ([#753](https://github.com/coal-library/coal/pull/753))
 - Fix contact patch computation by enforcing CCW construction of support sets ([#772](https://github.com/coal-library/coal/pull/772))
+- Remove pixi 0.57 warnings ([#774](https://github.com/coal-library/coal/pull/774))
 
 ### Changed
-
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))
   - Rename `CoalScalar` to `Scalar`
   - Add option to switch between (default) double precision and float precision
@@ -44,6 +45,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Introducing `Convex16` and `Convex32` to store neighbors and polygons indices as `uint16` or `uint32` ([#682](https://github.com/coal-library/coal/pull/682), [#716](https://github.com/coal-library/coal/pull/716)).
   - Along with #665, this allows to divide by two the memory footprint of `Convex`.
 - Fixed a bug in DynamicAABBTree broadphase that missed aabb overlaps when multiple planes/halfspaces are used in a scene.
+- Python version update ([#774](https://github.com/coal-library/coal/pull/774)):
+  - Project is now tested with Python 3.10 and 3.14
+  - Python 3.10 is the minimal supported Python version
 
 ## [3.0.2] - 2025-09-29
 
