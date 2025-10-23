@@ -7,7 +7,7 @@ channels = ["conda-forge"]
 license = "BSD-3-Clause"
 license-file = "LICENSE"
 
-[build-dependencies]
+[dependencies]
 ccache = ">=4.9.1"
 cmake = ">=3.15"
 cxx-compiler = ">=1.7.0"
@@ -15,14 +15,11 @@ ninja = ">=1.11"
 pkg-config = ">=0.29.2"
 git = ">=2.47.0"
 nanobind = ">=2.5.0,<3"
-
-[dependencies]
 libboost-devel = ">=1.80.0"
 eigen = ">=3.4.0"
 assimp = ">=5.4"
 numpy = ">=1.22.0"
 python = ">=3.9.0"
-# XML generation seem to be broken in some doxygen version
 doxygen = ">=1.8"
 lxml = ">=5.3"
 pylatexenc = ">=2.10"
