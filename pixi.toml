@@ -25,11 +25,21 @@ lxml = ">=5.3"
 pylatexenc = ">=2.10"
 nanoeigenpy = ">=0.3.0"
 
-[activation]
+[target.unix.activation]
 scripts = ["development/scripts/pixi/activation.sh"]
 
 [target.win-64.activation]
 scripts = ["development/scripts/pixi/activation.bat"]
+
+[activation.env]
+# Setup ccache
+CMAKE_CXX_COMPILER_LAUNCHER = "ccache"
+# Create compile_commands.json for language server
+CMAKE_EXPORT_COMPILE_COMMANDS = "ON"
+# Activate color output with Ninja
+CMAKE_COLOR_DIAGNOSTICS = "ON"
+# Help ccache manage generated files and PCH (https://ccache.dev/manual/latest.html#_precompiled_headers)
+CCACHE_SLOPPINESS = "include_file_ctime,include_file_mtime,pch_defines,time_macros"
 
 [tasks]
 # We must avoid to set CMAKE_CXX_FLAGS because of WIN32
@@ -65,7 +75,7 @@ tasks = { lint = { cmd = "pre-commit run --all" } }
 tomlkit = ">=0.13.2"
 
 [feature.new-version.tasks]
-configure_new_version = { cmd = [
+configure-new-version = { cmd = [
   "CXXFLAGS=$COAL_CXX_FLAGS",
   "cmake",
   "-G",
@@ -74,13 +84,15 @@ configure_new_version = { cmd = [
   "build_new_version",
   "-S",
   ".",
+  "-DPython_EXECUTABLE=$PYTHON_EXECUTABLE",
   "-DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX",
   "-DCMAKE_BUILD_TYPE=$COAL_BUILD_TYPE",
   "-DGENERATE_PYTHON_STUBS=ON",
   "-DCOAL_HAS_QHULL=ON",
+  "-DCOAL_PYTHON_NANOBIND=$COAL_PYTHON_NANOBIND",
 ] }
-release_new_version = { cmd = "VERSION=$COAL_VERSION cmake --build build_new_version --target release", depends-on = [
-  "configure_new_version",
+release-new-version = { cmd = "VERSION=$COAL_VERSION cmake --build build_new_version --target release", depends-on = [
+  "configure-new-version",
 ] }
 
 # QHull support
@@ -108,19 +120,16 @@ python = "3.10.*"
 # nanobind need typing_extensions on Python <3.11
 typing_extensions = ">=4.13.2"
 
-# Use clang-cl on Windows.
-# We must use scripts instead of env to setup CC and CXX
-# to avoid cxx-compiler to overwrite them.
+# Use clang-cl on Windows
 [feature.clang-cl]
 platforms = ["win-64"]
-activation = { scripts = ["development/scripts/pixi/activation_clang_cl.bat"] }
+activation = { env = { CC = "clang-cl", CXX = "clang-cl" } }
+dependencies = { clangxx = "*" }
 
-# Use clang on GNU/Linux.
-# We must use scripts instead of env to setup CC and CXX
-# to avoid cxx-compiler to overwrite them.
+# Use clang on GNU/Linux
 [feature.clang]
 platforms = ["linux-64"]
-activation = { scripts = ["development/scripts/pixi/activation_clang.sh"] }
+activation = { env = { CC = "clang", CXX = "clang++" } }
 dependencies = { clangxx = "*" }
 
 [environments]
