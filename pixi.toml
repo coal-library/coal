@@ -104,11 +104,12 @@ activation.env = { COAL_PYTHON_NANOBIND = "OFF" }
 dependencies = { octomap = ">=1.10" }
 
 [feature.python-latest.dependencies]
-python = "3.13.*"
+python = "3.14.*"
 
 [feature.python-oldest.dependencies]
-python = "3.9.*"
-typing_extensions = ">=4.13.2,<5"
+python = "3.10.*"
+# nanobind need typing_extensions on Python <3.11
+typing_extensions = ">=4.13.2"
 
 # Use clang-cl on Windows.
 # We must use scripts instead of env to setup CC and CXX
@@ -146,7 +147,7 @@ all-boost-python = { features = [
   "octomap",
   "python-latest",
   "boost-python",
-]}
+] }
 all-python-oldest = { features = [
   "qhull",
   "octomap",
