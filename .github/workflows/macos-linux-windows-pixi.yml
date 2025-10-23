@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   coal-pixi:
-    name: ${{ matrix.os }} - Env ${{ matrix.environment }} ${{ matrix.build_type }} ${{ matrix.cxx_options }}
+    name: Standard - ${{ matrix.os }} - Env ${{ matrix.environment }} ${{ matrix.build_type }} ${{ matrix.cxx_options }}
     runs-on: ${{ matrix.os }}
     env:
       CCACHE_BASEDIR: "${GITHUB_WORKSPACE}"
@@ -91,12 +91,40 @@ jobs:
       run: |
         pixi run -e ${{ matrix.environment }} ctest --test-dir build --output-on-failure
 
-    # Following steps will modify the pixi environment
+  coal-python-standalone-pixi:
+    name: Python standalone - ${{ matrix.os }} - Env ${{ matrix.environment }}
+    runs-on: ${{ matrix.os }}
+    env:
+      CCACHE_BASEDIR: "${GITHUB_WORKSPACE}"
+      CCACHE_DIR: "${GITHUB_WORKSPACE}/.ccache"
+      CCACHE_COMPRESS: true
+      CCACHE_COMPRESSLEVEL: 6
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, macos-15-intel, windows-latest]
+        environment: [all, all-boost-python]
+
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        submodules: recursive
+
+    - uses: actions/cache@v4
+      with:
+        path: .ccache
+        key: ccache-python-standalone-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.environment }}-${{ github.sha }}
+        restore-keys: ccache-python-standalone-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.environment }}-
+
+    - uses: prefix-dev/setup-pixi@v0.9.1
+      with:
+        cache: true
+        environments: ${{ matrix.environment }}
+
     - name: Build Coal cpp [MacOS/Linux/Windows]
       env:
         CMAKE_BUILD_PARALLEL_LEVEL: 2
-        COAL_BUILD_TYPE: ${{ matrix.build_type }}
-        COAL_CXX_FLAGS: ${{ matrix.cxx_options }}
       shell: bash -el {0}
       run: |
         pixi run -e ${{ matrix.environment }} configure \
@@ -108,8 +136,6 @@ jobs:
     - name: Build Coal standalone python [MacOS/Linux/Windows]
       env:
         CMAKE_BUILD_PARALLEL_LEVEL: 2
-        COAL_BUILD_TYPE: ${{ matrix.build_type }}
-        COAL_CXX_FLAGS: ${{ matrix.cxx_options }}
       shell: bash -el {0}
       run: |
         pixi run -e ${{ matrix.environment }} configure \
@@ -126,6 +152,7 @@ jobs:
 
     needs:
     - coal-pixi
+    - coal-python-standalone-pixi
 
     runs-on: Ubuntu-latest
 
