@@ -94,6 +94,8 @@ configure = { cmd = [
   "build",
   "-S",
   ".",
+  # Don't use standard layout because it's not well implemented on Windows
+  "-DPYTHON_STANDARD_LAYOUT=OFF",
   "-DPython_EXECUTABLE=$PYTHON_EXECUTABLE",
   "-DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX",
   "-DCMAKE_BUILD_TYPE=$COAL_BUILD_TYPE",
@@ -125,6 +127,8 @@ configure-new-version = { cmd = [
   "build_new_version",
   "-S",
   ".",
+  # Don't use standard layout because it's not well implemented on Windows
+  "-DPYTHON_STANDARD_LAYOUT=OFF",
   "-DPython_EXECUTABLE=$PYTHON_EXECUTABLE",
   "-DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX",
   "-DCMAKE_BUILD_TYPE=$COAL_BUILD_TYPE",
