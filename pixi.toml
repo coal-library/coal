@@ -162,9 +162,10 @@ python = "3.10.*"
 typing_extensions = ">=4.13.2"
 
 # Use clang-cl on Windows
+# Absolute path is needed to avoid using system clang-cl
 [feature.clang-cl]
 platforms = ["win-64"]
-activation = { env = { CC = "clang-cl", CXX = "clang-cl" } }
+activation = { env = { CC = "%CONDA_PREFIX%\\Library\\bin\\clang-cl", CXX = "%CONDA_PREFIX%\\Library\\bin\\clang-cl" } }
 dependencies = { clangxx = "*" }
 
 # Use clang on GNU/Linux
