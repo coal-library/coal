@@ -35,11 +35,13 @@ backend = { name = "pixi-build-cmake", version = "0.3.*" }
 
 [package.build.config]
 extra-args = [
+  # Don't use standard layout because it's not well implemented on Windows
+  "-DPYTHON_STANDARD_LAYOUT=OFF",
+  "-DGENERATE_PYTHON_STUBS=ON",
   "-DBUILD_TESTING=OFF",
   "-DCOAL_HAS_QHULL=ON",
   "-DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL=ON",
   "-DCOAL_PYTHON_NANOBIND=OFF",
-  "-DGENERATE_PYTHON_STUBS=ON",
 ]
 
 [package.build-dependencies]
