@@ -1,13 +1,4 @@
-:: Setup ccache
-set CMAKE_CXX_COMPILER_LAUNCHER=ccache
-
-:: Create compile_commands.json for language server
-set CMAKE_EXPORT_COMPILE_COMMANDS=1
-
-:: Activate color output with Ninja
-set CMAKE_COLOR_DIAGNOSTICS=1
-
-:: Find Python executable path and set it
+:: Find Python executable path for nanobind and Boost.Python
 for /f "tokens=*" %%i in ('python -c "import sys; print(sys.executable)"') do set PYTHON_EXECUTABLE=%%i
 
 :: Set default build value only if not previously set

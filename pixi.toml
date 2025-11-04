@@ -6,8 +6,9 @@ platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 channels = ["conda-forge"]
 license = "BSD-3-Clause"
 license-file = "LICENSE"
+preview = ["pixi-build"]
 
-[build-dependencies]
+[dependencies]
 ccache = ">=4.9.1"
 cmake = ">=3.15"
 cxx-compiler = ">=1.7.0"
@@ -15,24 +16,73 @@ ninja = ">=1.11"
 pkg-config = ">=0.29.2"
 git = ">=2.47.0"
 nanobind = ">=2.5.0,<3"
-
-[dependencies]
 libboost-devel = ">=1.80.0"
 eigen = ">=3.4.0"
 assimp = ">=5.4"
 numpy = ">=1.22.0"
 python = ">=3.9.0"
-# XML generation seem to be broken in some doxygen version
 doxygen = ">=1.8"
 lxml = ">=5.3"
 pylatexenc = ">=2.10"
 nanoeigenpy = ">=0.3.0"
 
-[activation]
+[package]
+name = { workspace = true }
+version = { workspace = true }
+
+[package.build]
+backend = { name = "pixi-build-cmake", version = "0.3.*" }
+
+[package.build.config]
+extra-args = [
+  # Don't use standard layout because it's not well implemented on Windows
+  "-DPYTHON_STANDARD_LAYOUT=OFF",
+  "-DGENERATE_PYTHON_STUBS=ON",
+  "-DBUILD_TESTING=OFF",
+  "-DCOAL_HAS_QHULL=ON",
+  "-DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL=ON",
+  "-DCOAL_PYTHON_NANOBIND=OFF",
+]
+
+[package.build-dependencies]
+pkg-config = ">=0.29.2"
+git = ">=2.47.0"
+lxml = ">=5.3"
+pylatexenc = ">=2.10"
+doxygen = ">=1.8"
+
+[package.host-dependencies]
+libboost-devel = ">=1.80.0"
+libboost-python-devel = ">=1.80.0"
+eigen = ">=3.4.0"
+assimp = ">=5.4"
+numpy = ">=1.22.0"
+python = ">=3.9.0"
+eigenpy = ">=3.7.0"
+octomap = ">=1.10"
+
+[package.target.win.host-dependencies]
+qhull = ">=2020.2"
+
+[package.target.unix.host-dependencies]
+qhull = ">=2020.2"
+qhull-static = ">=2020.2"
+
+[target.unix.activation]
 scripts = ["development/scripts/pixi/activation.sh"]
 
 [target.win-64.activation]
 scripts = ["development/scripts/pixi/activation.bat"]
+
+[activation.env]
+# Setup ccache
+CMAKE_CXX_COMPILER_LAUNCHER = "ccache"
+# Create compile_commands.json for language server
+CMAKE_EXPORT_COMPILE_COMMANDS = "ON"
+# Activate color output with Ninja
+CMAKE_COLOR_DIAGNOSTICS = "ON"
+# Help ccache manage generated files and PCH (https://ccache.dev/manual/latest.html#_precompiled_headers)
+CCACHE_SLOPPINESS = "include_file_ctime,include_file_mtime,pch_defines,time_macros"
 
 [tasks]
 # We must avoid to set CMAKE_CXX_FLAGS because of WIN32
@@ -46,6 +96,8 @@ configure = { cmd = [
   "build",
   "-S",
   ".",
+  # Don't use standard layout because it's not well implemented on Windows
+  "-DPYTHON_STANDARD_LAYOUT=OFF",
   "-DPython_EXECUTABLE=$PYTHON_EXECUTABLE",
   "-DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX",
   "-DCMAKE_BUILD_TYPE=$COAL_BUILD_TYPE",
@@ -68,7 +120,7 @@ tasks = { lint = { cmd = "pre-commit run --all" } }
 tomlkit = ">=0.13.2"
 
 [feature.new-version.tasks]
-configure_new_version = { cmd = [
+configure-new-version = { cmd = [
   "CXXFLAGS=$COAL_CXX_FLAGS",
   "cmake",
   "-G",
@@ -77,13 +129,17 @@ configure_new_version = { cmd = [
   "build_new_version",
   "-S",
   ".",
+  # Don't use standard layout because it's not well implemented on Windows
+  "-DPYTHON_STANDARD_LAYOUT=OFF",
+  "-DPython_EXECUTABLE=$PYTHON_EXECUTABLE",
   "-DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX",
   "-DCMAKE_BUILD_TYPE=$COAL_BUILD_TYPE",
   "-DGENERATE_PYTHON_STUBS=ON",
   "-DCOAL_HAS_QHULL=ON",
+  "-DCOAL_PYTHON_NANOBIND=$COAL_PYTHON_NANOBIND",
 ] }
-release_new_version = { cmd = "VERSION=$COAL_VERSION cmake --build build_new_version --target release", depends-on = [
-  "configure_new_version",
+release-new-version = { cmd = "VERSION=$COAL_VERSION cmake --build build_new_version --target release", depends-on = [
+  "configure-new-version",
 ] }
 
 # QHull support
@@ -104,26 +160,38 @@ activation.env = { COAL_PYTHON_NANOBIND = "OFF" }
 dependencies = { octomap = ">=1.10" }
 
 [feature.python-latest.dependencies]
-python = "3.13.*"
+python = "3.14.*"
 
 [feature.python-oldest.dependencies]
-python = "3.9.*"
-typing_extensions = ">=4.13.2,<5"
+python = "3.10.*"
+# nanobind need typing_extensions on Python <3.11
+typing_extensions = ">=4.13.2"
 
-# Use clang-cl on Windows.
-# We must use scripts instead of env to setup CC and CXX
-# to avoid cxx-compiler to overwrite them.
+# Use clang-cl on Windows
+# If something go wrong, we can check this repository:
+# https://github.com/conda-forge/clang-win-activation-feedstock/tree/main
 [feature.clang-cl]
 platforms = ["win-64"]
-activation = { scripts = ["development/scripts/pixi/activation_clang_cl.bat"] }
+dependencies = { clangxx = "*", lld = "*" }
 
-# Use clang on GNU/Linux.
-# We must use scripts instead of env to setup CC and CXX
-# to avoid cxx-compiler to overwrite them.
+# Absolute path is needed to avoid using system clang-cl
+[feature.clang-cl.activation.env]
+CC = "%CONDA_PREFIX%\\Library\\bin\\clang-cl"
+CXX = "%CONDA_PREFIX%\\Library\\bin\\clang-cl"
+
+# Use clang on GNU/Linux
 [feature.clang]
 platforms = ["linux-64"]
-activation = { scripts = ["development/scripts/pixi/activation_clang.sh"] }
+activation = { env = { CC = "clang", CXX = "clang++" } }
 dependencies = { clangxx = "*" }
+
+[feature.test-pixi-build]
+dependencies = { coal = { path = "." }, cmake = ">=3.22", python = "*" }
+
+[feature.test-pixi-build.tasks]
+test-cmake = "cmake -S test/pixi_build -B build_test_pixi_build"
+test-python = "python -c 'import coal'"
+test = { depends-on = ["test-cmake", "test-python"] }
 
 [environments]
 default = { features = ["python-latest"], solve-group = "python-latest" }
@@ -146,7 +214,7 @@ all-boost-python = { features = [
   "octomap",
   "python-latest",
   "boost-python",
-]}
+] }
 all-python-oldest = { features = [
   "qhull",
   "octomap",
@@ -165,3 +233,4 @@ new-version = { features = [
   "octomap",
   "python-latest",
 ], solve-group = "python-latest" }
+test-pixi-build = { features = ["test-pixi-build"], no-default-feature = true }
