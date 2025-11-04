@@ -1,4 +1,4 @@
-:: Find Python executable path for nanobind
+:: Find Python executable path for nanobind and Boost.Python
 for /f "tokens=*" %%i in ('python -c "import sys; print(sys.executable)"') do set PYTHON_EXECUTABLE=%%i
 
 :: Set default build value only if not previously set
