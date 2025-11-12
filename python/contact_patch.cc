@@ -158,4 +158,30 @@ void exposeContactPatchAPI() {
                  const ContactPatchRequest&, ContactPatchResult&) const>(
                  &ComputeContactPatch::operator()));
   }
+
+  if (!eigenpy::register_symbolic_link_to_registered_type<
+          ContactPatchSimplifierGreedy>()) {
+    class_<ContactPatchSimplifierGreedy>("ContactPatchSimplifierGreedy",
+                                         "Greedy contact patch simplifier.",
+                                         init<>())
+        .def("compute", &ContactPatchSimplifierGreedy::compute,
+             (arg("self"), arg("patch_in"), arg("target_vertices"),
+              arg("patch_out")),
+             "Simplify `patch_in` into `patch_out` using the greedy heuristic.")
+        .def("simplify", &ContactPatchSimplifierGreedy::simplify,
+             (arg("self"), arg("patch"), arg("target_vertices")));
+  }
+
+  if (!eigenpy::register_symbolic_link_to_registered_type<
+          ContactPatchSimplifierMaxArea>()) {
+    class_<ContactPatchSimplifierMaxArea>(
+        "ContactPatchSimplifierMaxArea",
+        "Max-area dynamic-programming contact patch simplifier.", init<>())
+        .def("compute", &ContactPatchSimplifierMaxArea::compute,
+             (arg("self"), arg("patch_in"), arg("target_vertices"),
+              arg("patch_out")),
+             "Simplify `patch_in` into `patch_out` using the max-area DP.")
+        .def("simplify", &ContactPatchSimplifierMaxArea::simplify,
+             (arg("self"), arg("patch"), arg("target_vertices")));
+  }
 }

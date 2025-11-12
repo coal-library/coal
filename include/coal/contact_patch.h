@@ -41,6 +41,7 @@
 #include "coal/collision_data.h"
 #include "coal/contact_patch/contact_patch_solver.h"
 #include "coal/contact_patch_func_matrix.h"
+#include "coal/contact_patch/contact_patch_simplifier.h"
 
 namespace coal {
 

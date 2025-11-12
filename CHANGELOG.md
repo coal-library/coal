@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - ROS: jrl_cmakemodules dependency + kilted CI ([#769](https://github.com/coal-library/coal/pull/769))
 - Added `SUFFIX_SO_VERSION` CMake option, default `OFF` ([#770](https://github.com/coal-library/coal/pull/770))
 - Add pixi-build support ([#774](https://github.com/coal-library/coal/pull/774))
+- contact patches: add helpers to reduce the size of a contact patch by keeping points that minimize the difference between the area of the original patch and the area of the new patch
 
 ### Removed
 - Remove direct dependency to ([#744](https://github.com/coal-library/coal/pull/744)):
