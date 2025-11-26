@@ -16,69 +16,20 @@
 
 namespace coal {
 
-BenchTimer::BenchTimer() {
-#ifdef _WIN32
-  QueryPerformanceFrequency(&frequency);
-  startCount.QuadPart = 0;
-  endCount.QuadPart = 0;
-#else
-  startCount.tv_sec = startCount.tv_usec = 0;
-  endCount.tv_sec = endCount.tv_usec = 0;
-#endif
-
-  stopped = 0;
-  startTimeInMicroSec = 0;
-  endTimeInMicroSec = 0;
-}
-
-BenchTimer::~BenchTimer() {}
-
-void BenchTimer::start() {
-  stopped = 0;  // reset stop flag
-#ifdef _WIN32
-  QueryPerformanceCounter(&startCount);
-#else
-  gettimeofday(&startCount, NULL);
-#endif
-}
-
-void BenchTimer::stop() {
-  stopped = 1;  // set timer stopped flag
-
-#ifdef _WIN32
-  QueryPerformanceCounter(&endCount);
-#else
-  gettimeofday(&endCount, NULL);
-#endif
-}
-
-double BenchTimer::getElapsedTimeInMicroSec() {
-#ifdef _WIN32
-  if (!stopped) QueryPerformanceCounter(&endCount);
-
-  startTimeInMicroSec = startCount.QuadPart * (1000000.0 / frequency.QuadPart);
-  endTimeInMicroSec = endCount.QuadPart * (1000000.0 / frequency.QuadPart);
-#else
-  if (!stopped) gettimeofday(&endCount, NULL);
-
-  startTimeInMicroSec =
-      ((double)startCount.tv_sec * 1000000.0) + (double)startCount.tv_usec;
-  endTimeInMicroSec =
-      ((double)endCount.tv_sec * 1000000.0) + (double)endCount.tv_usec;
-#endif
-
-  return endTimeInMicroSec - startTimeInMicroSec;
+void BenchTimer::start() { start_time_ = clock::now(); }
+double BenchTimer::getElapsedTime() { return getElapsedTimeInSec(); }
+double BenchTimer::getElapsedTimeInSec() {
+  return std::chrono::duration<double>(clock::now() - start_time_).count();
 }
 
 double BenchTimer::getElapsedTimeInMilliSec() {
-  return this->getElapsedTimeInMicroSec() * 0.001;
+  return std::chrono::duration<double, std::milli>(clock::now() - start_time_)
+      .count();
 }
-
-double BenchTimer::getElapsedTimeInSec() {
-  return this->getElapsedTimeInMicroSec() * 0.000001;
+double BenchTimer::getElapsedTimeInMicroSec() {
+  return std::chrono::duration<double, std::micro>(clock::now() - start_time_)
+      .count();
 }
-
-double BenchTimer::getElapsedTime() { return this->getElapsedTimeInMilliSec(); }
 
 const Eigen::IOFormat vfmt = Eigen::IOFormat(
     Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "", "");
