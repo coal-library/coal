@@ -48,12 +48,6 @@
 #include "coal/octree.h"
 #endif
 
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <sys/time.h>
-#endif
-
 #define EIGEN_VECTOR_IS_APPROX(Va, Vb, precision)                            \
   BOOST_CHECK_MESSAGE(((Va) - (Vb)).isZero(precision),                       \
                       "check " #Va ".isApprox(" #Vb ") failed at precision " \
