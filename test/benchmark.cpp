@@ -109,7 +109,6 @@ double distance(const std::vector<Transform3s>& tf, const BVHModel<BV>& m1,
 
     distance(&node, NULL);
   }
-  timer.stop();
   return timer.getElapsedTimeInMicroSec();
 }
 
@@ -136,7 +135,6 @@ double collide(const std::vector<Transform3s>& tf, const BVHModel<BV>& m1,
     collide(&node, request, result);
   }
 
-  timer.stop();
   return timer.getElapsedTimeInMicroSec();
 }
 

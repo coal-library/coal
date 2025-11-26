@@ -366,15 +366,15 @@ void broad_phase_self_distance_test(Scalar env_scale, std::size_t env_size,
   for (size_t i = 0; i < managers.size(); ++i) {
     timers[i].start();
     managers[i]->registerObjects(env);
-    timers[i].stop();
-    ts[i].push_back(timers[i].getElapsedTime());
+    const auto elapsed_s = timers[i].getElapsedTime();
+    ts[i].push_back(elapsed_s);
   }
 
   for (size_t i = 0; i < managers.size(); ++i) {
     timers[i].start();
     managers[i]->setup();
-    timers[i].stop();
-    ts[i].push_back(timers[i].getElapsedTime());
+    const auto elapsed_s = timers[i].getElapsedTime();
+    ts[i].push_back(elapsed_s);
   }
 
   std::vector<DistanceCallBackDefault> self_callbacks(managers.size());
@@ -382,8 +382,8 @@ void broad_phase_self_distance_test(Scalar env_scale, std::size_t env_size,
   for (size_t i = 0; i < self_callbacks.size(); ++i) {
     timers[i].start();
     managers[i]->distance(&self_callbacks[i]);
-    timers[i].stop();
-    ts[i].push_back(timers[i].getElapsedTime());
+    const auto elapsed_s = timers[i].getElapsedTime();
+    ts[i].push_back(elapsed_s);
     // std::cout << self_data[i].result.min_distance << " ";
   }
   // std::cout << std::endl;
@@ -515,15 +515,15 @@ void broad_phase_distance_test(Scalar env_scale, std::size_t env_size,
   for (size_t i = 0; i < managers.size(); ++i) {
     timers[i].start();
     managers[i]->registerObjects(env);
-    timers[i].stop();
-    ts[i].push_back(timers[i].getElapsedTime());
+    const auto elapsed_s = timers[i].getElapsedTime();
+    ts[i].push_back(elapsed_s);
   }
 
   for (size_t i = 0; i < managers.size(); ++i) {
     timers[i].start();
     managers[i]->setup();
-    timers[i].stop();
-    ts[i].push_back(timers[i].getElapsedTime());
+    const auto elapsed_s = timers[i].getElapsedTime();
+    ts[i].push_back(elapsed_s);
   }
 
   for (size_t i = 0; i < query.size(); ++i) {
@@ -531,8 +531,8 @@ void broad_phase_distance_test(Scalar env_scale, std::size_t env_size,
     for (size_t j = 0; j < managers.size(); ++j) {
       timers[j].start();
       managers[j]->distance(query[i], &query_callbacks[j]);
-      timers[j].stop();
-      ts[j].push_back(timers[j].getElapsedTime());
+      const auto elapsed_s = timers[j].getElapsedTime();
+      ts[j].push_back(elapsed_s);
       std::cout << query_callbacks[j].data.result.min_distance << " ";
     }
     std::cout << std::endl;

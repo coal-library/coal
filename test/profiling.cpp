@@ -91,8 +91,8 @@ void collide(const std::vector<Transform3s>& tf, const CollisionGeometry* o1,
     timer.start();
     /* int num_contact = */
     collide(o1, tf[i], o2, Id, request, results.rs[i]);
-    timer.stop();
-    results.times[(Eigen::DenseIndex)i] = timer.getElapsedTimeInMicroSec();
+    const auto elapsed_us = timer.getElapsedTimeInMicroSec();
+    results.times[(Eigen::DenseIndex)i] = elapsed_us;
   }
 }
 
