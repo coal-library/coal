@@ -70,7 +70,7 @@ jobs:
             build_type: Debug
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         submodules: recursive
 
@@ -125,7 +125,7 @@ jobs:
         environment: [all, all-boost-python]
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         submodules: recursive
 
@@ -182,7 +182,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, macos-15-intel, windows-latest]
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         submodules: recursive
 
