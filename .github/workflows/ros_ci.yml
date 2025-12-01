@@ -43,7 +43,7 @@ jobs:
       PRERELEASE: true
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
       # This step will fetch/store the directory used by ccache before/after the ci run
