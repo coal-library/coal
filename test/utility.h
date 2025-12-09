@@ -43,15 +43,10 @@
 #include "coal/collision_object.h"
 #include "coal/broadphase/default_broadphase_callbacks.h"
 #include "coal/shape/convex.h"
+#include <chrono>
 
 #ifdef COAL_HAS_OCTOMAP
 #include "coal/octree.h"
-#endif
-
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <sys/time.h>
 #endif
 
 #define EIGEN_VECTOR_IS_APPROX(Va, Vb, precision)                            \
@@ -83,12 +78,11 @@ typedef coal::shared_ptr<octomap::OcTree> OcTreePtr_t;
 namespace coal {
 
 class BenchTimer {
- public:
-  BenchTimer();
-  ~BenchTimer();
+  using clock = std::chrono::steady_clock;
+  using time_point = clock::time_point;
 
+ public:
   void start();                       ///< start timer
-  void stop();                        ///< stop the timer
   double getElapsedTime();            ///< get elapsed time in milli-second
   double getElapsedTimeInSec();       ///< get elapsed time in second (same as
                                       ///< getElapsedTime)
@@ -96,17 +90,7 @@ class BenchTimer {
   double getElapsedTimeInMicroSec();  ///< get elapsed time in micro-second
 
  private:
-  double startTimeInMicroSec;  ///< starting time in micro-second
-  double endTimeInMicroSec;    ///< ending time in micro-second
-  int stopped;                 ///< stop flag
-#ifdef _WIN32
-  LARGE_INTEGER frequency;  ///< ticks per second
-  LARGE_INTEGER startCount;
-  LARGE_INTEGER endCount;
-#else
-  timeval startCount;
-  timeval endCount;
-#endif
+  time_point start_time_ = clock::now();
 };
 
 struct TStruct {

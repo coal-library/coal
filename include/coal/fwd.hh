@@ -47,7 +47,7 @@
 #include "coal/deprecated.hh"
 #include "coal/warning.hh"
 
-#if _WIN32
+#if defined(_WIN32)
 #define COAL_PRETTY_FUNCTION __FUNCSIG__
 #else
 #define COAL_PRETTY_FUNCTION __PRETTY_FUNCTION__
@@ -108,7 +108,7 @@
 #else
 #define COAL_COMPILER_DIAGNOSTIC_IGNORED_MAYBE_UNINITIALIZED
 #endif
-#elif defined(WIN32)
+#elif defined(_WIN32)
 #define COAL_COMPILER_DIAGNOSTIC_PUSH _Pragma("warning(push)")
 #define COAL_COMPILER_DIAGNOSTIC_POP _Pragma("warning(pop)")
 #define COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS \

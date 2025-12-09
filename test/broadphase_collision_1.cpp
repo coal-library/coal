@@ -251,15 +251,15 @@ void broad_phase_duplicate_check_test(Scalar env_scale, std::size_t env_size,
   for (size_t i = 0; i < managers.size(); ++i) {
     timers[i].start();
     managers[i]->registerObjects(env);
-    timers[i].stop();
-    ts[i].push_back(timers[i].getElapsedTime());
+    const auto elapsed_s = timers[i].getElapsedTime();
+    ts[i].push_back(elapsed_s);
   }
 
   for (size_t i = 0; i < managers.size(); ++i) {
     timers[i].start();
     managers[i]->setup();
-    timers[i].stop();
-    ts[i].push_back(timers[i].getElapsedTime());
+    const auto elapsed_s = timers[i].getElapsedTime();
+    ts[i].push_back(elapsed_s);
   }
 
   // update the environment
@@ -296,8 +296,8 @@ void broad_phase_duplicate_check_test(Scalar env_scale, std::size_t env_size,
   for (size_t i = 0; i < managers.size(); ++i) {
     timers[i].start();
     managers[i]->update();
-    timers[i].stop();
-    ts[i].push_back(timers[i].getElapsedTime());
+    const auto elapsed_s = timers[i].getElapsedTime();
+    ts[i].push_back(elapsed_s);
   }
 
   std::vector<CollisionDataForUniquenessChecking> self_data(managers.size());
@@ -306,8 +306,8 @@ void broad_phase_duplicate_check_test(Scalar env_scale, std::size_t env_size,
     CollisionFunctionForUniquenessChecking callback;
     timers[i].start();
     managers[i]->collide(&callback);
-    timers[i].stop();
-    ts[i].push_back(timers[i].getElapsedTime());
+    const auto elapsed_s = timers[i].getElapsedTime();
+    ts[i].push_back(elapsed_s);
   }
 
   for (auto obj : env) delete obj;
@@ -424,15 +424,15 @@ void broad_phase_update_collision_test(Scalar env_scale, std::size_t env_size,
   for (size_t i = 0; i < managers.size(); ++i) {
     timers[i].start();
     managers[i]->registerObjects(env);
-    timers[i].stop();
-    ts[i].push_back(timers[i].getElapsedTime());
+    const auto elapsed_s = timers[i].getElapsedTime();
+    ts[i].push_back(elapsed_s);
   }
 
   for (size_t i = 0; i < managers.size(); ++i) {
     timers[i].start();
     managers[i]->setup();
-    timers[i].stop();
-    ts[i].push_back(timers[i].getElapsedTime());
+    const auto elapsed_s = timers[i].getElapsedTime();
+    ts[i].push_back(elapsed_s);
   }
 
   // update the environment
@@ -469,8 +469,8 @@ void broad_phase_update_collision_test(Scalar env_scale, std::size_t env_size,
   for (size_t i = 0; i < managers.size(); ++i) {
     timers[i].start();
     managers[i]->update();
-    timers[i].stop();
-    ts[i].push_back(timers[i].getElapsedTime());
+    const auto elapsed_s = timers[i].getElapsedTime();
+    ts[i].push_back(elapsed_s);
   }
 
   std::vector<CollisionData> self_data(managers.size());
@@ -485,8 +485,8 @@ void broad_phase_update_collision_test(Scalar env_scale, std::size_t env_size,
     CollisionCallBackDefault callback;
     timers[i].start();
     managers[i]->collide(&callback);
-    timers[i].stop();
-    ts[i].push_back(timers[i].getElapsedTime());
+    const auto elapsed_s = timers[i].getElapsedTime();
+    ts[i].push_back(elapsed_s);
   }
 
   for (size_t i = 0; i < managers.size(); ++i)
@@ -523,8 +523,8 @@ void broad_phase_update_collision_test(Scalar env_scale, std::size_t env_size,
     for (size_t j = 0; j < query_callbacks.size(); ++j) {
       timers[j].start();
       managers[j]->collide(query[i], &query_callbacks[j]);
-      timers[j].stop();
-      ts[j].push_back(timers[j].getElapsedTime());
+      const auto elapsed_s = timers[j].getElapsedTime();
+      ts[j].push_back(elapsed_s);
     }
 
     // for(size_t j = 0; j < managers.size(); ++j)

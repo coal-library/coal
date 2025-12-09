@@ -74,10 +74,14 @@ struct cast_register_initializer {
   void init(std::false_type) const {}
 
   cast_register_initializer const& init() const {
+#ifndef _WIN32
     COAL_COMPILER_DIAGNOSTIC_PUSH
     _Pragma("GCC diagnostic ignored \"-Wconversion\"")
+#endif
         BOOST_STATIC_WARNING((std::is_base_of<Base, Derived>::value));
+#ifndef _WIN32
     COAL_COMPILER_DIAGNOSTIC_POP
+#endif
     init(std::is_base_of<Base, Derived>());
     return *this;
   }

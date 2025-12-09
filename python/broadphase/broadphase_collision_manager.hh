@@ -215,7 +215,7 @@ struct BroadPhaseCollisionManagerWrapper
   static void exposeDerived() {
     std::string class_name = boost::typeindex::type_id<Derived>().pretty_name();
     boost::algorithm::replace_all(class_name, "coal::", "");
-#if defined(WIN32)
+#if defined(_WIN32)
     boost::algorithm::replace_all(class_name, "class ", "");
 #endif
 
