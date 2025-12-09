@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix contact patch computation by enforcing CCW construction of support sets ([#772](https://github.com/coal-library/coal/pull/772))
 - Remove pixi 0.57 warnings ([#774](https://github.com/coal-library/coal/pull/774))
 - Fix nanobind bindings' stub file ([#781](https://github.com/coal-library/coal/pull/781#event-20983199417))
+- Remove Windows warnings when building benchmakrs ([789](https://github.com/coal-library/coal/pull/789))
 
 ### Changed
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))
