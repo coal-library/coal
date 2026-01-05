@@ -115,8 +115,7 @@ if(ENABLE_DOXYGEN_AUTODOC)
   add_dependencies(generate_doxygen_cpp_doc doc)
 
   list(
-    APPEND
-    ${PYTHON_LIB_NAME}_HEADERS
+    APPEND ${PYTHON_LIB_NAME}_HEADERS
     ${CMAKE_CURRENT_BINARY_DIR}/doxygen_autodoc/doxygen_xml_parser_for_cmake.hh
   )
 endif()
