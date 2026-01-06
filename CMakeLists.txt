@@ -489,8 +489,7 @@ endif()
 
 if(COAL_HAS_OCTOMAP)
   list(
-    APPEND
-    ${PROJECT_NAME}_HEADERS
+    APPEND ${PROJECT_NAME}_HEADERS
     include/coal/octree.h
     include/coal/serialization/octree.h
     include/coal/internal/traversal_node_octree.h
