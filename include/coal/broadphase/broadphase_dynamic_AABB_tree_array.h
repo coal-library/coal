@@ -58,7 +58,6 @@ class COAL_DLLAPI DynamicAABBTreeArrayCollisionManager
   using Base::getObjects;
 
   using DynamicAABBNode = detail::implementation_array::NodeBase<AABB>;
-  using DynamicAABBTable = std::unordered_map<CollisionObject*, size_t>;
 
   int max_tree_nonbalanced_level;
   int tree_incremental_balance_pass;
@@ -76,6 +75,11 @@ class COAL_DLLAPI DynamicAABBTreeArrayCollisionManager
 
   /// @brief add one object to the manager
   void registerObject(CollisionObject* obj);
+
+  /// @brief add one object to the manager with an AABB expanded by margin. This
+  /// is useful when the narrowphase checks use a security margin. margin must
+  /// be >= 0.
+  void registerObject(CollisionObject* obj, Scalar margin);
 
   /// @brief remove one object from the manager
   void unregisterObject(CollisionObject* obj);
@@ -132,7 +136,12 @@ class COAL_DLLAPI DynamicAABBTreeArrayCollisionManager
 
  private:
   detail::implementation_array::HierarchyTree<AABB> dtree{};
-  std::unordered_map<CollisionObject*, size_t> table;
+  struct ObjectInfo {
+    size_t index = 0;
+    Scalar margin = 0.0;
+  };
+  using DynamicAABBTable = std::unordered_map<CollisionObject*, ObjectInfo>;
+  DynamicAABBTable table;
 
   bool setup_;
 

@@ -508,7 +508,9 @@ void DynamicAABBTreeArrayCollisionManager::registerObjects(
       leaves[i].parent = dtree.NULL_NODE;
       leaves[i].children[1] = dtree.NULL_NODE;
       leaves[i].data = other_objs[i];
-      table[other_objs[i]] = i;
+      ObjectInfo& info = table[other_objs[i]];
+      info.index = i;
+      info.margin = 0.0;
     }
 
     int n_leaves = (int)other_objs.size();
@@ -523,13 +525,28 @@ void DynamicAABBTreeArrayCollisionManager::registerObjects(
 void DynamicAABBTreeArrayCollisionManager::registerObject(
     CollisionObject* obj) {
   size_t node = dtree.insert(obj->getAABB(), obj);
-  table[obj] = node;
+  ObjectInfo& info = table[obj];
+  info.index = node;
+  info.margin = 0.0;
+}
+
+//==============================================================================
+void DynamicAABBTreeArrayCollisionManager::registerObject(
+    CollisionObject* obj, Scalar margin) {
+  if (margin < 0) {
+    COAL_THROW_PRETTY("margin must be non-negative", std::invalid_argument);
+  }
+  size_t node = dtree.insert(obj->getAABB().expandCopy(margin), obj);
+  ObjectInfo& info = table[obj];
+  info.index = node;
+  info.margin = margin;
 }
 
 //==============================================================================
 void DynamicAABBTreeArrayCollisionManager::unregisterObject(
     CollisionObject* obj) {
-  size_t node = table[obj];
+  ObjectInfo& info = table[obj];
+  size_t node = info.index;
   table.erase(obj);
   dtree.remove(node);
 }
@@ -557,10 +574,11 @@ void DynamicAABBTreeArrayCollisionManager::setup() {
 
 //==============================================================================
 void DynamicAABBTreeArrayCollisionManager::update() {
-  for (auto it = table.cbegin(), end = table.cend(); it != end; ++it) {
-    const CollisionObject* obj = it->first;
-    size_t node = it->second;
-    dtree.getNodes()[node].bv = obj->getAABB();
+  for (auto it = table.begin(), end = table.end(); it != end; ++it) {
+    CollisionObject* obj = it->first;
+    ObjectInfo& info = it->second;
+    size_t node = info.index;
+    dtree.getNodes()[node].bv = obj->getAABB().expandCopy(info.margin);
   }
 
   dtree.refit();
@@ -574,9 +592,11 @@ void DynamicAABBTreeArrayCollisionManager::update_(
     CollisionObject* updated_obj) {
   const auto it = table.find(updated_obj);
   if (it != table.end()) {
-    size_t node = it->second;
-    if (!(dtree.getNodes()[node].bv == updated_obj->getAABB()))
-      dtree.update(node, updated_obj->getAABB());
+    ObjectInfo& info = it->second;
+    size_t node = info.index;
+    AABB new_aabb = updated_obj->getAABB().expandCopy(info.margin);
+    if (!(dtree.getNodes()[node].bv == new_aabb))
+      dtree.update(node, new_aabb);
   }
   setup_ = false;
 }

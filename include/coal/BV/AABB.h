@@ -226,6 +226,12 @@ class COAL_DLLAPI AABB {
     return *this;
   }
 
+  inline AABB expandCopy(const Scalar delta) const {
+    AABB expanded = *this;
+    expanded.expand(delta);
+    return expanded;
+  }
+
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
