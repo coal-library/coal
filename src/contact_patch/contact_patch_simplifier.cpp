@@ -120,8 +120,30 @@ void ContactPatchSimplifierMaxArea::compute(const ContactPatch& patch_in,
 
   if (n == 0 || target_vertices == 0 || target_vertices >= n) {
     simplified_buffer_.assign(pts.begin(), pts.end());
+  } else if (target_vertices == 1) {
+    // Return the barycenter of the patch
+    Vec2s barycenter = Vec2s::Zero();
+    for (Index i = 0; i < n; ++i) {
+      barycenter += pts[i];
+    }
+    barycenter /= static_cast<Scalar>(n);
+    simplified_buffer_.push_back(barycenter);
+  } else if (target_vertices == 2) {
+    // Return the first point and the point farthest from it
+    const Vec2s& first = pts[0];
+    Index farthest_idx = 0;
+    Scalar max_dist_sq = Scalar(0);
+    for (Index i = 1; i < n; ++i) {
+      const Scalar dist_sq = (pts[i] - first).squaredNorm();
+      if (dist_sq > max_dist_sq) {
+        max_dist_sq = dist_sq;
+        farthest_idx = i;
+      }
+    }
+    simplified_buffer_.push_back(first);
+    simplified_buffer_.push_back(pts[farthest_idx]);
   } else {
-    const Index desired = clamp<Index>(target_vertices, 1, n);
+    const Index desired = clamp<Index>(target_vertices, 3, n);
 
     ordered_indices_.resize(n);
     const Index dp_width = desired + 1;
@@ -156,38 +178,33 @@ void ContactPatchSimplifierMaxArea::compute(const ContactPatch& patch_in,
       Scalar anchor_best_area = invalid_area;
       int anchor_best_end = -1;
 
-      if (desired == 1) {
-        anchor_best_area = Scalar(0);
-        anchor_best_end = 0;
-      } else {
-        for (Index i = 1; i < n; ++i) {
-          const Index max_k = std::min(desired, i + 1);
-          for (Index k = 2; k <= max_k; ++k) {
-            for (Index j = k - 2; j < i; ++j) {
-              const Scalar prev_area = dp_area_[dp_index(j, k - 1)];
-              if (prev_area == invalid_area) {
-                continue;
-              }
+      for (Index i = 1; i < n; ++i) {
+        const Index max_k = std::min(desired, i + 1);
+        for (Index k = 2; k <= max_k; ++k) {
+          for (Index j = k - 2; j < i; ++j) {
+            const Scalar prev_area = dp_area_[dp_index(j, k - 1)];
+            if (prev_area == invalid_area) {
+              continue;
+            }
 
-              const Scalar tri_area = std::abs(double_triangle_area(
-                  pts[ordered_indices_[0]], pts[ordered_indices_[j]],
-                  pts[ordered_indices_[i]]));
-              const Scalar candidate_area = prev_area + tri_area;
-              const Index cur_idx = dp_index(i, k);
-              if (candidate_area > dp_area_[cur_idx]) {
-                dp_area_[cur_idx] = candidate_area;
-                dp_prev_[cur_idx] = static_cast<int>(j);
-              }
+            const Scalar tri_area = std::abs(double_triangle_area(
+                pts[ordered_indices_[0]], pts[ordered_indices_[j]],
+                pts[ordered_indices_[i]]));
+            const Scalar candidate_area = prev_area + tri_area;
+            const Index cur_idx = dp_index(i, k);
+            if (candidate_area > dp_area_[cur_idx]) {
+              dp_area_[cur_idx] = candidate_area;
+              dp_prev_[cur_idx] = static_cast<int>(j);
             }
           }
         }
+      }
 
-        for (Index i = desired - 1; i < n; ++i) {
-          const Scalar area = dp_area_[dp_index(i, desired)];
-          if (area > anchor_best_area) {
-            anchor_best_area = area;
-            anchor_best_end = static_cast<int>(i);
-          }
+      for (Index i = desired - 1; i < n; ++i) {
+        const Scalar area = dp_area_[dp_index(i, desired)];
+        if (area > anchor_best_area) {
+          anchor_best_area = area;
+          anchor_best_end = static_cast<int>(i);
         }
       }
 
@@ -282,8 +299,30 @@ void ContactPatchSimplifierGreedy::compute(const ContactPatch& patch_in,
 
   if (n == 0 || target_vertices == 0 || target_vertices >= n) {
     simplified_buffer_.assign(pts.begin(), pts.end());
+  } else if (target_vertices == 1) {
+    // Return the barycenter of the patch
+    Vec2s barycenter = Vec2s::Zero();
+    for (Index i = 0; i < n; ++i) {
+      barycenter += pts[i];
+    }
+    barycenter /= static_cast<Scalar>(n);
+    simplified_buffer_.push_back(barycenter);
+  } else if (target_vertices == 2) {
+    // Return the first point and the point farthest from it
+    const Vec2s& first = pts[0];
+    Index farthest_idx = 0;
+    Scalar max_dist_sq = Scalar(0);
+    for (Index i = 1; i < n; ++i) {
+      const Scalar dist_sq = (pts[i] - first).squaredNorm();
+      if (dist_sq > max_dist_sq) {
+        max_dist_sq = dist_sq;
+        farthest_idx = i;
+      }
+    }
+    simplified_buffer_.push_back(first);
+    simplified_buffer_.push_back(pts[farthest_idx]);
   } else {
-    const Index desired = clamp<Index>(target_vertices, 1, n);
+    const Index desired = clamp<Index>(target_vertices, 3, n);
 
     prev_.resize(n);
     next_.resize(n);

@@ -223,9 +223,7 @@ ConvexBaseTpl<IndexType>* ConvexBaseTpl<IndexType>::convexHull(
   IndexType begin_id = 0;
   for (size_t i = 0; i < static_cast<size_t>(nvertex); ++i) {
     Neighbors& n = neighbors_[i];
-    if (nneighbors[i].size() >= (std::numeric_limits<unsigned char>::max)())
-      COAL_THROW_PRETTY("Too many neighbors.", std::logic_error);
-    n.count = (unsigned char)nneighbors[i].size();
+    n.count = static_cast<IndexType>(nneighbors[i].size());
     n.begin_id = begin_id;
     IndexType j = 0;
     for (IndexType idx : nneighbors[i]) {

@@ -19,7 +19,19 @@ struct CPUTimes {
   CPUTimes() : wall(0), user(0), system(0) {}
 
   void clear() { wall = user = system = 0; }
+
+  CPUTimes& operator+=(const CPUTimes& rhs) {
+    wall += rhs.wall;
+    user += rhs.user;
+    system += rhs.system;
+    return *this;
+  }
 };
+
+inline CPUTimes operator+(CPUTimes lhs, const CPUTimes& rhs) {
+  lhs += rhs;
+  return lhs;
+}
 
 ///
 /// @brief This class mimics the way "boost/timer/timer.hpp" operates while
