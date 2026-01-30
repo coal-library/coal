@@ -638,7 +638,7 @@ template <typename _IndexType>
 struct ConvexBaseTplNeighbors {
   typedef _IndexType IndexType;
 
-  unsigned char count;
+  IndexType count;
   IndexType begin_id;
 
   bool operator==(const ConvexBaseTplNeighbors& other) const {

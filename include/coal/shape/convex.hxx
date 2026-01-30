@@ -306,9 +306,7 @@ void ConvexTpl<PolygonT>::fillNeighbors() {
   IndexType begin_id = 0;
   for (unsigned int i = 0; i < num_points; ++i) {
     Neighbors& n = neighbors_[i];
-    if (nneighbors[i].size() >= (std::numeric_limits<unsigned char>::max)())
-      COAL_THROW_PRETTY("Too many neighbors.", std::logic_error);
-    n.count = (unsigned char)nneighbors[i].size();
+    n.count = static_cast<IndexType>(nneighbors[i].size());
     n.begin_id = begin_id;
     IndexType j = 0;
     for (IndexType idx : nneighbors[i]) {
