@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added `SUFFIX_SO_VERSION` CMake option, default `OFF` ([#770](https://github.com/coal-library/coal/pull/770))
 - Add pixi-build support ([#774](https://github.com/coal-library/coal/pull/774))
 - contact patches: add helpers to reduce the size of a contact patch by keeping points that minimize the difference between the area of the original patch and the area of the new patch
+  - handle the specific cases of n_desired = 1 or 2 ([805](https://github.com/coal-library/coal/pull/805))
+- timings: + and += operators ([805](https://github.com/coal-library/coal/pull/805))
 
 ### Removed
 - Remove direct dependency to ([#744](https://github.com/coal-library/coal/pull/744)):
@@ -30,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove pixi 0.57 warnings ([#774](https://github.com/coal-library/coal/pull/774))
 - Fix nanobind bindings' stub file ([#781](https://github.com/coal-library/coal/pull/781#event-20983199417))
 - Remove Windows warnings when building benchmakrs ([789](https://github.com/coal-library/coal/pull/789))
+- convex: a point can have more than 256 neighbors now. In fact, a point can have `std::numeric_limits<IndexType>::max()` number of neighbors, where IndexType is typically int16 or int32 ([805](https://github.com/coal-library/coal/pull/805))
 
 ### Changed
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))
