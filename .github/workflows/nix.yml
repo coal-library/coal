@@ -39,7 +39,7 @@ jobs:
         with:
           name: gepetto
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-      - run: nix build -L .#coal-cpp
+      - run: nix build -L .#libcoal
       - run: nix build -L .#coal-bp
       - run: nix build -L .#coal-nb
 
