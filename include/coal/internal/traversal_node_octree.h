@@ -924,7 +924,12 @@ class COAL_DLLAPI OcTreeSolver {
               sqrt(sqrDistLowerBound) - crequest->security_margin;
         return false;
       }
-      if (crequest->enable_contact) {  // Overlap
+      if (bothAreLeaves) {  // Both are leaf nodes and overlap
+        if (cresult->distance_lower_bound > 0 &&
+            sqrDistLowerBound <
+                cresult->distance_lower_bound * cresult->distance_lower_bound)
+          cresult->distance_lower_bound =
+              sqrt(sqrDistLowerBound) - crequest->security_margin;
         if (cresult->numContacts() < crequest->num_max_contacts)
           cresult->addContact(
               Contact(tree1, tree2, static_cast<int>(root1 - tree1->getRoot()),
