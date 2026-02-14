@@ -8,148 +8,93 @@
 
   outputs =
     inputs:
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = inputs.nixpkgs.lib.systems.flakeExposed;
-      perSystem =
-        { pkgs, self', ... }:
-        {
-          apps.default = {
-            type = "app";
-            program = pkgs.python3.withPackages (_: [ self'.packages.default ]);
-          };
-          packages = {
-            default = self'.packages.coal-full-bp;
-            coal-full-bp = pkgs.python3Packages.toPythonModule (
-              (pkgs.coal.override { pythonSupport = true; }).overrideAttrs (super: {
-                pname = "coal-full-bp";
-                cmakeFlags = super.cmakeFlags ++ [
-                  "-DCOAL_DISABLE_HPP_FCL_WARNINGS=ON"
-                  "-DCOAL_PYTHON_NANOBIND=OFF"
-                  "-DGENERATE_PYTHON_STUBS=OFF"
-                ];
-                src = pkgs.lib.fileset.toSource {
-                  root = ./.;
-                  fileset = pkgs.lib.fileset.unions [
-                    ./CMakeLists.txt
-                    ./doc
-                    ./hpp-fclConfig.cmake
-                    ./include
-                    ./package.xml
-                    ./python
-                    # ./python-nb
-                    ./src
-                    ./test
-                  ];
-                };
-              })
-            );
-            coal-full-nb =
-              (self'.packages.coal-full-bp.override { pythonSupport = true; }).overrideAttrs
-                (super: {
-                  pname = "coal-full-nb";
-                  cmakeFlags = super.cmakeFlags ++ [
-                    "-DCOAL_PYTHON_NANOBIND=ON"
-                  ];
-                  src = pkgs.lib.fileset.toSource {
-                    root = ./.;
-                    fileset = pkgs.lib.fileset.unions [
-                      ./CMakeLists.txt
-                      ./doc
-                      ./hpp-fclConfig.cmake
-                      ./include
-                      ./package.xml
-                      # ./python
-                      ./python-nb
-                      ./src
-                      ./test
-                    ];
-                  };
-                  postPatch = ''
-                    substituteInPlace python-nb/CMakeLists.txt --replace-fail \
-                      "$""{Python_SITELIB}" \
-                      "${pkgs.python3.sitePackages}"
-                  '';
-                  propagatedBuildInputs = super.propagatedBuildInputs ++ [
-                    pkgs.python3Packages.nanobind
-                    pkgs.python3Packages.nanoeigenpy
-                  ];
-                  pythonImportsCheck = [ "coal" ]; # hppfcl is broken with nanobind
-                });
-            coal-cpp = (self'.packages.coal-full-bp.override { pythonSupport = false; }).overrideAttrs (super: {
-              pname = "coal-cpp";
-              src = pkgs.lib.fileset.toSource {
-                root = ./.;
-                fileset = pkgs.lib.fileset.unions [
-                  ./CMakeLists.txt
-                  ./doc
-                  ./hpp-fclConfig.cmake
-                  ./include
-                  ./package.xml
-                  # ./python
-                  # ./python-nb
-                  ./src
-                  ./test
-                ];
-              };
-            });
-            coal-nb = (self'.packages.coal-full-bp.override { pythonSupport = true; }).overrideAttrs (super: {
-              pname = "coal-nb";
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } (
+      { self, lib, ... }:
+      {
+        systems = inputs.nixpkgs.lib.systems.flakeExposed;
+        flake.overlays = {
+          default = final: prev: {
+            coal = prev.coal.overrideAttrs (super: {
               cmakeFlags = super.cmakeFlags ++ [
-                "-DCOAL_PYTHON_NANOBIND=ON"
-                "-DBUILD_STANDALONE_PYTHON_INTERFACE=ON"
-              ];
-              postPatch = ''
-                substituteInPlace python-nb/CMakeLists.txt --replace-fail \
-                  "$""{Python_SITELIB}" \
-                  "${pkgs.python3.sitePackages}"
-              '';
-              src = pkgs.lib.fileset.toSource {
-                root = ./.;
-                fileset = pkgs.lib.fileset.unions [
-                  ./CMakeLists.txt
-                  ./doc
-                  ./hpp-fclConfig.cmake
-                  ./include
-                  ./package.xml
-                  # ./python
-                  ./python-nb
-                  # ./src
-                  ./test
-                ];
-              };
-              pythonImportsCheck = [ "coal" ]; # hppfcl is broken with nanobind
-              propagatedBuildInputs = super.propagatedBuildInputs ++ [
-                self'.packages.coal-cpp
-                pkgs.python3Packages.nanobind
-                pkgs.python3Packages.nanoeigenpy
-              ];
-            });
-            coal-bp = (self'.packages.coal-full-bp.override { pythonSupport = true; }).overrideAttrs (super: {
-              pname = "coal-bp";
-              cmakeFlags = super.cmakeFlags ++ [
-                "-DCOAL_PYTHON_NANOBIND=OFF"
+                "-DCOAL_DISABLE_HPP_FCL_WARNINGS=ON"
                 "-DGENERATE_PYTHON_STUBS=OFF"
-                "-DBUILD_STANDALONE_PYTHON_INTERFACE=ON"
               ];
-              src = pkgs.lib.fileset.toSource {
+              src = lib.fileset.toSource {
                 root = ./.;
-                fileset = pkgs.lib.fileset.unions [
+                fileset = lib.fileset.unions [
                   ./CMakeLists.txt
                   ./doc
                   ./hpp-fclConfig.cmake
                   ./include
                   ./package.xml
                   ./python
-                  # ./python-nb
-                  # ./src
+                  ./python-nb
+                  ./src
                   ./test
                 ];
               };
-              propagatedBuildInputs = super.propagatedBuildInputs ++ [
-                self'.packages.coal-cpp
-              ];
             });
+
+            pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+              (python-final: python-prev: {
+                coal = python-prev.coal.overrideAttrs (super: {
+                  pname = "coal-bp";
+                  cmakeFlags = super.cmakeFlags ++ [
+                    "-DCOAL_PYTHON_NANOBIND=OFF"
+                  ];
+                });
+
+                coal-nb = python-final.coal.overrideAttrs (super: {
+                  pname = "coal-nb";
+                  cmakeFlags = super.cmakeFlags ++ [
+                    "-DCOAL_PYTHON_NANOBIND=ON"
+                  ];
+                  postPatch = ''
+                    substituteInPlace python-nb/CMakeLists.txt --replace-fail \
+                      "$""{Python_SITELIB}" \
+                      "${python-final.python.sitePackages}"
+                  '';
+                  propagatedBuildInputs = super.propagatedBuildInputs ++ [
+                    python-final.nanobind
+                    python-final.nanoeigenpy
+                  ];
+                  pythonImportsCheck = [ "coal" ]; # hppfcl is broken with nanobind
+                });
+              })
+            ];
           };
         };
-    };
+        perSystem =
+          {
+            pkgs,
+            self',
+            system,
+            ...
+          }:
+          {
+            _module.args = {
+              pkgs = import inputs.nixpkgs {
+                inherit system;
+                overlays = [ self.overlays.default ];
+              };
+            };
+            apps.default = {
+              type = "app";
+              program = pkgs.python3.withPackages (_: [ self'.packages.default ]);
+            };
+            packages = {
+              default = self'.packages.coal-full-bp;
+              libcoal = pkgs.coal;
+              coal-bp = pkgs.python3Packages.coal;
+              coal-nb = pkgs.python3Packages.coal-nb;
+              coal-full-bp = (pkgs.python3Packages.coal.override { buildStandalone = false; }).overrideAttrs {
+                pname = "coal-full-bp";
+              };
+              coal-full-nb = (pkgs.python3Packages.coal-nb.override { buildStandalone = false; }).overrideAttrs {
+                pname = "coal-full-nb";
+              };
+            };
+          };
+      }
+    );
 }
