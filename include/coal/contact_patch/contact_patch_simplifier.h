@@ -63,12 +63,6 @@ class COAL_DLLAPI ContactPatchSimplifierMaxArea {
 
  private:
   ContactPatch::Polygon simplified_buffer_;
-  std::vector<Index> ordered_indices_;
-  std::vector<Scalar> dp_area_;
-  std::vector<int> dp_prev_;
-  std::vector<Index> selection_indices_tmp_;
-  std::vector<Index> best_indices_;
-  std::vector<uint8_t> keep_;
 };
 
 /// @brief Greedy contact patch simplifier based on the Visvalingam–Whyatt rule.
