@@ -171,7 +171,7 @@ struct COAL_DLLAPI ContactPatchSolver {
 
   /// @brief Retrieve result, adds a post-processing step if result has bigger
   /// size than `this->max_patch_size`.
-  void getResult(const Contact& contact, const ContactPatch::Polygon* result,
+  void getResult(const Contact& contact, const std::vector<Vec2s>* result,
                  ContactPatch& contact_patch) const;
 
   /// @return the intersecting point between line defined by ray (a, b) and

@@ -581,7 +581,7 @@ void getShapeSupportSet(const Box* box, SupportSet& support_set,
       Vec3s(x, y, -z), Vec3s(-x, y, -z), Vec3s(-x, -y, -z), Vec3s(x, -y, -z),
   };
 
-  SupportSet::Polygon& polygon = support_data.polygon;
+  std::vector<Vec2s>& polygon = support_data.polygon;
   polygon.clear();
   const Transform3s& tf = support_set.tf;
   for (const Vec3s& corner : corners) {
@@ -825,7 +825,7 @@ void getShapeSupportSetLinear(const ConvexBaseTpl<IndexType>* convex,
   const Scalar support_value = support_dir.dot(support);
 
   const std::vector<Vec3s>& points = *(convex->points);
-  SupportSet::Polygon& polygon = support_data.polygon;
+  std::vector<Vec2s>& polygon = support_data.polygon;
   polygon.clear();
   const Transform3s& tf = support_set.tf;
   for (const Vec3s& point : points) {
@@ -853,7 +853,7 @@ void convexSupportSetRecurse(const ConvexBaseTpl<IndexType>* convex,
                              const size_t vertex_idx, const Vec3s& support_dir,
                              const Scalar support_value, const Transform3s& tf,
                              std::vector<int8_t>& visited,
-                             SupportSet::Polygon& polygon, Scalar tol) {
+                             std::vector<Vec2s>& polygon, Scalar tol) {
   if (visited[vertex_idx]) {
     return;
   }
@@ -906,7 +906,7 @@ void getShapeSupportSetLog(const ConvexBaseTpl<IndexType>* convex,
   // log support function.
   std::fill(support_data.visited.begin(), support_data.visited.end(), false);
 
-  SupportSet::Polygon& polygon = support_data.polygon;
+  std::vector<Vec2s>& polygon = support_data.polygon;
   polygon.clear();
   const Transform3s& tf = support_set.tf;
 
@@ -964,8 +964,8 @@ getShapeSupportSetTplInstantiation(LargeConvex<Triangle16::IndexType>);
 getShapeSupportSetTplInstantiation(LargeConvex<Triangle32::IndexType>);
 
 // ============================================================================
-COAL_DLLAPI void computeSupportSetConvexHull(SupportSet::Polygon& cloud,
-                                             SupportSet::Polygon& cvx_hull) {
+COAL_DLLAPI void computeSupportSetConvexHull(std::vector<Vec2s>& cloud,
+                                             std::vector<Vec2s>& cvx_hull) {
   cvx_hull.clear();
 
   if (cloud.size() <= 2) {

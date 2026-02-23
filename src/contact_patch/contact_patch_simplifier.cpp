@@ -159,7 +159,7 @@ inline Scalar double_triangle_area(const Vec2s& a, const Vec2s& b,
   return ab.x() * ac.y() - ab.y() * ac.x();
 }
 
-Scalar compute_triangle_area(const ContactPatch::Polygon& pts,
+Scalar compute_triangle_area(const std::vector<Vec2s>& pts,
                              const std::vector<int>& prev,
                              const std::vector<int>& next, int vertex) {
   const int prev_idx = prev[static_cast<Index>(vertex)];
@@ -173,7 +173,7 @@ Scalar compute_triangle_area(const ContactPatch::Polygon& pts,
   return std::abs(double_triangle_area(a, b, c)) * Scalar(0.5);
 }
 
-Scalar compute_triangle_area_kgon(const ContactPatch::Polygon& pts,  //
+Scalar compute_triangle_area_kgon(const std::vector<Vec2s>& pts,  //
                                   int i, int j, int k) {
   int n = static_cast<int>(pts.size());
   i %= n;
@@ -186,7 +186,7 @@ Scalar compute_triangle_area_kgon(const ContactPatch::Polygon& pts,  //
   return std::abs(double_triangle_area(a, b, c)) * Scalar(0.5);
 }
 
-Scalar compute_rooted_kgon(const ContactPatch::Polygon& pts, int root, int k,
+Scalar compute_rooted_kgon(const std::vector<Vec2s>& pts, int root, int k,
                            const ArrayView<int>& left_c,
                            const ArrayView<int>& right_c,
                            ArrayView<int>& best_v, ArrayView<Scalar>& dp_area,
@@ -251,7 +251,7 @@ Scalar compute_rooted_kgon(const ContactPatch::Polygon& pts, int root, int k,
   return max_total_area;
 }
 
-void solve_recursive(const ContactPatch::Polygon& pts, int k, int root_start,
+void solve_recursive(const std::vector<Vec2s>& pts, int k, int root_start,
                      int root_end, const ArrayView<int>& left_bound,
                      const ArrayView<int>& right_bound, Scalar& global_max_area,
                      ArrayView<int>& global_best_v, ArrayView<Scalar>& dp_area,

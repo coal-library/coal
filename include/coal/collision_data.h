@@ -549,7 +549,7 @@ struct COAL_DLLAPI ContactPatch {
 
  protected:
   /// @brief Container for the vertices of the set.
-  Polygon m_points;
+  std::vector<Vec2s> m_points;
 
  public:
   /// @brief Default constructor.
@@ -631,10 +631,10 @@ struct COAL_DLLAPI ContactPatch {
   }
 
   /// @brief Getter for the 2D points in the set.
-  Polygon& points() { return this->m_points; }
+  std::vector<Vec2s>& points() { return this->m_points; }
 
   /// @brief Const getter for the 2D points in the set.
-  const Polygon& points() const { return this->m_points; }
+  const std::vector<Vec2s>& points() const { return this->m_points; }
 
   /// @brief Getter for the i-th 2D point in the set.
   Vec2s& point(const size_t i) {

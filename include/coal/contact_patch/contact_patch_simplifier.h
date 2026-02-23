@@ -63,7 +63,7 @@ class COAL_DLLAPI ContactPatchSimplifierNaive {
   void simplify(ContactPatch& patch, std::size_t target_vertices);
 
  private:
-  ContactPatch::Polygon simplified_buffer_;
+  std::vector<Vec2s> simplified_buffer_;
 };
 
 /// @brief Dynamic-programming simplifier that preserves the largest possible
@@ -82,7 +82,7 @@ class COAL_DLLAPI ContactPatchSimplifierMaxArea {
   void simplify(ContactPatch& patch, std::size_t target_vertices);
 
  private:
-  ContactPatch::Polygon simplified_buffer_;
+  std::vector<Vec2s> simplified_buffer_;
 };
 
 /// @brief Greedy contact patch simplifier based on the Visvalingam–Whyatt rule.
@@ -108,7 +108,7 @@ class COAL_DLLAPI ContactPatchSimplifierGreedy {
     Index version;
   };
 
-  ContactPatch::Polygon simplified_buffer_;
+  std::vector<Vec2s> simplified_buffer_;
   std::vector<int> prev_;
   std::vector<int> next_;
   std::vector<bool> removed_;
