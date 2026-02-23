@@ -219,6 +219,7 @@ find_package(assimp REQUIRED)
 
 set(
   ${PROJECT_NAME}_HEADERS
+  include/coal/alloca.h
   include/coal/collision_data.h
   include/coal/BV/kIOS.h
   include/coal/BV/BV.h
