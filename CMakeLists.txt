@@ -265,6 +265,7 @@ set(
   include/coal/broadphase/detail/sparse_hash_table.h
   include/coal/broadphase/detail/spatial_hash-inl.h
   include/coal/broadphase/detail/spatial_hash.h
+  include/coal/container/array_view.h
   include/coal/narrowphase/narrowphase.h
   include/coal/narrowphase/gjk.h
   include/coal/narrowphase/narrowphase_defaults.h
