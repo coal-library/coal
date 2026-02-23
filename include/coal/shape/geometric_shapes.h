@@ -781,7 +781,7 @@ class ConvexBaseTpl : public ShapeBase {
     const std::vector<Neighbors>& nns = *neighbors;
     IndexType begin_id = nns[i].begin_id;
 #ifndef NDEBUG
-    unsigned char count = nns[i].count;
+    IndexType count = nns[i].count;
     assert(j < count);
 #endif
     const std::vector<IndexType>& nns_vec = *nneighbors_;

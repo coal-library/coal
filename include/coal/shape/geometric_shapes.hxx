@@ -172,7 +172,7 @@ void ConvexBaseTpl<IndexType>::deepcopy(const ConvexBaseTpl<IndexType>* source,
         new std::vector<OtherNeighbors>(source_neighbors.size()));
     std::vector<OtherNeighbors>& copy_neighbors = *(copy->neighbors);
     for (std::size_t i = 0; i < source_neighbors.size(); ++i) {
-      copy_neighbors[i].count = source_neighbors[i].count;
+      copy_neighbors[i].count = OtherIndexType(source_neighbors[i].count);
       copy_neighbors[i].begin_id = OtherIndexType(source_neighbors[i].begin_id);
     }
   } else {
