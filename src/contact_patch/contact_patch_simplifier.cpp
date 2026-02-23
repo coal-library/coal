@@ -45,8 +45,101 @@
 
 namespace coal {
 
+void ContactPatchSimplifierNaive::compute(const ContactPatch& patch_in,
+                                          std::size_t target_vertices,
+                                          ContactPatch& patch_out) {
+  const auto& pts = patch_in.points();
+  const std::size_t n = pts.size();
+  simplified_buffer_.clear();
+  simplified_buffer_.reserve(std::min(target_vertices, n));
+
+  if (n == 0 || target_vertices == 0 || target_vertices >= n) {
+    simplified_buffer_.assign(pts.begin(), pts.end());
+  } else if (target_vertices == 1) {
+    Vec2s barycenter = Vec2s::Zero();
+    for (std::size_t i = 0; i < n; ++i) {
+      barycenter += pts[i];
+    }
+    barycenter /= static_cast<Scalar>(n);
+    simplified_buffer_.push_back(barycenter);
+  } else if (target_vertices == 2) {
+    const Vec2s& first = pts[0];
+    std::size_t farthest_idx = 0;
+    Scalar max_dist_sq = Scalar(0);
+    for (std::size_t i = 1; i < n; ++i) {
+      const Scalar dist_sq = (pts[i] - first).squaredNorm();
+      if (dist_sq > max_dist_sq) {
+        max_dist_sq = dist_sq;
+        farthest_idx = i;
+      }
+    }
+    simplified_buffer_.push_back(first);
+    simplified_buffer_.push_back(pts[farthest_idx]);
+  } else {
+    // Brute-force: enumerate all C(n, k) subsets of vertices (preserving CCW
+    // order) and keep the one that maximises the polygon area.
+    const std::size_t k = target_vertices;
+    std::vector<std::size_t> indices(k);
+    std::iota(indices.begin(), indices.end(), std::size_t(0));
+
+    // Shoelace formula for the polygon formed by the selected indices.
+    const auto compute_area = [&](const std::vector<std::size_t>& idx) {
+      Scalar area = Scalar(0);
+      for (std::size_t i = 0; i < k; ++i) {
+        const std::size_t j = (i + 1) % k;
+        area += pts[idx[i]](0) * pts[idx[j]](1);
+        area -= pts[idx[j]](0) * pts[idx[i]](1);
+      }
+      return std::abs(area) * Scalar(0.5);
+    };
+
+    Scalar best_area = Scalar(-1);
+    std::vector<std::size_t> best_indices(indices);
+
+    while (true) {
+      const Scalar area = compute_area(indices);
+      if (area > best_area) {
+        best_area = area;
+        best_indices = indices;
+      }
+
+      // Advance to the next combination in lexicographic order.
+      // Find the rightmost index that can still be incremented.
+      int i = static_cast<int>(k) - 1;
+      while (i >= 0 && indices[static_cast<std::size_t>(i)] ==
+                           n - k + static_cast<std::size_t>(i)) {
+        --i;
+      }
+      if (i < 0) break;
+
+      ++indices[static_cast<std::size_t>(i)];
+      for (std::size_t j = static_cast<std::size_t>(i) + 1; j < k; ++j) {
+        indices[j] = indices[j - 1] + 1;
+      }
+    }
+
+    for (std::size_t i = 0; i < k; ++i) {
+      simplified_buffer_.push_back(pts[best_indices[i]]);
+    }
+  }
+
+  if (&patch_in != &patch_out) {
+    patch_out = patch_in;
+  }
+  auto& polygon = patch_out.points();
+  polygon.assign(simplified_buffer_.begin(), simplified_buffer_.end());
+}
+
+void ContactPatchSimplifierNaive::simplify(ContactPatch& patch,
+                                           std::size_t target_vertices) {
+  compute(patch, target_vertices, patch);
+}
+
 namespace {
-using Index = typename ContactPatchSimplifierMaxArea::Index;
+// -----------------------------------------------
+// Utils for non-trivial contact patch simplifiers
+// -----------------------------------------------
+using Index = std::size_t;
 
 template <typename T>
 inline T clamp(T val, T min_val, T max_val) {

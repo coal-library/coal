@@ -44,12 +44,32 @@
 
 namespace coal {
 
+/// @brief Naive patch simplifier.
+/// Computes the area of all possible combinations.
+/// Returns the combination with the largest area.
+/// This is very expensive and only meant to be used in tests to check
+/// if other simplifiers return the correct answer.
+class COAL_DLLAPI ContactPatchSimplifierNaive {
+ public:
+  ContactPatchSimplifierNaive() = default;
+
+  /// @brief Compute the maximum-area subset of `patch_in` with
+  /// `target_vertices` points and store it in `patch_out`.
+  void compute(const ContactPatch& patch_in, std::size_t target_vertices,
+               ContactPatch& patch_out);
+
+  /// @brief In-place simplification helper that replaces the polygon with the
+  /// max-area subset.
+  void simplify(ContactPatch& patch, std::size_t target_vertices);
+
+ private:
+  ContactPatch::Polygon simplified_buffer_;
+};
+
 /// @brief Dynamic-programming simplifier that preserves the largest possible
 /// polygon area with `target_vertices` points.
 class COAL_DLLAPI ContactPatchSimplifierMaxArea {
  public:
-  using Index = std::size_t;
-
   ContactPatchSimplifierMaxArea() = default;
 
   /// @brief Compute the maximum-area subset of `patch_in` with
@@ -68,7 +88,7 @@ class COAL_DLLAPI ContactPatchSimplifierMaxArea {
 /// @brief Greedy contact patch simplifier based on the Visvalingam–Whyatt rule.
 class COAL_DLLAPI ContactPatchSimplifierGreedy {
  public:
-  using Index = typename ContactPatchSimplifierMaxArea::Index;
+  using Index = std::size_t;
 
   ContactPatchSimplifierGreedy() = default;
 
