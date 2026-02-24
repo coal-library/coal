@@ -14,6 +14,10 @@ namespace coal {
 // -----------------------------------------------------------
 
 /// @brief Compute the convex hull of a polygon.
+/// @note This function internally uses alloca to avoid memory allocation on the
+/// heap. Hence, this function is meant to be used on point clouds with a small
+/// amount of points. If you encounter problems with this method, feel free to
+/// raise an issue.
 COAL_DLLAPI void computePolygonConvexHull(const std::vector<Vec2s>& cloud,
                                           std::vector<Vec2s>& cvx_hull);
 
