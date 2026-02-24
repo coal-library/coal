@@ -72,7 +72,7 @@ struct ArrayView {
   T& operator[](int i) {
     assert(i >= 0);
     assert(i < int(size_));
-    return data_[i];
+    return data_[static_cast<std::size_t>(i)];
   }
 
   /// @brief Const getter for the i-th element.
@@ -85,7 +85,7 @@ struct ArrayView {
   const T& operator[](int i) const {
     assert(i >= 0);
     assert(i < int(size_));
-    return data_[i];
+    return data_[static_cast<std::size_t>(i)];
   }
 
   /// @brief Returns a pointer to the data pointer.
