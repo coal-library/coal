@@ -68,7 +68,7 @@ struct ArrayView {
   /// @brief Getter for the i-th element.
   T& operator[](int i) {
     assert(i >= 0);
-    assert(i < size_);
+    assert(i < int(size_));
     return data_[i];
   }
 
@@ -81,9 +81,15 @@ struct ArrayView {
   /// @brief Const getter for the i-th element.
   const T& operator[](int i) const {
     assert(i >= 0);
-    assert(i < size_);
+    assert(i < int(size_));
     return data_[i];
   }
+
+  /// @brief Returns a pointer to the data pointer.
+  T* data() { return data_; }
+
+  /// @brief Returns a const pointer to the data pointer.
+  const T* data() const { return data_; }
 
   /// @brief Returns a pointer to the first element of the view.
   T* begin() { return data_; }

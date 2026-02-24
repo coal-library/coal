@@ -343,6 +343,7 @@ set(
   include/coal/serialization/quadrilateral.h
   include/coal/serialization/triangle.h
   include/coal/timings.h
+  include/coal/utils.h
 )
 
 if(
