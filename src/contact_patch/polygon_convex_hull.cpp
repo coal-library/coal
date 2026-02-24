@@ -69,7 +69,7 @@ void computePolygonConvexHull(const std::vector<Vec2s>& cloud,
   cloud_[support_idx] = tmp;
   cvx_hull.clear();
   cvx_hull.emplace_back(cloud_[0]);
-  const Vec2s& v = cvx_hull[0];
+  const Vec2s v = cvx_hull[0];
 
   // Step 2 - Sort the rest of the point cloud_ according to the angle made with
   // v. Note: we use stable_sort instead of sort because sort can fail if two
