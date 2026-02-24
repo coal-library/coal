@@ -46,11 +46,6 @@
 #include <alloca.h>
 #endif
 
-namespace coal {
-template <typename T>
-using span = boost::span<T>;
-}
-
 /// @brief Maximum number of bytes that `COAL_MAKE_ALLOCA_BOOST_SPAN` will
 /// allocate on the stack via `alloca`. Requests that exceed this threshold fall
 /// back to a heap allocation managed by a `std::unique_ptr`.
@@ -85,6 +80,6 @@ using span = boost::span<T>;
 
 #define COAL_MAKE_ALLOCA_BOOST_SPAN(Type, Name, Size) \
   COAL_MAKE_ALLOCA_TYPED_PTR(Type, Name, Size);       \
-  coal::span<Type> Name(ptr_##Name, _sz_##Name);
+  boost::span<Type> Name(ptr_##Name, _sz_##Name);
 
 #endif  // ifndef COAL_ALLOCA_H

@@ -74,7 +74,7 @@ void computePolygonConvexHull(const std::vector<Vec2s>& cloud,
   // Step 2 - Sort the rest of the point cloud_ according to the angle made with
   // v. Note: we use stable_sort instead of sort because sort can fail if two
   // values are identical.
-  std::stable_sort(
+  std::sort(
       cloud_.begin() + 1, cloud_.end(), [&v](const Vec2s& p1, const Vec2s& p2) {
         // p1 is "smaller" than p2 if det(p1 - v, p2 - v) >= 0
         const Scalar det =
