@@ -59,6 +59,9 @@ struct ArrayView {
   /// @brief Constructor from a pointer and a size.
   ArrayView(T* data, std::size_t size) : data_(data), size_(size) {}
 
+  /// @brief Whether the internal data points towards a ptr.
+  bool isValid() const { return data() != nullptr; }
+
   /// @brief Getter for the i-th element.
   T& operator[](std::size_t i) {
     assert(i < size_);
