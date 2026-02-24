@@ -1,24 +1,11 @@
-//
-// Copyright (c) 2026 INRIA
-//
-
-#ifndef COAL_UTILS_H
-#define COAL_UTILS_H
-
-#include "coal/data_types.h"
+#include "coal/contact_patch/polygon_convex_hull.h"
 #include "coal/container/array_view.h"
 
 #include <algorithm>
 
 namespace coal {
-
-// -----------------------------------------------------------
-// Collection of various utilities useful in the Coal library.
-// -----------------------------------------------------------
-
-/// @brief Compute the convex hull of a polygon.
-inline void computePolygonConvexHull(const std::vector<Vec2s>& cloud,
-                                     std::vector<Vec2s>& cvx_hull) {
+void computePolygonConvexHull(const std::vector<Vec2s>& cloud,
+                              std::vector<Vec2s>& cvx_hull) {
   cvx_hull.clear();
 
   if (cloud.size() <= 2) {
@@ -142,7 +129,4 @@ inline void computePolygonConvexHull(const std::vector<Vec2s>& cloud,
     cvx_hull.emplace_back(vec);
   }
 }
-
 }  // namespace coal
-
-#endif  // COAL_UTILS_H

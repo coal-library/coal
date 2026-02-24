@@ -37,7 +37,7 @@
 /** \authors Jia Pan, Florent Lamiraux, Josef Mirabel, Louis Montaut */
 
 #include "coal/narrowphase/support_functions.h"
-#include "coal/utils.h"
+#include "coal/contact_patch/polygon_convex_hull.h"
 
 namespace coal {
 namespace details {

@@ -287,6 +287,7 @@ set(
   include/coal/contact_patch/contact_patch_solver.h
   include/coal/contact_patch/contact_patch_solver.hxx
   include/coal/contact_patch/contact_patch_simplifier.h
+  include/coal/contact_patch/polygon_convex_hull.h
   include/coal/distance.h
   include/coal/math/matrix_3f.h
   include/coal/math/vec_3f.h
@@ -343,7 +344,6 @@ set(
   include/coal/serialization/quadrilateral.h
   include/coal/serialization/triangle.h
   include/coal/timings.h
-  include/coal/utils.h
 )
 
 if(
