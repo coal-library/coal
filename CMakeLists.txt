@@ -188,6 +188,19 @@ if(COAL_ENABLE_LOGGING)
   ADD_PROJECT_DEPENDENCY(Boost REQUIRED log)
 endif()
 
+# boost::span requires Boost >= 1.73.0 (released August 2020).
+# On Ubuntu 20.04 the system Boost is 1.71 and is too old; Ubuntu 22.04
+# ships 1.74 and is fine.
+if(Boost_VERSION_STRING VERSION_LESS 1.73)
+  message(
+    FATAL_ERROR
+    "Coal requires Boost >= 1.73.0 for boost::span support. "
+    "Found: Boost ${Boost_VERSION_STRING}. "
+    "On Ubuntu 20.04, install a newer Boost version (e.g. from a PPA "
+    "or by building from source)."
+  )
+endif()
+
 if(Boost_VERSION_STRING VERSION_LESS 1.81)
   # Default C++ version should be C++11
   CHECK_MINIMAL_CXX_STANDARD(11 ENFORCE)
@@ -265,7 +278,6 @@ set(
   include/coal/broadphase/detail/sparse_hash_table.h
   include/coal/broadphase/detail/spatial_hash-inl.h
   include/coal/broadphase/detail/spatial_hash.h
-  include/coal/container/array_view.h
   include/coal/narrowphase/narrowphase.h
   include/coal/narrowphase/gjk.h
   include/coal/narrowphase/narrowphase_defaults.h

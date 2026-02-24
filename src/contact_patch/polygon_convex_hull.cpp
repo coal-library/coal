@@ -1,5 +1,5 @@
 #include "coal/contact_patch/polygon_convex_hull.h"
-#include "coal/container/array_view.h"
+#include "coal/alloca.h"
 
 #include <algorithm>
 
@@ -17,7 +17,7 @@ void computePolygonConvexHull(const std::vector<Vec2s>& cloud,
   }
 
   // temporary copy of cloud to work on
-  COAL_MAKE_ALLOCA_ARRAY_VIEW(Vec2s, cloud_, cloud.size());
+  COAL_MAKE_ALLOCA_BOOST_SPAN(Vec2s, cloud_, cloud.size());
   for (size_t i = 0; i < cloud.size(); ++i) {
     cloud_[i] = cloud[i];
   }

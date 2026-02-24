@@ -34,7 +34,7 @@
 /** \author Louis Montaut */
 
 #include "coal/contact_patch/contact_patch_simplifier.h"
-#include "coal/container/array_view.h"
+#include "coal/alloca.h"
 
 #include <algorithm>
 #include <cmath>
@@ -187,35 +187,36 @@ Scalar compute_triangle_area_kgon(const std::vector<Vec2s>& pts,  //
 }
 
 Scalar compute_rooted_kgon(const std::vector<Vec2s>& pts, int root, int k,
-                           const ArrayView<int>& left_c,
-                           const ArrayView<int>& right_c,
-                           ArrayView<int>& best_v, ArrayView<Scalar>& dp_area,
-                           ArrayView<int>& dp_prev) {
+                           boost::span<const int> left_c,
+                           boost::span<const int> right_c,
+                           boost::span<int> best_v, boost::span<Scalar> dp_area,
+                           boost::span<int> dp_prev) {
   int n = static_cast<int>(pts.size());
 
   for (int m = 1; m < k; ++m) {
-    int len = right_c[m - 1] - left_c[m - 1] + 1;
+    int len = right_c[Index(m - 1)] - left_c[Index(m - 1)] + 1;
     for (int i = 0; i < len; ++i) {
-      dp_area[m * 2 * n + i] = Scalar(-1.0);
-      dp_prev[m * 2 * n + i] = -1;
+      dp_area[Index(m * 2 * n + i)] = Scalar(-1.0);
+      dp_prev[Index(m * 2 * n + i)] = -1;
     }
   }
 
   for (int i = left_c[0]; i <= right_c[0]; ++i) {
-    dp_area[1 * 2 * n + (i - left_c[0])] = Scalar(0.0);
-    dp_prev[1 * 2 * n + (i - left_c[0])] = root;
+    dp_area[Index(1 * 2 * n + (i - left_c[0]))] = Scalar(0.0);
+    dp_prev[Index(1 * 2 * n + (i - left_c[0]))] = root;
   }
 
   for (int m = 2; m < k; ++m) {
-    for (int i = left_c[m - 1]; i <= right_c[m - 1]; ++i) {
+    for (int i = left_c[Index(m - 1)]; i <= right_c[Index(m - 1)]; ++i) {
       Scalar best_area = Scalar(-1.0);
       int best_j = -1;
 
-      int j_start = left_c[m - 2];
-      int j_end = std::min(right_c[m - 2], i - 1);
+      int j_start = left_c[Index(m - 2)];
+      int j_end = std::min(right_c[Index(m - 2)], i - 1);
 
       for (int j = j_start; j <= j_end; ++j) {
-        Scalar prev_val = dp_area[(m - 1) * 2 * n + (j - left_c[m - 2])];
+        Scalar prev_val =
+            dp_area[Index((m - 1) * 2 * n + (j - left_c[Index(m - 2)]))];
         if (prev_val < Scalar(0.0)) continue;
 
         Scalar area = prev_val + compute_triangle_area_kgon(pts, root, j, i);
@@ -224,43 +225,43 @@ Scalar compute_rooted_kgon(const std::vector<Vec2s>& pts, int root, int k,
           best_j = j;
         }
       }
-      dp_area[m * 2 * n + (i - left_c[m - 1])] = best_area;
-      dp_prev[m * 2 * n + (i - left_c[m - 1])] = best_j;
+      dp_area[Index(m * 2 * n + (i - left_c[Index(m - 1)]))] = best_area;
+      dp_prev[Index(m * 2 * n + (i - left_c[Index(m - 1)]))] = best_j;
     }
   }
 
   Scalar max_total_area = Scalar(-1.0);
   int best_end = -1;
-  for (int i = left_c[k - 2]; i <= right_c[k - 2]; ++i) {
-    Scalar val = dp_area[(k - 1) * 2 * n + (i - left_c[k - 2])];
+  for (int i = left_c[Index(k - 2)]; i <= right_c[Index(k - 2)]; ++i) {
+    Scalar val = dp_area[Index((k - 1) * 2 * n + (i - left_c[Index(k - 2)]))];
     if (val > max_total_area) {
       max_total_area = val;
       best_end = i;
     }
   }
 
-  best_v.assign(static_cast<Index>(k), 0);
+  std::fill(best_v.begin(), best_v.end(), 0);
   best_v[0] = root;
   if (best_end != -1) {
     int curr = best_end;
     for (int m = k - 1; m >= 1; --m) {
-      best_v[m] = curr;
-      curr = dp_prev[m * 2 * n + (curr - left_c[m - 1])];
+      best_v[Index(m)] = curr;
+      curr = dp_prev[Index(m * 2 * n + (curr - left_c[Index(m - 1)]))];
     }
   }
   return max_total_area;
 }
 
 void solve_recursive(const std::vector<Vec2s>& pts, int k, int root_start,
-                     int root_end, const ArrayView<int>& left_bound,
-                     const ArrayView<int>& right_bound, Scalar& global_max_area,
-                     ArrayView<int>& global_best_v, ArrayView<Scalar>& dp_area,
-                     ArrayView<int>& dp_prev) {
+                     int root_end, boost::span<const int> left_bound,
+                     boost::span<const int> right_bound,
+                     Scalar& global_max_area, boost::span<int> global_best_v,
+                     boost::span<Scalar> dp_area, boost::span<int> dp_prev) {
   if (root_start > root_end) return;
 
   int mid_root = root_start + (root_end - root_start) / 2;
 
-  COAL_MAKE_ALLOCA_ARRAY_VIEW(int, mid_v, static_cast<Index>(k));
+  COAL_MAKE_ALLOCA_BOOST_SPAN(int, mid_v, static_cast<Index>(k));
   Scalar mid_area = compute_rooted_kgon(pts, mid_root, k, left_bound,
                                         right_bound, mid_v, dp_area, dp_prev);
 
@@ -272,7 +273,7 @@ void solve_recursive(const std::vector<Vec2s>& pts, int k, int root_start,
   }
 
   if (root_start < mid_root) {
-    COAL_MAKE_ALLOCA_ARRAY_VIEW(int, new_right, static_cast<Index>(k - 1));
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, new_right, static_cast<Index>(k - 1));
     for (int m = 1; m < k; ++m)
       new_right[static_cast<Index>(m - 1)] = mid_v[static_cast<Index>(m)];
     solve_recursive(pts, k, root_start, mid_root - 1, left_bound, new_right,
@@ -280,7 +281,7 @@ void solve_recursive(const std::vector<Vec2s>& pts, int k, int root_start,
   }
 
   if (mid_root < root_end) {
-    COAL_MAKE_ALLOCA_ARRAY_VIEW(int, new_left, static_cast<Index>(k - 1));
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, new_left, static_cast<Index>(k - 1));
     for (int m = 1; m < k; ++m)
       new_left[static_cast<Index>(m - 1)] = mid_v[static_cast<Index>(m)];
     solve_recursive(pts, k, mid_root + 1, root_end, new_left, right_bound,
@@ -357,31 +358,31 @@ void ContactPatchSimplifierMaxArea::compute(const ContactPatch& patch_in,
   } else {
     const std::size_t desired = clamp<Index>(target_vertices, 3, n);
 
-    COAL_MAKE_ALLOCA_ARRAY_VIEW(Scalar, dp_area,
+    COAL_MAKE_ALLOCA_BOOST_SPAN(Scalar, dp_area,
                                 static_cast<std::size_t>(desired * 2 * n));
-    COAL_MAKE_ALLOCA_ARRAY_VIEW(int, dp_prev,
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, dp_prev,
                                 static_cast<std::size_t>(desired * 2 * n));
 
-    COAL_MAKE_ALLOCA_ARRAY_VIEW(int, left_bound, desired - 1);
-    COAL_MAKE_ALLOCA_ARRAY_VIEW(int, right_bound, desired - 1);
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, left_bound, desired - 1);
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, right_bound, desired - 1);
     for (std::size_t m = 1; m < desired; ++m) {
       left_bound[m - 1] = int(m);
       right_bound[m - 1] = int(n - desired + m);
     }
 
-    COAL_MAKE_ALLOCA_ARRAY_VIEW(int, P0, desired);
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, P0, desired);
     Scalar area0 = compute_rooted_kgon(pts, 0, int(desired), left_bound,
                                        right_bound, P0, dp_area, dp_prev);
 
-    COAL_MAKE_ALLOCA_ARRAY_VIEW(int, P0_ext, desired + 1);
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, P0_ext, desired + 1);
     for (std::size_t i = 0; i < desired; ++i) {
       P0_ext[i] = P0[i];
     }
     P0_ext[desired] = int(n);
 
-    COAL_MAKE_ALLOCA_ARRAY_VIEW(int, P1, desired);
-    COAL_MAKE_ALLOCA_ARRAY_VIEW(int, left_bound1, desired - 1);
-    COAL_MAKE_ALLOCA_ARRAY_VIEW(int, right_bound1, desired - 1);
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, P1, desired);
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, left_bound1, desired - 1);
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, right_bound1, desired - 1);
     for (std::size_t m = 1; m < desired; ++m) {
       left_bound1[m - 1] = P0_ext[m];
       right_bound1[m - 1] = P0_ext[m + 1];
@@ -391,7 +392,7 @@ void ContactPatchSimplifierMaxArea::compute(const ContactPatch& patch_in,
                                        right_bound1, P1, dp_area, dp_prev);
 
     Scalar global_max_area = std::max(area0, area1);
-    COAL_MAKE_ALLOCA_ARRAY_VIEW(int, global_best_v, desired);
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, global_best_v, desired);
     if (area0 > area1) {
       for (std::size_t i = 0; i < desired; ++i) {
         global_best_v[i] = P0[i];
@@ -403,8 +404,8 @@ void ContactPatchSimplifierMaxArea::compute(const ContactPatch& patch_in,
     }
 
     if (P0[1] - P0[0] > 1) {
-      COAL_MAKE_ALLOCA_ARRAY_VIEW(int, arg_left_bound, desired - 1);
-      COAL_MAKE_ALLOCA_ARRAY_VIEW(int, arg_right_bound, desired - 1);
+      COAL_MAKE_ALLOCA_BOOST_SPAN(int, arg_left_bound, desired - 1);
+      COAL_MAKE_ALLOCA_BOOST_SPAN(int, arg_right_bound, desired - 1);
       for (std::size_t i = 0; i < desired - 1; ++i) {
         arg_left_bound[i] = P0_ext[i + 1];
         arg_right_bound[i] = P1[i + 1];

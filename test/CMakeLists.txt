@@ -73,7 +73,6 @@ if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
   add_coal_test(serialization serialization.cpp)
 
   add_coal_test(alloca alloca.cpp)
-  add_coal_test(array_view array_view.cpp)
 
   # Broadphase
   add_coal_test(broadphase broadphase.cpp)

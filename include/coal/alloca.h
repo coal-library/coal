@@ -37,14 +37,54 @@
 #ifndef COAL_ALLOCA_H
 #define COAL_ALLOCA_H
 
+#include "coal/logging.h"
+#include <boost/core/span.hpp>
+
 #ifdef WIN32
 #include <malloc.h>
 #else
 #include <alloca.h>
 #endif
 
+namespace coal {
+template <typename T>
+using span = boost::span<T>;
+}
+
+/// @brief Maximum number of bytes that `COAL_MAKE_ALLOCA_BOOST_SPAN` will
+/// allocate on the stack via `alloca`. Requests that exceed this threshold fall
+/// back to a heap allocation managed by a `std::unique_ptr`.
+#define COAL_ALLOCA_MAX_STACK_BYTES 65536
+
 #define COAL_ALLOCA EIGEN_ALLOCA
+
 #define COAL_ALLOCA_TYPED_PTR(Type, Size) \
   reinterpret_cast<Type*>(COAL_ALLOCA(sizeof(Type) * (Size)))
+
+/// @brief Macro to create a pointer of type Type, with Size * sizeof(Type)
+/// allocated elements, refered to by variable Name.
+///
+/// If `Size * sizeof(Type) <= COAL_ALLOCA_MAX_STACK_BYTES`, the buffer is
+/// allocated on the stack via `alloca` (zero overhead, freed on function
+/// return). Otherwise a heap buffer is allocated and owned by a
+/// `std::unique_ptr` that is freed when it goes out of scope.
+#define COAL_MAKE_ALLOCA_TYPED_PTR(Type, Name, Size)                  \
+  const std::size_t _sz_##Name = static_cast<std::size_t>(Size);      \
+  const std::size_t _bytes_##Name = _sz_##Name * sizeof(Type);        \
+  std::unique_ptr<Type[]> _heap_buf_##Name;                           \
+  Type* ptr_##Name;                                                   \
+  if (_bytes_##Name <= COAL_ALLOCA_MAX_STACK_BYTES) {                 \
+    ptr_##Name = COAL_ALLOCA_TYPED_PTR(Type, _sz_##Name);             \
+  } else {                                                            \
+    COAL_LOG_WARNING(                                                 \
+        "Exceeded COAL_ALLOCA_MAX_STACK_BYTES in "                    \
+        "COAL_MAKE_ALLOCA_TYPED_PTR. Switching to heap allocation."); \
+    _heap_buf_##Name.reset(new Type[_sz_##Name]);                     \
+    ptr_##Name = _heap_buf_##Name.get();                              \
+  }
+
+#define COAL_MAKE_ALLOCA_BOOST_SPAN(Type, Name, Size) \
+  COAL_MAKE_ALLOCA_TYPED_PTR(Type, Name, Size);       \
+  coal::span<Type> Name(ptr_##Name, _sz_##Name);
 
 #endif  // ifndef COAL_ALLOCA_H
