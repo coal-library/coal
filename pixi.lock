@@ -4563,10 +4563,10 @@ packages:
   - octomap >=1.10.0,<1.11.0a0
   - libboost >=1.88.0,<1.89.0a0
   - libboost-python >=1.88.0,<1.89.0a0
-  - eigenpy >=3.12.0,<3.12.1.0a0
   - assimp >=6.0.4,<6.0.5.0a0
   - numpy >=1.23,<3
   - python_abi 3.14.* *_cp314
+  - eigenpy >=3.12.0,<3.12.1.0a0
   - qhull >=2020.2,<2020.3.0a0
 - conda: .
   name: coal
@@ -4580,10 +4580,10 @@ packages:
   - octomap >=1.10.0,<1.11.0a0
   - libboost >=1.88.0,<1.89.0a0
   - libboost-python >=1.88.0,<1.89.0a0
-  - eigenpy >=3.12.0,<3.12.1.0a0
   - assimp >=6.0.4,<6.0.5.0a0
   - numpy >=1.23,<3
   - python_abi 3.14.* *_cp314
+  - eigenpy >=3.12.0,<3.12.1.0a0
   - qhull >=2020.2,<2020.3.0a0
 - conda: .
   name: coal
@@ -4600,10 +4600,10 @@ packages:
   - octomap >=1.10.0,<1.11.0a0
   - libboost >=1.88.0,<1.89.0a0
   - libboost-python >=1.88.0,<1.89.0a0
-  - eigenpy >=3.12.0,<3.12.1.0a0
   - assimp >=6.0.4,<6.0.5.0a0
   - numpy >=1.23,<3
   - python_abi 3.14.* *_cp314
+  - eigenpy >=3.12.0,<3.12.1.0a0
   - qhull >=2020.2,<2020.3.0a0
 - conda: .
   name: coal
@@ -4618,10 +4618,10 @@ packages:
   - octomap >=1.10.0,<1.11.0a0
   - libboost >=1.88.0,<1.89.0a0
   - libboost-python >=1.88.0,<1.89.0a0
-  - eigenpy >=3.12.0,<3.12.1.0a0
   - assimp >=6.0.4,<6.0.5.0a0
   - numpy >=1.23,<3
   - python_abi 3.14.* *_cp314
+  - eigenpy >=3.12.0,<3.12.1.0a0
   - qhull >=2020.2,<2020.3.0a0
 - conda: https://conda.anaconda.org/conda-forge/linux-64/compiler-rt-21.1.8-ha770c72_1.conda
   sha256: 858d6848e0b078c32e3a809d6d0e2d0ab9fc3069a567f117fd3dc71f9205e6d0
