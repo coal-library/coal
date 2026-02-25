@@ -39,6 +39,7 @@
 
 #include "coal/logging.h"
 #include <boost/core/span.hpp>
+#include <memory>
 
 #ifdef WIN32
 #include <malloc.h>
@@ -66,7 +67,7 @@
 #define COAL_MAKE_ALLOCA_TYPED_PTR(Type, Name, Size)                  \
   const std::size_t _sz_##Name = static_cast<std::size_t>(Size);      \
   const std::size_t _bytes_##Name = _sz_##Name * sizeof(Type);        \
-  std::unique_ptr<Type[]> _heap_buf_##Name;                           \
+  std::unique_ptr<std::vector<Type>> _heap_buf_##Name;                \
   Type* ptr_##Name;                                                   \
   if (_bytes_##Name <= COAL_ALLOCA_MAX_STACK_BYTES) {                 \
     ptr_##Name = COAL_ALLOCA_TYPED_PTR(Type, _sz_##Name);             \
@@ -74,8 +75,8 @@
     COAL_LOG_WARNING(                                                 \
         "Exceeded COAL_ALLOCA_MAX_STACK_BYTES in "                    \
         "COAL_MAKE_ALLOCA_TYPED_PTR. Switching to heap allocation."); \
-    _heap_buf_##Name.reset(new Type[_sz_##Name]);                     \
-    ptr_##Name = _heap_buf_##Name.get();                              \
+    _heap_buf_##Name.reset(new std::vector<Type>(_sz_##Name));        \
+    ptr_##Name = _heap_buf_##Name.get()->data();                      \
   }
 
 #define COAL_MAKE_ALLOCA_BOOST_SPAN(Type, Name, Size) \
