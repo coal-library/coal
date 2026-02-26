@@ -188,19 +188,6 @@ if(COAL_ENABLE_LOGGING)
   ADD_PROJECT_DEPENDENCY(Boost REQUIRED log)
 endif()
 
-# boost::span requires Boost >= 1.73.0 (released August 2020).
-# On Ubuntu 20.04 the system Boost is 1.71 and is too old; Ubuntu 22.04
-# ships 1.74 and is fine.
-if(Boost_VERSION_STRING VERSION_LESS 1.73)
-  message(
-    FATAL_ERROR
-    "Coal requires Boost >= 1.73.0 for boost::span support. "
-    "Found: Boost ${Boost_VERSION_STRING}. "
-    "On Ubuntu 20.04, install a newer Boost version (e.g. from a PPA "
-    "or by building from source)."
-  )
-endif()
-
 if(Boost_VERSION_STRING VERSION_LESS 1.81)
   # Default C++ version should be C++11
   CHECK_MINIMAL_CXX_STANDARD(11 ENFORCE)
@@ -357,6 +344,20 @@ set(
   include/coal/serialization/triangle.h
   include/coal/timings.h
 )
+
+# boost::span requires Boost >= 1.78.0.
+# On Ubuntu 22.04 the system Boost is 1.74 and is too old.
+# We must install boost/core/span headers.
+if(Boost_VERSION VERSION_LESS 1.78)
+  message(INFO "Boost <= 1.78 detected: boost::span headers will be installed")
+  list(
+    APPEND ${PROJECT_NAME}_HEADERS
+    include/coal/third_party/boost/core/data.hpp
+    include/coal/third_party/boost/core/detail/assert.hpp
+    include/coal/third_party/boost/core/make_span.hpp
+    include/coal/third_party/boost/core/span.hpp
+  )
+endif()
 
 if(
   COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL
