@@ -156,7 +156,7 @@ void ContactPatchSolver::computePatch(const ShapeType1& s1,
 
   // `eps` is be used to check strict positivity of determinants.
   const Scalar eps = Eigen::NumTraits<Scalar>::dummy_precision();
-  using Polygon = SupportSet::Polygon;
+  using Polygon = std::vector<Vec2s>;
 
   if ((this->support_set_shape1.size() == 2) &&
       (this->support_set_shape2.size() == 2)) {
@@ -382,16 +382,16 @@ void ContactPatchSolver::computePatch(const ShapeType1& s1,
 }
 
 // ============================================================================
-inline void ContactPatchSolver::getResult(
-    const Contact& contact, const ContactPatch::Polygon* result_ptr,
-    ContactPatch& contact_patch) const {
+inline void ContactPatchSolver::getResult(const Contact& contact,
+                                          const std::vector<Vec2s>* result_ptr,
+                                          ContactPatch& contact_patch) const {
   if (result_ptr->size() <= 1) {
     contact_patch.addPoint(contact.pos);
     return;
   }
 
-  const ContactPatch::Polygon& result = *(result_ptr);
-  ContactPatch::Polygon& patch = contact_patch.points();
+  const std::vector<Vec2s>& result = *(result_ptr);
+  std::vector<Vec2s>& patch = contact_patch.points();
   patch = result;
 }
 

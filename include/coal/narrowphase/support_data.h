@@ -69,7 +69,7 @@ struct ShapeSupportData {
 
   // @brief Temporary set used to compute the convex-hull of a support set.
   // Only used for ConvexBase and Box.
-  SupportSet::Polygon polygon;
+  std::vector<Vec2s> polygon;
 };
 
 }  // namespace details

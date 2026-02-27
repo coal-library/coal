@@ -34,6 +34,7 @@
 /** \author Louis Montaut */
 
 #include "coal/contact_patch/contact_patch_simplifier.h"
+#include "coal/alloca.h"
 
 #include <algorithm>
 #include <cmath>
@@ -44,8 +45,101 @@
 
 namespace coal {
 
+void ContactPatchSimplifierNaive::compute(const ContactPatch& patch_in,
+                                          std::size_t target_vertices,
+                                          ContactPatch& patch_out) {
+  const auto& pts = patch_in.points();
+  const std::size_t n = pts.size();
+  simplified_buffer_.clear();
+  simplified_buffer_.reserve(std::min(target_vertices, n));
+
+  if (n == 0 || target_vertices == 0 || target_vertices >= n) {
+    simplified_buffer_.assign(pts.begin(), pts.end());
+  } else if (target_vertices == 1) {
+    Vec2s barycenter = Vec2s::Zero();
+    for (std::size_t i = 0; i < n; ++i) {
+      barycenter += pts[i];
+    }
+    barycenter /= static_cast<Scalar>(n);
+    simplified_buffer_.push_back(barycenter);
+  } else if (target_vertices == 2) {
+    const Vec2s& first = pts[0];
+    std::size_t farthest_idx = 0;
+    Scalar max_dist_sq = Scalar(0);
+    for (std::size_t i = 1; i < n; ++i) {
+      const Scalar dist_sq = (pts[i] - first).squaredNorm();
+      if (dist_sq > max_dist_sq) {
+        max_dist_sq = dist_sq;
+        farthest_idx = i;
+      }
+    }
+    simplified_buffer_.push_back(first);
+    simplified_buffer_.push_back(pts[farthest_idx]);
+  } else {
+    // Brute-force: enumerate all C(n, k) subsets of vertices (preserving CCW
+    // order) and keep the one that maximises the polygon area.
+    const std::size_t k = target_vertices;
+    std::vector<std::size_t> indices(k);
+    std::iota(indices.begin(), indices.end(), std::size_t(0));
+
+    // Shoelace formula for the polygon formed by the selected indices.
+    const auto compute_area = [&](const std::vector<std::size_t>& idx) {
+      Scalar area = Scalar(0);
+      for (std::size_t i = 0; i < k; ++i) {
+        const std::size_t j = (i + 1) % k;
+        area += pts[idx[i]](0) * pts[idx[j]](1);
+        area -= pts[idx[j]](0) * pts[idx[i]](1);
+      }
+      return std::abs(area) * Scalar(0.5);
+    };
+
+    Scalar best_area = Scalar(-1);
+    std::vector<std::size_t> best_indices(indices);
+
+    while (true) {
+      const Scalar area = compute_area(indices);
+      if (area > best_area) {
+        best_area = area;
+        best_indices = indices;
+      }
+
+      // Advance to the next combination in lexicographic order.
+      // Find the rightmost index that can still be incremented.
+      int i = static_cast<int>(k) - 1;
+      while (i >= 0 && indices[static_cast<std::size_t>(i)] ==
+                           n - k + static_cast<std::size_t>(i)) {
+        --i;
+      }
+      if (i < 0) break;
+
+      ++indices[static_cast<std::size_t>(i)];
+      for (std::size_t j = static_cast<std::size_t>(i) + 1; j < k; ++j) {
+        indices[j] = indices[j - 1] + 1;
+      }
+    }
+
+    for (std::size_t i = 0; i < k; ++i) {
+      simplified_buffer_.push_back(pts[best_indices[i]]);
+    }
+  }
+
+  if (&patch_in != &patch_out) {
+    patch_out = patch_in;
+  }
+  auto& polygon = patch_out.points();
+  polygon.assign(simplified_buffer_.begin(), simplified_buffer_.end());
+}
+
+void ContactPatchSimplifierNaive::simplify(ContactPatch& patch,
+                                           std::size_t target_vertices) {
+  compute(patch, target_vertices, patch);
+}
+
 namespace {
-using Index = typename ContactPatchSimplifierMaxArea::Index;
+// -----------------------------------------------
+// Utils for non-trivial contact patch simplifiers
+// -----------------------------------------------
+using Index = std::size_t;
 
 template <typename T>
 inline T clamp(T val, T min_val, T max_val) {
@@ -65,7 +159,7 @@ inline Scalar double_triangle_area(const Vec2s& a, const Vec2s& b,
   return ab.x() * ac.y() - ab.y() * ac.x();
 }
 
-Scalar compute_triangle_area(const ContactPatch::Polygon& pts,
+Scalar compute_triangle_area(const std::vector<Vec2s>& pts,
                              const std::vector<int>& prev,
                              const std::vector<int>& next, int vertex) {
   const int prev_idx = prev[static_cast<Index>(vertex)];
@@ -78,6 +172,123 @@ Scalar compute_triangle_area(const ContactPatch::Polygon& pts,
   const Vec2s& c = pts[static_cast<Index>(next_idx)];
   return std::abs(double_triangle_area(a, b, c)) * Scalar(0.5);
 }
+
+Scalar compute_triangle_area_kgon(const std::vector<Vec2s>& pts,  //
+                                  int i, int j, int k) {
+  int n = static_cast<int>(pts.size());
+  i %= n;
+  j %= n;
+  k %= n;
+  if (i == j || j == k || i == k) return Scalar(0);
+  const Vec2s& a = pts[static_cast<Index>(i)];
+  const Vec2s& b = pts[static_cast<Index>(j)];
+  const Vec2s& c = pts[static_cast<Index>(k)];
+  return std::abs(double_triangle_area(a, b, c)) * Scalar(0.5);
+}
+
+Scalar compute_rooted_kgon(const std::vector<Vec2s>& pts, int root, int k,
+                           boost::span<const int> left_c,
+                           boost::span<const int> right_c,
+                           boost::span<int> best_v, boost::span<Scalar> dp_area,
+                           boost::span<int> dp_prev) {
+  int n = static_cast<int>(pts.size());
+
+  for (int m = 1; m < k; ++m) {
+    int len = right_c[Index(m - 1)] - left_c[Index(m - 1)] + 1;
+    for (int i = 0; i < len; ++i) {
+      dp_area[Index(m * 2 * n + i)] = Scalar(-1.0);
+      dp_prev[Index(m * 2 * n + i)] = -1;
+    }
+  }
+
+  for (int i = left_c[0]; i <= right_c[0]; ++i) {
+    dp_area[Index(1 * 2 * n + (i - left_c[0]))] = Scalar(0.0);
+    dp_prev[Index(1 * 2 * n + (i - left_c[0]))] = root;
+  }
+
+  for (int m = 2; m < k; ++m) {
+    for (int i = left_c[Index(m - 1)]; i <= right_c[Index(m - 1)]; ++i) {
+      Scalar best_area = Scalar(-1.0);
+      int best_j = -1;
+
+      int j_start = left_c[Index(m - 2)];
+      int j_end = std::min(right_c[Index(m - 2)], i - 1);
+
+      for (int j = j_start; j <= j_end; ++j) {
+        Scalar prev_val =
+            dp_area[Index((m - 1) * 2 * n + (j - left_c[Index(m - 2)]))];
+        if (prev_val < Scalar(0.0)) continue;
+
+        Scalar area = prev_val + compute_triangle_area_kgon(pts, root, j, i);
+        if (area > best_area) {
+          best_area = area;
+          best_j = j;
+        }
+      }
+      dp_area[Index(m * 2 * n + (i - left_c[Index(m - 1)]))] = best_area;
+      dp_prev[Index(m * 2 * n + (i - left_c[Index(m - 1)]))] = best_j;
+    }
+  }
+
+  Scalar max_total_area = Scalar(-1.0);
+  int best_end = -1;
+  for (int i = left_c[Index(k - 2)]; i <= right_c[Index(k - 2)]; ++i) {
+    Scalar val = dp_area[Index((k - 1) * 2 * n + (i - left_c[Index(k - 2)]))];
+    if (val > max_total_area) {
+      max_total_area = val;
+      best_end = i;
+    }
+  }
+
+  std::fill(best_v.begin(), best_v.end(), 0);
+  best_v[0] = root;
+  if (best_end != -1) {
+    int curr = best_end;
+    for (int m = k - 1; m >= 1; --m) {
+      best_v[Index(m)] = curr;
+      curr = dp_prev[Index(m * 2 * n + (curr - left_c[Index(m - 1)]))];
+    }
+  }
+  return max_total_area;
+}
+
+void solve_recursive(const std::vector<Vec2s>& pts, int k, int root_start,
+                     int root_end, boost::span<const int> left_bound,
+                     boost::span<const int> right_bound,
+                     Scalar& global_max_area, boost::span<int> global_best_v,
+                     boost::span<Scalar> dp_area, boost::span<int> dp_prev) {
+  if (root_start > root_end) return;
+
+  int mid_root = root_start + (root_end - root_start) / 2;
+
+  COAL_MAKE_ALLOCA_BOOST_SPAN(int, mid_v, static_cast<Index>(k));
+  Scalar mid_area = compute_rooted_kgon(pts, mid_root, k, left_bound,
+                                        right_bound, mid_v, dp_area, dp_prev);
+
+  if (mid_area > global_max_area) {
+    global_max_area = mid_area;
+    for (int i = 0; i < k; ++i) {
+      global_best_v[static_cast<Index>(i)] = mid_v[static_cast<Index>(i)];
+    }
+  }
+
+  if (root_start < mid_root) {
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, new_right, static_cast<Index>(k - 1));
+    for (int m = 1; m < k; ++m)
+      new_right[static_cast<Index>(m - 1)] = mid_v[static_cast<Index>(m)];
+    solve_recursive(pts, k, root_start, mid_root - 1, left_bound, new_right,
+                    global_max_area, global_best_v, dp_area, dp_prev);
+  }
+
+  if (mid_root < root_end) {
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, new_left, static_cast<Index>(k - 1));
+    for (int m = 1; m < k; ++m)
+      new_left[static_cast<Index>(m - 1)] = mid_v[static_cast<Index>(m)];
+    solve_recursive(pts, k, mid_root + 1, root_end, new_left, right_bound,
+                    global_max_area, global_best_v, dp_area, dp_prev);
+  }
+}
+
 }  // namespace
 
 // Let's start by a remark: if you start at vertex p0 of a 2D polygon,
@@ -110,6 +321,10 @@ Scalar compute_triangle_area(const ContactPatch::Polygon& pts,
 // - This produces the "best" fan for anchor p0. We compare it to the previous
 //   "best" (anchor, sequence) and keep the best of the two.
 // - We repeat this procedure with the next anchor.
+//
+// Note: this implementation is heavily inspired by CGAL's 2D inscribed k-gon
+// method. See here for more info:
+// https://doc.cgal.org/latest/Inscribed_areas/group__PkgInscribedAreasRef.html
 void ContactPatchSimplifierMaxArea::compute(const ContactPatch& patch_in,
                                             Index target_vertices,
                                             ContactPatch& patch_out) {
@@ -121,7 +336,6 @@ void ContactPatchSimplifierMaxArea::compute(const ContactPatch& patch_in,
   if (n == 0 || target_vertices == 0 || target_vertices >= n) {
     simplified_buffer_.assign(pts.begin(), pts.end());
   } else if (target_vertices == 1) {
-    // Return the barycenter of the patch
     Vec2s barycenter = Vec2s::Zero();
     for (Index i = 0; i < n; ++i) {
       barycenter += pts[i];
@@ -129,7 +343,6 @@ void ContactPatchSimplifierMaxArea::compute(const ContactPatch& patch_in,
     barycenter /= static_cast<Scalar>(n);
     simplified_buffer_.push_back(barycenter);
   } else if (target_vertices == 2) {
-    // Return the first point and the point farthest from it
     const Vec2s& first = pts[0];
     Index farthest_idx = 0;
     Scalar max_dist_sq = Scalar(0);
@@ -143,124 +356,69 @@ void ContactPatchSimplifierMaxArea::compute(const ContactPatch& patch_in,
     simplified_buffer_.push_back(first);
     simplified_buffer_.push_back(pts[farthest_idx]);
   } else {
-    const Index desired = clamp<Index>(target_vertices, 3, n);
+    const std::size_t desired = clamp<Index>(target_vertices, 3, n);
 
-    ordered_indices_.resize(n);
-    const Index dp_width = desired + 1;
-    // note: we could use an Eigen::Matrix but using a std::vector<Scalar> for
-    // dp_area_ is mirroring dp_prev_ (the "best" sequence of indices so far).
-    dp_area_.assign(n * dp_width, -std::numeric_limits<Scalar>::infinity());
-    dp_prev_.assign(n * dp_width, -1);
-    selection_indices_tmp_.clear();
-    selection_indices_tmp_.reserve(desired);
-    best_indices_.clear();
-    best_indices_.reserve(desired);
+    COAL_MAKE_ALLOCA_BOOST_SPAN(Scalar, dp_area,
+                                static_cast<std::size_t>(desired * 2 * n));
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, dp_prev,
+                                static_cast<std::size_t>(desired * 2 * n));
 
-    const Scalar invalid_area = -std::numeric_limits<Scalar>::infinity();
-    Scalar best_area = invalid_area;
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, left_bound, desired - 1);
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, right_bound, desired - 1);
+    for (std::size_t m = 1; m < desired; ++m) {
+      left_bound[m - 1] = int(m);
+      right_bound[m - 1] = int(n - desired + m);
+    }
 
-    const auto dp_index = [dp_width](Index i, Index k) {
-      return static_cast<Index>(i * dp_width + k);
-    };
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, P0, desired);
+    Scalar area0 = compute_rooted_kgon(pts, 0, int(desired), left_bound,
+                                       right_bound, P0, dp_area, dp_prev);
 
-    for (Index anchor = 0; anchor < n; ++anchor) {
-      for (Index i = 0; i < n; ++i) {
-        ordered_indices_[i] = (anchor + i) % n;
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, P0_ext, desired + 1);
+    for (std::size_t i = 0; i < desired; ++i) {
+      P0_ext[i] = P0[i];
+    }
+    P0_ext[desired] = int(n);
+
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, P1, desired);
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, left_bound1, desired - 1);
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, right_bound1, desired - 1);
+    for (std::size_t m = 1; m < desired; ++m) {
+      left_bound1[m - 1] = P0_ext[m];
+      right_bound1[m - 1] = P0_ext[m + 1];
+    }
+
+    Scalar area1 = compute_rooted_kgon(pts, P0[1], int(desired), left_bound1,
+                                       right_bound1, P1, dp_area, dp_prev);
+
+    Scalar global_max_area = std::max(area0, area1);
+    COAL_MAKE_ALLOCA_BOOST_SPAN(int, global_best_v, desired);
+    if (area0 > area1) {
+      for (std::size_t i = 0; i < desired; ++i) {
+        global_best_v[i] = P0[i];
       }
-
-      std::fill(dp_area_.begin(), dp_area_.end(), invalid_area);
-      std::fill(dp_prev_.begin(), dp_prev_.end(), -1);
-      selection_indices_tmp_.clear();
-
-      dp_area_[dp_index(0, 1)] = Scalar(0);
-      dp_prev_[dp_index(0, 1)] = -1;
-
-      Scalar anchor_best_area = invalid_area;
-      int anchor_best_end = -1;
-
-      for (Index i = 1; i < n; ++i) {
-        const Index max_k = std::min(desired, i + 1);
-        for (Index k = 2; k <= max_k; ++k) {
-          for (Index j = k - 2; j < i; ++j) {
-            const Scalar prev_area = dp_area_[dp_index(j, k - 1)];
-            if (prev_area == invalid_area) {
-              continue;
-            }
-
-            const Scalar tri_area = std::abs(double_triangle_area(
-                pts[ordered_indices_[0]], pts[ordered_indices_[j]],
-                pts[ordered_indices_[i]]));
-            const Scalar candidate_area = prev_area + tri_area;
-            const Index cur_idx = dp_index(i, k);
-            if (candidate_area > dp_area_[cur_idx]) {
-              dp_area_[cur_idx] = candidate_area;
-              dp_prev_[cur_idx] = static_cast<int>(j);
-            }
-          }
-        }
-      }
-
-      for (Index i = desired - 1; i < n; ++i) {
-        const Scalar area = dp_area_[dp_index(i, desired)];
-        if (area > anchor_best_area) {
-          anchor_best_area = area;
-          anchor_best_end = static_cast<int>(i);
-        }
-      }
-
-      if (anchor_best_area == invalid_area || anchor_best_end < 0) {
-        continue;
-      }
-
-      selection_indices_tmp_.clear();
-
-      Index current = static_cast<Index>(anchor_best_end);
-      Index current_k = desired;
-      selection_indices_tmp_.push_back(ordered_indices_[current]);
-
-      while (current_k > 1) {
-        const int predecessor = dp_prev_[dp_index(current, current_k)];
-        if (predecessor < 0) {
-          anchor_best_area = invalid_area;
-          break;
-        }
-        current = static_cast<Index>(predecessor);
-        --current_k;
-        selection_indices_tmp_.push_back(ordered_indices_[current]);
-      }
-
-      if (anchor_best_area == invalid_area) {
-        continue;
-      }
-
-      std::reverse(selection_indices_tmp_.begin(),
-                   selection_indices_tmp_.end());
-
-      if (anchor_best_area > best_area) {
-        best_area = anchor_best_area;
-        best_indices_ = selection_indices_tmp_;
+    } else {
+      for (std::size_t i = 0; i < desired; ++i) {
+        global_best_v[i] = P1[i];
       }
     }
 
-    if (best_indices_.empty()) {
-      best_indices_.clear();
-      for (Index i = 0; i < desired; ++i) {
-        best_indices_.push_back(i);
+    if (P0[1] - P0[0] > 1) {
+      COAL_MAKE_ALLOCA_BOOST_SPAN(int, arg_left_bound, desired - 1);
+      COAL_MAKE_ALLOCA_BOOST_SPAN(int, arg_right_bound, desired - 1);
+      for (std::size_t i = 0; i < desired - 1; ++i) {
+        arg_left_bound[i] = P0_ext[i + 1];
+        arg_right_bound[i] = P1[i + 1];
       }
+
+      solve_recursive(pts, int(desired), P0[0] + 1, P0[1] - 1, arg_left_bound,
+                      arg_right_bound, global_max_area, global_best_v, dp_area,
+                      dp_prev);
     }
 
-    keep_.resize(n);
-    std::fill(keep_.begin(), keep_.end(), uint8_t(0));
-    for (Index idx : best_indices_) {
-      if (idx < n) {
-        keep_[idx] = uint8_t(1);
-      }
-    }
-
-    for (Index i = 0; i < n; ++i) {
-      if (keep_[i]) {
-        simplified_buffer_.push_back(pts[i]);
-      }
+    for (std::size_t i = 0; i < desired; ++i) {
+      int v = global_best_v[i];
+      simplified_buffer_.push_back(pts[static_cast<std::size_t>(v % int(n))]);
     }
   }
 

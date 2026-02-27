@@ -39,6 +39,7 @@ set(
   contact_patch.cpp
   contact_patch/contact_patch_solver.cpp
   contact_patch/contact_patch_simplifier.cpp
+  contact_patch/polygon_convex_hull.cpp
   contact_patch_func_matrix.cpp
   distance_func_matrix.cpp
   collision_data.cpp
@@ -242,6 +243,18 @@ target_include_directories(
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
 )
+
+# boost::span requires Boost >= 1.78.0.
+# On Ubuntu 22.04 the system Boost is 1.74 and is too old.
+# In this case, we add include/coal/third_party as include directory.
+if(Boost_VERSION VERSION_LESS 1.78)
+  target_include_directories(
+    ${LIBRARY_NAME}
+    PUBLIC
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/coal/third_party>
+      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/coal/third_party>
+  )
+endif()
 
 if(octomap_FOUND)
   MODERNIZE_TARGET_LINK_LIBRARIES(

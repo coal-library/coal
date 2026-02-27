@@ -549,7 +549,7 @@ struct COAL_DLLAPI ContactPatch {
 
  protected:
   /// @brief Container for the vertices of the set.
-  Polygon m_points;
+  std::vector<Vec2s> m_points;
 
  public:
   /// @brief Default constructor.
@@ -574,6 +574,25 @@ struct COAL_DLLAPI ContactPatch {
 
   /// @brief Returns the number of points in the contact patch.
   size_t size() const { return this->m_points.size(); }
+
+  /// @brief Returns the area of the 2D surface represented by the contact
+  /// patch.
+  Scalar computeArea() const {
+    const size_t n = this->m_points.size();
+    if (n < 3) {
+      return Scalar(0);
+    }
+
+    // Shoelace formula for polygon area
+    // See: https://en.wikipedia.org/wiki/Shoelace_formula
+    Scalar area = Scalar(0);
+    for (size_t i = 0; i < n; ++i) {
+      const size_t j = (i + 1) % n;
+      area += this->m_points[i](0) * this->m_points[j](1);
+      area -= this->m_points[j](0) * this->m_points[i](1);
+    }
+    return std::abs(area) / Scalar(2);
+  }
 
   /// @brief Add a 3D point to the set, expressed in the world frame.
   /// @note This function takes a 3D point and expresses it in the local frame
@@ -612,10 +631,10 @@ struct COAL_DLLAPI ContactPatch {
   }
 
   /// @brief Getter for the 2D points in the set.
-  Polygon& points() { return this->m_points; }
+  std::vector<Vec2s>& points() { return this->m_points; }
 
   /// @brief Const getter for the 2D points in the set.
-  const Polygon& points() const { return this->m_points; }
+  const std::vector<Vec2s>& points() const { return this->m_points; }
 
   /// @brief Getter for the i-th 2D point in the set.
   Vec2s& point(const size_t i) {

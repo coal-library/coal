@@ -219,6 +219,7 @@ find_package(assimp REQUIRED)
 
 set(
   ${PROJECT_NAME}_HEADERS
+  include/coal/alloca.h
   include/coal/collision_data.h
   include/coal/BV/kIOS.h
   include/coal/BV/BV.h
@@ -285,6 +286,7 @@ set(
   include/coal/contact_patch/contact_patch_solver.h
   include/coal/contact_patch/contact_patch_solver.hxx
   include/coal/contact_patch/contact_patch_simplifier.h
+  include/coal/contact_patch/polygon_convex_hull.h
   include/coal/distance.h
   include/coal/math/matrix_3f.h
   include/coal/math/vec_3f.h
@@ -342,6 +344,20 @@ set(
   include/coal/serialization/triangle.h
   include/coal/timings.h
 )
+
+# boost::span requires Boost >= 1.78.0.
+# On Ubuntu 22.04 the system Boost is 1.74 and is too old.
+# We must install boost/core/span headers.
+if(Boost_VERSION VERSION_LESS 1.78)
+  message(INFO "Boost <= 1.78 detected: boost::span headers will be installed")
+  list(
+    APPEND ${PROJECT_NAME}_HEADERS
+    include/coal/third_party/boost/core/data.hpp
+    include/coal/third_party/boost/core/detail/assert.hpp
+    include/coal/third_party/boost/core/make_span.hpp
+    include/coal/third_party/boost/core/span.hpp
+  )
+endif()
 
 if(
   COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL
