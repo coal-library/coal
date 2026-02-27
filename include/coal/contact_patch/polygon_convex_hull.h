@@ -5,6 +5,9 @@
 #ifndef COAL_CONTACT_PATCH_POLYGON_CONVEX_HULL_H
 #define COAL_CONTACT_PATCH_POLYGON_CONVEX_HULL_H
 
+#include <vector>
+
+#include "coal/config.hh"
 #include "coal/data_types.h"
 
 namespace coal {
