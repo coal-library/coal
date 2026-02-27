@@ -34,6 +34,9 @@
 
 /** \author Louis Montaut */
 
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 #define BOOST_TEST_MODULE COAL_POLYGON_CONVEX_HULL
 #include <boost/test/included/unit_test.hpp>
 
