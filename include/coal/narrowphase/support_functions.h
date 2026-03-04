@@ -108,6 +108,22 @@ template <int _SupportOptions = SupportOptions::NoSweptSphere,
 void getShapeSupport(const ConvexBaseTpl<IndexType>* convex, const Vec3s& dir,
                      Vec3s& support, int& hint, ShapeSupportData& /*unused*/);
 
+/// @brief Generic ShapeBase support function.
+/// This overload uses virtual dispatch via ShapeBase::computeShapeSupport(),
+/// allowing custom shapes to participate in GJK/EPA computations.
+template <int _SupportOptions = SupportOptions::NoSweptSphere>
+void getShapeSupport(const ShapeBase* shape, const Vec3s& dir, Vec3s& support,
+                     int& hint, ShapeSupportData& support_data);
+
+/// @brief Generic ShapeBase support set function.
+/// This overload uses virtual dispatch for custom shapes.
+/// The default behavior computes a single support point.
+template <int _SupportOptions = SupportOptions::NoSweptSphere>
+void getShapeSupportSet(const ShapeBase* shape, SupportSet& support_set,
+                        int& hint, ShapeSupportData& support_data,
+                        size_t num_sampled_supports = 6,
+                        Scalar tol = Scalar(1e-3));
+
 /// @brief Cast a `ConvexBase` to a `LargeConvex` to use the log version of
 /// `getShapeSupport`. This is **much** faster than the linear version of
 /// `getShapeSupport` when a `ConvexBase` has more than a few dozen of vertices.
