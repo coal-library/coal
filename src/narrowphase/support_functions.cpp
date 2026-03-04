@@ -83,6 +83,7 @@ Vec3s getSupport(const ShapeBase* shape, const Vec3s& dir, int& hint) {
     case GEOM_HALFSPACE:
       support.setZero();
       break;
+    case GEOM_CUSTOM:
     default:
       // Use virtual dispatch for custom shapes
       getShapeSupport<_SupportOptions>(shape, dir, support, hint, support_data);
@@ -462,7 +463,7 @@ void getShapeSupport(const ShapeBase* shape, const Vec3s& dir, Vec3s& support,
                      int& hint, ShapeSupportData& support_data) {
   shape->computeShapeSupport(dir, support, hint, support_data);
   if (_SupportOptions == SupportOptions::WithSweptSphere) {
-    support += shape->getSweptSphereRadius() * dir.normalized();
+    support += shape->getSweptSphereRadius() * dir;
   }
 }
 getShapeSupportTplInstantiation(ShapeBase);
@@ -508,6 +509,7 @@ void getSupportSet(const ShapeBase* shape, SupportSet& support_set, int& hint,
     case GEOM_PLANE:
     case GEOM_HALFSPACE:
       break;
+    case GEOM_CUSTOM:
     default:
       // Use virtual dispatch for custom shapes
       getShapeSupportSet<_SupportOptions>(shape, support_set, hint,

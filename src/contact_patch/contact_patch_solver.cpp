@@ -119,8 +119,10 @@ ContactPatchSolver::makeSupportSetFunction(const ShapeBase* shape,
     case GEOM_CONVEX32:
       return details::getConvexBaseSupportSetTpl<Triangle32::IndexType,
                                                  Options::NoSweptSphere>;
+    case GEOM_CUSTOM:
     default:
-      COAL_THROW_PRETTY("Unsupported geometric shape.", std::logic_error);
+      // Use virtual dispatch for custom shapes via ShapeBase overload.
+      return details::getShapeSupportSetTpl<ShapeBase, Options::NoSweptSphere>;
   }
 }
 
