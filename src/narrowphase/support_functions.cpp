@@ -81,9 +81,12 @@ Vec3s getSupport(const ShapeBase* shape, const Vec3s& dir, int& hint) {
       break;
     case GEOM_PLANE:
     case GEOM_HALFSPACE:
-    default:
       support.setZero();
-      ;  // nothing
+      break;
+    default:
+      // Use virtual dispatch for custom shapes
+      getShapeSupport<_SupportOptions>(shape, dir, support, hint, support_data);
+      break;
   }
 
   return support;
@@ -451,6 +454,20 @@ getShapeSupportTplInstantiation(LargeConvex<Triangle16::IndexType>);
 getShapeSupportTplInstantiation(LargeConvex<Triangle32::IndexType>);
 
 // ============================================================================
+// Generic ShapeBase support function using virtual dispatch.
+// This enables custom shapes to participate in GJK/EPA computations
+// by overriding ShapeBase::computeShapeSupport().
+template <int _SupportOptions>
+void getShapeSupport(const ShapeBase* shape, const Vec3s& dir, Vec3s& support,
+                     int& hint, ShapeSupportData& support_data) {
+  shape->computeShapeSupport(dir, support, hint, support_data);
+  if (_SupportOptions == SupportOptions::WithSweptSphere) {
+    support += shape->getSweptSphereRadius() * dir.normalized();
+  }
+}
+getShapeSupportTplInstantiation(ShapeBase);
+
+// ============================================================================
 #define CALL_GET_SHAPE_SUPPORT_SET(ShapeType)                               \
   getShapeSupportSet<_SupportOptions>(static_cast<const ShapeType*>(shape), \
                                       support_set, hint, support_data,      \
@@ -490,10 +507,15 @@ void getSupportSet(const ShapeBase* shape, SupportSet& support_set, int& hint,
       break;
     case GEOM_PLANE:
     case GEOM_HALFSPACE:
-    default:;  // nothing
+      break;
+    default:
+      // Use virtual dispatch for custom shapes
+      getShapeSupportSet<_SupportOptions>(shape, support_set, hint,
+                                          support_data, max_num_supports, tol);
+      break;
   }
 }
-#undef CALL_GET_SHAPE_SUPPORT
+#undef CALL_GET_SHAPE_SUPPORT_SET
 
 // Explicit instantiation
 // clang-format off
@@ -961,6 +983,22 @@ void getShapeSupportSet(const LargeConvex<IndexType>* convex,
 }
 getShapeSupportSetTplInstantiation(LargeConvex<Triangle16::IndexType>);
 getShapeSupportSetTplInstantiation(LargeConvex<Triangle32::IndexType>);
+
+// ============================================================================
+// Generic ShapeBase support set function using virtual dispatch.
+// Default behavior: compute a single support point via computeShapeSupport().
+template <int _SupportOptions>
+void getShapeSupportSet(const ShapeBase* shape, SupportSet& support_set,
+                        int& hint, ShapeSupportData& support_data,
+                        size_t /*unused*/, Scalar /*unused*/) {
+  support_set.points().clear();
+  Vec3s support;
+  const Vec3s& support_dir = support_set.getNormal();
+  getShapeSupport<_SupportOptions>(shape, support_dir, support, hint,
+                                   support_data);
+  support_set.addPoint(support);
+}
+getShapeSupportSetTplInstantiation(ShapeBase);
 
 // ============================================================================
 COAL_DLLAPI void computeSupportSetConvexHull(const std::vector<Vec2s>& cloud,
