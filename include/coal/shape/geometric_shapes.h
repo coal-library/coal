@@ -46,6 +46,7 @@
 #include "coal/collision_object.h"
 #include "coal/data_types.h"
 #include "coal/shared_ptr_comparison.h"
+#include "coal/narrowphase/support_data.h"
 
 #ifdef COAL_HAS_QHULL
 namespace orgQhull {
@@ -85,6 +86,31 @@ class COAL_DLLAPI ShapeBase : public CollisionGeometry {
   /// @brief Get radius of sphere swept around the shape.
   /// This radius is always >= 0.
   Scalar getSweptSphereRadius() const { return this->m_swept_sphere_radius; }
+
+  /// @brief Compute the support point of this shape in the given direction.
+  /// The output support point is expressed in the local frame of the shape
+  /// and does not account for the swept sphere radius.
+  /// Override this method to enable custom shapes to participate in GJK/EPA
+  /// collision and distance computations.
+  /// @param[in] dir support direction.
+  /// @param[out] support the computed support point.
+  /// @param[in,out] hint warm-start hint (used mainly for convex shapes).
+  /// @param[in,out] data temporary data for support computation.
+  virtual void computeShapeSupport(const Vec3s& dir, Vec3s& support, int& hint,
+                                   details::ShapeSupportData& data) const {
+    COAL_UNUSED_VARIABLE(dir);
+    COAL_UNUSED_VARIABLE(support);
+    COAL_UNUSED_VARIABLE(hint);
+    COAL_UNUSED_VARIABLE(data);
+    COAL_THROW_PRETTY(
+        "computeShapeSupport not implemented for this shape type. "
+        "Override this method to use custom shapes with GJK/EPA.",
+        std::logic_error);
+  }
+
+  /// @brief Whether the Nesterov normalize heuristic should be used
+  /// for this shape in GJK. Override for custom shapes if needed.
+  virtual bool needNesterovNormalizeHeuristic() const { return false; }
 
  protected:
   bool isEqual(const CollisionGeometry& _other) const override {

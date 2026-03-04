@@ -174,7 +174,16 @@ MinkowskiDiff::GetSupportFunction makeGetSupportFunction1(
       }
     }
     default:
-      COAL_THROW_PRETTY("Unsupported geometric shape.", std::logic_error);
+      // Use virtual dispatch for custom shapes via ShapeBase overload
+      if (_SupportOptions == SupportOptions::WithSweptSphere) {
+        swept_sphere_radius[1] = 0;
+      } else {
+        swept_sphere_radius[1] = s1->getSweptSphereRadius();
+      }
+      if (identity)
+        return getSupportFuncTpl<Shape0, ShapeBase, true, _SupportOptions>;
+      else
+        return getSupportFuncTpl<Shape0, ShapeBase, false, _SupportOptions>;
   }
 }
 
@@ -256,7 +265,17 @@ MinkowskiDiff::GetSupportFunction makeGetSupportFunction0(
       break;
     }
     default:
-      COAL_THROW_PRETTY("Unsupported geometric shape", std::logic_error);
+      // Use virtual dispatch for custom shapes via ShapeBase overload.
+      // Shape0 is resolved as ShapeBase; shape1 is still dispatched
+      // via makeGetSupportFunction1 which resolves known types
+      // at compile time and falls back to ShapeBase for unknowns.
+      if (_SupportOptions == SupportOptions::WithSweptSphere) {
+        swept_sphere_radius[0] = 0;
+      } else {
+        swept_sphere_radius[0] = s0->getSweptSphereRadius();
+      }
+      return makeGetSupportFunction1<ShapeBase, _SupportOptions>(
+          s1, identity, swept_sphere_radius, data);
   }
 }
 
@@ -291,7 +310,8 @@ bool getNormalizeSupportDirection(const ShapeBase* shape) {
       return (bool)shape_traits<ConvexBase32>::NeedNesterovNormalizeHeuristic;
       break;
     default:
-      COAL_THROW_PRETTY("Unsupported geometric shape", std::logic_error);
+      // Use virtual dispatch for custom shapes
+      return shape->needNesterovNormalizeHeuristic();
   }
 }
 
