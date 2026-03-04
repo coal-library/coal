@@ -387,6 +387,28 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[GEOM_HALFSPACE][GEOM_PLANE]     = &ShapeShapeDistance<Halfspace, Plane>;
   distance_matrix[GEOM_HALFSPACE][GEOM_HALFSPACE] = &ShapeShapeDistance<Halfspace, Halfspace>;
   distance_matrix[GEOM_HALFSPACE][GEOM_ELLIPSOID] = &ShapeShapeDistance<Halfspace, Ellipsoid>;
+
+  // Custom shapes (GEOM_CUSTOM) use virtual dispatch via ShapeBase.
+  // Plane and Halfspace are not listed here because they require specialized
+  // analytic treatment and GJK does not work correctly for unbounded shapes.
+  distance_matrix[GEOM_CUSTOM][GEOM_BOX]          = &ShapeShapeDistance<ShapeBase, Box>;
+  distance_matrix[GEOM_CUSTOM][GEOM_SPHERE]        = &ShapeShapeDistance<ShapeBase, Sphere>;
+  distance_matrix[GEOM_CUSTOM][GEOM_CAPSULE]       = &ShapeShapeDistance<ShapeBase, Capsule>;
+  distance_matrix[GEOM_CUSTOM][GEOM_CONE]          = &ShapeShapeDistance<ShapeBase, Cone>;
+  distance_matrix[GEOM_CUSTOM][GEOM_CYLINDER]      = &ShapeShapeDistance<ShapeBase, Cylinder>;
+  distance_matrix[GEOM_CUSTOM][GEOM_CONVEX16]      = &ShapeShapeDistance<ShapeBase, ConvexBase16>;
+  distance_matrix[GEOM_CUSTOM][GEOM_CONVEX32]      = &ShapeShapeDistance<ShapeBase, ConvexBase32>;
+  distance_matrix[GEOM_CUSTOM][GEOM_ELLIPSOID]     = &ShapeShapeDistance<ShapeBase, Ellipsoid>;
+  distance_matrix[GEOM_CUSTOM][GEOM_CUSTOM]        = &ShapeShapeDistance<ShapeBase, ShapeBase>;
+
+  distance_matrix[GEOM_BOX][GEOM_CUSTOM]           = &ShapeShapeDistance<Box, ShapeBase>;
+  distance_matrix[GEOM_SPHERE][GEOM_CUSTOM]         = &ShapeShapeDistance<Sphere, ShapeBase>;
+  distance_matrix[GEOM_CAPSULE][GEOM_CUSTOM]        = &ShapeShapeDistance<Capsule, ShapeBase>;
+  distance_matrix[GEOM_CONE][GEOM_CUSTOM]           = &ShapeShapeDistance<Cone, ShapeBase>;
+  distance_matrix[GEOM_CYLINDER][GEOM_CUSTOM]       = &ShapeShapeDistance<Cylinder, ShapeBase>;
+  distance_matrix[GEOM_CONVEX16][GEOM_CUSTOM]       = &ShapeShapeDistance<ConvexBase16, ShapeBase>;
+  distance_matrix[GEOM_CONVEX32][GEOM_CUSTOM]       = &ShapeShapeDistance<ConvexBase32, ShapeBase>;
+  distance_matrix[GEOM_ELLIPSOID][GEOM_CUSTOM]      = &ShapeShapeDistance<Ellipsoid, ShapeBase>;
   // clang-format on
 
   /* AABB distance not implemented */
