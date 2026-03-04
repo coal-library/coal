@@ -566,6 +566,7 @@ void exposeCollisionGeometries() {
         .value("GEOM_OCTREE", GEOM_OCTREE)
         .value("HF_AABB", HF_AABB)
         .value("HF_OBBRSS", HF_OBBRSS)
+        .value("GEOM_CUSTOM", GEOM_CUSTOM)
         .export_values();
   }
 

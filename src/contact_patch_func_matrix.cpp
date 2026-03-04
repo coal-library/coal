@@ -271,6 +271,28 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[GEOM_TRIANGLE][GEOM_ELLIPSOID]  = &ShapeShapeContactPatch<TriangleP, Ellipsoid>;
   contact_patch_matrix[GEOM_TRIANGLE][GEOM_TRIANGLE]   = &ShapeShapeContactPatch<TriangleP, TriangleP>;
 
+  // Custom shapes (GEOM_CUSTOM) use virtual dispatch via ShapeBase.
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_BOX]          = &ShapeShapeContactPatch<ShapeBase, Box>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_SPHERE]        = &ShapeShapeContactPatch<ShapeBase, Sphere>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_CAPSULE]       = &ShapeShapeContactPatch<ShapeBase, Capsule>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_CONE]          = &ShapeShapeContactPatch<ShapeBase, Cone>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_CYLINDER]      = &ShapeShapeContactPatch<ShapeBase, Cylinder>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_CONVEX16]      = &ShapeShapeContactPatch<ShapeBase, ConvexBase16>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_CONVEX32]      = &ShapeShapeContactPatch<ShapeBase, ConvexBase32>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_ELLIPSOID]     = &ShapeShapeContactPatch<ShapeBase, Ellipsoid>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_TRIANGLE]      = &ShapeShapeContactPatch<ShapeBase, TriangleP>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_CUSTOM]        = &ShapeShapeContactPatch<ShapeBase, ShapeBase>;
+
+  contact_patch_matrix[GEOM_BOX][GEOM_CUSTOM]           = &ShapeShapeContactPatch<Box, ShapeBase>;
+  contact_patch_matrix[GEOM_SPHERE][GEOM_CUSTOM]         = &ShapeShapeContactPatch<Sphere, ShapeBase>;
+  contact_patch_matrix[GEOM_CAPSULE][GEOM_CUSTOM]        = &ShapeShapeContactPatch<Capsule, ShapeBase>;
+  contact_patch_matrix[GEOM_CONE][GEOM_CUSTOM]           = &ShapeShapeContactPatch<Cone, ShapeBase>;
+  contact_patch_matrix[GEOM_CYLINDER][GEOM_CUSTOM]       = &ShapeShapeContactPatch<Cylinder, ShapeBase>;
+  contact_patch_matrix[GEOM_CONVEX16][GEOM_CUSTOM]       = &ShapeShapeContactPatch<ConvexBase16, ShapeBase>;
+  contact_patch_matrix[GEOM_CONVEX32][GEOM_CUSTOM]       = &ShapeShapeContactPatch<ConvexBase32, ShapeBase>;
+  contact_patch_matrix[GEOM_ELLIPSOID][GEOM_CUSTOM]      = &ShapeShapeContactPatch<Ellipsoid, ShapeBase>;
+  contact_patch_matrix[GEOM_TRIANGLE][GEOM_CUSTOM]       = &ShapeShapeContactPatch<TriangleP, ShapeBase>;
+
   // TODO(louis): properly handle non-convex shapes like BVH, Octrees and Hfields.
   // The following functions work. However apart from the contact frame, these functions don't
   // compute more information than a call to `collide`.
