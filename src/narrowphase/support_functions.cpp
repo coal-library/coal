@@ -461,9 +461,14 @@ getShapeSupportTplInstantiation(LargeConvex<Triangle32::IndexType>);
 template <int _SupportOptions>
 void getShapeSupport(const ShapeBase* shape, const Vec3s& dir, Vec3s& support,
                      int& hint, ShapeSupportData& support_data) {
-  shape->computeShapeSupport(dir, support, hint, support_data);
+  // GJK may pass non-unit-length directions (e.g. DefaultGJK uses the closest
+  // simplex point as the next direction, which is not normalized).  Normalize
+  // here so that implementations of computeShapeSupport() can safely assume a
+  // unit-length direction, as documented.
+  const Vec3s dir_normalized = dir.normalized();
+  shape->computeShapeSupport(dir_normalized, support, hint, support_data);
   if (_SupportOptions == SupportOptions::WithSweptSphere) {
-    support += shape->getSweptSphereRadius() * dir;
+    support += shape->getSweptSphereRadius() * dir_normalized;
   }
 }
 getShapeSupportTplInstantiation(ShapeBase);
