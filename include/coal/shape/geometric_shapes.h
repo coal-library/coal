@@ -100,7 +100,7 @@ class COAL_DLLAPI ShapeBase : public CollisionGeometry {
   /// and does not account for the swept sphere radius.
   /// Override this method to enable custom shapes to participate in GJK/EPA
   /// collision and distance computations.
-  /// @param[in] dir support direction.
+  /// @param[in] dir support direction. Always unit-length when called by Coal.
   /// @param[out] support the computed support point.
   /// @param[in,out] hint warm-start hint (used mainly for convex shapes).
   /// @param[in,out] data temporary data for support computation.
