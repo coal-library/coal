@@ -417,6 +417,30 @@ CollisionFunctionMatrix::CollisionFunctionMatrix() {
   collision_matrix[GEOM_TRIANGLE][GEOM_ELLIPSOID]         = &ShapeShapeCollide<TriangleP, Ellipsoid>;
   collision_matrix[GEOM_TRIANGLE][GEOM_TRIANGLE]          = &ShapeShapeCollide<TriangleP, TriangleP>;
 
+  // Custom shapes (GEOM_CUSTOM) use virtual dispatch via ShapeBase.
+  // Plane and Halfspace are not listed here because they require specialized
+  // analytic treatment and GJK does not work correctly for unbounded shapes.
+  collision_matrix[GEOM_CUSTOM][GEOM_BOX]                  = &ShapeShapeCollide<ShapeBase, Box>;
+  collision_matrix[GEOM_CUSTOM][GEOM_SPHERE]               = &ShapeShapeCollide<ShapeBase, Sphere>;
+  collision_matrix[GEOM_CUSTOM][GEOM_CAPSULE]              = &ShapeShapeCollide<ShapeBase, Capsule>;
+  collision_matrix[GEOM_CUSTOM][GEOM_CONE]                 = &ShapeShapeCollide<ShapeBase, Cone>;
+  collision_matrix[GEOM_CUSTOM][GEOM_CYLINDER]             = &ShapeShapeCollide<ShapeBase, Cylinder>;
+  collision_matrix[GEOM_CUSTOM][GEOM_CONVEX16]             = &ShapeShapeCollide<ShapeBase, ConvexBase16>;
+  collision_matrix[GEOM_CUSTOM][GEOM_CONVEX32]             = &ShapeShapeCollide<ShapeBase, ConvexBase32>;
+  collision_matrix[GEOM_CUSTOM][GEOM_ELLIPSOID]            = &ShapeShapeCollide<ShapeBase, Ellipsoid>;
+  collision_matrix[GEOM_CUSTOM][GEOM_TRIANGLE]             = &ShapeShapeCollide<ShapeBase, TriangleP>;
+  collision_matrix[GEOM_CUSTOM][GEOM_CUSTOM]               = &ShapeShapeCollide<ShapeBase, ShapeBase>;
+
+  collision_matrix[GEOM_BOX][GEOM_CUSTOM]                  = &ShapeShapeCollide<Box, ShapeBase>;
+  collision_matrix[GEOM_SPHERE][GEOM_CUSTOM]               = &ShapeShapeCollide<Sphere, ShapeBase>;
+  collision_matrix[GEOM_CAPSULE][GEOM_CUSTOM]              = &ShapeShapeCollide<Capsule, ShapeBase>;
+  collision_matrix[GEOM_CONE][GEOM_CUSTOM]                 = &ShapeShapeCollide<Cone, ShapeBase>;
+  collision_matrix[GEOM_CYLINDER][GEOM_CUSTOM]             = &ShapeShapeCollide<Cylinder, ShapeBase>;
+  collision_matrix[GEOM_CONVEX16][GEOM_CUSTOM]             = &ShapeShapeCollide<ConvexBase16, ShapeBase>;
+  collision_matrix[GEOM_CONVEX32][GEOM_CUSTOM]             = &ShapeShapeCollide<ConvexBase32, ShapeBase>;
+  collision_matrix[GEOM_ELLIPSOID][GEOM_CUSTOM]            = &ShapeShapeCollide<Ellipsoid, ShapeBase>;
+  collision_matrix[GEOM_TRIANGLE][GEOM_CUSTOM]             = &ShapeShapeCollide<TriangleP, ShapeBase>;
+
   collision_matrix[BV_AABB][GEOM_BOX]                     = &BVHShapeCollider<AABB, Box>::collide;
   collision_matrix[BV_AABB][GEOM_SPHERE]                  = &BVHShapeCollider<AABB, Sphere>::collide;
   collision_matrix[BV_AABB][GEOM_CAPSULE]                 = &BVHShapeCollider<AABB, Capsule>::collide;

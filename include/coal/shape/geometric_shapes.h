@@ -73,6 +73,14 @@ class COAL_DLLAPI ShapeBase : public CollisionGeometry {
   /// @brief Get object type: a geometric shape
   OBJECT_TYPE getObjectType() const override { return OT_GEOM; }
 
+  /// @brief Get node type.
+  /// Custom shapes (those not built into Coal) return GEOM_CUSTOM. Built-in
+  /// shapes override this to return their specific GEOM_* type.
+  /// @note Custom shapes that override getNodeType() to return something other
+  /// than GEOM_CUSTOM must also register the appropriate entries in the
+  /// collision, distance and contact-patch function matrices.
+  NODE_TYPE getNodeType() const override { return GEOM_CUSTOM; }
+
   /// @brief Set radius of sphere swept around the shape.
   /// Must be >= 0.
   void setSweptSphereRadius(Scalar radius) {
