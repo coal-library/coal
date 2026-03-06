@@ -35,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove Windows warnings when building benchmakrs ([789](https://github.com/coal-library/coal/pull/789))
 - convex: a point can have more than 256 neighbors now. In fact, a point can have `std::numeric_limits<IndexType>::max()` number of neighbors, where IndexType is typically int16 or int32 ([805](https://github.com/coal-library/coal/pull/805))
 - Fix octree against octree collision check ([#811](https://github.com/coal-library/coal/pull/811))
+- Fix condition for negative bounding volume check ([#816](https://github.com/coal-library/coal/pull/816))
 
 ### Changed
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))
