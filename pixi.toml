@@ -63,11 +63,15 @@ doxygen = ">=1.8"
 libboost-devel = ">=1.80.0"
 libboost-python-devel = ">=1.80.0"
 eigen = ">=3.4.0"
+eigen-abi-devel = ">=3.4.0"
 assimp = ">=5.4"
 numpy = ">=1.22.0"
 python = ">=3.9.0"
 eigenpy = ">=3.7.0"
 octomap = ">=1.10"
+
+[package.run-dependencies]
+eigen = ">=3.4.0"
 
 [package.target.win.host-dependencies]
 qhull = ">=2020.2"
