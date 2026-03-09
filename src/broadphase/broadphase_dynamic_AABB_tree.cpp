@@ -578,7 +578,7 @@ void DynamicAABBTreeCollisionManager::update() {
     CollisionObject* obj = it->first;
     DynamicAABBNode* node = it->second;
     node->bv = obj->getAABB();
-    if (node->bv.volume() <= 0.)
+    if (node->bv.volume() < 0.)
       COAL_THROW_PRETTY("The bounding volume has a negative volume.",
                         std::invalid_argument)
   }
