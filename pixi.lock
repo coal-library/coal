@@ -3600,6 +3600,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/c-ares-1.34.6-hb03c661_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.2.25-hbd8a1cb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/cmake-4.2.3-hc85cc9f_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/eigen-3.4.0-h54a6638_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/eigen-abi-3.4.0.100-h3bcb7cf_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/eigenpy-3.12.0-np2py314h430d974_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/icu-78.2-h33c6efd_0.conda
@@ -3658,6 +3659,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/c-ares-1.34.6-hb5e19a0_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.2.25-hbd8a1cb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/cmake-4.2.3-h965d0ab_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/eigen-3.4.0-h2fb4741_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/eigen-abi-3.4.0.100-h6bcb275_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/eigenpy-3.12.0-np2py314hf36f832_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/icu-78.2-h14c5de8_0.conda
@@ -3711,6 +3713,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/c-ares-1.34.6-hc919400_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.2.25-hbd8a1cb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/cmake-4.2.3-h8cb302d_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/eigen-3.4.0-h784d473_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/eigen-abi-3.4.0.100-h485a483_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/eigenpy-3.12.0-np2py314h27da615_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/icu-78.2-hef89b57_0.conda
@@ -3762,6 +3765,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/bzip2-1.0.8-h0ad9c76_9.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.2.25-h4c7d964_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/cmake-4.2.3-hdcbee5b_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/eigen-3.4.0-h5112557_2.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/eigen-abi-3.4.0.100-hc11354d_2.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/eigenpy-3.12.0-py314h4f1df02_2.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/icu-78.2-h637d24d_0.conda
@@ -4616,10 +4620,12 @@ packages:
   variants:
     target_platform: osx-64
   depends:
+  - eigen >=3.4.0
   - libcxx >=22
   - octomap >=1.10.0,<1.11.0a0
   - libboost >=1.88.0,<1.89.0a0
   - libboost-python >=1.88.0,<1.89.0a0
+  - eigen-abi >=3.4.0.100,<3.4.0.101.0a0
   - assimp >=6.0.4,<6.0.5.0a0
   - numpy >=1.23,<3
   - python_abi 3.14.* *_cp314
@@ -4633,10 +4639,12 @@ packages:
   variants:
     target_platform: osx-arm64
   depends:
+  - eigen >=3.4.0
   - libcxx >=22
   - octomap >=1.10.0,<1.11.0a0
   - libboost >=1.88.0,<1.89.0a0
   - libboost-python >=1.88.0,<1.89.0a0
+  - eigen-abi >=3.4.0.100,<3.4.0.101.0a0
   - assimp >=6.0.4,<6.0.5.0a0
   - numpy >=1.23,<3
   - python_abi 3.14.* *_cp314
@@ -4651,12 +4659,14 @@ packages:
     cxx_compiler: vs2022
     target_platform: win-64
   depends:
+  - eigen >=3.4.0
   - vc >=14.3,<15
   - vc14_runtime >=14.44.35208
   - ucrt >=10.0.20348.0
   - octomap >=1.10.0,<1.11.0a0
   - libboost >=1.88.0,<1.89.0a0
   - libboost-python >=1.88.0,<1.89.0a0
+  - eigen-abi >=3.4.0.100,<3.4.0.101.0a0
   - assimp >=6.0.4,<6.0.5.0a0
   - numpy >=1.23,<3
   - python_abi 3.14.* *_cp314
@@ -4670,11 +4680,13 @@ packages:
   variants:
     target_platform: linux-64
   depends:
+  - eigen >=3.4.0
   - libstdcxx >=15
   - libgcc >=15
   - octomap >=1.10.0,<1.11.0a0
   - libboost >=1.88.0,<1.89.0a0
   - libboost-python >=1.88.0,<1.89.0a0
+  - eigen-abi >=3.4.0.100,<3.4.0.101.0a0
   - assimp >=6.0.4,<6.0.5.0a0
   - numpy >=1.23,<3
   - python_abi 3.14.* *_cp314
