@@ -42,6 +42,7 @@
                   cmakeFlags = super.cmakeFlags ++ [
                     "-DCOAL_PYTHON_NANOBIND=OFF"
                   ];
+                  postPatch = "";
                 });
 
                 coal-nb = python-final.coal.overrideAttrs (super: {
