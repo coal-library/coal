@@ -59,6 +59,10 @@ BVHModel<BV>* BVHExtract(const BVHModel<BV>& model, const Transform3s& pose,
   // Early-stop GJK as soon as a separating plane is found
   gjk.gjk.setDistanceEarlyBreak(Scalar(1e-3));
 
+  if (gjk.gjk_initial_guess == GJKInitialGuess::BoundingVolumeGuess) {
+    box.computeLocalAABB();
+  }
+
   // Check what triangles should be kept.
   // TODO use the BV hierarchy
   std::vector<bool> keep_vertex(model.num_vertices, false);
@@ -80,8 +84,13 @@ BVHModel<BV>* BVHExtract(const BVHModel<BV>& model, const Transform3s& pose,
         }
       }
 
-      const TriangleP tri(model_vertices_[t[0]], model_vertices_[t[1]],
-                          model_vertices_[t[2]]);
+      TriangleP tri(model_vertices_[t[0]], model_vertices_[t[1]],
+                    model_vertices_[t[2]]);
+
+      if (gjk.gjk_initial_guess == GJKInitialGuess::BoundingVolumeGuess) {
+        tri.computeLocalAABB();
+      }
+
       const bool enable_nearest_points = false;
       const bool compute_penetration = false;  // we only need to know if there
                                                // is a collision or not

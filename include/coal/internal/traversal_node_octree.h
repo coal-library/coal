@@ -382,16 +382,17 @@ class COAL_DLLAPI OcTreeSolver {
         Transform3s box_tf;
         constructBox(bv1, tf1, box, box_tf);
 
-        if (solver->gjk_initial_guess == GJKInitialGuess::BoundingVolumeGuess) {
-          box.computeLocalAABB();
-        }
-
         size_t primitive_id =
             static_cast<size_t>(tree2->getBV(root2).primitiveId());
         const Triangle32& tri_id = (*(tree2->tri_indices))[primitive_id];
-        const TriangleP tri((*(tree2->vertices))[tri_id[0]],
-                            (*(tree2->vertices))[tri_id[1]],
-                            (*(tree2->vertices))[tri_id[2]]);
+        TriangleP tri((*(tree2->vertices))[tri_id[0]],
+                      (*(tree2->vertices))[tri_id[1]],
+                      (*(tree2->vertices))[tri_id[2]]);
+
+        if (solver->gjk_initial_guess == GJKInitialGuess::BoundingVolumeGuess) {
+          box.computeLocalAABB();
+          tri.computeLocalAABB();
+        }
 
         Vec3s p1, p2, normal;
         const Scalar distance = internal::ShapeShapeDistance<Box, TriangleP>(
@@ -500,15 +501,17 @@ class COAL_DLLAPI OcTreeSolver {
       Box box;
       Transform3s box_tf;
       constructBox(bv1, tf1, box, box_tf);
-      if (solver->gjk_initial_guess == GJKInitialGuess::BoundingVolumeGuess) {
-        box.computeLocalAABB();
-      }
 
       size_t primitive_id = static_cast<size_t>(bvn2.primitiveId());
       const Triangle32& tri_id = (*(tree2->tri_indices))[primitive_id];
-      const TriangleP tri((*(tree2->vertices))[tri_id[0]],
-                          (*(tree2->vertices))[tri_id[1]],
-                          (*(tree2->vertices))[tri_id[2]]);
+      TriangleP tri((*(tree2->vertices))[tri_id[0]],
+                    (*(tree2->vertices))[tri_id[1]],
+                    (*(tree2->vertices))[tri_id[2]]);
+
+      if (solver->gjk_initial_guess == GJKInitialGuess::BoundingVolumeGuess) {
+        box.computeLocalAABB();
+        tri.computeLocalAABB();
+      }
 
       // When reaching this point, `this->solver` has already been set up
       // by the CollisionRequest `this->crequest`.

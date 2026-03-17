@@ -328,6 +328,10 @@ struct COAL_DLLAPI GJKSolver {
     TriangleP tri(tf_1M2.transform(s2.a), tf_1M2.transform(s2.b),
                   tf_1M2.transform(s2.c));
 
+    if (this->gjk_initial_guess == GJKInitialGuess::BoundingVolumeGuess) {
+      tri.computeLocalAABB();
+    }
+
     constexpr bool relative_transformation_already_computed = true;
     Scalar distance;
     this->runGJKAndEPA(s1, tf1, tri, tf_1M2, compute_penetration, distance, p1,
