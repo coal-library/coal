@@ -95,7 +95,7 @@ class COAL_DLLAPI OcTree : public CollisionGeometry {
         free_threshold(other.free_threshold) {}
 
   /// \brief Clone *this into a new Octree
-  OcTree* clone() const { return new OcTree(*this); }
+  OcTree* clone() const override { return new OcTree(*this); }
 
   /// \brief Returns the tree associated to the underlying octomap OcTree.
   shared_ptr<const octomap::OcTree> getTree() const { return tree; }
@@ -103,7 +103,7 @@ class COAL_DLLAPI OcTree : public CollisionGeometry {
   void exportAsObjFile(const std::string& filename) const;
 
   /// @brief compute the AABB for the octree in its local coordinate system
-  void computeLocalAABB() {
+  void computeLocalAABB() override {
     typedef Eigen::Matrix<float, 3, 1> Vec3float;
     Vec3float max_extent, min_extent;
 
@@ -259,13 +259,13 @@ class COAL_DLLAPI OcTree : public CollisionGeometry {
   }
 
   /// @brief return object type, it is an octree
-  OBJECT_TYPE getObjectType() const { return OT_OCTREE; }
+  OBJECT_TYPE getObjectType() const override { return OT_OCTREE; }
 
   /// @brief return node type, it is an octree
-  NODE_TYPE getNodeType() const { return GEOM_OCTREE; }
+  NODE_TYPE getNodeType() const override { return GEOM_OCTREE; }
 
  private:
-  virtual bool isEqual(const CollisionGeometry& _other) const {
+  virtual bool isEqual(const CollisionGeometry& _other) const override {
     const OcTree* other_ptr = dynamic_cast<const OcTree*>(&_other);
     if (other_ptr == nullptr) return false;
     const OcTree& other = *other_ptr;

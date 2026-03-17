@@ -37,6 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix octree against octree collision check ([#811](https://github.com/coal-library/coal/pull/811))
 - Fix condition for negative bounding volume check ([#816](https://github.com/coal-library/coal/pull/816))
 - Add missing calls to computeLocalAABB for internal objects ([#819](https://github.com/coal-library/coal/pull/819))
+- Add missing override specifiers ([#820](https://github.com/coal-library/coal/pull/820))
 
 ### Changed
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))

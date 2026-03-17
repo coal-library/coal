@@ -110,10 +110,10 @@ class COAL_DLLAPI BVHModelBase : public CollisionGeometry {
   virtual ~BVHModelBase() {}
 
   /// @brief Get the object type: it is a BVH
-  OBJECT_TYPE getObjectType() const { return OT_BVH; }
+  OBJECT_TYPE getObjectType() const override { return OT_BVH; }
 
   /// @brief Compute the AABB for the BVH, used for broad-phase collision
-  void computeLocalAABB();
+  void computeLocalAABB() override;
 
   /// @brief Begin a new BVH model
   int beginModel(unsigned int num_tris = 0, unsigned int num_vertices = 0);
@@ -203,7 +203,7 @@ class COAL_DLLAPI BVHModelBase : public CollisionGeometry {
   /// save one matrix transformation.
   virtual void makeParentRelative() = 0;
 
-  Vec3s computeCOM() const {
+  Vec3s computeCOM() const override {
     Scalar vol = 0;
     Vec3s com(0, 0, 0);
     if (!(vertices.get())) {
@@ -233,7 +233,7 @@ class COAL_DLLAPI BVHModelBase : public CollisionGeometry {
     return com / (vol * 4);
   }
 
-  Scalar computeVolume() const {
+  Scalar computeVolume() const override {
     Scalar vol = 0;
     if (!(vertices.get())) {
       std::cerr << "BVH Error in `computeCOM`! The BVHModel does not contain "
@@ -259,7 +259,7 @@ class COAL_DLLAPI BVHModelBase : public CollisionGeometry {
     return vol / 6;
   }
 
-  Matrix3s computeMomentofInertia() const {
+  Matrix3s computeMomentofInertia() const override {
     Matrix3s C = Matrix3s::Zero();
 
     Matrix3s C_canonical;
@@ -316,7 +316,7 @@ class COAL_DLLAPI BVHModelBase : public CollisionGeometry {
 
  protected:
   /// \brief Comparison operators
-  virtual bool isEqual(const CollisionGeometry& other) const;
+  virtual bool isEqual(const CollisionGeometry& other) const override;
 };
 
 /// @brief A class describing the bounding hierarchy of a mesh model or a point
@@ -346,7 +346,7 @@ class COAL_DLLAPI BVHModel : public BVHModelBase {
   BVHModel(const BVHModel& other);
 
   /// @brief Clone *this into a new BVHModel
-  virtual BVHModel<BV>* clone() const { return new BVHModel(*this); }
+  virtual BVHModel<BV>* clone() const override { return new BVHModel(*this); }
 
   /// @brief deconstruction, delete mesh data related.
   ~BVHModel() {}
@@ -370,23 +370,23 @@ class COAL_DLLAPI BVHModel : public BVHModelBase {
   unsigned int getNumBVs() const { return num_bvs; }
 
   /// @brief Get the BV type: default is unknown
-  NODE_TYPE getNodeType() const { return BV_UNKNOWN; }
+  NODE_TYPE getNodeType() const override { return BV_UNKNOWN; }
 
   /// @brief Check the number of memory used
-  int memUsage(const bool msg) const;
+  int memUsage(const bool msg) const override;
 
   /// @brief This is a special acceleration: BVH_model default stores the BV's
   /// transform in world coordinate. However, we can also store each BV's
   /// transform related to its parent BV node. When traversing the BVH, this can
   /// save one matrix transformation.
-  void makeParentRelative() {
+  void makeParentRelative() override {
     Matrix3s I(Matrix3s::Identity());
     makeParentRelativeRecurse(0, I, Vec3s::Zero());
   }
 
  protected:
-  void deleteBVs();
-  bool allocateBVs();
+  void deleteBVs() override;
+  bool allocateBVs() override;
 
   unsigned int num_bvs_allocated;
   std::shared_ptr<std::vector<unsigned int>> primitive_indices;
@@ -398,10 +398,10 @@ class COAL_DLLAPI BVHModel : public BVHModelBase {
   unsigned int num_bvs;
 
   /// @brief Build the bounding volume hierarchy
-  int buildTree();
+  int buildTree() override;
 
   /// @brief Refit the bounding volume hierarchy
-  int refitTree(bool bottomup);
+  int refitTree(bool bottomup) override;
 
   /// @brief Refit the bounding volume hierarchy in a top-down way (slow but
   /// more compact)
@@ -439,7 +439,7 @@ class COAL_DLLAPI BVHModel : public BVHModelBase {
   }
 
  private:
-  virtual bool isEqual(const CollisionGeometry& _other) const {
+  virtual bool isEqual(const CollisionGeometry& _other) const override {
     const BVHModel* other_ptr = dynamic_cast<const BVHModel*>(&_other);
     if (other_ptr == nullptr) return false;
     const BVHModel& other = *other_ptr;
