@@ -38,6 +38,7 @@
 #include "coal/shape/geometric_shapes_utility.h"
 #include "coal/internal/BV_fitter.h"
 #include "coal/internal/tools.h"
+#include "coal/narrowphase/support_data.h"
 
 namespace coal {
 
@@ -232,6 +233,17 @@ std::vector<Vec3s> getBoundVertices(const TriangleP& triangle,
   return result;
 }
 
+std::vector<Vec3s> getBoundVertices(const ShapeBase& s, const Transform3s& tf) {
+  AABB aabb;
+  computeBV<AABB, ShapeBase>(s, tf, aabb);
+  const Vec3s& lo = aabb.min_;
+  const Vec3s& hi = aabb.max_;
+  return {Vec3s(lo[0], lo[1], lo[2]), Vec3s(hi[0], lo[1], lo[2]),
+          Vec3s(lo[0], hi[1], lo[2]), Vec3s(hi[0], hi[1], lo[2]),
+          Vec3s(lo[0], lo[1], hi[2]), Vec3s(hi[0], lo[1], hi[2]),
+          Vec3s(lo[0], hi[1], hi[2]), Vec3s(hi[0], hi[1], hi[2])};
+}
+
 }  // namespace details
 
 Halfspace transform(const Halfspace& a, const Transform3s& tf) {
@@ -380,6 +392,25 @@ void computeBV<AABB, ConvexBase16>(const ConvexBase16& s, const Transform3s& tf,
                                    AABB& bv) {
   computeAABBConvex(s, tf, bv);
 }
+
+template <>
+void computeBV<AABB, ShapeBase>(const ShapeBase& s, const Transform3s& tf,
+                                AABB& bv) {
+  const Matrix3s& R = tf.getRotation();
+  const Vec3s& T = tf.getTranslation();
+  details::ShapeSupportData data;
+  Vec3s sup;
+
+  for (int i = 0; i < 3; ++i) {
+    const Vec3s row = R.row(i).transpose();
+    int hint_pos = 0, hint_neg = 0;
+    s.computeShapeSupport(row, sup, hint_pos, data);
+    bv.max_[i] = T[i] + row.dot(sup);
+    s.computeShapeSupport(Vec3s(-row), sup, hint_neg, data);
+    bv.min_[i] = T[i] + row.dot(sup);
+  }
+}
+
 
 template <>
 void computeBV<AABB, TriangleP>(const TriangleP& s, const Transform3s& tf,
