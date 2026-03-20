@@ -63,6 +63,8 @@ COAL_DLLAPI std::vector<Vec3s> getBoundVertices(const Cylinder& cylinder,
                                                 const Transform3s& tf);
 COAL_DLLAPI std::vector<Vec3s> getBoundVertices(const TriangleP& triangle,
                                                 const Transform3s& tf);
+COAL_DLLAPI std::vector<Vec3s> getBoundVertices(const ShapeBase& s,
+                                                const Transform3s& tf);
 template <typename IndexType>
 std::vector<Vec3s> getBoundVertices(const ConvexBaseTpl<IndexType>& convex,
                                     const Transform3s& tf) {
@@ -122,6 +124,10 @@ COAL_DLLAPI void computeBV<AABB, ConvexBase16>(const ConvexBase16& s,
 
 template <>
 COAL_DLLAPI void computeBV<AABB, TriangleP>(const TriangleP& s,
+                                            const Transform3s& tf, AABB& bv);
+
+template <>
+COAL_DLLAPI void computeBV<AABB, ShapeBase>(const ShapeBase& s,
                                             const Transform3s& tf, AABB& bv);
 
 template <>

@@ -451,6 +451,7 @@ CollisionFunctionMatrix::CollisionFunctionMatrix() {
   collision_matrix[BV_AABB][GEOM_PLANE]                   = &BVHShapeCollider<AABB, Plane>::collide;
   collision_matrix[BV_AABB][GEOM_HALFSPACE]               = &BVHShapeCollider<AABB, Halfspace>::collide;
   collision_matrix[BV_AABB][GEOM_ELLIPSOID]               = &BVHShapeCollider<AABB, Ellipsoid>::collide;
+  collision_matrix[BV_AABB][GEOM_CUSTOM]                  = &BVHShapeCollider<AABB, ShapeBase>::collide;
 
   collision_matrix[BV_OBB][GEOM_BOX]                      = &BVHShapeCollider<OBB, Box>::collide;
   collision_matrix[BV_OBB][GEOM_SPHERE]                   = &BVHShapeCollider<OBB, Sphere>::collide;
@@ -462,6 +463,7 @@ CollisionFunctionMatrix::CollisionFunctionMatrix() {
   collision_matrix[BV_OBB][GEOM_PLANE]                    = &BVHShapeCollider<OBB, Plane>::collide;
   collision_matrix[BV_OBB][GEOM_HALFSPACE]                = &BVHShapeCollider<OBB, Halfspace>::collide;
   collision_matrix[BV_OBB][GEOM_ELLIPSOID]                = &BVHShapeCollider<OBB, Ellipsoid>::collide;
+  collision_matrix[BV_OBB][GEOM_CUSTOM]                   = &BVHShapeCollider<OBB, ShapeBase>::collide;
 
   collision_matrix[BV_RSS][GEOM_BOX]                      = &BVHShapeCollider<RSS, Box>::collide;
   collision_matrix[BV_RSS][GEOM_SPHERE]                   = &BVHShapeCollider<RSS, Sphere>::collide;
@@ -473,6 +475,7 @@ CollisionFunctionMatrix::CollisionFunctionMatrix() {
   collision_matrix[BV_RSS][GEOM_PLANE]                    = &BVHShapeCollider<RSS, Plane>::collide;
   collision_matrix[BV_RSS][GEOM_HALFSPACE]                = &BVHShapeCollider<RSS, Halfspace>::collide;
   collision_matrix[BV_RSS][GEOM_ELLIPSOID]                = &BVHShapeCollider<RSS, Ellipsoid>::collide;
+  collision_matrix[BV_RSS][GEOM_CUSTOM]                   = &BVHShapeCollider<RSS, ShapeBase>::collide;
 
   collision_matrix[BV_KDOP16][GEOM_BOX]                   = &BVHShapeCollider<KDOP<16>, Box>::collide;
   collision_matrix[BV_KDOP16][GEOM_SPHERE]                = &BVHShapeCollider<KDOP<16>, Sphere>::collide;
@@ -484,6 +487,7 @@ CollisionFunctionMatrix::CollisionFunctionMatrix() {
   collision_matrix[BV_KDOP16][GEOM_PLANE]                 = &BVHShapeCollider<KDOP<16>, Plane>::collide;
   collision_matrix[BV_KDOP16][GEOM_HALFSPACE]             = &BVHShapeCollider<KDOP<16>, Halfspace>::collide;
   collision_matrix[BV_KDOP16][GEOM_ELLIPSOID]             = &BVHShapeCollider<KDOP<16>, Ellipsoid>::collide;
+  collision_matrix[BV_KDOP16][GEOM_CUSTOM]                = &BVHShapeCollider<KDOP<16>, ShapeBase>::collide;
 
   collision_matrix[BV_KDOP18][GEOM_BOX]                   = &BVHShapeCollider<KDOP<18>, Box>::collide;
   collision_matrix[BV_KDOP18][GEOM_SPHERE]                = &BVHShapeCollider<KDOP<18>, Sphere>::collide;
@@ -495,6 +499,7 @@ CollisionFunctionMatrix::CollisionFunctionMatrix() {
   collision_matrix[BV_KDOP18][GEOM_PLANE]                 = &BVHShapeCollider<KDOP<18>, Plane>::collide;
   collision_matrix[BV_KDOP18][GEOM_HALFSPACE]             = &BVHShapeCollider<KDOP<18>, Halfspace>::collide;
   collision_matrix[BV_KDOP18][GEOM_ELLIPSOID]             = &BVHShapeCollider<KDOP<18>, Ellipsoid>::collide;
+  collision_matrix[BV_KDOP18][GEOM_CUSTOM]                = &BVHShapeCollider<KDOP<18>, ShapeBase>::collide;
 
   collision_matrix[BV_KDOP24][GEOM_BOX]                   = &BVHShapeCollider<KDOP<24>, Box>::collide;
   collision_matrix[BV_KDOP24][GEOM_SPHERE]                = &BVHShapeCollider<KDOP<24>, Sphere>::collide;
@@ -506,6 +511,7 @@ CollisionFunctionMatrix::CollisionFunctionMatrix() {
   collision_matrix[BV_KDOP24][GEOM_PLANE]                 = &BVHShapeCollider<KDOP<24>, Plane>::collide;
   collision_matrix[BV_KDOP24][GEOM_HALFSPACE]             = &BVHShapeCollider<KDOP<24>, Halfspace>::collide;
   collision_matrix[BV_KDOP24][GEOM_ELLIPSOID]             = &BVHShapeCollider<KDOP<24>, Ellipsoid>::collide;
+  collision_matrix[BV_KDOP24][GEOM_CUSTOM]                = &BVHShapeCollider<KDOP<24>, ShapeBase>::collide;
 
   collision_matrix[BV_kIOS][GEOM_BOX]                     = &BVHShapeCollider<kIOS, Box>::collide;
   collision_matrix[BV_kIOS][GEOM_SPHERE]                  = &BVHShapeCollider<kIOS, Sphere>::collide;
@@ -517,6 +523,7 @@ CollisionFunctionMatrix::CollisionFunctionMatrix() {
   collision_matrix[BV_kIOS][GEOM_PLANE]                   = &BVHShapeCollider<kIOS, Plane>::collide;
   collision_matrix[BV_kIOS][GEOM_HALFSPACE]               = &BVHShapeCollider<kIOS, Halfspace>::collide;
   collision_matrix[BV_kIOS][GEOM_ELLIPSOID]               = &BVHShapeCollider<kIOS, Ellipsoid>::collide;
+  collision_matrix[BV_kIOS][GEOM_CUSTOM]                  = &BVHShapeCollider<kIOS, ShapeBase>::collide;
 
   collision_matrix[BV_OBBRSS][GEOM_BOX]                   = &BVHShapeCollider<OBBRSS, Box>::collide;
   collision_matrix[BV_OBBRSS][GEOM_SPHERE]                = &BVHShapeCollider<OBBRSS, Sphere>::collide;
@@ -528,6 +535,7 @@ CollisionFunctionMatrix::CollisionFunctionMatrix() {
   collision_matrix[BV_OBBRSS][GEOM_PLANE]                 = &BVHShapeCollider<OBBRSS, Plane>::collide;
   collision_matrix[BV_OBBRSS][GEOM_HALFSPACE]             = &BVHShapeCollider<OBBRSS, Halfspace>::collide;
   collision_matrix[BV_OBBRSS][GEOM_ELLIPSOID]             = &BVHShapeCollider<OBBRSS, Ellipsoid>::collide;
+  collision_matrix[BV_OBBRSS][GEOM_CUSTOM]                = &BVHShapeCollider<OBBRSS, ShapeBase>::collide;
 
   collision_matrix[HF_AABB][GEOM_BOX]                     = &HeightFieldShapeCollider<AABB, Box>::collide;
   collision_matrix[HF_AABB][GEOM_SPHERE]                  = &HeightFieldShapeCollider<AABB, Sphere>::collide;
@@ -539,6 +547,7 @@ CollisionFunctionMatrix::CollisionFunctionMatrix() {
   collision_matrix[HF_AABB][GEOM_PLANE]                   = &HeightFieldShapeCollider<AABB, Plane>::collide;
   collision_matrix[HF_AABB][GEOM_HALFSPACE]               = &HeightFieldShapeCollider<AABB, Halfspace>::collide;
   collision_matrix[HF_AABB][GEOM_ELLIPSOID]               = &HeightFieldShapeCollider<AABB, Ellipsoid>::collide;
+  collision_matrix[HF_AABB][GEOM_CUSTOM]                  = &HeightFieldShapeCollider<AABB, ShapeBase>::collide;
 
   collision_matrix[HF_OBBRSS][GEOM_BOX]                   = &HeightFieldShapeCollider<OBBRSS, Box>::collide;
   collision_matrix[HF_OBBRSS][GEOM_SPHERE]                = &HeightFieldShapeCollider<OBBRSS, Sphere>::collide;
@@ -550,6 +559,7 @@ CollisionFunctionMatrix::CollisionFunctionMatrix() {
   collision_matrix[HF_OBBRSS][GEOM_PLANE]                 = &HeightFieldShapeCollider<OBBRSS, Plane>::collide;
   collision_matrix[HF_OBBRSS][GEOM_HALFSPACE]             = &HeightFieldShapeCollider<OBBRSS, Halfspace>::collide;
   collision_matrix[HF_OBBRSS][GEOM_ELLIPSOID]             = &HeightFieldShapeCollider<OBBRSS, Ellipsoid>::collide;
+  collision_matrix[HF_OBBRSS][GEOM_CUSTOM]                = &HeightFieldShapeCollider<OBBRSS, ShapeBase>::collide;
 
   collision_matrix[BV_AABB][BV_AABB]                      = &BVHCollide<AABB>;
   collision_matrix[BV_OBB][BV_OBB]                        = &BVHCollide<OBB>;
@@ -571,6 +581,7 @@ CollisionFunctionMatrix::CollisionFunctionMatrix() {
   collision_matrix[GEOM_OCTREE][GEOM_PLANE]               = &OctreeCollide<OcTree, Plane>;
   collision_matrix[GEOM_OCTREE][GEOM_HALFSPACE]           = &OctreeCollide<OcTree, Halfspace>;
   collision_matrix[GEOM_OCTREE][GEOM_ELLIPSOID]           = &OctreeCollide<OcTree, Ellipsoid>;
+  collision_matrix[GEOM_OCTREE][GEOM_CUSTOM]              = &OctreeCollide<OcTree, ShapeBase>;
 
   collision_matrix[GEOM_BOX][GEOM_OCTREE]                 = &OctreeCollide<Box, OcTree>;
   collision_matrix[GEOM_SPHERE][GEOM_OCTREE]              = &OctreeCollide<Sphere, OcTree>;
@@ -581,6 +592,7 @@ CollisionFunctionMatrix::CollisionFunctionMatrix() {
   collision_matrix[GEOM_CONVEX32][GEOM_OCTREE]            = &OctreeCollide<ConvexBase32, OcTree>;
   collision_matrix[GEOM_PLANE][GEOM_OCTREE]               = &OctreeCollide<Plane, OcTree>;
   collision_matrix[GEOM_HALFSPACE][GEOM_OCTREE]           = &OctreeCollide<Halfspace, OcTree>;
+  collision_matrix[GEOM_CUSTOM][GEOM_OCTREE]              = &OctreeCollide<ShapeBase, OcTree>;
 
   collision_matrix[GEOM_OCTREE][GEOM_OCTREE]              = &OctreeCollide<OcTree, OcTree>;
 
