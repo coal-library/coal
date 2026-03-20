@@ -382,7 +382,7 @@ void getShapeSupportLog(const ConvexBaseTpl<IndexType>* convex,
   support = pts[static_cast<size_t>(hint)];
 
   if (_SupportOptions == SupportOptions::WithSweptSphere) {
-    support += convex->getSweptSphereRadius() * dir.normalized();
+    support += convex->getSweptSphereRadius() * dir_normalized;
   }
 }
 

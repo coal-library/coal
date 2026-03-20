@@ -49,6 +49,14 @@
 #include "coal/narrowphase/support_data.h"
 #include "coal/narrowphase/support_functions.h"
 #include "coal/shape/geometric_shapes.h"
+#include "coal/shape/geometric_shapes_utility.h"
+#include "coal/BVH/BVH_model.h"
+#include "coal/shape/geometric_shape_to_BVH_model.h"
+#include "coal/hfield.h"
+
+#ifdef COAL_HAS_OCTOMAP
+#include "coal/octree.h"
+#endif
 
 using namespace coal;
 
@@ -331,4 +339,263 @@ BOOST_AUTO_TEST_CASE(test_builtin_shapes_keep_their_node_type) {
   BOOST_CHECK_EQUAL(Cylinder(1, 2).getNodeType(), GEOM_CYLINDER);
   BOOST_CHECK_EQUAL(Cone(1, 2).getNodeType(), GEOM_CONE);
   BOOST_CHECK_EQUAL(Ellipsoid(1, 1, 1).getNodeType(), GEOM_ELLIPSOID);
+}
+
+/// Test computeBV<AABB, ShapeBase> produces tight AABBs matching built-in.
+BOOST_AUTO_TEST_CASE(test_computeBV_AABB_ShapeBase) {
+  const Scalar radius = 1.5;
+  CustomSphere custom(radius);
+  Sphere builtin(radius);
+
+  // Identity transform
+  {
+    AABB bv_custom, bv_builtin;
+    computeBV<AABB, ShapeBase>(custom, Transform3s(), bv_custom);
+    computeBV<AABB, Sphere>(builtin, Transform3s(), bv_builtin);
+    BOOST_CHECK(bv_custom.min_.isApprox(bv_builtin.min_, Scalar(1e-10)));
+    BOOST_CHECK(bv_custom.max_.isApprox(bv_builtin.max_, Scalar(1e-10)));
+  }
+
+  // Non-identity transform (rotation + translation)
+  {
+    Transform3s tf;
+    tf.setTranslation(Vec3s(1.0, 2.0, 3.0));
+    Quats q(Eigen::AngleAxis<Scalar>(Scalar(0.7), Vec3s::UnitZ()));
+    tf.setQuatRotation(q);
+
+    AABB bv_custom, bv_builtin;
+    computeBV<AABB, ShapeBase>(custom, tf, bv_custom);
+    computeBV<AABB, Sphere>(builtin, tf, bv_builtin);
+    // Sphere AABB is rotation-invariant, so both should match
+    BOOST_CHECK(bv_custom.min_.isApprox(bv_builtin.min_, Scalar(1e-10)));
+    BOOST_CHECK(bv_custom.max_.isApprox(bv_builtin.max_, Scalar(1e-10)));
+  }
+}
+
+#ifdef COAL_HAS_OCTOMAP
+
+/// Helper: create a simple occupied octree centered at the origin.
+static OcTree makeSimpleOctree(Scalar resolution = 0.1) {
+  auto octree_ptr =
+      coal::shared_ptr<octomap::OcTree>(new octomap::OcTree(resolution));
+  // Fill a small 1x1x1 cube centered at origin
+  const Scalar half = Scalar(0.5);
+  for (Scalar x = -half; x < half; x += resolution) {
+    for (Scalar y = -half; y < half; y += resolution) {
+      for (Scalar z = -half; z < half; z += resolution) {
+        octomap::point3d p(static_cast<float>(x + resolution * Scalar(0.5)),
+                           static_cast<float>(y + resolution * Scalar(0.5)),
+                           static_cast<float>(z + resolution * Scalar(0.5)));
+        octree_ptr->updateNode(p, true);
+      }
+    }
+  }
+  octree_ptr->updateInnerOccupancy();
+  return OcTree(octree_ptr);
+}
+
+/// Test collision: CustomSphere vs OcTree (both directions).
+BOOST_AUTO_TEST_CASE(test_custom_shape_octree_collision) {
+  const Scalar radius = 0.5;
+  CustomSphere custom(radius);
+  custom.computeLocalAABB();
+
+  OcTree octree = makeSimpleOctree();
+  octree.computeLocalAABB();
+
+  CollisionRequest request;
+  CollisionResult result;
+
+  // Overlapping: custom sphere at origin overlaps octree at origin
+  Transform3s tf1;
+  Transform3s tf2;
+  std::size_t n = collide(&custom, tf1, &octree, tf2, request, result);
+  BOOST_CHECK_GT(n, 0u);
+
+  // Reversed order: octree vs custom
+  result.clear();
+  n = collide(&octree, tf2, &custom, tf1, request, result);
+  BOOST_CHECK_GT(n, 0u);
+
+  // Separated: move custom sphere far away
+  result.clear();
+  tf1.setTranslation(Vec3s(5.0, 0, 0));
+  n = collide(&custom, tf1, &octree, tf2, request, result);
+  BOOST_CHECK_EQUAL(n, 0u);
+
+  // Reversed separated
+  result.clear();
+  n = collide(&octree, tf2, &custom, tf1, request, result);
+  BOOST_CHECK_EQUAL(n, 0u);
+}
+
+/// Test distance: CustomSphere vs OcTree (both directions).
+BOOST_AUTO_TEST_CASE(test_custom_shape_octree_distance) {
+  const Scalar radius = 0.5;
+  CustomSphere custom(radius);
+  custom.computeLocalAABB();
+
+  OcTree octree = makeSimpleOctree();
+  octree.computeLocalAABB();
+
+  DistanceRequest request(true);
+  DistanceResult result;
+
+  // Separated: custom sphere well away from octree
+  Transform3s tf1(Quats::Identity(), Vec3s(3.0, 0, 0));
+  Transform3s tf2;
+  Scalar d = distance(&custom, tf1, &octree, tf2, request, result);
+  BOOST_CHECK_GT(d, Scalar(0));
+
+  // Reversed: octree vs custom
+  result.clear();
+  Scalar d_rev = distance(&octree, tf2, &custom, tf1, request, result);
+  BOOST_CHECK_GT(d_rev, Scalar(0));
+
+  // Both directions should give similar distances
+  BOOST_CHECK_CLOSE(d, d_rev, Scalar(1));
+}
+
+/// Test that ComputeCollision does not throw for GEOM_CUSTOM <-> GEOM_OCTREE.
+BOOST_AUTO_TEST_CASE(test_custom_octree_no_throw) {
+  CustomSphere custom(1.0);
+  custom.computeLocalAABB();
+
+  OcTree octree = makeSimpleOctree();
+  octree.computeLocalAABB();
+
+  CollisionRequest request;
+  CollisionResult result;
+
+  // Should not throw unsupported-pair exception
+  BOOST_CHECK_NO_THROW(collide(&custom, Transform3s(), &octree, Transform3s(),
+                                request, result));
+  result.clear();
+  BOOST_CHECK_NO_THROW(collide(&octree, Transform3s(), &custom, Transform3s(),
+                                request, result));
+}
+
+#endif  // COAL_HAS_OCTOMAP
+
+// ============================================================================
+// BVH mesh tests
+// ============================================================================
+
+/// Helper: create a simple BVHModel<OBBRSS> box mesh (unit cube centered at
+/// origin).
+static coal::shared_ptr<BVHModel<OBBRSS>> makeBoxMesh() {
+  auto model = coal::make_shared<BVHModel<OBBRSS>>();
+  generateBVHModel(*model, Box(Vec3s::Ones()), Transform3s());
+  return model;
+}
+
+/// Collision: CustomSphere vs BVHModel<OBBRSS> mesh
+BOOST_AUTO_TEST_CASE(test_custom_shape_bvh_collision) {
+  const Scalar radius = 0.5;
+  CustomSphere custom(radius);
+  custom.computeLocalAABB();
+
+  auto mesh = makeBoxMesh();
+
+  CollisionRequest request;
+  CollisionResult result;
+
+  // Overlapping: sphere at origin, mesh at origin
+  Transform3s tf1, tf2;
+  std::size_t n = collide(&custom, tf1, mesh.get(), tf2, request, result);
+  BOOST_CHECK_GT(n, 0u);
+
+  // Reversed order
+  result.clear();
+  n = collide(mesh.get(), tf2, &custom, tf1, request, result);
+  BOOST_CHECK_GT(n, 0u);
+
+  // Separated: move sphere far away
+  result.clear();
+  tf1.setTranslation(Vec3s(5.0, 0, 0));
+  n = collide(&custom, tf1, mesh.get(), tf2, request, result);
+  BOOST_CHECK_EQUAL(n, 0u);
+}
+
+/// Distance: CustomSphere vs BVHModel<OBBRSS> mesh
+BOOST_AUTO_TEST_CASE(test_custom_shape_bvh_distance) {
+  const Scalar radius = 0.5;
+  CustomSphere custom(radius);
+  custom.computeLocalAABB();
+
+  auto mesh = makeBoxMesh();
+
+  DistanceRequest request(true);
+  DistanceResult result;
+
+  // Separated: sphere at x=3, mesh at origin. Expected distance ~2.0
+  // (sphere surface at 2.5, box surface at 0.5)
+  Transform3s tf1(Quats::Identity(), Vec3s(3.0, 0, 0));
+  Transform3s tf2;
+  Scalar d = distance(&custom, tf1, mesh.get(), tf2, request, result);
+  BOOST_CHECK_GT(d, Scalar(0));
+  BOOST_CHECK_CLOSE(d, Scalar(2.0), Scalar(5));
+
+  // Symmetry: mesh vs custom should give similar distance
+  result.clear();
+  Scalar d_rev = distance(mesh.get(), tf2, &custom, tf1, request, result);
+  BOOST_CHECK_GT(d_rev, Scalar(0));
+  BOOST_CHECK_CLOSE(d, d_rev, Scalar(1));
+}
+
+/// Collision: CustomSphere vs HeightField<AABB>
+BOOST_AUTO_TEST_CASE(test_custom_shape_heightfield_collision) {
+  const Scalar radius = 0.5;
+  CustomSphere custom(radius);
+  custom.computeLocalAABB();
+
+  // Create a simple flat 2x2 heightfield at z=0, spanning [-1,1] x [-1,1]
+  const Eigen::DenseIndex nx = 3, ny = 3;
+  MatrixXs heights = MatrixXs::Zero(ny, nx);
+  HeightField<AABB> hf(Scalar(2.0), Scalar(2.0), heights,
+                        Scalar(-0.1));  // min_height
+  hf.computeLocalAABB();
+
+  CollisionRequest request;
+  CollisionResult result;
+
+  // Sphere at z=0.3 (overlaps with heightfield surface at z=0)
+  Transform3s tf1(Quats::Identity(), Vec3s(0, 0, Scalar(0.3)));
+  Transform3s tf2;
+  std::size_t n = collide(&custom, tf1, &hf, tf2, request, result);
+  BOOST_CHECK_GT(n, 0u);
+
+  // Sphere far above: no collision
+  result.clear();
+  tf1.setTranslation(Vec3s(0, 0, 5.0));
+  n = collide(&custom, tf1, &hf, tf2, request, result);
+  BOOST_CHECK_EQUAL(n, 0u);
+}
+
+/// Verify computeBV<OBB, ShapeBase> produces valid BV containing the shape.
+BOOST_AUTO_TEST_CASE(test_computeBV_OBB_ShapeBase) {
+  const Scalar radius = 1.5;
+  CustomSphere custom(radius);
+
+  Transform3s tf;
+  tf.setTranslation(Vec3s(1.0, 2.0, 3.0));
+  Quats q(Eigen::AngleAxis<Scalar>(Scalar(0.7), Vec3s::UnitZ()));
+  tf.setQuatRotation(q);
+
+  // Compute OBB for custom shape
+  OBB obb;
+  computeBV<OBB, ShapeBase>(custom, tf, obb);
+
+  // Compute AABB for reference — the OBB should contain the AABB center
+  AABB aabb;
+  computeBV<AABB, ShapeBase>(custom, tf, aabb);
+
+  // The OBB should at least contain the AABB center
+  BOOST_CHECK(obb.contain(aabb.center()));
+
+  // Also test OBBRSS (the one Tesseract uses)
+  OBBRSS obbrss;
+  computeBV<OBBRSS, ShapeBase>(custom, tf, obbrss);
+  // OBBRSS should contain the AABB center too
+  BOOST_CHECK(obbrss.contain(aabb.center()));
 }
