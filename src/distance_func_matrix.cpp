@@ -438,6 +438,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[BV_OBB][GEOM_PLANE]            = &BVHShapeDistancer<OBB, Plane>::distance;
   distance_matrix[BV_OBB][GEOM_HALFSPACE]        = &BVHShapeDistancer<OBB, Halfspace>::distance;
   distance_matrix[BV_OBB][GEOM_ELLIPSOID]        = &BVHShapeDistancer<OBB, Ellipsoid>::distance;
+  distance_matrix[BV_OBB][GEOM_CUSTOM]           = &BVHShapeDistancer<OBB, ShapeBase>::distance;
 
   distance_matrix[BV_RSS][GEOM_BOX]              = &BVHShapeDistancer<RSS, Box>::distance;
   distance_matrix[BV_RSS][GEOM_SPHERE]           = &BVHShapeDistancer<RSS, Sphere>::distance;
@@ -449,6 +450,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[BV_RSS][GEOM_PLANE]            = &BVHShapeDistancer<RSS, Plane>::distance;
   distance_matrix[BV_RSS][GEOM_HALFSPACE]        = &BVHShapeDistancer<RSS, Halfspace>::distance;
   distance_matrix[BV_RSS][GEOM_ELLIPSOID]        = &BVHShapeDistancer<RSS, Ellipsoid>::distance;
+  distance_matrix[BV_RSS][GEOM_CUSTOM]           = &BVHShapeDistancer<RSS, ShapeBase>::distance;
   // clang-format on
 
   /* KDOP distance not implemented */
@@ -504,6 +506,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[BV_kIOS][GEOM_PLANE]                      = &BVHShapeDistancer<kIOS, Plane>::distance;
   distance_matrix[BV_kIOS][GEOM_HALFSPACE]                  = &BVHShapeDistancer<kIOS, Halfspace>::distance;
   distance_matrix[BV_kIOS][GEOM_ELLIPSOID]                  = &BVHShapeDistancer<kIOS, Ellipsoid>::distance;
+  distance_matrix[BV_kIOS][GEOM_CUSTOM]                     = &BVHShapeDistancer<kIOS, ShapeBase>::distance;
 
   distance_matrix[BV_OBBRSS][GEOM_BOX]                      = &BVHShapeDistancer<OBBRSS, Box>::distance;
   distance_matrix[BV_OBBRSS][GEOM_SPHERE]                   = &BVHShapeDistancer<OBBRSS, Sphere>::distance;
@@ -515,6 +518,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[BV_OBBRSS][GEOM_PLANE]                    = &BVHShapeDistancer<OBBRSS, Plane>::distance;
   distance_matrix[BV_OBBRSS][GEOM_HALFSPACE]                = &BVHShapeDistancer<OBBRSS, Halfspace>::distance;
   distance_matrix[BV_OBBRSS][GEOM_ELLIPSOID]                = &BVHShapeDistancer<OBBRSS, Ellipsoid>::distance;
+  distance_matrix[BV_OBBRSS][GEOM_CUSTOM]                   = &BVHShapeDistancer<OBBRSS, ShapeBase>::distance;
 
   distance_matrix[HF_AABB][GEOM_BOX]                        = &HeightFieldShapeDistancer<AABB, Box>::distance;
   distance_matrix[HF_AABB][GEOM_SPHERE]                     = &HeightFieldShapeDistancer<AABB, Sphere>::distance;
@@ -526,6 +530,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[HF_AABB][GEOM_PLANE]                      = &HeightFieldShapeDistancer<AABB, Plane>::distance;
   distance_matrix[HF_AABB][GEOM_HALFSPACE]                  = &HeightFieldShapeDistancer<AABB, Halfspace>::distance;
   distance_matrix[HF_AABB][GEOM_ELLIPSOID]                  = &HeightFieldShapeDistancer<AABB, Ellipsoid>::distance;
+  distance_matrix[HF_AABB][GEOM_CUSTOM]                     = &HeightFieldShapeDistancer<AABB, ShapeBase>::distance;
 
   distance_matrix[HF_OBBRSS][GEOM_BOX]                      = &HeightFieldShapeDistancer<OBBRSS, Box>::distance;
   distance_matrix[HF_OBBRSS][GEOM_SPHERE]                   = &HeightFieldShapeDistancer<OBBRSS, Sphere>::distance;
@@ -537,6 +542,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[HF_OBBRSS][GEOM_PLANE]                    = &HeightFieldShapeDistancer<OBBRSS, Plane>::distance;
   distance_matrix[HF_OBBRSS][GEOM_HALFSPACE]                = &HeightFieldShapeDistancer<OBBRSS, Halfspace>::distance;
   distance_matrix[HF_OBBRSS][GEOM_ELLIPSOID]                = &HeightFieldShapeDistancer<OBBRSS, Ellipsoid>::distance;
+  distance_matrix[HF_OBBRSS][GEOM_CUSTOM]                   = &HeightFieldShapeDistancer<OBBRSS, ShapeBase>::distance;
 
   distance_matrix[BV_AABB][BV_AABB]                         = &BVHDistance<AABB>;
   distance_matrix[BV_OBB][BV_OBB]                           = &BVHDistance<OBB>;
@@ -555,6 +561,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[GEOM_OCTREE][GEOM_PLANE]                  = &Distance<OcTree, Plane>;
   distance_matrix[GEOM_OCTREE][GEOM_HALFSPACE]              = &Distance<OcTree, Halfspace>;
   distance_matrix[GEOM_OCTREE][GEOM_ELLIPSOID]              = &Distance<OcTree, Ellipsoid>;
+  distance_matrix[GEOM_OCTREE][GEOM_CUSTOM]                 = &Distance<OcTree, ShapeBase>;
 
   distance_matrix[GEOM_BOX][GEOM_OCTREE]                    = &Distance<Box, OcTree>;
   distance_matrix[GEOM_SPHERE][GEOM_OCTREE]                 = &Distance<Sphere, OcTree>;
@@ -565,6 +572,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[GEOM_CONVEX32][GEOM_OCTREE]               = &Distance<ConvexBase32, OcTree>;
   distance_matrix[GEOM_PLANE][GEOM_OCTREE]                  = &Distance<Plane, OcTree>;
   distance_matrix[GEOM_HALFSPACE][GEOM_OCTREE]              = &Distance<Halfspace, OcTree>;
+  distance_matrix[GEOM_CUSTOM][GEOM_OCTREE]                 = &Distance<ShapeBase, OcTree>;
 
   distance_matrix[GEOM_OCTREE][GEOM_OCTREE]                 = &Distance<OcTree, OcTree>;
 
