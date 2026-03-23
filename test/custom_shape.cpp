@@ -72,6 +72,8 @@ class CustomSphere : public ShapeBase {
 
   CustomSphere* clone() const override { return new CustomSphere(*this); }
 
+  NODE_TYPE getNodeType() const override { return GEOM_CUSTOM; }
+
   void computeLocalAABB() override {
     const Scalar r = radius + this->getSweptSphereRadius();
     aabb_local.min_ = Vec3s::Constant(-r);
@@ -118,6 +120,8 @@ class CastSphere : public ShapeBase {
       : ShapeBase(), radius(radius), cast_tf(cast_tf) {}
 
   CastSphere* clone() const override { return new CastSphere(*this); }
+
+  NODE_TYPE getNodeType() const override { return GEOM_CUSTOM; }
 
   void computeLocalAABB() override {
     // AABB must bound the sphere at both pose 0 (identity) and pose 1.
