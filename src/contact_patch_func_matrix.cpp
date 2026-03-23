@@ -150,6 +150,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[GEOM_BOX][GEOM_HALFSPACE]       = &ShapeShapeContactPatch<Box, Halfspace>;
   contact_patch_matrix[GEOM_BOX][GEOM_ELLIPSOID]       = &ShapeShapeContactPatch<Box, Ellipsoid>;
   contact_patch_matrix[GEOM_BOX][GEOM_TRIANGLE]        = &ShapeShapeContactPatch<Box, TriangleP>;
+  contact_patch_matrix[GEOM_BOX][GEOM_CUSTOM]          = &ShapeShapeContactPatch<Box, ShapeBase>;
 
   contact_patch_matrix[GEOM_SPHERE][GEOM_BOX]          = &ShapeShapeContactPatch<Sphere, Box>;
   contact_patch_matrix[GEOM_SPHERE][GEOM_SPHERE]       = &ShapeShapeContactPatch<Sphere, Sphere>;
@@ -162,6 +163,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[GEOM_SPHERE][GEOM_HALFSPACE]    = &ShapeShapeContactPatch<Sphere, Halfspace>;
   contact_patch_matrix[GEOM_SPHERE][GEOM_ELLIPSOID]    = &ShapeShapeContactPatch<Sphere, Ellipsoid>;
   contact_patch_matrix[GEOM_SPHERE][GEOM_TRIANGLE]     = &ShapeShapeContactPatch<Sphere, TriangleP>;
+  contact_patch_matrix[GEOM_SPHERE][GEOM_CUSTOM]       = &ShapeShapeContactPatch<Sphere, ShapeBase>;
 
   contact_patch_matrix[GEOM_ELLIPSOID][GEOM_BOX]       = &ShapeShapeContactPatch<Ellipsoid, Box>;
   contact_patch_matrix[GEOM_ELLIPSOID][GEOM_SPHERE]    = &ShapeShapeContactPatch<Ellipsoid, Sphere>;
@@ -174,6 +176,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[GEOM_ELLIPSOID][GEOM_HALFSPACE] = &ShapeShapeContactPatch<Ellipsoid, Halfspace>;
   contact_patch_matrix[GEOM_ELLIPSOID][GEOM_ELLIPSOID] = &ShapeShapeContactPatch<Ellipsoid, Ellipsoid>;
   contact_patch_matrix[GEOM_ELLIPSOID][GEOM_TRIANGLE]  = &ShapeShapeContactPatch<Ellipsoid, TriangleP>;
+  contact_patch_matrix[GEOM_ELLIPSOID][GEOM_CUSTOM]    = &ShapeShapeContactPatch<Ellipsoid, ShapeBase>;
 
   contact_patch_matrix[GEOM_CAPSULE][GEOM_BOX]         = &ShapeShapeContactPatch<Capsule, Box>;
   contact_patch_matrix[GEOM_CAPSULE][GEOM_SPHERE]      = &ShapeShapeContactPatch<Capsule, Sphere>;
@@ -186,6 +189,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[GEOM_CAPSULE][GEOM_HALFSPACE]   = &ShapeShapeContactPatch<Capsule, Halfspace>;
   contact_patch_matrix[GEOM_CAPSULE][GEOM_ELLIPSOID]   = &ShapeShapeContactPatch<Capsule, Ellipsoid>;
   contact_patch_matrix[GEOM_CAPSULE][GEOM_TRIANGLE]    = &ShapeShapeContactPatch<Capsule, TriangleP>;
+  contact_patch_matrix[GEOM_CAPSULE][GEOM_CUSTOM]      = &ShapeShapeContactPatch<Capsule, ShapeBase>;
 
   contact_patch_matrix[GEOM_CONE][GEOM_BOX]            = &ShapeShapeContactPatch<Cone, Box>;
   contact_patch_matrix[GEOM_CONE][GEOM_SPHERE]         = &ShapeShapeContactPatch<Cone, Sphere>;
@@ -198,6 +202,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[GEOM_CONE][GEOM_HALFSPACE]      = &ShapeShapeContactPatch<Cone, Halfspace>;
   contact_patch_matrix[GEOM_CONE][GEOM_ELLIPSOID]      = &ShapeShapeContactPatch<Cone, Ellipsoid>;
   contact_patch_matrix[GEOM_CONE][GEOM_TRIANGLE]       = &ShapeShapeContactPatch<Cone, TriangleP>;
+  contact_patch_matrix[GEOM_CONE][GEOM_CUSTOM]         = &ShapeShapeContactPatch<Cone, ShapeBase>;
 
   contact_patch_matrix[GEOM_CYLINDER][GEOM_BOX]        = &ShapeShapeContactPatch<Cylinder, Box>;
   contact_patch_matrix[GEOM_CYLINDER][GEOM_SPHERE]     = &ShapeShapeContactPatch<Cylinder, Sphere>;
@@ -210,6 +215,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[GEOM_CYLINDER][GEOM_HALFSPACE]  = &ShapeShapeContactPatch<Cylinder, Halfspace>;
   contact_patch_matrix[GEOM_CYLINDER][GEOM_ELLIPSOID]  = &ShapeShapeContactPatch<Cylinder, Ellipsoid>;
   contact_patch_matrix[GEOM_CYLINDER][GEOM_TRIANGLE]   = &ShapeShapeContactPatch<Cylinder, TriangleP>;
+  contact_patch_matrix[GEOM_CYLINDER][GEOM_CUSTOM]     = &ShapeShapeContactPatch<Cylinder, ShapeBase>;
 
   contact_patch_matrix[GEOM_CONVEX16][GEOM_BOX]          = &ShapeShapeContactPatch<ConvexBase16, Box>;
   contact_patch_matrix[GEOM_CONVEX16][GEOM_SPHERE]       = &ShapeShapeContactPatch<ConvexBase16, Sphere>;
@@ -222,6 +228,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[GEOM_CONVEX16][GEOM_HALFSPACE]    = &ShapeShapeContactPatch<ConvexBase16, Halfspace>;
   contact_patch_matrix[GEOM_CONVEX16][GEOM_ELLIPSOID]    = &ShapeShapeContactPatch<ConvexBase16, Ellipsoid>;
   contact_patch_matrix[GEOM_CONVEX16][GEOM_TRIANGLE]     = &ShapeShapeContactPatch<ConvexBase16, TriangleP>;
+  contact_patch_matrix[GEOM_CONVEX16][GEOM_CUSTOM]       = &ShapeShapeContactPatch<ConvexBase16, ShapeBase>;
 
   contact_patch_matrix[GEOM_CONVEX32][GEOM_BOX]          = &ShapeShapeContactPatch<ConvexBase32, Box>;
   contact_patch_matrix[GEOM_CONVEX32][GEOM_SPHERE]       = &ShapeShapeContactPatch<ConvexBase32, Sphere>;
@@ -234,6 +241,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[GEOM_CONVEX32][GEOM_HALFSPACE]    = &ShapeShapeContactPatch<ConvexBase32, Halfspace>;
   contact_patch_matrix[GEOM_CONVEX32][GEOM_ELLIPSOID]    = &ShapeShapeContactPatch<ConvexBase32, Ellipsoid>;
   contact_patch_matrix[GEOM_CONVEX32][GEOM_TRIANGLE]     = &ShapeShapeContactPatch<ConvexBase32, TriangleP>;
+  contact_patch_matrix[GEOM_CONVEX32][GEOM_CUSTOM]       = &ShapeShapeContactPatch<ConvexBase32, ShapeBase>;
 
   contact_patch_matrix[GEOM_PLANE][GEOM_BOX]           = &ShapeShapeContactPatch<Plane, Box>;
   contact_patch_matrix[GEOM_PLANE][GEOM_SPHERE]        = &ShapeShapeContactPatch<Plane, Sphere>;
@@ -246,6 +254,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[GEOM_PLANE][GEOM_HALFSPACE]     = &ShapeShapeContactPatch<Plane, Halfspace>;
   contact_patch_matrix[GEOM_PLANE][GEOM_ELLIPSOID]     = &ShapeShapeContactPatch<Plane, Ellipsoid>;
   contact_patch_matrix[GEOM_PLANE][GEOM_TRIANGLE]      = &ShapeShapeContactPatch<Plane, TriangleP>;
+  contact_patch_matrix[GEOM_PLANE][GEOM_CUSTOM]        = &ShapeShapeContactPatch<Plane, ShapeBase>;
 
   contact_patch_matrix[GEOM_HALFSPACE][GEOM_BOX]       = &ShapeShapeContactPatch<Halfspace, Box>;
   contact_patch_matrix[GEOM_HALFSPACE][GEOM_SPHERE]    = &ShapeShapeContactPatch<Halfspace, Sphere>;
@@ -258,6 +267,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[GEOM_HALFSPACE][GEOM_HALFSPACE] = &ShapeShapeContactPatch<Halfspace, Halfspace>;
   contact_patch_matrix[GEOM_HALFSPACE][GEOM_ELLIPSOID] = &ShapeShapeContactPatch<Halfspace, Ellipsoid>;
   contact_patch_matrix[GEOM_HALFSPACE][GEOM_TRIANGLE]  = &ShapeShapeContactPatch<Halfspace, TriangleP>;
+  contact_patch_matrix[GEOM_HALFSPACE][GEOM_CUSTOM]    = &ShapeShapeContactPatch<Halfspace, ShapeBase>;
 
   contact_patch_matrix[GEOM_TRIANGLE][GEOM_BOX]        = &ShapeShapeContactPatch<TriangleP, Box>;
   contact_patch_matrix[GEOM_TRIANGLE][GEOM_SPHERE]     = &ShapeShapeContactPatch<TriangleP, Sphere>;
@@ -270,28 +280,20 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[GEOM_TRIANGLE][GEOM_HALFSPACE]  = &ShapeShapeContactPatch<TriangleP, Halfspace>;
   contact_patch_matrix[GEOM_TRIANGLE][GEOM_ELLIPSOID]  = &ShapeShapeContactPatch<TriangleP, Ellipsoid>;
   contact_patch_matrix[GEOM_TRIANGLE][GEOM_TRIANGLE]   = &ShapeShapeContactPatch<TriangleP, TriangleP>;
+  contact_patch_matrix[GEOM_TRIANGLE][GEOM_CUSTOM]     = &ShapeShapeContactPatch<TriangleP, ShapeBase>;
 
-  // Custom shapes (GEOM_CUSTOM) use virtual dispatch via ShapeBase.
   contact_patch_matrix[GEOM_CUSTOM][GEOM_BOX]          = &ShapeShapeContactPatch<ShapeBase, Box>;
-  contact_patch_matrix[GEOM_CUSTOM][GEOM_SPHERE]        = &ShapeShapeContactPatch<ShapeBase, Sphere>;
-  contact_patch_matrix[GEOM_CUSTOM][GEOM_CAPSULE]       = &ShapeShapeContactPatch<ShapeBase, Capsule>;
-  contact_patch_matrix[GEOM_CUSTOM][GEOM_CONE]          = &ShapeShapeContactPatch<ShapeBase, Cone>;
-  contact_patch_matrix[GEOM_CUSTOM][GEOM_CYLINDER]      = &ShapeShapeContactPatch<ShapeBase, Cylinder>;
-  contact_patch_matrix[GEOM_CUSTOM][GEOM_CONVEX16]      = &ShapeShapeContactPatch<ShapeBase, ConvexBase16>;
-  contact_patch_matrix[GEOM_CUSTOM][GEOM_CONVEX32]      = &ShapeShapeContactPatch<ShapeBase, ConvexBase32>;
-  contact_patch_matrix[GEOM_CUSTOM][GEOM_ELLIPSOID]     = &ShapeShapeContactPatch<ShapeBase, Ellipsoid>;
-  contact_patch_matrix[GEOM_CUSTOM][GEOM_TRIANGLE]      = &ShapeShapeContactPatch<ShapeBase, TriangleP>;
-  contact_patch_matrix[GEOM_CUSTOM][GEOM_CUSTOM]        = &ShapeShapeContactPatch<ShapeBase, ShapeBase>;
-
-  contact_patch_matrix[GEOM_BOX][GEOM_CUSTOM]           = &ShapeShapeContactPatch<Box, ShapeBase>;
-  contact_patch_matrix[GEOM_SPHERE][GEOM_CUSTOM]         = &ShapeShapeContactPatch<Sphere, ShapeBase>;
-  contact_patch_matrix[GEOM_CAPSULE][GEOM_CUSTOM]        = &ShapeShapeContactPatch<Capsule, ShapeBase>;
-  contact_patch_matrix[GEOM_CONE][GEOM_CUSTOM]           = &ShapeShapeContactPatch<Cone, ShapeBase>;
-  contact_patch_matrix[GEOM_CYLINDER][GEOM_CUSTOM]       = &ShapeShapeContactPatch<Cylinder, ShapeBase>;
-  contact_patch_matrix[GEOM_CONVEX16][GEOM_CUSTOM]       = &ShapeShapeContactPatch<ConvexBase16, ShapeBase>;
-  contact_patch_matrix[GEOM_CONVEX32][GEOM_CUSTOM]       = &ShapeShapeContactPatch<ConvexBase32, ShapeBase>;
-  contact_patch_matrix[GEOM_ELLIPSOID][GEOM_CUSTOM]      = &ShapeShapeContactPatch<Ellipsoid, ShapeBase>;
-  contact_patch_matrix[GEOM_TRIANGLE][GEOM_CUSTOM]       = &ShapeShapeContactPatch<TriangleP, ShapeBase>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_SPHERE]       = &ShapeShapeContactPatch<ShapeBase, Sphere>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_CAPSULE]      = &ShapeShapeContactPatch<ShapeBase, Capsule>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_CONE]         = &ShapeShapeContactPatch<ShapeBase, Cone>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_CYLINDER]     = &ShapeShapeContactPatch<ShapeBase, Cylinder>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_CONVEX16]     = &ShapeShapeContactPatch<ShapeBase, ConvexBase16>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_CONVEX32]     = &ShapeShapeContactPatch<ShapeBase, ConvexBase32>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_ELLIPSOID]    = &ShapeShapeContactPatch<ShapeBase, Ellipsoid>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_TRIANGLE]     = &ShapeShapeContactPatch<ShapeBase, TriangleP>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_PLANE]        = &ShapeShapeContactPatch<ShapeBase, Plane>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_HALFSPACE]    = &ShapeShapeContactPatch<ShapeBase, Halfspace>;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_CUSTOM]       = &ShapeShapeContactPatch<ShapeBase, ShapeBase>;
 
   // TODO(louis): properly handle non-convex shapes like BVH, Octrees and Hfields.
   // The following functions work. However apart from the contact frame, these functions don't
@@ -306,6 +308,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[BV_AABB][GEOM_PLANE]       = &BVHShapeComputeContactPatch<AABB, Plane>::run;
   contact_patch_matrix[BV_AABB][GEOM_HALFSPACE]   = &BVHShapeComputeContactPatch<AABB, Halfspace>::run;
   contact_patch_matrix[BV_AABB][GEOM_ELLIPSOID]   = &BVHShapeComputeContactPatch<AABB, Ellipsoid>::run;
+  contact_patch_matrix[BV_AABB][GEOM_CUSTOM]      = &BVHShapeComputeContactPatch<AABB, ShapeBase>::run;
 
   contact_patch_matrix[BV_OBB][GEOM_BOX]          = &BVHShapeComputeContactPatch<OBB, Box>::run;
   contact_patch_matrix[BV_OBB][GEOM_SPHERE]       = &BVHShapeComputeContactPatch<OBB, Sphere>::run;
@@ -317,6 +320,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[BV_OBB][GEOM_PLANE]        = &BVHShapeComputeContactPatch<OBB, Plane>::run;
   contact_patch_matrix[BV_OBB][GEOM_HALFSPACE]    = &BVHShapeComputeContactPatch<OBB, Halfspace>::run;
   contact_patch_matrix[BV_OBB][GEOM_ELLIPSOID]    = &BVHShapeComputeContactPatch<OBB, Ellipsoid>::run;
+  contact_patch_matrix[BV_OBB][GEOM_CUSTOM]       = &BVHShapeComputeContactPatch<OBB, ShapeBase>::run;
 
   contact_patch_matrix[BV_RSS][GEOM_BOX]          = &BVHShapeComputeContactPatch<RSS, Box>::run;
   contact_patch_matrix[BV_RSS][GEOM_SPHERE]       = &BVHShapeComputeContactPatch<RSS, Sphere>::run;
@@ -328,6 +332,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[BV_RSS][GEOM_PLANE]        = &BVHShapeComputeContactPatch<RSS, Plane>::run;
   contact_patch_matrix[BV_RSS][GEOM_HALFSPACE]    = &BVHShapeComputeContactPatch<RSS, Halfspace>::run;
   contact_patch_matrix[BV_RSS][GEOM_ELLIPSOID]    = &BVHShapeComputeContactPatch<RSS, Ellipsoid>::run;
+  contact_patch_matrix[BV_RSS][GEOM_CUSTOM]       = &BVHShapeComputeContactPatch<RSS, ShapeBase>::run;
 
   contact_patch_matrix[BV_KDOP16][GEOM_BOX]       = &BVHShapeComputeContactPatch<KDOP<16>, Box>::run;
   contact_patch_matrix[BV_KDOP16][GEOM_SPHERE]    = &BVHShapeComputeContactPatch<KDOP<16>, Sphere>::run;
@@ -339,6 +344,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[BV_KDOP16][GEOM_PLANE]     = &BVHShapeComputeContactPatch<KDOP<16>, Plane>::run;
   contact_patch_matrix[BV_KDOP16][GEOM_HALFSPACE] = &BVHShapeComputeContactPatch<KDOP<16>, Halfspace>::run;
   contact_patch_matrix[BV_KDOP16][GEOM_ELLIPSOID] = &BVHShapeComputeContactPatch<KDOP<16>, Ellipsoid>::run;
+  contact_patch_matrix[BV_KDOP16][GEOM_CUSTOM]    = &BVHShapeComputeContactPatch<KDOP<16>, ShapeBase>::run;
 
   contact_patch_matrix[BV_KDOP18][GEOM_BOX]       = &BVHShapeComputeContactPatch<KDOP<18>, Box>::run;
   contact_patch_matrix[BV_KDOP18][GEOM_SPHERE]    = &BVHShapeComputeContactPatch<KDOP<18>, Sphere>::run;
@@ -350,6 +356,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[BV_KDOP18][GEOM_PLANE]     = &BVHShapeComputeContactPatch<KDOP<18>, Plane>::run;
   contact_patch_matrix[BV_KDOP18][GEOM_HALFSPACE] = &BVHShapeComputeContactPatch<KDOP<18>, Halfspace>::run;
   contact_patch_matrix[BV_KDOP18][GEOM_ELLIPSOID] = &BVHShapeComputeContactPatch<KDOP<18>, Ellipsoid>::run;
+  contact_patch_matrix[BV_KDOP18][GEOM_CUSTOM]    = &BVHShapeComputeContactPatch<KDOP<18>, ShapeBase>::run;
 
   contact_patch_matrix[BV_KDOP24][GEOM_BOX]       = &BVHShapeComputeContactPatch<KDOP<24>, Box>::run;
   contact_patch_matrix[BV_KDOP24][GEOM_SPHERE]    = &BVHShapeComputeContactPatch<KDOP<24>, Sphere>::run;
@@ -361,6 +368,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[BV_KDOP24][GEOM_PLANE]     = &BVHShapeComputeContactPatch<KDOP<24>, Plane>::run;
   contact_patch_matrix[BV_KDOP24][GEOM_HALFSPACE] = &BVHShapeComputeContactPatch<KDOP<24>, Halfspace>::run;
   contact_patch_matrix[BV_KDOP24][GEOM_ELLIPSOID] = &BVHShapeComputeContactPatch<KDOP<24>, Ellipsoid>::run;
+  contact_patch_matrix[BV_KDOP24][GEOM_CUSTOM]    = &BVHShapeComputeContactPatch<KDOP<24>, ShapeBase>::run;
 
   contact_patch_matrix[BV_kIOS][GEOM_BOX]         = &BVHShapeComputeContactPatch<kIOS, Box>::run;
   contact_patch_matrix[BV_kIOS][GEOM_SPHERE]      = &BVHShapeComputeContactPatch<kIOS, Sphere>::run;
@@ -372,6 +380,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[BV_kIOS][GEOM_PLANE]       = &BVHShapeComputeContactPatch<kIOS, Plane>::run;
   contact_patch_matrix[BV_kIOS][GEOM_HALFSPACE]   = &BVHShapeComputeContactPatch<kIOS, Halfspace>::run;
   contact_patch_matrix[BV_kIOS][GEOM_ELLIPSOID]   = &BVHShapeComputeContactPatch<kIOS, Ellipsoid>::run;
+  contact_patch_matrix[BV_kIOS][GEOM_CUSTOM]      = &BVHShapeComputeContactPatch<kIOS, ShapeBase>::run;
 
   contact_patch_matrix[BV_OBBRSS][GEOM_BOX]       = &BVHShapeComputeContactPatch<OBBRSS, Box>::run;
   contact_patch_matrix[BV_OBBRSS][GEOM_SPHERE]    = &BVHShapeComputeContactPatch<OBBRSS, Sphere>::run;
@@ -383,6 +392,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[BV_OBBRSS][GEOM_PLANE]     = &BVHShapeComputeContactPatch<OBBRSS, Plane>::run;
   contact_patch_matrix[BV_OBBRSS][GEOM_HALFSPACE] = &BVHShapeComputeContactPatch<OBBRSS, Halfspace>::run;
   contact_patch_matrix[BV_OBBRSS][GEOM_ELLIPSOID] = &BVHShapeComputeContactPatch<OBBRSS, Ellipsoid>::run;
+  contact_patch_matrix[BV_OBBRSS][GEOM_CUSTOM]    = &BVHShapeComputeContactPatch<OBBRSS, ShapeBase>::run;
 
   contact_patch_matrix[HF_AABB][GEOM_BOX]         = &HeightFieldShapeComputeContactPatch<AABB, Box>::run;
   contact_patch_matrix[HF_AABB][GEOM_SPHERE]      = &HeightFieldShapeComputeContactPatch<AABB, Sphere>::run;
@@ -394,6 +404,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[HF_AABB][GEOM_PLANE]       = &HeightFieldShapeComputeContactPatch<AABB, Plane>::run;
   contact_patch_matrix[HF_AABB][GEOM_HALFSPACE]   = &HeightFieldShapeComputeContactPatch<AABB, Halfspace>::run;
   contact_patch_matrix[HF_AABB][GEOM_ELLIPSOID]   = &HeightFieldShapeComputeContactPatch<AABB, Ellipsoid>::run;
+  contact_patch_matrix[HF_AABB][GEOM_CUSTOM]      = &HeightFieldShapeComputeContactPatch<AABB, ShapeBase>::run;
 
   contact_patch_matrix[HF_OBBRSS][GEOM_BOX]       = &HeightFieldShapeComputeContactPatch<OBBRSS, Box>::run;
   contact_patch_matrix[HF_OBBRSS][GEOM_SPHERE]    = &HeightFieldShapeComputeContactPatch<OBBRSS, Sphere>::run;
@@ -405,6 +416,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[HF_OBBRSS][GEOM_PLANE]     = &HeightFieldShapeComputeContactPatch<OBBRSS, Plane>::run;
   contact_patch_matrix[HF_OBBRSS][GEOM_HALFSPACE] = &HeightFieldShapeComputeContactPatch<OBBRSS, Halfspace>::run;
   contact_patch_matrix[HF_OBBRSS][GEOM_ELLIPSOID] = &HeightFieldShapeComputeContactPatch<OBBRSS, Ellipsoid>::run;
+  contact_patch_matrix[HF_OBBRSS][GEOM_CUSTOM]    = &HeightFieldShapeComputeContactPatch<OBBRSS, ShapeBase>::run;
 
   contact_patch_matrix[BV_AABB][BV_AABB]          = &BVHComputeContactPatch<AABB>::run;
   contact_patch_matrix[BV_OBB][BV_OBB]            = &BVHComputeContactPatch<OBB>::run;
@@ -438,6 +450,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[GEOM_OCTREE][BV_KDOP24] = &contact_patch_function_not_implemented;
   contact_patch_matrix[GEOM_OCTREE][HF_AABB] = &contact_patch_function_not_implemented;
   contact_patch_matrix[GEOM_OCTREE][HF_OBBRSS] = &contact_patch_function_not_implemented;
+  contact_patch_matrix[GEOM_OCTREE][GEOM_CUSTOM] = &contact_patch_function_not_implemented;
 
   contact_patch_matrix[GEOM_BOX][GEOM_OCTREE]  = &contact_patch_function_not_implemented;
   contact_patch_matrix[GEOM_SPHERE][GEOM_OCTREE]  = &contact_patch_function_not_implemented;
@@ -459,6 +472,7 @@ ContactPatchFunctionMatrix::ContactPatchFunctionMatrix() {
   contact_patch_matrix[BV_KDOP24][GEOM_OCTREE]  = &contact_patch_function_not_implemented;
   contact_patch_matrix[HF_AABB][GEOM_OCTREE] = &contact_patch_function_not_implemented;
   contact_patch_matrix[HF_OBBRSS][GEOM_OCTREE] = &contact_patch_function_not_implemented;
+  contact_patch_matrix[GEOM_CUSTOM][GEOM_OCTREE] = &contact_patch_function_not_implemented;
 #endif
   // clang-format on
 }
