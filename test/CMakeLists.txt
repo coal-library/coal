@@ -67,7 +67,10 @@ if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
   add_coal_test(accelerated_gjk accelerated_gjk.cpp)
   add_coal_test(gjk_convergence_criterion gjk_convergence_criterion.cpp)
   add_coal_test(custom_shape custom_shape.cpp)
-  add_coal_test(custom_shape_deformed_cylinder custom_shape_deformed_cylinder.cpp)
+  add_coal_test(
+    custom_shape_deformed_cylinder
+    custom_shape_deformed_cylinder.cpp
+  )
   if(COAL_HAS_OCTOMAP)
     add_coal_test(octree octree.cpp)
   endif(COAL_HAS_OCTOMAP)
