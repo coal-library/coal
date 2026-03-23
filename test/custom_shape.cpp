@@ -53,6 +53,7 @@
 #include "coal/BVH/BVH_model.h"
 #include "coal/shape/geometric_shape_to_BVH_model.h"
 #include "coal/hfield.h"
+#include "coal/contact_patch.h"
 
 #ifdef COAL_HAS_OCTOMAP
 #include "coal/octree.h"
@@ -572,6 +573,32 @@ BOOST_AUTO_TEST_CASE(test_custom_shape_heightfield_collision) {
   BOOST_CHECK_EQUAL(n, 0u);
 }
 
+/// HeightField distance is unimplemented in Coal for ALL shape types (the
+/// matrix entry exists but the function throws std::invalid_argument).
+/// This test documents that limitation and ensures GEOM_CUSTOM behaves
+/// consistently with built-in shapes.
+BOOST_AUTO_TEST_CASE(test_custom_shape_heightfield_distance_not_implemented) {
+  const Scalar radius = 0.5;
+  CustomSphere custom(radius);
+  custom.computeLocalAABB();
+
+  const Eigen::DenseIndex nx = 3, ny = 3;
+  MatrixXs heights = MatrixXs::Zero(ny, nx);
+  HeightField<AABB> hf(Scalar(2.0), Scalar(2.0), heights, Scalar(-0.1));
+  hf.computeLocalAABB();
+
+  DistanceRequest request(true);
+  DistanceResult result;
+
+  Transform3s tf1(Quats::Identity(), Vec3s(0, 0, 3.0));
+  Transform3s tf2;
+
+  // Matches the behaviour of built-in shapes (e.g. Sphere vs HeightField)
+  BOOST_CHECK_THROW(
+      distance(&custom, tf1, &hf, tf2, request, result),
+      std::invalid_argument);
+}
+
 /// Verify computeBV<OBB, ShapeBase> produces valid BV containing the shape.
 BOOST_AUTO_TEST_CASE(test_computeBV_OBB_ShapeBase) {
   const Scalar radius = 1.5;
@@ -598,4 +625,121 @@ BOOST_AUTO_TEST_CASE(test_computeBV_OBB_ShapeBase) {
   computeBV<OBBRSS, ShapeBase>(custom, tf, obbrss);
   // OBBRSS should contain the AABB center too
   BOOST_CHECK(obbrss.contain(aabb.center()));
+}
+
+// ============================================================================
+// Contact patch tests
+// ============================================================================
+
+/// Contact patch: CustomSphere vs built-in Box.
+/// Exercises GEOM_CUSTOM entries in contact_patch_func_matrix and
+/// the GEOM_CUSTOM case in ContactPatchSolver::makeSupportSetFunction.
+BOOST_AUTO_TEST_CASE(test_custom_shape_contact_patch) {
+  const Scalar radius = 1.0;
+  CustomSphere custom(radius);
+  Box box(2.0, 2.0, 2.0);
+
+  // Sphere at origin, box slightly overlapping along +Z
+  Transform3s tf1;
+  const Scalar overlap = Scalar(0.01);
+  Transform3s tf2(Quats::Identity(),
+                  Vec3s(0, 0, radius + Scalar(1.0) - overlap));
+
+  const size_t num_max_contact = 1;
+  const CollisionRequest col_req(CollisionRequestFlag::CONTACT,
+                                 num_max_contact);
+  const ContactPatchRequest patch_req;
+
+  CollisionResult col_res;
+  coal::collide(&custom, tf1, &box, tf2, col_req, col_res);
+  BOOST_REQUIRE(col_res.isCollision());
+
+  {
+    ContactPatchResult patch_res(patch_req);
+    coal::computeContactPatch(&custom, tf1, &box, tf2, col_res, patch_req,
+                              patch_res);
+    BOOST_REQUIRE(patch_res.numContactPatches() > 0);
+
+    const Contact& contact = col_res.getContact(0);
+    const ContactPatch& patch = patch_res.getContactPatch(0);
+
+    // Sphere is strictly convex => single-point contact patch
+    BOOST_CHECK_EQUAL(patch.size(), 1u);
+
+    const Scalar tol = Scalar(1e-3);
+    BOOST_CHECK_SMALL(
+        (patch.getNormal() - contact.normal).norm(), tol);
+    BOOST_CHECK_SMALL(
+        std::abs(patch.penetration_depth - contact.penetration_depth), tol);
+  }
+
+  // Reversed order: Box vs CustomSphere
+  {
+    CollisionResult col_res2;
+    coal::collide(&box, tf2, &custom, tf1, col_req, col_res2);
+    BOOST_REQUIRE(col_res2.isCollision());
+
+    ContactPatchResult patch_res(patch_req);
+    coal::computeContactPatch(&box, tf2, &custom, tf1, col_res2, patch_req,
+                              patch_res);
+    BOOST_CHECK(patch_res.numContactPatches() > 0);
+  }
+
+  // GEOM_CUSTOM vs GEOM_CUSTOM
+  {
+    CustomSphere custom2(radius);
+    Transform3s tf_c2(Quats::Identity(),
+                      Vec3s(0, 0, 2 * radius - overlap));
+
+    CollisionResult col_res3;
+    coal::collide(&custom, tf1, &custom2, tf_c2, col_req, col_res3);
+    BOOST_REQUIRE(col_res3.isCollision());
+
+    ContactPatchResult patch_res(patch_req);
+    coal::computeContactPatch(&custom, tf1, &custom2, tf_c2, col_res3,
+                              patch_req, patch_res);
+    BOOST_REQUIRE(patch_res.numContactPatches() > 0);
+
+    const ContactPatch& patch = patch_res.getContactPatch(0);
+    BOOST_CHECK_EQUAL(patch.size(), 1u);
+  }
+}
+
+/// Smoke test: contact patch computation does not throw for various
+/// GEOM_CUSTOM pairings.
+BOOST_AUTO_TEST_CASE(test_custom_shape_contact_patch_no_throw) {
+  const Scalar radius = 1.0;
+  CustomSphere custom(radius);
+
+  Transform3s tf1;
+  const Scalar overlap = Scalar(0.01);
+  const size_t num_max_contact = 1;
+  const CollisionRequest col_req(CollisionRequestFlag::CONTACT,
+                                 num_max_contact);
+
+  auto test_pair = [&](CollisionGeometry* o1, const Transform3s& t1,
+                       CollisionGeometry* o2, const Transform3s& t2) {
+    CollisionResult col_res;
+    coal::collide(o1, t1, o2, t2, col_req, col_res);
+    BOOST_REQUIRE(col_res.isCollision());
+    const ContactPatchRequest patch_req;
+    ContactPatchResult patch_res(patch_req);
+    BOOST_CHECK_NO_THROW(coal::computeContactPatch(
+        o1, t1, o2, t2, col_res, patch_req, patch_res));
+  };
+
+  Transform3s tf_near(Quats::Identity(),
+                      Vec3s(0, 0, 2 * radius - overlap));
+
+  Sphere sphere(radius);
+  test_pair(&custom, tf1, &sphere, tf_near);
+
+  Capsule capsule(radius, 2.0);
+  test_pair(&custom, tf1, &capsule, tf_near);
+
+  Cylinder cylinder(radius, 2.0);
+  test_pair(&custom, tf1, &cylinder, tf_near);
+
+  Ellipsoid ellipsoid(radius, radius, radius);
+  test_pair(&custom, tf1, &ellipsoid, tf_near);
 }
