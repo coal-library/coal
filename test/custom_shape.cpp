@@ -34,9 +34,10 @@
 
 /// @file custom_shape.cpp
 /// @brief Tests for custom shape support via ShapeBase virtual dispatch.
-///        Demonstrates how to implement a custom shape outside the Coal library,
-///        specifically in the style of Tesseract Bullet's CastHullShape for
-///        continuous collision detection (Schulman et al., 2013).
+///        Demonstrates how to implement a custom shape outside the Coal
+///        library, specifically in the style of the Tesseract implementation of
+///        a Trajopt CastHullShape for continuous collision detection
+///        (originally using Bullet) (Schulman et al., 2014).
 
 #define BOOST_TEST_MODULE COAL_CUSTOM_SHAPE
 #include <boost/test/included/unit_test.hpp>
@@ -47,7 +48,6 @@
 #include "coal/math/transform.h"
 #include "coal/narrowphase/narrowphase.h"
 #include "coal/narrowphase/support_data.h"
-#include "coal/narrowphase/support_functions.h"
 #include "coal/shape/geometric_shapes.h"
 #include "coal/shape/geometric_shapes_utility.h"
 #include "coal/BVH/BVH_model.h"
@@ -135,25 +135,28 @@ class CastSphere : public ShapeBase {
     aabb_radius = (aabb_local.max_ - aabb_local.min_).norm() / 2;
   }
 
-  /// @brief Support function of the swept volume (convex hull of two sphere
-  /// poses). The support is the maximum of the two sphere supports:
-  ///   support_cast(dir) = max(r * dir, T1 * (r * T1^{-1} * dir))
-  ///                     = max(r * dir, r * dir + t1) (since sphere is round)
-  ///                     = r * dir + max(0, dir · t1) * dir_normalized
-  /// For a sphere, this simplifies to:
-  ///   support_cast(dir) = r * dir + max(0, dir · t1) * dir
-  /// (dir is already unit-length, so no normalization needed)
+  /// @brief Support of the swept volume (convex hull of shape at pose 0 and
+  /// pose 1). General formula (Schulman et al. 2013):
+  ///   s0 = support_shape(dir)                          -- pose 0 (identity)
+  ///   s1 = T * support_shape(T.rotation^{-1} * dir)    -- pose 1
+  ///   support_cast(dir) = argmax_{s0, s1} dot(dir, ·)
+  /// For a sphere, T.rotation^{-1} * dir == dir (rotationally symmetric),
+  /// so s1 simplifies to t + radius * dir.
   void computeShapeSupport(const Vec3s& dir, Vec3s& support, int& /*hint*/,
                            details::ShapeSupportData& /*data*/) const override {
-    // Support of sphere at pose 0 (identity)
+    // Pose 0: shape in its local frame (identity transform)
     const Vec3s s0 = radius * dir;
-    // Support of sphere at pose 1 (cast_tf)
-    // For a sphere: support in dir = center + radius * dir
-    // center of sphere at pose 1 = cast_tf.translation()
-    const Vec3s& t1 = cast_tf.getTranslation();
-    const Vec3s s1 = t1 + radius * dir;
-    // Take the one that is furthest in direction dir
-    support = (dir.dot(s0) >= dir.dot(s1)) ? s0 : s1;
+
+    // Pose 1: rotate dir into pose-1 local frame, get support, transform back.
+    // For a sphere the rotation is irrelevant (radius * dir regardless of
+    // orientation), but we keep the general structure here. A non-symmetric
+    // shape would replace `radius * dir_local1` with its own local support.
+    const Vec3s dir_local1 = cast_tf.getRotation().transpose() * dir;
+    const Vec3s s1 = cast_tf.transform(radius * dir_local1);
+
+    // Take the one that is furthest in direction dir. (Prefer pose 1 on tie,
+    // matching Tesseract.)
+    support = (dir.dot(s0) > dir.dot(s1)) ? s0 : s1;
   }
 
   bool needNesterovNormalizeHeuristic() const override { return true; }
@@ -202,15 +205,14 @@ BOOST_AUTO_TEST_CASE(test_custom_sphere_vs_builtin_sphere_distance) {
   std::vector<Scalar> separations = {0.1, 0.5, 1.0, 2.0, 5.0};
   for (Scalar sep : separations) {
     Transform3s tf1;  // identity
-    Transform3s tf2(Quats::Identity(),
-                    Vec3s(2 * radius + sep, 0, 0));
+    Transform3s tf2(Quats::Identity(), Vec3s(2 * radius + sep, 0, 0));
 
     // Distance between two built-in spheres
     Sphere s2_builtin(radius);
     DistanceRequest request(true);
     DistanceResult result_builtin;
-    Scalar d_builtin =
-        distance(&builtin_sphere, tf1, &s2_builtin, tf2, request, result_builtin);
+    Scalar d_builtin = distance(&builtin_sphere, tf1, &s2_builtin, tf2, request,
+                                result_builtin);
 
     // Distance between custom sphere and built-in sphere
     DistanceResult result_custom;
@@ -290,8 +292,7 @@ BOOST_AUTO_TEST_CASE(test_cast_sphere_swept_volume) {
   const Scalar sweep_dist = 3.0;
 
   // Cast transform: sphere moves sweep_dist along X
-  Transform3s cast_tf(Quats::Identity(),
-                      Vec3s(sweep_dist, 0, 0));
+  Transform3s cast_tf(Quats::Identity(), Vec3s(sweep_dist, 0, 0));
   CastSphere cast_sphere(radius, cast_tf);
   cast_sphere.computeLocalAABB();
 
@@ -306,7 +307,8 @@ BOOST_AUTO_TEST_CASE(test_cast_sphere_swept_volume) {
   // Box at (sweep_dist + 0.5, 0, 0): box edge at sweep_dist + 0.0, just
   // touching the end sphere → should collide.
   tf_box.setTranslation(Vec3s(sweep_dist + radius + Scalar(0.4), 0, 0));
-  std::size_t n = collide(&cast_sphere, tf_cast, &box, tf_box, coll_req, coll_res);
+  std::size_t n =
+      collide(&cast_sphere, tf_cast, &box, tf_box, coll_req, coll_res);
   BOOST_CHECK_GT(n, 0u);
 
   // Box far beyond the swept path: no collision.
@@ -469,11 +471,11 @@ BOOST_AUTO_TEST_CASE(test_custom_octree_no_throw) {
   CollisionResult result;
 
   // Should not throw unsupported-pair exception
-  BOOST_CHECK_NO_THROW(collide(&custom, Transform3s(), &octree, Transform3s(),
-                                request, result));
+  BOOST_CHECK_NO_THROW(
+      collide(&custom, Transform3s(), &octree, Transform3s(), request, result));
   result.clear();
-  BOOST_CHECK_NO_THROW(collide(&octree, Transform3s(), &custom, Transform3s(),
-                                request, result));
+  BOOST_CHECK_NO_THROW(
+      collide(&octree, Transform3s(), &custom, Transform3s(), request, result));
 }
 
 #endif  // COAL_HAS_OCTOMAP
@@ -554,7 +556,7 @@ BOOST_AUTO_TEST_CASE(test_custom_shape_heightfield_collision) {
   const Eigen::DenseIndex nx = 3, ny = 3;
   MatrixXs heights = MatrixXs::Zero(ny, nx);
   HeightField<AABB> hf(Scalar(2.0), Scalar(2.0), heights,
-                        Scalar(-0.1));  // min_height
+                       Scalar(-0.1));  // min_height
   hf.computeLocalAABB();
 
   CollisionRequest request;
@@ -594,9 +596,8 @@ BOOST_AUTO_TEST_CASE(test_custom_shape_heightfield_distance_not_implemented) {
   Transform3s tf2;
 
   // Matches the behaviour of built-in shapes (e.g. Sphere vs HeightField)
-  BOOST_CHECK_THROW(
-      distance(&custom, tf1, &hf, tf2, request, result),
-      std::invalid_argument);
+  BOOST_CHECK_THROW(distance(&custom, tf1, &hf, tf2, request, result),
+                    std::invalid_argument);
 }
 
 /// Verify computeBV<OBB, ShapeBase> produces valid BV containing the shape.
@@ -667,8 +668,7 @@ BOOST_AUTO_TEST_CASE(test_custom_shape_contact_patch) {
     BOOST_CHECK_EQUAL(patch.size(), 1u);
 
     const Scalar tol = Scalar(1e-3);
-    BOOST_CHECK_SMALL(
-        (patch.getNormal() - contact.normal).norm(), tol);
+    BOOST_CHECK_SMALL((patch.getNormal() - contact.normal).norm(), tol);
     BOOST_CHECK_SMALL(
         std::abs(patch.penetration_depth - contact.penetration_depth), tol);
   }
@@ -688,8 +688,7 @@ BOOST_AUTO_TEST_CASE(test_custom_shape_contact_patch) {
   // GEOM_CUSTOM vs GEOM_CUSTOM
   {
     CustomSphere custom2(radius);
-    Transform3s tf_c2(Quats::Identity(),
-                      Vec3s(0, 0, 2 * radius - overlap));
+    Transform3s tf_c2(Quats::Identity(), Vec3s(0, 0, 2 * radius - overlap));
 
     CollisionResult col_res3;
     coal::collide(&custom, tf1, &custom2, tf_c2, col_req, col_res3);
@@ -724,12 +723,11 @@ BOOST_AUTO_TEST_CASE(test_custom_shape_contact_patch_no_throw) {
     BOOST_REQUIRE(col_res.isCollision());
     const ContactPatchRequest patch_req;
     ContactPatchResult patch_res(patch_req);
-    BOOST_CHECK_NO_THROW(coal::computeContactPatch(
-        o1, t1, o2, t2, col_res, patch_req, patch_res));
+    BOOST_CHECK_NO_THROW(coal::computeContactPatch(o1, t1, o2, t2, col_res,
+                                                   patch_req, patch_res));
   };
 
-  Transform3s tf_near(Quats::Identity(),
-                      Vec3s(0, 0, 2 * radius - overlap));
+  Transform3s tf_near(Quats::Identity(), Vec3s(0, 0, 2 * radius - overlap));
 
   Sphere sphere(radius);
   test_pair(&custom, tf1, &sphere, tf_near);
