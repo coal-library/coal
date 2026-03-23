@@ -35,9 +35,8 @@
 /// @file custom_shape.cpp
 /// @brief Tests for custom shape support via ShapeBase virtual dispatch.
 ///        Demonstrates how to implement a custom shape outside the Coal
-///        library, specifically in the style of the Tesseract implementation of
-///        a Trajopt CastHullShape for continuous collision detection
-///        (originally using Bullet) (Schulman et al., 2014).
+///        library, including a cast (swept) sphere for continuous collision
+///        detection (Schulman et al., 2014).
 
 #define BOOST_TEST_MODULE COAL_CUSTOM_SHAPE
 #include <boost/test/included/unit_test.hpp>
@@ -47,7 +46,7 @@
 #include "coal/distance.h"
 #include "coal/math/transform.h"
 #include "coal/narrowphase/narrowphase.h"
-#include "coal/narrowphase/support_data.h"
+#include "coal/narrowphase/minkowski_difference.h"
 #include "coal/shape/geometric_shapes.h"
 #include "coal/shape/geometric_shapes_utility.h"
 #include "coal/BVH/BVH_model.h"
@@ -101,12 +100,8 @@ class CustomSphere : public ShapeBase {
 
 // ============================================================================
 // CastSphere: swept volume of a sphere moving from the identity transform to
-// a given cast transform. This implements the Schulman et al. (2013) swept
-// volume support function: support_cast(d) = max(support_T0(d), support_T1(d))
-// where T0 is identity and T1 is the cast_tf.
-//
-// This is the Coal equivalent of Tesseract Bullet's CastHullShape, using
-// the virtual dispatch extension mechanism added to ShapeBase.
+// a given cast transform. The support function returns the point that maximises
+// dot(d, ·) over both poses (Schulman et al., 2014).
 // ============================================================================
 class CastSphere : public ShapeBase {
  public:
@@ -114,67 +109,81 @@ class CastSphere : public ShapeBase {
   /// @param cast_tf the transform from pose 0 (identity) to pose 1,
   ///                expressed in the local frame of this shape.
   CastSphere(Scalar radius, const Transform3s& cast_tf)
-      : ShapeBase(), radius(radius), cast_tf(cast_tf) {}
+      : ShapeBase(), shape_(radius), cast_tf_(cast_tf) {}
 
   CastSphere* clone() const override { return new CastSphere(*this); }
 
   NODE_TYPE getNodeType() const override { return GEOM_CUSTOM; }
 
   void computeLocalAABB() override {
-    // AABB must bound the sphere at both pose 0 (identity) and pose 1.
-    const Scalar r = radius + this->getSweptSphereRadius();
-    // Pose 0: sphere at origin
-    Vec3s min0 = Vec3s::Constant(-r);
-    Vec3s max0 = Vec3s::Constant(r);
-    // Pose 1: sphere at cast_tf.translation()
-    const Vec3s& t1 = cast_tf.getTranslation();
-    Vec3s min1 = t1 - Vec3s::Constant(r);
-    Vec3s max1 = t1 + Vec3s::Constant(r);
-    aabb_local.min_ = min0.cwiseMin(min1);
-    aabb_local.max_ = max0.cwiseMax(max1);
-    aabb_center = (aabb_local.min_ + aabb_local.max_) / 2;
-    aabb_radius = (aabb_local.max_ - aabb_local.min_).norm() / 2;
+    // Compute AABB from support function.
+    int hint = 0;
+    details::ShapeSupportData data;
+    for (int i = 0; i < 3; ++i) {
+      Vec3s dir = Vec3s::Zero();
+      Vec3s s;
+      dir[i] = 1;
+      computeShapeSupport(dir, s, hint, data);
+      aabb_local.max_[i] = s[i];
+      dir[i] = -1;
+      computeShapeSupport(dir, s, hint, data);
+      aabb_local.min_[i] = s[i];
+    }
+    const Scalar r = getSweptSphereRadius();
+    aabb_local.min_ -= Vec3s::Constant(r);
+    aabb_local.max_ += Vec3s::Constant(r);
+    aabb_center = aabb_local.center();
+    aabb_radius = (aabb_local.min_ - aabb_center).norm();
   }
 
   /// @brief Support of the swept volume (convex hull of shape at pose 0 and
-  /// pose 1). General formula (Schulman et al. 2013):
+  /// pose 1). General formula (Schulman et al. 2014):
   ///   s0 = support_shape(dir)                          -- pose 0 (identity)
   ///   s1 = T * support_shape(T.rotation^{-1} * dir)    -- pose 1
   ///   support_cast(dir) = argmax_{s0, s1} dot(dir, ·)
-  /// For a sphere, T.rotation^{-1} * dir == dir (rotationally symmetric),
-  /// so s1 simplifies to t + radius * dir.
   void computeShapeSupport(const Vec3s& dir, Vec3s& support, int& /*hint*/,
                            details::ShapeSupportData& /*data*/) const override {
-    // Pose 0: shape in its local frame (identity transform)
-    const Vec3s s0 = radius * dir;
+    // Pose 0: underlying shape support in its local frame (identity transform).
+    // WithSweptSphere so shapes with intrinsic radii (Sphere, Capsule) include
+    // that radius in the support point.
+    const Vec3s s0 =
+        details::getSupport<details::SupportOptions::WithSweptSphere>(
+            &shape_, dir, hint0_);
 
     // Pose 1: rotate dir into pose-1 local frame, get support, transform back.
-    // For a sphere the rotation is irrelevant (radius * dir regardless of
-    // orientation), but we keep the general structure here. A non-symmetric
-    // shape would replace `radius * dir_local1` with its own local support.
-    const Vec3s dir_local1 = cast_tf.getRotation().transpose() * dir;
-    const Vec3s s1 = cast_tf.transform(radius * dir_local1);
+    const Vec3s dir_local1 = cast_tf_.getRotation().transpose() * dir;
+    const Vec3s s1 = cast_tf_.transform(
+        details::getSupport<details::SupportOptions::WithSweptSphere>(
+            &shape_, dir_local1, hint1_));
 
-    // Take the one that is furthest in direction dir. (Prefer pose 1 on tie,
-    // matching Tesseract.)
+    // Return the support of the convex hull of both poses (prefer pose 1 on
+    // tie).
     support = (dir.dot(s0) > dir.dot(s1)) ? s0 : s1;
+  }
+
+  /// @brief Delegate to the underlying shape via shape_traits lookup.
+  bool needNesterovNormalizeHeuristic() const override {
+    return details::getNormalizeSupportDirection(&shape_);
   }
 
   bool isEqual(const CollisionGeometry& other) const override {
     const CastSphere* other_ = dynamic_cast<const CastSphere*>(&other);
     if (other_ == nullptr) return false;
-    return radius == other_->radius && cast_tf == other_->cast_tf;
+    return shape_ == other_->shape_ && cast_tf_ == other_->cast_tf_;
   }
 
-  Scalar radius;
-  Transform3s cast_tf;  ///< relative transform from pose 0 to pose 1
+ private:
+  Sphere shape_;
+  Transform3s cast_tf_;
+  mutable int hint0_{0};
+  mutable int hint1_{0};
 };
 
 // ============================================================================
 // Tests
 // ============================================================================
 
-/// Verify that GEOM_CUSTOM is the default node type for ShapeBase subclasses.
+/// Verify that custom shapes returning GEOM_CUSTOM are recognized correctly.
 BOOST_AUTO_TEST_CASE(test_geom_custom_node_type) {
   CustomSphere sphere(1.0);
   BOOST_CHECK_EQUAL(sphere.getNodeType(), GEOM_CUSTOM);
@@ -282,7 +291,6 @@ BOOST_AUTO_TEST_CASE(test_custom_sphere_vs_custom_sphere) {
 }
 
 /// Test a CastSphere (swept volume of a sphere between two poses).
-/// This demonstrates Tesseract-style CCD via Coal's custom shape API.
 ///
 /// The CastSphere represents the convex hull of a sphere moving from position
 /// (0,0,0) to (d,0,0). Its support function maximises over both endpoints.
@@ -303,8 +311,8 @@ BOOST_AUTO_TEST_CASE(test_cast_sphere_swept_volume) {
   CollisionRequest coll_req;
   CollisionResult coll_res;
 
-  // Box at (sweep_dist + 0.5, 0, 0): box edge at sweep_dist + 0.0, just
-  // touching the end sphere → should collide.
+  // Box center at sweep_dist + radius + 0.4 = 4.4; box left edge at 3.9.
+  // End sphere surface at sweep_dist + radius = 4.0 → overlap of 0.1.
   tf_box.setTranslation(Vec3s(sweep_dist + radius + Scalar(0.4), 0, 0));
   std::size_t n =
       collide(&cast_sphere, tf_cast, &box, tf_box, coll_req, coll_res);
@@ -620,7 +628,7 @@ BOOST_AUTO_TEST_CASE(test_computeBV_OBB_ShapeBase) {
   // The OBB should at least contain the AABB center
   BOOST_CHECK(obb.contain(aabb.center()));
 
-  // Also test OBBRSS (the one Tesseract uses)
+  // Also test OBBRSS
   OBBRSS obbrss;
   computeBV<OBBRSS, ShapeBase>(custom, tf, obbrss);
   // OBBRSS should contain the AABB center too
