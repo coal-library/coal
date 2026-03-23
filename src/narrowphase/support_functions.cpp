@@ -84,10 +84,12 @@ Vec3s getSupport(const ShapeBase* shape, const Vec3s& dir, int& hint) {
       support.setZero();
       break;
     case GEOM_CUSTOM:
-    default:
       // Use virtual dispatch for custom shapes
       getShapeSupport<_SupportOptions>(shape, dir, support, hint, support_data);
       break;
+    default:
+      support.setZero();
+      ;  // nothing
   }
 
   return support;
@@ -515,11 +517,11 @@ void getSupportSet(const ShapeBase* shape, SupportSet& support_set, int& hint,
     case GEOM_HALFSPACE:
       break;
     case GEOM_CUSTOM:
-    default:
       // Use virtual dispatch for custom shapes
       getShapeSupportSet<_SupportOptions>(shape, support_set, hint,
                                           support_data, max_num_supports, tol);
       break;
+    default:;  // nothing
   }
 }
 #undef CALL_GET_SHAPE_SUPPORT_SET
