@@ -90,9 +90,6 @@ class CustomSphere : public ShapeBase {
     support = radius * dir;
   }
 
-  // A sphere is smooth/strictly convex, so Nesterov normalization is helpful.
-  bool needNesterovNormalizeHeuristic() const override { return true; }
-
   bool isEqual(const CollisionGeometry& other) const override {
     const CustomSphere* other_ = dynamic_cast<const CustomSphere*>(&other);
     if (other_ == nullptr) return false;
@@ -162,8 +159,6 @@ class CastSphere : public ShapeBase {
     // matching Tesseract.)
     support = (dir.dot(s0) > dir.dot(s1)) ? s0 : s1;
   }
-
-  bool needNesterovNormalizeHeuristic() const override { return true; }
 
   bool isEqual(const CollisionGeometry& other) const override {
     const CastSphere* other_ = dynamic_cast<const CastSphere*>(&other);
