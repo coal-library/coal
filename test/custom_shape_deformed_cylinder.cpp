@@ -106,9 +106,6 @@ class DeformedCylinder : public ShapeBase {
     support = (dir.dot(s1) >= dir.dot(s2)) ? s1 : s2;
   }
 
-  // Smooth surface => Nesterov normalization is helpful
-  bool needNesterovNormalizeHeuristic() const override { return true; }
-
   bool isEqual(const CollisionGeometry& other) const override {
     const auto* o = dynamic_cast<const DeformedCylinder*>(&other);
     if (o == nullptr) return false;
