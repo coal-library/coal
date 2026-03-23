@@ -73,14 +73,6 @@ class COAL_DLLAPI ShapeBase : public CollisionGeometry {
   /// @brief Get object type: a geometric shape
   OBJECT_TYPE getObjectType() const override { return OT_GEOM; }
 
-  /// @brief Get node type.
-  /// Custom shapes (those not built into Coal) return GEOM_CUSTOM. Built-in
-  /// shapes override this to return their specific GEOM_* type.
-  /// @note Custom shapes that override getNodeType() to return something other
-  /// than GEOM_CUSTOM must also register the appropriate entries in the
-  /// collision, distance and contact-patch function matrices.
-  NODE_TYPE getNodeType() const override { return GEOM_CUSTOM; }
-
   /// @brief Set radius of sphere swept around the shape.
   /// Must be >= 0.
   void setSweptSphereRadius(Scalar radius) {
@@ -98,8 +90,9 @@ class COAL_DLLAPI ShapeBase : public CollisionGeometry {
   /// @brief Compute the support point of this shape in the given direction.
   /// The output support point is expressed in the local frame of the shape
   /// and does not account for the swept sphere radius.
-  /// Override this method to enable custom shapes to participate in GJK/EPA
-  /// collision and distance computations.
+  /// Override getNodeType() to return GEOM_CUSTOM and this method to enable
+  /// custom shapes to participate in GJK/EPA collision and distance
+  /// computations.
   /// @param[in] dir support direction. Always unit-length when called by Coal.
   /// @param[out] support the computed support point.
   /// @param[in,out] hint warm-start hint (used mainly for convex shapes).
@@ -111,8 +104,8 @@ class COAL_DLLAPI ShapeBase : public CollisionGeometry {
     COAL_UNUSED_VARIABLE(hint);
     COAL_UNUSED_VARIABLE(data);
     COAL_THROW_PRETTY(
-        "computeShapeSupport not implemented for this shape type. "
-        "Override this method to use custom shapes with GJK/EPA.",
+        "computeShapeSupport not implemented for this shape type. Override "
+        "getNodeType() and this method to use custom shapes with GJK/EPA.",
         std::logic_error);
   }
 

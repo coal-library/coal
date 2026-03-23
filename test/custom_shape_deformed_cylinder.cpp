@@ -74,6 +74,8 @@ class DeformedCylinder : public ShapeBase {
     return new DeformedCylinder(*this);
   }
 
+  NODE_TYPE getNodeType() const override { return GEOM_CUSTOM; }
+
   void computeLocalAABB() override {
     // Delegate to the generic ShapeBase AABB computation, which calls
     // computeShapeSupport in each axis direction.
