@@ -31,12 +31,12 @@ COAL_DLLAPI CollisionGeometry* extract(const CollisionGeometry* model,
  */
 inline const char* get_node_type_name(NODE_TYPE node_type) {
   static const char* node_type_name_all[] = {
-      "BV_UNKNOWN",     "BV_AABB",        "BV_OBB",         "BV_RSS",
-      "BV_kIOS",        "BV_OBBRSS",      "BV_KDOP16",      "BV_KDOP18",
-      "BV_KDOP24",      "GEOM_BOX",       "GEOM_SPHERE",    "GEOM_CAPSULE",
-      "GEOM_CONE",      "GEOM_CYLINDER",  "GEOM_CONVEX16",  "GEOM_CONVEX32",
-      "GEOM_PLANE",     "GEOM_HALFSPACE", "GEOM_TRIANGLE",  "GEOM_OCTREE",
-      "GEOM_ELLIPSOID", "HF_AABB",        "HF_OBBRSS",      "GEOM_CUSTOM",
+      "BV_UNKNOWN",     "BV_AABB",        "BV_OBB",        "BV_RSS",
+      "BV_kIOS",        "BV_OBBRSS",      "BV_KDOP16",     "BV_KDOP18",
+      "BV_KDOP24",      "GEOM_BOX",       "GEOM_SPHERE",   "GEOM_CAPSULE",
+      "GEOM_CONE",      "GEOM_CYLINDER",  "GEOM_CONVEX16", "GEOM_CONVEX32",
+      "GEOM_PLANE",     "GEOM_HALFSPACE", "GEOM_TRIANGLE", "GEOM_OCTREE",
+      "GEOM_ELLIPSOID", "HF_AABB",        "HF_OBBRSS",     "GEOM_CUSTOM",
       "NODE_COUNT"};
 
   return node_type_name_all[node_type];
