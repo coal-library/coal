@@ -288,6 +288,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[GEOM_BOX][GEOM_PLANE]           = &ShapeShapeDistance<Box, Plane>;
   distance_matrix[GEOM_BOX][GEOM_HALFSPACE]       = &ShapeShapeDistance<Box, Halfspace>;
   distance_matrix[GEOM_BOX][GEOM_ELLIPSOID]       = &ShapeShapeDistance<Box, Ellipsoid>;
+  distance_matrix[GEOM_BOX][GEOM_CUSTOM]          = &ShapeShapeDistance<Box, ShapeBase>;
 
   distance_matrix[GEOM_SPHERE][GEOM_BOX]          = &ShapeShapeDistance<Sphere, Box>;
   distance_matrix[GEOM_SPHERE][GEOM_SPHERE]       = &ShapeShapeDistance<Sphere, Sphere>;
@@ -299,6 +300,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[GEOM_SPHERE][GEOM_PLANE]        = &ShapeShapeDistance<Sphere, Plane>;
   distance_matrix[GEOM_SPHERE][GEOM_HALFSPACE]    = &ShapeShapeDistance<Sphere, Halfspace>;
   distance_matrix[GEOM_SPHERE][GEOM_ELLIPSOID]    = &ShapeShapeDistance<Sphere, Ellipsoid>;
+  distance_matrix[GEOM_SPHERE][GEOM_CUSTOM]       = &ShapeShapeDistance<Sphere, ShapeBase>;
 
   distance_matrix[GEOM_ELLIPSOID][GEOM_BOX]       = &ShapeShapeDistance<Ellipsoid, Box>;
   distance_matrix[GEOM_ELLIPSOID][GEOM_SPHERE]    = &ShapeShapeDistance<Ellipsoid, Sphere>;
@@ -310,6 +312,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[GEOM_ELLIPSOID][GEOM_PLANE]     = &ShapeShapeDistance<Ellipsoid, Plane>;
   distance_matrix[GEOM_ELLIPSOID][GEOM_HALFSPACE] = &ShapeShapeDistance<Ellipsoid, Halfspace>;
   distance_matrix[GEOM_ELLIPSOID][GEOM_ELLIPSOID] = &ShapeShapeDistance<Ellipsoid, Ellipsoid>;
+  distance_matrix[GEOM_ELLIPSOID][GEOM_CUSTOM]    = &ShapeShapeDistance<Ellipsoid, ShapeBase>;
 
   distance_matrix[GEOM_CAPSULE][GEOM_BOX]         = &ShapeShapeDistance<Capsule, Box>;
   distance_matrix[GEOM_CAPSULE][GEOM_SPHERE]      = &ShapeShapeDistance<Capsule, Sphere>;
@@ -321,6 +324,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[GEOM_CAPSULE][GEOM_PLANE]       = &ShapeShapeDistance<Capsule, Plane>;
   distance_matrix[GEOM_CAPSULE][GEOM_HALFSPACE]   = &ShapeShapeDistance<Capsule, Halfspace>;
   distance_matrix[GEOM_CAPSULE][GEOM_ELLIPSOID]   = &ShapeShapeDistance<Capsule, Ellipsoid>;
+  distance_matrix[GEOM_CAPSULE][GEOM_CUSTOM]      = &ShapeShapeDistance<Capsule, ShapeBase>;
 
   distance_matrix[GEOM_CONE][GEOM_BOX]            = &ShapeShapeDistance<Cone, Box>;
   distance_matrix[GEOM_CONE][GEOM_SPHERE]         = &ShapeShapeDistance<Cone, Sphere>;
@@ -332,6 +336,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[GEOM_CONE][GEOM_PLANE]          = &ShapeShapeDistance<Cone, Plane>;
   distance_matrix[GEOM_CONE][GEOM_HALFSPACE]      = &ShapeShapeDistance<Cone, Halfspace>;
   distance_matrix[GEOM_CONE][GEOM_ELLIPSOID]      = &ShapeShapeDistance<Cone, Ellipsoid>;
+  distance_matrix[GEOM_CONE][GEOM_CUSTOM]         = &ShapeShapeDistance<Cone, ShapeBase>;
 
   distance_matrix[GEOM_CYLINDER][GEOM_BOX]        = &ShapeShapeDistance<Cylinder, Box>;
   distance_matrix[GEOM_CYLINDER][GEOM_SPHERE]     = &ShapeShapeDistance<Cylinder, Sphere>;
@@ -343,6 +348,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[GEOM_CYLINDER][GEOM_PLANE]      = &ShapeShapeDistance<Cylinder, Plane>;
   distance_matrix[GEOM_CYLINDER][GEOM_HALFSPACE]  = &ShapeShapeDistance<Cylinder, Halfspace>;
   distance_matrix[GEOM_CYLINDER][GEOM_ELLIPSOID]  = &ShapeShapeDistance<Cylinder, Ellipsoid>;
+  distance_matrix[GEOM_CYLINDER][GEOM_CUSTOM]     = &ShapeShapeDistance<Cylinder, ShapeBase>;
 
   distance_matrix[GEOM_CONVEX16][GEOM_BOX]          = &ShapeShapeDistance<ConvexBase16, Box>;
   distance_matrix[GEOM_CONVEX16][GEOM_SPHERE]       = &ShapeShapeDistance<ConvexBase16, Sphere>;
@@ -354,6 +360,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[GEOM_CONVEX16][GEOM_PLANE]        = &ShapeShapeDistance<ConvexBase16, Plane>;
   distance_matrix[GEOM_CONVEX16][GEOM_HALFSPACE]    = &ShapeShapeDistance<ConvexBase16, Halfspace>;
   distance_matrix[GEOM_CONVEX16][GEOM_ELLIPSOID]    = &ShapeShapeDistance<ConvexBase16, Ellipsoid>;
+  distance_matrix[GEOM_CONVEX16][GEOM_CUSTOM]       = &ShapeShapeDistance<ConvexBase16, ShapeBase>;
 
   distance_matrix[GEOM_CONVEX32][GEOM_BOX]          = &ShapeShapeDistance<ConvexBase32, Box>;
   distance_matrix[GEOM_CONVEX32][GEOM_SPHERE]       = &ShapeShapeDistance<ConvexBase32, Sphere>;
@@ -365,6 +372,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[GEOM_CONVEX32][GEOM_PLANE]        = &ShapeShapeDistance<ConvexBase32, Plane>;
   distance_matrix[GEOM_CONVEX32][GEOM_HALFSPACE]    = &ShapeShapeDistance<ConvexBase32, Halfspace>;
   distance_matrix[GEOM_CONVEX32][GEOM_ELLIPSOID]    = &ShapeShapeDistance<ConvexBase32, Ellipsoid>;
+  distance_matrix[GEOM_CONVEX32][GEOM_CUSTOM]       = &ShapeShapeDistance<ConvexBase32, ShapeBase>;
 
   distance_matrix[GEOM_PLANE][GEOM_BOX]           = &ShapeShapeDistance<Plane, Box>;
   distance_matrix[GEOM_PLANE][GEOM_SPHERE]        = &ShapeShapeDistance<Plane, Sphere>;
@@ -376,6 +384,7 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[GEOM_PLANE][GEOM_PLANE]         = &ShapeShapeDistance<Plane, Plane>;
   distance_matrix[GEOM_PLANE][GEOM_HALFSPACE]     = &ShapeShapeDistance<Plane, Halfspace>;
   distance_matrix[GEOM_PLANE][GEOM_ELLIPSOID]     = &ShapeShapeDistance<Plane, Ellipsoid>;
+  distance_matrix[GEOM_PLANE][GEOM_CUSTOM]        = &ShapeShapeDistance<Plane, ShapeBase>;
 
   distance_matrix[GEOM_HALFSPACE][GEOM_BOX]       = &ShapeShapeDistance<Halfspace, Box>;
   distance_matrix[GEOM_HALFSPACE][GEOM_SPHERE]    = &ShapeShapeDistance<Halfspace, Sphere>;
@@ -387,28 +396,20 @@ DistanceFunctionMatrix::DistanceFunctionMatrix() {
   distance_matrix[GEOM_HALFSPACE][GEOM_PLANE]     = &ShapeShapeDistance<Halfspace, Plane>;
   distance_matrix[GEOM_HALFSPACE][GEOM_HALFSPACE] = &ShapeShapeDistance<Halfspace, Halfspace>;
   distance_matrix[GEOM_HALFSPACE][GEOM_ELLIPSOID] = &ShapeShapeDistance<Halfspace, Ellipsoid>;
+  distance_matrix[GEOM_HALFSPACE][GEOM_CUSTOM]    = &ShapeShapeDistance<Halfspace, ShapeBase>;
 
-  // Custom shapes (GEOM_CUSTOM) use virtual dispatch via ShapeBase.
-  // Plane and Halfspace are not listed here because they require specialized
-  // analytic treatment and GJK does not work correctly for unbounded shapes.
   distance_matrix[GEOM_CUSTOM][GEOM_BOX]          = &ShapeShapeDistance<ShapeBase, Box>;
-  distance_matrix[GEOM_CUSTOM][GEOM_SPHERE]        = &ShapeShapeDistance<ShapeBase, Sphere>;
-  distance_matrix[GEOM_CUSTOM][GEOM_CAPSULE]       = &ShapeShapeDistance<ShapeBase, Capsule>;
-  distance_matrix[GEOM_CUSTOM][GEOM_CONE]          = &ShapeShapeDistance<ShapeBase, Cone>;
-  distance_matrix[GEOM_CUSTOM][GEOM_CYLINDER]      = &ShapeShapeDistance<ShapeBase, Cylinder>;
-  distance_matrix[GEOM_CUSTOM][GEOM_CONVEX16]      = &ShapeShapeDistance<ShapeBase, ConvexBase16>;
-  distance_matrix[GEOM_CUSTOM][GEOM_CONVEX32]      = &ShapeShapeDistance<ShapeBase, ConvexBase32>;
-  distance_matrix[GEOM_CUSTOM][GEOM_ELLIPSOID]     = &ShapeShapeDistance<ShapeBase, Ellipsoid>;
-  distance_matrix[GEOM_CUSTOM][GEOM_CUSTOM]        = &ShapeShapeDistance<ShapeBase, ShapeBase>;
+  distance_matrix[GEOM_CUSTOM][GEOM_SPHERE]       = &ShapeShapeDistance<ShapeBase, Sphere>;
+  distance_matrix[GEOM_CUSTOM][GEOM_CAPSULE]      = &ShapeShapeDistance<ShapeBase, Capsule>;
+  distance_matrix[GEOM_CUSTOM][GEOM_CONE]         = &ShapeShapeDistance<ShapeBase, Cone>;
+  distance_matrix[GEOM_CUSTOM][GEOM_CYLINDER]     = &ShapeShapeDistance<ShapeBase, Cylinder>;
+  distance_matrix[GEOM_CUSTOM][GEOM_CONVEX16]     = &ShapeShapeDistance<ShapeBase, ConvexBase16>;
+  distance_matrix[GEOM_CUSTOM][GEOM_CONVEX32]     = &ShapeShapeDistance<ShapeBase, ConvexBase32>;
+  distance_matrix[GEOM_CUSTOM][GEOM_ELLIPSOID]    = &ShapeShapeDistance<ShapeBase, Ellipsoid>;
+  distance_matrix[GEOM_CUSTOM][GEOM_PLANE]        = &ShapeShapeDistance<ShapeBase, Plane>;
+  distance_matrix[GEOM_CUSTOM][GEOM_HALFSPACE]    = &ShapeShapeDistance<ShapeBase, Halfspace>;
+  distance_matrix[GEOM_CUSTOM][GEOM_CUSTOM]       = &ShapeShapeDistance<ShapeBase, ShapeBase>;
 
-  distance_matrix[GEOM_BOX][GEOM_CUSTOM]           = &ShapeShapeDistance<Box, ShapeBase>;
-  distance_matrix[GEOM_SPHERE][GEOM_CUSTOM]         = &ShapeShapeDistance<Sphere, ShapeBase>;
-  distance_matrix[GEOM_CAPSULE][GEOM_CUSTOM]        = &ShapeShapeDistance<Capsule, ShapeBase>;
-  distance_matrix[GEOM_CONE][GEOM_CUSTOM]           = &ShapeShapeDistance<Cone, ShapeBase>;
-  distance_matrix[GEOM_CYLINDER][GEOM_CUSTOM]       = &ShapeShapeDistance<Cylinder, ShapeBase>;
-  distance_matrix[GEOM_CONVEX16][GEOM_CUSTOM]       = &ShapeShapeDistance<ConvexBase16, ShapeBase>;
-  distance_matrix[GEOM_CONVEX32][GEOM_CUSTOM]       = &ShapeShapeDistance<ConvexBase32, ShapeBase>;
-  distance_matrix[GEOM_ELLIPSOID][GEOM_CUSTOM]      = &ShapeShapeDistance<Ellipsoid, ShapeBase>;
   // clang-format on
 
   /* AABB distance not implemented */
