@@ -64,11 +64,15 @@ using namespace coal;
 // ============================================================================
 class DeformedCylinder : public ShapeBase {
  public:
-  DeformedCylinder(const Vec3s& p1, const Vec3s& n1, Scalar r1,
-                   const Vec3s& p2, const Vec3s& n2, Scalar r2)
+  DeformedCylinder(const Vec3s& p1, const Vec3s& n1, Scalar r1, const Vec3s& p2,
+                   const Vec3s& n2, Scalar r2)
       : ShapeBase(),
-        p1(p1), n1(n1.normalized()), r1(r1),
-        p2(p2), n2(n2.normalized()), r2(r2) {}
+        p1(p1),
+        n1(n1.normalized()),
+        r1(r1),
+        p2(p2),
+        n2(n2.normalized()),
+        r2(r2) {}
 
   DeformedCylinder* clone() const override {
     return new DeformedCylinder(*this);
@@ -96,8 +100,7 @@ class DeformedCylinder : public ShapeBase {
                            const Vec3s& d) -> Vec3s {
       Vec3s proj = d - d.dot(n) * n;
       Scalar len = proj.norm();
-      if (len > Scalar(1e-12))
-        return p + r * (proj / len);
+      if (len > Scalar(1e-12)) return p + r * (proj / len);
       return p;
     };
 
@@ -109,16 +112,16 @@ class DeformedCylinder : public ShapeBase {
   bool isEqual(const CollisionGeometry& other) const override {
     const auto* o = dynamic_cast<const DeformedCylinder*>(&other);
     if (o == nullptr) return false;
-    return p1 == o->p1 && n1 == o->n1 && r1 == o->r1 &&
-           p2 == o->p2 && n2 == o->n2 && r2 == o->r2;
+    return p1 == o->p1 && n1 == o->n1 && r1 == o->r1 && p2 == o->p2 &&
+           n2 == o->n2 && r2 == o->r2;
   }
 
-  Vec3s p1;       ///< disk 1 center (local frame)
-  Vec3s n1;       ///< disk 1 normal (unit)
-  Scalar r1;      ///< disk 1 radius
-  Vec3s p2;       ///< disk 2 center (local frame)
-  Vec3s n2;       ///< disk 2 normal (unit)
-  Scalar r2;      ///< disk 2 radius
+  Vec3s p1;   ///< disk 1 center (local frame)
+  Vec3s n1;   ///< disk 1 normal (unit)
+  Scalar r1;  ///< disk 1 radius
+  Vec3s p2;   ///< disk 2 center (local frame)
+  Vec3s n2;   ///< disk 2 normal (unit)
+  Scalar r2;  ///< disk 2 radius
 };
 
 // ============================================================================
@@ -126,8 +129,8 @@ class DeformedCylinder : public ShapeBase {
 // ============================================================================
 
 BOOST_AUTO_TEST_CASE(test_deformed_cylinder_node_type) {
-  DeformedCylinder dc(Vec3s(0, 0, 0), Vec3s::UnitZ(), 1.0,
-                      Vec3s(0, 0, 2), Vec3s::UnitZ(), 1.0);
+  DeformedCylinder dc(Vec3s(0, 0, 0), Vec3s::UnitZ(), 1.0, Vec3s(0, 0, 2),
+                      Vec3s::UnitZ(), 1.0);
   BOOST_CHECK_EQUAL(dc.getObjectType(), OT_GEOM);
   BOOST_CHECK_EQUAL(dc.getNodeType(), GEOM_CUSTOM);
 }
@@ -139,8 +142,7 @@ BOOST_AUTO_TEST_CASE(test_deformed_cylinder_vs_box) {
   const Scalar r = 0.5;
   Vec3s n1 = Vec3s::UnitZ();
   Vec3s n2(std::sin(angle), 0, std::cos(angle));
-  DeformedCylinder dc(Vec3s(0, 0, 0), n1, r,
-                      Vec3s(0, 0, 2), n2, r);
+  DeformedCylinder dc(Vec3s(0, 0, 0), n1, r, Vec3s(0, 0, 2), n2, r);
   dc.computeLocalAABB();
 
   Box box(1.0, 1.0, 1.0);
@@ -196,10 +198,10 @@ BOOST_AUTO_TEST_CASE(test_deformed_cylinder_degenerates_to_cylinder) {
 
   // Test distance from several directions
   Vec3s offsets[] = {
-    Vec3s(3, 0, 0),       // radial
-    Vec3s(0, 0, 3),       // axial above
-    Vec3s(0, 0, -3),      // axial below
-    Vec3s(2, 2, 0.5),     // diagonal
+      Vec3s(3, 0, 0),    // radial
+      Vec3s(0, 0, 3),    // axial above
+      Vec3s(0, 0, -3),   // axial below
+      Vec3s(2, 2, 0.5),  // diagonal
   };
 
   for (const auto& offset : offsets) {
@@ -225,8 +227,8 @@ BOOST_AUTO_TEST_CASE(test_deformed_cylinder_degenerates_to_cylinder) {
 /// Contact patch: deformed cylinder vs Box.
 BOOST_AUTO_TEST_CASE(test_deformed_cylinder_contact_patch) {
   const Scalar r = 0.5;
-  DeformedCylinder dc(Vec3s(0, 0, 0), Vec3s::UnitZ(), r,
-                      Vec3s(0, 0, 2), Vec3s::UnitZ(), r);
+  DeformedCylinder dc(Vec3s(0, 0, 0), Vec3s::UnitZ(), r, Vec3s(0, 0, 2),
+                      Vec3s::UnitZ(), r);
   dc.computeLocalAABB();
 
   Box box(2.0, 2.0, 2.0);
@@ -241,7 +243,7 @@ BOOST_AUTO_TEST_CASE(test_deformed_cylinder_contact_patch) {
 
   const ContactPatchRequest patch_req;
   ContactPatchResult patch_res(patch_req);
-  BOOST_CHECK_NO_THROW(coal::computeContactPatch(
-      &dc, tf1, &box, tf2, col_res, patch_req, patch_res));
+  BOOST_CHECK_NO_THROW(coal::computeContactPatch(&dc, tf1, &box, tf2, col_res,
+                                                 patch_req, patch_res));
   BOOST_CHECK(patch_res.numContactPatches() > 0);
 }
