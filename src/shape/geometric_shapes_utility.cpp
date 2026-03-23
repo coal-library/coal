@@ -411,7 +411,6 @@ void computeBV<AABB, ShapeBase>(const ShapeBase& s, const Transform3s& tf,
   }
 }
 
-
 template <>
 void computeBV<AABB, TriangleP>(const TriangleP& s, const Transform3s& tf,
                                 AABB& bv) {
