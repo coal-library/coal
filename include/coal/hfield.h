@@ -265,7 +265,9 @@ class COAL_DLLAPI HeightField : public CollisionGeometry {
   /// @brief Returns the maximal height value of the Height Field.
   Scalar getMaxHeight() const { return max_height; }
 
-  virtual HeightField<BV>* clone() const { return new HeightField(*this); }
+  virtual HeightField<BV>* clone() const override {
+    return new HeightField(*this);
+  }
 
   const BVS& getNodes() const { return bvs; }
 
@@ -274,7 +276,7 @@ class COAL_DLLAPI HeightField : public CollisionGeometry {
 
   /// @brief Compute the AABB for the HeightField, used for broad-phase
   /// collision
-  void computeLocalAABB() {
+  void computeLocalAABB() override {
     const Vec3s A(x_grid[0], y_grid[0], min_height);
     const Vec3s B(x_grid[x_grid.size() - 1], y_grid[y_grid.size() - 1],
                   max_height);
@@ -331,13 +333,13 @@ class COAL_DLLAPI HeightField : public CollisionGeometry {
   }
 
   /// @brief Get the object type: it is a HFIELD
-  OBJECT_TYPE getObjectType() const { return OT_HFIELD; }
+  OBJECT_TYPE getObjectType() const override { return OT_HFIELD; }
 
-  Vec3s computeCOM() const { return Vec3s::Zero(); }
+  Vec3s computeCOM() const override { return Vec3s::Zero(); }
 
-  Scalar computeVolume() const { return 0; }
+  Scalar computeVolume() const override { return 0; }
 
-  Matrix3s computeMomentofInertia() const { return Matrix3s::Zero(); }
+  Matrix3s computeMomentofInertia() const override { return Matrix3s::Zero(); }
 
  protected:
   /// @brief Dimensions in meters along X and Y directions
@@ -493,10 +495,10 @@ class COAL_DLLAPI HeightField : public CollisionGeometry {
   }
 
   /// @brief Get the BV type: default is unknown
-  NODE_TYPE getNodeType() const { return BV_UNKNOWN; }
+  NODE_TYPE getNodeType() const override { return BV_UNKNOWN; }
 
  private:
-  virtual bool isEqual(const CollisionGeometry& _other) const {
+  virtual bool isEqual(const CollisionGeometry& _other) const override {
     const HeightField* other_ptr = dynamic_cast<const HeightField*>(&_other);
     if (other_ptr == nullptr) return false;
     const HeightField& other = *other_ptr;

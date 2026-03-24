@@ -69,7 +69,7 @@ class COAL_DLLAPI ShapeBase : public CollisionGeometry {
   virtual ~ShapeBase() {};
 
   /// @brief Get object type: a geometric shape
-  OBJECT_TYPE getObjectType() const { return OT_GEOM; }
+  OBJECT_TYPE getObjectType() const override { return OT_GEOM; }
 
   /// @brief Set radius of sphere swept around the shape.
   /// Must be >= 0.
@@ -116,12 +116,12 @@ class COAL_DLLAPI TriangleP : public ShapeBase {
       : ShapeBase(other), a(other.a), b(other.b), c(other.c) {}
 
   /// @brief Clone *this into a new TriangleP
-  virtual TriangleP* clone() const { return new TriangleP(*this); };
+  virtual TriangleP* clone() const override { return new TriangleP(*this); };
 
   /// @brief virtual function of compute AABB in local coordinate
-  void computeLocalAABB();
+  void computeLocalAABB() override;
 
-  NODE_TYPE getNodeType() const { return GEOM_TRIANGLE; }
+  NODE_TYPE getNodeType() const override { return GEOM_TRIANGLE; }
 
   //  std::pair<ShapeBase*, Transform3s> inflated(const Scalar value) const
   //  {
@@ -147,7 +147,7 @@ class COAL_DLLAPI TriangleP : public ShapeBase {
   Vec3s a, b, c;
 
  private:
-  virtual bool isEqual(const CollisionGeometry& _other) const {
+  virtual bool isEqual(const CollisionGeometry& _other) const override {
     const TriangleP* other_ptr = dynamic_cast<const TriangleP*>(&_other);
     if (other_ptr == nullptr) return false;
     const TriangleP& other = *other_ptr;
@@ -178,7 +178,7 @@ class COAL_DLLAPI Box : public ShapeBase {
   }
 
   /// @brief Clone *this into a new Box
-  virtual Box* clone() const { return new Box(*this); };
+  virtual Box* clone() const override { return new Box(*this); };
 
   /// @brief Default constructor
   Box() {}
@@ -187,14 +187,14 @@ class COAL_DLLAPI Box : public ShapeBase {
   Vec3s halfSide;
 
   /// @brief Compute AABB
-  void computeLocalAABB();
+  void computeLocalAABB() override;
 
   /// @brief Get node type: a box
-  NODE_TYPE getNodeType() const { return GEOM_BOX; }
+  NODE_TYPE getNodeType() const override { return GEOM_BOX; }
 
-  Scalar computeVolume() const { return 8 * halfSide.prod(); }
+  Scalar computeVolume() const override { return 8 * halfSide.prod(); }
 
-  Matrix3s computeMomentofInertia() const {
+  Matrix3s computeMomentofInertia() const override {
     Scalar V = computeVolume();
     Vec3s s(halfSide.cwiseAbs2() * V);
     return (Vec3s(s[1] + s[2], s[0] + s[2], s[0] + s[1]) / 3).asDiagonal();
@@ -221,7 +221,7 @@ class COAL_DLLAPI Box : public ShapeBase {
   }
 
  private:
-  virtual bool isEqual(const CollisionGeometry& _other) const {
+  virtual bool isEqual(const CollisionGeometry& _other) const override {
     const Box* other_ptr = dynamic_cast<const Box*>(&_other);
     if (other_ptr == nullptr) return false;
     const Box& other = *other_ptr;
@@ -245,23 +245,23 @@ class COAL_DLLAPI Sphere : public ShapeBase {
   Sphere(const Sphere& other) : ShapeBase(other), radius(other.radius) {}
 
   /// @brief Clone *this into a new Sphere
-  virtual Sphere* clone() const { return new Sphere(*this); };
+  virtual Sphere* clone() const override { return new Sphere(*this); };
 
   /// @brief Radius of the sphere
   Scalar radius;
 
   /// @brief Compute AABB
-  void computeLocalAABB();
+  void computeLocalAABB() override;
 
   /// @brief Get node type: a sphere
-  NODE_TYPE getNodeType() const { return GEOM_SPHERE; }
+  NODE_TYPE getNodeType() const override { return GEOM_SPHERE; }
 
-  Matrix3s computeMomentofInertia() const {
+  Matrix3s computeMomentofInertia() const override {
     Scalar I = Scalar(0.4) * radius * radius * computeVolume();
     return I * Matrix3s::Identity();
   }
 
-  Scalar computeVolume() const {
+  Scalar computeVolume() const override {
     return 4 * boost::math::constants::pi<Scalar>() * radius * radius * radius /
            3;
   }
@@ -286,7 +286,7 @@ class COAL_DLLAPI Sphere : public ShapeBase {
   }
 
  private:
-  virtual bool isEqual(const CollisionGeometry& _other) const {
+  virtual bool isEqual(const CollisionGeometry& _other) const override {
     const Sphere* other_ptr = dynamic_cast<const Sphere*>(&_other);
     if (other_ptr == nullptr) return false;
     const Sphere& other = *other_ptr;
@@ -312,19 +312,19 @@ class COAL_DLLAPI Ellipsoid : public ShapeBase {
   Ellipsoid(const Ellipsoid& other) : ShapeBase(other), radii(other.radii) {}
 
   /// @brief Clone *this into a new Ellipsoid
-  virtual Ellipsoid* clone() const { return new Ellipsoid(*this); };
+  virtual Ellipsoid* clone() const override { return new Ellipsoid(*this); };
 
   /// @brief Radii of the Ellipsoid (such that on boundary: x^2/rx^2 + y^2/ry^2
   /// + z^2/rz^2 = 1)
   Vec3s radii;
 
   /// @brief Compute AABB
-  void computeLocalAABB();
+  void computeLocalAABB() override;
 
   /// @brief Get node type: an ellipsoid
-  NODE_TYPE getNodeType() const { return GEOM_ELLIPSOID; }
+  NODE_TYPE getNodeType() const override { return GEOM_ELLIPSOID; }
 
-  Matrix3s computeMomentofInertia() const {
+  Matrix3s computeMomentofInertia() const override {
     Scalar V = computeVolume();
     Scalar a2 = V * radii[0] * radii[0];
     Scalar b2 = V * radii[1] * radii[1];
@@ -335,7 +335,7 @@ class COAL_DLLAPI Ellipsoid : public ShapeBase {
         .finished();
   }
 
-  Scalar computeVolume() const {
+  Scalar computeVolume() const override {
     return 4 * boost::math::constants::pi<Scalar>() * radii[0] * radii[1] *
            radii[2] / 3;
   }
@@ -361,7 +361,7 @@ class COAL_DLLAPI Ellipsoid : public ShapeBase {
   }
 
  private:
-  virtual bool isEqual(const CollisionGeometry& _other) const {
+  virtual bool isEqual(const CollisionGeometry& _other) const override {
     const Ellipsoid* other_ptr = dynamic_cast<const Ellipsoid*>(&_other);
     if (other_ptr == nullptr) return false;
     const Ellipsoid& other = *other_ptr;
@@ -391,7 +391,7 @@ class COAL_DLLAPI Capsule : public ShapeBase {
       : ShapeBase(other), radius(other.radius), halfLength(other.halfLength) {}
 
   /// @brief Clone *this into a new Capsule
-  virtual Capsule* clone() const { return new Capsule(*this); };
+  virtual Capsule* clone() const override { return new Capsule(*this); };
 
   /// @brief Radius of capsule
   Scalar radius;
@@ -400,17 +400,17 @@ class COAL_DLLAPI Capsule : public ShapeBase {
   Scalar halfLength;
 
   /// @brief Compute AABB
-  void computeLocalAABB();
+  void computeLocalAABB() override;
 
   /// @brief Get node type: a capsule
-  NODE_TYPE getNodeType() const { return GEOM_CAPSULE; }
+  NODE_TYPE getNodeType() const override { return GEOM_CAPSULE; }
 
-  Scalar computeVolume() const {
+  Scalar computeVolume() const override {
     return boost::math::constants::pi<Scalar>() * radius * radius *
            ((halfLength * 2) + radius * 4 / Scalar(3));
   }
 
-  Matrix3s computeMomentofInertia() const {
+  Matrix3s computeMomentofInertia() const override {
     Scalar v_cyl = radius * radius * (halfLength * 2) *
                    boost::math::constants::pi<Scalar>();
     Scalar v_sph = radius * radius * radius *
@@ -447,7 +447,7 @@ class COAL_DLLAPI Capsule : public ShapeBase {
   }
 
  private:
-  virtual bool isEqual(const CollisionGeometry& _other) const {
+  virtual bool isEqual(const CollisionGeometry& _other) const override {
     const Capsule* other_ptr = dynamic_cast<const Capsule*>(&_other);
     if (other_ptr == nullptr) return false;
     const Capsule& other = *other_ptr;
@@ -476,7 +476,7 @@ class COAL_DLLAPI Cone : public ShapeBase {
       : ShapeBase(other), radius(other.radius), halfLength(other.halfLength) {}
 
   /// @brief Clone *this into a new Cone
-  virtual Cone* clone() const { return new Cone(*this); };
+  virtual Cone* clone() const override { return new Cone(*this); };
 
   /// @brief Radius of the cone
   Scalar radius;
@@ -485,17 +485,17 @@ class COAL_DLLAPI Cone : public ShapeBase {
   Scalar halfLength;
 
   /// @brief Compute AABB
-  void computeLocalAABB();
+  void computeLocalAABB() override;
 
   /// @brief Get node type: a cone
-  NODE_TYPE getNodeType() const { return GEOM_CONE; }
+  NODE_TYPE getNodeType() const override { return GEOM_CONE; }
 
-  Scalar computeVolume() const {
+  Scalar computeVolume() const override {
     return boost::math::constants::pi<Scalar>() * radius * radius *
            (halfLength * 2) / 3;
   }
 
-  Matrix3s computeMomentofInertia() const {
+  Matrix3s computeMomentofInertia() const override {
     Scalar V = computeVolume();
     Scalar ix =
         V * (Scalar(0.4) * halfLength * halfLength + 3 * radius * radius / 20);
@@ -504,7 +504,9 @@ class COAL_DLLAPI Cone : public ShapeBase {
     return (Matrix3s() << ix, 0, 0, 0, ix, 0, 0, 0, iz).finished();
   }
 
-  Vec3s computeCOM() const { return Vec3s(0, 0, -Scalar(0.5) * halfLength); }
+  Vec3s computeCOM() const override {
+    return Vec3s(0, 0, -Scalar(0.5) * halfLength);
+  }
 
   Scalar minInflationValue() const { return -(std::min)(radius, halfLength); }
 
@@ -538,7 +540,7 @@ class COAL_DLLAPI Cone : public ShapeBase {
   }
 
  private:
-  virtual bool isEqual(const CollisionGeometry& _other) const {
+  virtual bool isEqual(const CollisionGeometry& _other) const override {
     const Cone* other_ptr = dynamic_cast<const Cone*>(&_other);
     if (other_ptr == nullptr) return false;
     const Cone& other = *other_ptr;
@@ -574,7 +576,7 @@ class COAL_DLLAPI Cylinder : public ShapeBase {
   }
 
   /// @brief Clone *this into a new Cylinder
-  virtual Cylinder* clone() const { return new Cylinder(*this); };
+  virtual Cylinder* clone() const override { return new Cylinder(*this); };
 
   /// @brief Radius of the cylinder
   Scalar radius;
@@ -583,17 +585,17 @@ class COAL_DLLAPI Cylinder : public ShapeBase {
   Scalar halfLength;
 
   /// @brief Compute AABB
-  void computeLocalAABB();
+  void computeLocalAABB() override;
 
   /// @brief Get node type: a cylinder
-  NODE_TYPE getNodeType() const { return GEOM_CYLINDER; }
+  NODE_TYPE getNodeType() const override { return GEOM_CYLINDER; }
 
-  Scalar computeVolume() const {
+  Scalar computeVolume() const override {
     return boost::math::constants::pi<Scalar>() * radius * radius *
            (halfLength * 2);
   }
 
-  Matrix3s computeMomentofInertia() const {
+  Matrix3s computeMomentofInertia() const override {
     Scalar V = computeVolume();
     Scalar ix = V * (radius * radius / 4 + halfLength * halfLength / 3);
     Scalar iz = V * radius * radius / 2;
@@ -621,7 +623,7 @@ class COAL_DLLAPI Cylinder : public ShapeBase {
   }
 
  private:
-  virtual bool isEqual(const CollisionGeometry& _other) const {
+  virtual bool isEqual(const CollisionGeometry& _other) const override {
     const Cylinder* other_ptr = dynamic_cast<const Cylinder*>(&_other);
     if (other_ptr == nullptr) return false;
     const Cylinder& other = *other_ptr;
@@ -742,7 +744,7 @@ class ConvexBaseTpl : public ShapeBase {
 
   /// @brief Clone (deep copy).
   COAL_DEPRECATED_MESSAGE(Use deepcopy instead.)
-  virtual ConvexBaseTpl* clone() const { return this->deepcopy(); }
+  virtual ConvexBaseTpl* clone() const override { return this->deepcopy(); }
 
   /// @brief Deep copy of the ConvexBaseTpl.
   /// This method deep copies every field of the class.
@@ -762,10 +764,10 @@ class ConvexBaseTpl : public ShapeBase {
   }
 
   /// @brief Compute AABB
-  void computeLocalAABB();
+  void computeLocalAABB() override;
 
   /// @brief Get node type: a convex polytope
-  NODE_TYPE getNodeType() const;
+  NODE_TYPE getNodeType() const override;
 
 #ifdef COAL_HAS_QHULL
   /// @brief Builds the double description of the convex polytope, i.e. the set
@@ -869,7 +871,7 @@ class ConvexBaseTpl : public ShapeBase {
 
   void computeCenter();
 
-  virtual bool isEqual(const CollisionGeometry& _other) const {
+  virtual bool isEqual(const CollisionGeometry& _other) const override {
     const ConvexBaseTpl* other_ptr =
         dynamic_cast<const ConvexBaseTpl*>(&_other);
     if (other_ptr == nullptr) return false;
@@ -987,7 +989,7 @@ class COAL_DLLAPI Halfspace : public ShapeBase {
   }
 
   /// @brief Clone *this into a new Halfspace
-  virtual Halfspace* clone() const { return new Halfspace(*this); };
+  virtual Halfspace* clone() const override { return new Halfspace(*this); };
 
   Scalar signedDistance(const Vec3s& p) const {
     return n.dot(p) - (d + this->getSweptSphereRadius());
@@ -998,10 +1000,10 @@ class COAL_DLLAPI Halfspace : public ShapeBase {
   }
 
   /// @brief Compute AABB
-  void computeLocalAABB();
+  void computeLocalAABB() override;
 
   /// @brief Get node type: a half space
-  NODE_TYPE getNodeType() const { return GEOM_HALFSPACE; }
+  NODE_TYPE getNodeType() const override { return GEOM_HALFSPACE; }
 
   Scalar minInflationValue() const {
     return std::numeric_limits<Scalar>::lowest();
@@ -1035,7 +1037,7 @@ class COAL_DLLAPI Halfspace : public ShapeBase {
   void unitNormalTest();
 
  private:
-  virtual bool isEqual(const CollisionGeometry& _other) const {
+  virtual bool isEqual(const CollisionGeometry& _other) const override {
     const Halfspace* other_ptr = dynamic_cast<const Halfspace*>(&_other);
     if (other_ptr == nullptr) return false;
     const Halfspace& other = *other_ptr;
@@ -1077,7 +1079,7 @@ class COAL_DLLAPI Plane : public ShapeBase {
   }
 
   /// @brief Clone *this into a new Plane
-  virtual Plane* clone() const { return new Plane(*this); };
+  virtual Plane* clone() const override { return new Plane(*this); };
 
   Scalar signedDistance(const Vec3s& p) const {
     const Scalar dist = n.dot(p) - d;
@@ -1096,10 +1098,10 @@ class COAL_DLLAPI Plane : public ShapeBase {
   }
 
   /// @brief Compute AABB
-  void computeLocalAABB();
+  void computeLocalAABB() override;
 
   /// @brief Get node type: a plane
-  NODE_TYPE getNodeType() const { return GEOM_PLANE; }
+  NODE_TYPE getNodeType() const override { return GEOM_PLANE; }
 
   /// @brief Plane normal
   Vec3s n;
@@ -1112,7 +1114,7 @@ class COAL_DLLAPI Plane : public ShapeBase {
   void unitNormalTest();
 
  private:
-  virtual bool isEqual(const CollisionGeometry& _other) const {
+  virtual bool isEqual(const CollisionGeometry& _other) const override {
     const Plane* other_ptr = dynamic_cast<const Plane*>(&_other);
     if (other_ptr == nullptr) return false;
     const Plane& other = *other_ptr;
