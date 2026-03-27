@@ -38,7 +38,6 @@
 #include "coal/shape/geometric_shapes_utility.h"
 #include "coal/internal/BV_fitter.h"
 #include "coal/internal/tools.h"
-#include "coal/narrowphase/support_data.h"
 
 namespace coal {
 
@@ -396,19 +395,20 @@ void computeBV<AABB, ConvexBase16>(const ConvexBase16& s, const Transform3s& tf,
 template <>
 void computeBV<AABB, ShapeBase>(const ShapeBase& s, const Transform3s& tf,
                                 AABB& bv) {
+  // Use the precomputed local AABB with the rotated-AABB formula.
+  // Slightly conservative when aabb_local is not tight to the shape, but this
+  // is consistent with other computeBV<AABB, ...> specializations and
+  // CollisionObject::computeAABB().
   const Matrix3s& R = tf.getRotation();
   const Vec3s& T = tf.getTranslation();
-  details::ShapeSupportData data;
-  Vec3s sup;
 
-  for (int i = 0; i < 3; ++i) {
-    const Vec3s row = R.row(i).transpose();
-    int hint_pos = 0, hint_neg = 0;
-    s.computeShapeSupport(row, sup, hint_pos, data);
-    bv.max_[i] = T[i] + row.dot(sup);
-    s.computeShapeSupport(Vec3s(-row), sup, hint_neg, data);
-    bv.min_[i] = T[i] + row.dot(sup);
-  }
+  const Vec3s half = (s.aabb_local.max_ - s.aabb_local.min_) * 0.5;
+
+  const Vec3s new_center = R * s.aabb_local.center() + T;
+  const Vec3s v_delta(R.cwiseAbs() * half);
+
+  bv.min_ = new_center - v_delta;
+  bv.max_ = new_center + v_delta;
 }
 
 template <>

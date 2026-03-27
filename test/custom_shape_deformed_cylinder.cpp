@@ -47,7 +47,6 @@
 #include "coal/distance.h"
 #include "coal/math/transform.h"
 #include "coal/shape/geometric_shapes.h"
-#include "coal/shape/geometric_shapes_utility.h"
 
 using namespace coal;
 
@@ -81,13 +80,17 @@ class DeformedCylinder : public ShapeBase {
   NODE_TYPE getNodeType() const override { return GEOM_CUSTOM; }
 
   void computeLocalAABB() override {
-    // Delegate to the generic ShapeBase AABB computation, which calls
-    // computeShapeSupport in each axis direction.
-    AABB bv;
-    computeBV<AABB, ShapeBase>(*this, Transform3s(), bv);
+    // Closed-form AABB from each disk's per-axis extent:
+    // p_i ± r*sqrt(1 - n_i²).
+    for (int i = 0; i < 3; ++i) {
+      const Scalar extent1 = r1 * std::sqrt(1 - n1[i] * n1[i]);
+      const Scalar extent2 = r2 * std::sqrt(1 - n2[i] * n2[i]);
+      aabb_local.max_[i] = std::max(p1[i] + extent1, p2[i] + extent2);
+      aabb_local.min_[i] = std::min(p1[i] - extent1, p2[i] - extent2);
+    }
     const Scalar ssr = this->getSweptSphereRadius();
-    aabb_local.min_ = bv.min_ - Vec3s::Constant(ssr);
-    aabb_local.max_ = bv.max_ + Vec3s::Constant(ssr);
+    aabb_local.min_ -= Vec3s::Constant(ssr);
+    aabb_local.max_ += Vec3s::Constant(ssr);
     aabb_center = (aabb_local.min_ + aabb_local.max_) / 2;
     aabb_radius = (aabb_local.max_ - aabb_local.min_).norm() / 2;
   }
