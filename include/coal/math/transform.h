@@ -167,7 +167,7 @@ class COAL_DLLAPI Transform3s {
   }
 
   /// @brief inverse transform
-  inline Transform3s inverse() {
+  inline Transform3s inverse() const {
     return Transform3s(R.transpose(), -R.transpose() * T);
   }
 
