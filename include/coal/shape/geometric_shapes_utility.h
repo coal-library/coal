@@ -126,6 +126,9 @@ template <>
 COAL_DLLAPI void computeBV<AABB, TriangleP>(const TriangleP& s,
                                             const Transform3s& tf, AABB& bv);
 
+/// @pre s.computeLocalAABB() must have been called (reads s.aabb_local).
+/// Do not call from within computeLocalAABB() — compute the AABB from the
+/// shape's geometric parameters directly.
 template <>
 COAL_DLLAPI void computeBV<AABB, ShapeBase>(const ShapeBase& s,
                                             const Transform3s& tf, AABB& bv);

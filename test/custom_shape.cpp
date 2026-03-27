@@ -109,29 +109,24 @@ class CastSphere : public ShapeBase {
   /// @param cast_tf the transform from pose 0 (identity) to pose 1,
   ///                expressed in the local frame of this shape.
   CastSphere(Scalar radius, const Transform3s& cast_tf)
-      : ShapeBase(), shape_(radius), cast_tf_(cast_tf) {}
+      : ShapeBase(), shape_(radius), cast_tf_(cast_tf) {
+    shape_.computeLocalAABB();
+  }
 
   CastSphere* clone() const override { return new CastSphere(*this); }
 
   NODE_TYPE getNodeType() const override { return GEOM_CUSTOM; }
 
   void computeLocalAABB() override {
-    // Compute AABB from support function.
-    int hint = 0;
-    details::ShapeSupportData data;
-    for (int i = 0; i < 3; ++i) {
-      Vec3s dir = Vec3s::Zero();
-      Vec3s s;
-      dir[i] = 1;
-      computeShapeSupport(dir, s, hint, data);
-      aabb_local.max_[i] = s[i];
-      dir[i] = -1;
-      computeShapeSupport(dir, s, hint, data);
-      aabb_local.min_[i] = s[i];
-    }
-    const Scalar r = getSweptSphereRadius();
-    aabb_local.min_ -= Vec3s::Constant(r);
-    aabb_local.max_ += Vec3s::Constant(r);
+    // Pose 0: shape's local AABB (includes its swept sphere radius).
+    aabb_local = shape_.aabb_local;
+
+    // Pose 1: shape at cast transform, via Coal's |R|*half-extents formula.
+    AABB pose1_aabb;
+    computeBV<AABB, ShapeBase>(shape_, cast_tf_, pose1_aabb);
+    aabb_local += pose1_aabb;
+
+    aabb_local.expand(getSweptSphereRadius());
     aabb_center = aabb_local.center();
     aabb_radius = (aabb_local.min_ - aabb_center).norm();
   }
@@ -355,6 +350,8 @@ BOOST_AUTO_TEST_CASE(test_builtin_shapes_keep_their_node_type) {
 BOOST_AUTO_TEST_CASE(test_computeBV_AABB_ShapeBase) {
   const Scalar radius = 1.5;
   CustomSphere custom(radius);
+  custom.computeLocalAABB();  // Required: computeBV<AABB, ShapeBase> uses
+                              // aabb_local
   Sphere builtin(radius);
 
   // Identity transform
@@ -366,7 +363,11 @@ BOOST_AUTO_TEST_CASE(test_computeBV_AABB_ShapeBase) {
     BOOST_CHECK(bv_custom.max_.isApprox(bv_builtin.max_, Scalar(1e-10)));
   }
 
-  // Non-identity transform (rotation + translation)
+  // Non-identity transform (rotation + translation).
+  // computeBV<AABB, ShapeBase> uses the rotated-AABB formula on aabb_local,
+  // which is slightly conservative when the local AABB is not tight to the
+  // shape under rotation (e.g. a sphere's cubic AABB). The result must
+  // contain the tight AABB but may be larger.
   {
     Transform3s tf;
     tf.setTranslation(Vec3s(1.0, 2.0, 3.0));
@@ -376,9 +377,17 @@ BOOST_AUTO_TEST_CASE(test_computeBV_AABB_ShapeBase) {
     AABB bv_custom, bv_builtin;
     computeBV<AABB, ShapeBase>(custom, tf, bv_custom);
     computeBV<AABB, Sphere>(builtin, tf, bv_builtin);
-    // Sphere AABB is rotation-invariant, so both should match
-    BOOST_CHECK(bv_custom.min_.isApprox(bv_builtin.min_, Scalar(1e-10)));
-    BOOST_CHECK(bv_custom.max_.isApprox(bv_builtin.max_, Scalar(1e-10)));
+    // Must be a valid enclosure of the tight AABB
+    BOOST_CHECK(
+        (bv_custom.min_.array() <= bv_builtin.min_.array() + 1e-10).all());
+    BOOST_CHECK(
+        (bv_custom.max_.array() >= bv_builtin.max_.array() - 1e-10).all());
+    // Should not be wildly oversized (sphere conservatism is bounded by
+    // sqrt(3))
+    const Vec3s size_custom = bv_custom.max_ - bv_custom.min_;
+    const Vec3s size_builtin = bv_builtin.max_ - bv_builtin.min_;
+    BOOST_CHECK(
+        (size_custom.array() <= size_builtin.array() * Scalar(1.8)).all());
   }
 }
 
