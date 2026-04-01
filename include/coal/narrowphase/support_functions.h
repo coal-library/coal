@@ -63,6 +63,13 @@ namespace details {
 template <int _SupportOptions = SupportOptions::NoSweptSphere>
 Vec3s getSupport(const ShapeBase* shape, const Vec3s& dir, int& hint);
 
+/// @brief Same as getSupport, but reuses caller-provided ShapeSupportData
+/// to avoid per-call allocation of the visited vector for ConvexBase shapes.
+/// Useful for custom shapes that delegate to an inner shape repeatedly.
+template <int _SupportOptions = SupportOptions::NoSweptSphere>
+Vec3s getSupport(const ShapeBase* shape, const Vec3s& dir, int& hint,
+                 ShapeSupportData& support_data);
+
 /// @brief Triangle support function.
 template <int _SupportOptions = SupportOptions::NoSweptSphere>
 void getShapeSupport(const TriangleP* triangle, const Vec3s& dir,
