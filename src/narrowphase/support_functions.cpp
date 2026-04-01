@@ -48,9 +48,9 @@ namespace details {
                                    support, hint, support_data)
 
 template <int _SupportOptions>
-Vec3s getSupport(const ShapeBase* shape, const Vec3s& dir, int& hint) {
+Vec3s getSupport(const ShapeBase* shape, const Vec3s& dir, int& hint,
+                 ShapeSupportData& support_data) {
   Vec3s support;
-  ShapeSupportData support_data;
   switch (shape->getNodeType()) {
     case GEOM_TRIANGLE:
       CALL_GET_SHAPE_SUPPORT(TriangleP);
@@ -94,13 +94,21 @@ Vec3s getSupport(const ShapeBase* shape, const Vec3s& dir, int& hint) {
 
   return support;
 }
+
+template <int _SupportOptions>
+Vec3s getSupport(const ShapeBase* shape, const Vec3s& dir, int& hint) {
+  ShapeSupportData support_data;
+  return getSupport<_SupportOptions>(shape, dir, hint, support_data);
+}
 #undef CALL_GET_SHAPE_SUPPORT
 
 // Explicit instantiation
 // clang-format off
 template COAL_DLLAPI Vec3s getSupport<SupportOptions::NoSweptSphere>(const ShapeBase*, const Vec3s&, int&);
-
 template COAL_DLLAPI Vec3s getSupport<SupportOptions::WithSweptSphere>(const ShapeBase*, const Vec3s&, int&);
+
+template COAL_DLLAPI Vec3s getSupport<SupportOptions::NoSweptSphere>(const ShapeBase*, const Vec3s&, int&, ShapeSupportData&);
+template COAL_DLLAPI Vec3s getSupport<SupportOptions::WithSweptSphere>(const ShapeBase*, const Vec3s&, int&, ShapeSupportData&);
 // clang-format on
 
 // ============================================================================
