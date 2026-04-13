@@ -1,12 +1,15 @@
-/// Copyright 2025 INRIA
+/// Copyright 2025-2026 INRIA
 
 #include "coal/BVH/BVH_model.h"
 #include "coal/serialization/BVH_model.h"
+#include "coal/shape/convex.h"
 
 #include "pickle.hh"
 #include "serializable.hh"
 
 #include "fwd.h"
+
+#include <nanobind/stl/shared_ptr.h>
 
 using namespace coal;
 using namespace nb::literals;
