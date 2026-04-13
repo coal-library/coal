@@ -38,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix condition for negative bounding volume check ([#816](https://github.com/coal-library/coal/pull/816))
 - Add missing calls to computeLocalAABB for internal objects ([#819](https://github.com/coal-library/coal/pull/819))
 - Add missing override specifiers ([#820](https://github.com/coal-library/coal/pull/820))
+- Fix Python error when accessing `geometry.convex` on BVH geometris ([#833](https://github.com/coal-library/coal/pull/833))
 
 ### Changed
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))
