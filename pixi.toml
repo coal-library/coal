@@ -182,9 +182,10 @@ typing_extensions = ">=4.13.2"
 # Use clang-cl on Windows
 # If something go wrong, we can check this repository:
 # https://github.com/conda-forge/clang-win-activation-feedstock/tree/main
+# coal-octree test is crashing on Windows when building with clang > 22.1
 [feature.clang-cl]
 platforms = ["win-64"]
-dependencies = { clangxx = "*", lld = "*" }
+dependencies = { clangxx = "<22.1", lld = "*" }
 
 # Absolute path is needed to avoid using system clang-cl
 [feature.clang-cl.activation.env]

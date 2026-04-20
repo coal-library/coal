@@ -763,12 +763,12 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/bzip2-1.0.8-h0ad9c76_9.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.2.25-h4c7d964_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/ccache-4.13.2-h7fd822b_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/win-64/clang-22-22.1.0-default_hac490eb_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/win-64/clang-22.1.0-default_nocfg_hbb9487a_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/win-64/clangxx-22.1.0-default_nocfg_hbb9487a_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/clang-21-21.1.8-default_hac490eb_3.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/clang-21.1.8-default_nocfg_hbb9487a_3.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/clangxx-21.1.8-default_nocfg_hbb9487a_3.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/cmake-4.3.1-hdcbee5b_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/win-64/compiler-rt22-22.1.0-h49e36cd_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/compiler-rt22_win-64-22.1.0-h49e36cd_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/compiler-rt21-21.1.8-h49e36cd_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/compiler-rt21_win-64-21.1.8-h49e36cd_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/cxx-compiler-1.11.0-h1c1089f_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/doxygen-1.13.2-hbf3f430_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/eigen-5.0.1-h5112557_0.conda
@@ -4014,21 +4014,21 @@ packages:
   license_family: Apache
   size: 24838
   timestamp: 1772400473621
-- conda: https://conda.anaconda.org/conda-forge/win-64/clang-22.1.0-default_nocfg_hbb9487a_0.conda
-  sha256: 349a04e9d84cd67a380b5b90bb033ae084d3685455447648135968ec02aa2e18
-  md5: 6da7ea42d788283040dd2785f34fc743
+- conda: https://conda.anaconda.org/conda-forge/win-64/clang-21.1.8-default_nocfg_hbb9487a_3.conda
+  sha256: 513301e89e28539356dcbe87a143899663321cea319ca3b7f1f3c6ee48d631a7
+  md5: e1ececcba577fc976a04c03b0e72dc8c
   depends:
-  - clang-22 22.1.0 default_hac490eb_0
+  - clang-21 21.1.8 default_hac490eb_3
   - libzlib >=1.3.1,<2.0a0
-  - llvm-openmp >=22.1.0
+  - llvm-openmp >=21.1.8
   - ucrt >=10.0.20348.0
   - vc >=14.3,<15
   - vc14_runtime >=14.44.35208
   - zstd >=1.5.7,<1.6.0a0
   license: Apache-2.0 WITH LLVM-exception
   license_family: Apache
-  size: 114978089
-  timestamp: 1772353299731
+  size: 108940113
+  timestamp: 1770196870041
 - conda: https://conda.anaconda.org/conda-forge/osx-64/clang-19-19.1.7-default_h9399c5b_8.conda
   sha256: ac3b9d1903f74d44698efb0f93101118e24dacf52f635d5d0a4f65df4484e416
   md5: f3f31a8c3982f9a4c077842b5178cc3c
@@ -4053,6 +4053,20 @@ packages:
   license_family: Apache
   size: 765865
   timestamp: 1772400229152
+- conda: https://conda.anaconda.org/conda-forge/win-64/clang-21-21.1.8-default_hac490eb_3.conda
+  sha256: 9820c149e965d7809b58befaeec62d629f3d95813b82751a499e3ecc731ca406
+  md5: b3f3091abb58151d821ac4a3cf525c23
+  depends:
+  - compiler-rt21 21.1.8.*
+  - libzlib >=1.3.1,<2.0a0
+  - ucrt >=10.0.20348.0
+  - vc >=14.3,<15
+  - vc14_runtime >=14.44.35208
+  - zstd >=1.5.7,<1.6.0a0
+  license: Apache-2.0 WITH LLVM-exception
+  license_family: Apache
+  size: 73389081
+  timestamp: 1770196593238
 - conda: https://conda.anaconda.org/conda-forge/linux-64/clang-22-22.1.0-default_h99862b1_0.conda
   sha256: a24a4eb8522693fbfc6c6b9ab1914314437ca0858b8ac6909275b47be3e93e39
   md5: 1f2b771fc99f1c8115301a9d232dfd94
@@ -4067,20 +4081,6 @@ packages:
   license_family: Apache
   size: 835553
   timestamp: 1772101189757
-- conda: https://conda.anaconda.org/conda-forge/win-64/clang-22-22.1.0-default_hac490eb_0.conda
-  sha256: 0aa2c3daf1b8797305dd85f74f836e1558415dcf6ada712ffadc35e80a5c9f7f
-  md5: 1f1e771e08f88ba4996ad67189224de6
-  depends:
-  - compiler-rt22 22.1.0.*
-  - libzlib >=1.3.1,<2.0a0
-  - ucrt >=10.0.20348.0
-  - vc >=14.3,<15
-  - vc14_runtime >=14.44.35208
-  - zstd >=1.5.7,<1.6.0a0
-  license: Apache-2.0 WITH LLVM-exception
-  license_family: Apache
-  size: 77430347
-  timestamp: 1772353047325
 - conda: https://conda.anaconda.org/conda-forge/linux-64/clang_impl_linux-64-22.1.0-default_h0a60c25_0.conda
   sha256: 8ac20fa0b6c96e739c06ec22e83560136d06799522bcd9421b083ec999ca01a1
   md5: c679d2aa7914d773899033583278fa24
@@ -4182,11 +4182,11 @@ packages:
   license_family: Apache
   size: 24759
   timestamp: 1772400631747
-- conda: https://conda.anaconda.org/conda-forge/win-64/clangxx-22.1.0-default_nocfg_hbb9487a_0.conda
-  sha256: 4aae816794e9018fd1a467bd516847f79ff3bffcf2caa84e86cfe613925fcc72
-  md5: eab5eb1bcbdbe1cdf3acd7735e27c87b
+- conda: https://conda.anaconda.org/conda-forge/win-64/clangxx-21.1.8-default_nocfg_hbb9487a_3.conda
+  sha256: ce71b4b446e39c7adfca432dd0cfdf7be0c376a974dc7c1eccba052103666bf6
+  md5: 0f620e6b8f3255b9a5a82cb08fdbce9b
   depends:
-  - clang 22.1.0 default_nocfg_hbb9487a_0
+  - clang 21.1.8 default_nocfg_hbb9487a_3
   - libzlib >=1.3.1,<2.0a0
   - ucrt >=10.0.20348.0
   - vc >=14.3,<15
@@ -4194,8 +4194,8 @@ packages:
   - zstd >=1.5.7,<1.6.0a0
   license: Apache-2.0 WITH LLVM-exception
   license_family: Apache
-  size: 38349897
-  timestamp: 1772353550860
+  size: 36325900
+  timestamp: 1770197126375
 - conda: https://conda.anaconda.org/conda-forge/linux-64/clangxx_impl_linux-64-22.1.0-default_h0a60c25_0.conda
   sha256: bc870eb662ec371a2c8f09769d8367c44fe9e83c2aa0f11c1b5ba40429091e0b
   md5: be5504be6338168fd4eaaea51448ff42
@@ -4364,6 +4364,27 @@ packages:
   license_family: APACHE
   size: 97085
   timestamp: 1757411887557
+- conda: https://conda.anaconda.org/conda-forge/win-64/compiler-rt21-21.1.8-h49e36cd_1.conda
+  sha256: 065c6304242c3bdd9a2dcfbca29639551eaba66f8cfc2dbd5578b5639cda86dd
+  md5: e9d6b5253caf06da17b78c7844fe1177
+  depends:
+  - compiler-rt21_win-64 21.1.8.*
+  - ucrt >=10.0.20348.0
+  - vc >=14.3,<15
+  - vc14_runtime >=14.44.35208
+  license: Apache-2.0 WITH LLVM-exception
+  license_family: APACHE
+  size: 3646497
+  timestamp: 1769057574881
+- conda: https://conda.anaconda.org/conda-forge/noarch/compiler-rt21_win-64-21.1.8-h49e36cd_1.conda
+  sha256: eb1172729d9fff61b79f8787c7da8b08be4199a61c13beca357c08825c69972d
+  md5: f5c53987efff421a2100cba08fc9995f
+  constrains:
+  - compiler-rt >=9.0.1
+  license: Apache-2.0 WITH LLVM-exception
+  license_family: APACHE
+  size: 3557216
+  timestamp: 1769057506914
 - conda: https://conda.anaconda.org/conda-forge/linux-64/compiler-rt22-22.1.0-hb700be7_0.conda
   sha256: a23f7a8bd6722b41abea88ebd0cea674b0daf8dfee70ece8d2cc798556144675
   md5: 6930338793ffed4140d0903011f6937e
@@ -4376,18 +4397,6 @@ packages:
   license_family: APACHE
   size: 114932
   timestamp: 1772021045728
-- conda: https://conda.anaconda.org/conda-forge/win-64/compiler-rt22-22.1.0-h49e36cd_0.conda
-  sha256: 1bda7c26a337e908d6d8df187ebbeb00646bd8b2f82674f2f3ade65bb7a09678
-  md5: fb549a3ffb359cf4d3a5e13c31c904cd
-  depends:
-  - compiler-rt22_win-64 22.1.0.*
-  - ucrt >=10.0.20348.0
-  - vc >=14.3,<15
-  - vc14_runtime >=14.44.35208
-  license: Apache-2.0 WITH LLVM-exception
-  license_family: APACHE
-  size: 3680052
-  timestamp: 1772019087513
 - conda: https://conda.anaconda.org/conda-forge/noarch/compiler-rt22_linux-64-22.1.0-hffcefe0_0.conda
   sha256: a37472aa2288bea0c588ae47aca6291238558303fdc2e814b58b8de64937263b
   md5: 1254d960f9dd3d269c093ee6db94a454
@@ -4397,15 +4406,6 @@ packages:
   license_family: APACHE
   size: 48094890
   timestamp: 1772020917994
-- conda: https://conda.anaconda.org/conda-forge/noarch/compiler-rt22_win-64-22.1.0-h49e36cd_0.conda
-  sha256: 9bdffc3b5afb4385b472828f16d1afd41d3924ec959bfc9c1c44fdb038217c73
-  md5: 137eab5c20533a223411df9971d2aa18
-  constrains:
-  - compiler-rt >=9.0.1
-  license: Apache-2.0 WITH LLVM-exception
-  license_family: APACHE
-  size: 4013037
-  timestamp: 1772019008363
 - conda: https://conda.anaconda.org/conda-forge/noarch/compiler-rt_linux-64-22.1.0-ha770c72_0.conda
   sha256: 081a126085b6656b8f5e0ffe0636eb07287d81376bdb8d49f5e0e455dce8bce9
   md5: 00fd62b3f1c0019f6aa9d6913f0917f9
