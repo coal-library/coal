@@ -68,6 +68,63 @@ COAL_DLLAPI void collide(CollisionTraversalNodeBase* node,
 COAL_DLLAPI void distance(DistanceTraversalNodeBase* node,
                           BVHFrontList* front_list = NULL,
                           unsigned int qsize = 2);
+
+/// @brief Internal helper: validates the squared-lower-bound invariant on
+/// the result. Exposed so the templated collide<Node> overload below can
+/// reuse the same check as the base-pointer overload.
+COAL_DLLAPI void checkResultLowerBound(const CollisionResult& result,
+                                       Scalar sqrDistLowerBound);
+}  // namespace coal
+
+#include "coal/internal/traversal_recurse.h"
+
+namespace coal {
+
+/// @brief Templated overload of `collide` that takes a concrete traversal-node
+/// type and dispatches to `collisionRecurseT`, allowing the compiler to
+/// resolve all virtual calls statically. Selected by overload resolution over
+/// the non-template `collide(CollisionTraversalNodeBase*, ...)` for any
+/// argument that is a strict subclass (because an exact-type template match
+/// outranks a derived-to-base pointer conversion).
+///
+/// Behaviour matches the base-pointer version exactly, including the
+/// front-list propagation path and the non-recursive iterative path; both
+/// are forwarded to the base-pointer overload so the templated path stays
+/// surgical and only optimises the common recursive case.
+template <typename Node>
+inline void collide(Node* node, const CollisionRequest& request,
+                    CollisionResult& result, BVHFrontList* front_list = NULL,
+                    bool recursive = true) {
+  if (front_list && front_list->size() > 0) {
+    return collide(static_cast<CollisionTraversalNodeBase*>(node), request,
+                   result, front_list, recursive);
+  }
+  if (!recursive) {
+    return collide(static_cast<CollisionTraversalNodeBase*>(node), request,
+                   result, front_list, recursive);
+  }
+  Scalar sqrDistLowerBound = 0;
+  collisionRecurseT(node, 0u, 0u, front_list, sqrDistLowerBound);
+  if (!std::isnan(sqrDistLowerBound)) {
+    checkResultLowerBound(result, sqrDistLowerBound);
+  }
+}
+
+/// @brief Templated overload of `distance` analogous to the templated
+/// `collide` above. Forwards the queue-search path to the base-pointer
+/// version; only the standard recursive case (qsize <= 2) is devirtualised.
+template <typename Node>
+inline void distance(Node* node, BVHFrontList* front_list = NULL,
+                     unsigned int qsize = 2) {
+  if (qsize > 2) {
+    return distance(static_cast<DistanceTraversalNodeBase*>(node), front_list,
+                    qsize);
+  }
+  node->preprocess();
+  distanceRecurseT(node, 0u, 0u, front_list);
+  node->postprocess();
+}
+
 }  // namespace coal
 
 /// @endcond
