@@ -201,6 +201,53 @@ if(COAL_BUILD_WITH_TRACY)
   target_link_libraries(${LIBRARY_NAME} PUBLIC Tracy::TracyClient)
 endif()
 
+if(COAL_ENABLE_SIMD)
+  target_compile_definitions(${LIBRARY_NAME} PRIVATE COAL_ENABLE_SIMD)
+endif()
+
+if(COAL_ENABLE_SIMD AND COAL_ENABLE_NATIVE_SIMD_FLAGS AND NOT MSVC)
+  set(_coal_simd_arch_flags "${COAL_SIMD_ARCH_FLAGS}")
+  if(_coal_simd_arch_flags STREQUAL "auto")
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
+      set(_coal_simd_arch_flags "-march=native -mavx2")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")
+      set(_coal_simd_arch_flags "-mcpu=native -mtune=native")
+      if(
+        CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+        AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13.0
+      )
+        string(APPEND _coal_simd_arch_flags " -flax-vector-conversions")
+      endif()
+    else()
+      set(_coal_simd_arch_flags "")
+    endif()
+  endif()
+
+  if(_coal_simd_arch_flags)
+    separate_arguments(
+      _coal_simd_arch_options
+      NATIVE_COMMAND
+      "${_coal_simd_arch_flags}"
+    )
+    target_compile_options(${LIBRARY_NAME} PUBLIC ${_coal_simd_arch_options})
+    message(
+      STATUS
+      "Coal native SIMD architecture flags: ${_coal_simd_arch_flags}"
+    )
+  endif()
+
+  if(
+    COAL_ENABLE_NO_SEMANTIC_INTERPOSITION
+    AND CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$"
+  )
+    target_compile_options(${LIBRARY_NAME} PUBLIC -fno-semantic-interposition)
+    message(
+      STATUS
+      "Coal native SIMD codegen flags: -fno-semantic-interposition"
+    )
+  endif()
+endif()
+
 if(WIN32)
   # There is an issue with MSVC 2017 and Eigen (due to std::aligned_storage).
   # See https://github.com/ceres-solver/ceres-solver/issues/481
