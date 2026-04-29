@@ -38,6 +38,7 @@
 
 #include "coal/narrowphase/support_functions.h"
 #include "coal/contact_patch/polygon_convex_hull.h"
+#include "coal/internal/simd_support.h"
 
 namespace coal {
 namespace details {
@@ -318,14 +319,14 @@ void getShapeSupportLog(const ConvexBaseTpl<IndexType>* convex,
       !convex->support_warm_starts.points.empty() &&
       support_data.last_dir.dot(dir_normalized) < use_warm_start_threshold) {
     // Change hint if last dir is too far from current dir.
-    Scalar maxdot = convex->support_warm_starts.points[0].dot(dir);
-    hint = int(convex->support_warm_starts.indices[0]);
-    for (size_t i = 1; i < convex->support_warm_starts.points.size(); ++i) {
-      Scalar dot = convex->support_warm_starts.points[i].dot(dir);
-      if (dot > maxdot) {
-        maxdot = dot;
-        hint = int(convex->support_warm_starts.indices[i]);
-      }
+    Scalar maxdot;
+    const int warm_start_hint = simd::maxDot(
+        convex->support_warm_starts.points.data(),
+        static_cast<int>(convex->support_warm_starts.points.size()), dir,
+        maxdot);
+    if (warm_start_hint >= 0) {
+      hint = int(convex->support_warm_starts
+                     .indices[static_cast<size_t>(warm_start_hint)]);
     }
   }
   support_data.last_dir = dir_normalized;
@@ -389,14 +390,26 @@ void getShapeSupportLinear(const ConvexBaseTpl<IndexType>* convex,
                            ShapeSupportData& /*unused*/) {
   const std::vector<Vec3s>& pts = *(convex->points);
 
-  hint = 0;
-  Scalar maxdot = pts[0].dot(dir);
-  for (int i = 1; i < (int)convex->num_points; ++i) {
-    Scalar dot = pts[static_cast<size_t>(i)].dot(dir);
-    if (dot > maxdot) {
-      maxdot = dot;
-      hint = i;
-    }
+  Scalar maxdot;
+  const std::size_t num_points = static_cast<std::size_t>(convex->num_points);
+  if (convex->support_points_x &&
+      convex->support_points_x->size() == num_points &&
+      convex->support_points_y &&
+      convex->support_points_y->size() == num_points &&
+      convex->support_points_z &&
+      convex->support_points_z->size() == num_points) {
+    hint = simd::maxDotSoA(convex->support_points_x->data(),
+                           convex->support_points_y->data(),
+                           convex->support_points_z->data(),
+                           static_cast<int>(convex->num_points), dir, maxdot);
+  } else {
+    hint = simd::maxDot(pts.data(), static_cast<int>(convex->num_points), dir,
+                        maxdot);
+  }
+
+  if (hint < 0) {
+    support.setZero();
+    return;
   }
 
   support = pts[static_cast<size_t>(hint)];

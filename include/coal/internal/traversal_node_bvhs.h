@@ -459,6 +459,18 @@ class MeshDistanceTraversalNode : public BVHDistanceTraversalNode<BV> {
     else
       d2 = TriangleDistance::sqrTriDistance(t11, t12, t13, t21, t22, t23,
                                             RT._R(), RT._T(), P1, P2);
+
+    // Skip the sqrt + result update when this leaf cannot improve the current
+    // bound. Guards: negative `min_distance` (signed-distance penetration) and
+    // the default `Scalar::max` seed both make `min_distance * min_distance`
+    // either invert the comparison or rely on IEEE overflow-to-inf.
+    const Scalar min_distance = this->result->min_distance;
+    if (min_distance >= Scalar(0) &&
+        min_distance < (std::numeric_limits<Scalar>::max)() &&
+        d2 >= min_distance * min_distance) {
+      return;
+    }
+
     Scalar d = sqrt(d2);
 
     this->result->update(d, this->model1, this->model2, primitive_id1,

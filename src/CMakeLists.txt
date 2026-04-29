@@ -66,6 +66,7 @@ set(
   broadphase/detail/morton.cpp
   narrowphase/gjk.cpp
   narrowphase/minkowski_difference.cpp
+  narrowphase/simd_support.cpp
   narrowphase/support_functions.cpp
   narrowphase/details.h
   shape/geometric_shapes.cpp
@@ -201,6 +202,12 @@ if(COAL_BUILD_WITH_TRACY)
   target_link_libraries(${LIBRARY_NAME} PUBLIC Tracy::TracyClient)
 endif()
 
+# SIMD code paths in this PR are gated by COAL_ENABLE_SIMD (defined alongside
+# the native compile flags by perf/build-simd-flags). Without that gate the
+# additions are dormant; merge perf/build-simd-flags first to activate.
+if(COAL_ENABLE_SIMD)
+  target_compile_definitions(${LIBRARY_NAME} PRIVATE COAL_ENABLE_SIMD)
+endif()
 if(WIN32)
   # There is an issue with MSVC 2017 and Eigen (due to std::aligned_storage).
   # See https://github.com/ceres-solver/ceres-solver/issues/481

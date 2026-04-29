@@ -76,12 +76,42 @@ void ConvexBaseTpl<IndexType>::initialize(
   this->normals.reset();
   this->offsets.reset();
   this->computeCenter();
+  this->buildSupportPointCache();
 }
 
 template <typename IndexType>
 void ConvexBaseTpl<IndexType>::set(std::shared_ptr<std::vector<Vec3s>> points_,
                                    unsigned int num_points_) {
   initialize(points_, num_points_);
+}
+
+template <typename IndexType>
+void ConvexBaseTpl<IndexType>::buildSupportPointCache() {
+  if (points == nullptr || num_points == 0) {
+    support_points_x.reset();
+    support_points_y.reset();
+    support_points_z.reset();
+    return;
+  }
+
+  COAL_ASSERT(points->size() == num_points,
+              "The number of points is not consistent with the size of the "
+              "points vector",
+              std::logic_error);
+
+  support_points_x.reset(new std::vector<Scalar>(num_points));
+  support_points_y.reset(new std::vector<Scalar>(num_points));
+  support_points_z.reset(new std::vector<Scalar>(num_points));
+
+  const std::vector<Vec3s>& points_ = *points;
+  std::vector<Scalar>& xs = *support_points_x;
+  std::vector<Scalar>& ys = *support_points_y;
+  std::vector<Scalar>& zs = *support_points_z;
+  for (std::size_t i = 0; i < num_points; ++i) {
+    xs[i] = points_[i][0];
+    ys[i] = points_[i][1];
+    zs[i] = points_[i][2];
+  }
 }
 
 template <typename IndexType>
@@ -94,6 +124,9 @@ ConvexBaseTpl<IndexType>& ConvexBaseTpl<IndexType>::operator=(
     // Shallow copy the rest of the data
     this->points = other.points;
     this->num_points = other.num_points;
+    this->support_points_x = other.support_points_x;
+    this->support_points_y = other.support_points_y;
+    this->support_points_z = other.support_points_z;
     this->normals = other.normals;
     this->offsets = other.offsets;
     this->num_normals_and_offsets = other.num_normals_and_offsets;
@@ -125,6 +158,7 @@ void ConvexBaseTpl<IndexType>::deepcopy(const ConvexBaseTpl<IndexType>* source,
     assert(source->num_points == 0);
   }
   copy->num_points = source->num_points;
+  copy->buildSupportPointCache();
 
   if (source->normals != nullptr) {
     copy->normals.reset(new std::vector<Vec3s>(*source->normals));
