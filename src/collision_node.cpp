@@ -40,8 +40,8 @@
 
 namespace coal {
 
-void checkResultLowerBound(const CollisionResult& result,
-                           Scalar sqrDistLowerBound) {
+COAL_DLLAPI void checkResultLowerBound(const CollisionResult& result,
+                                       Scalar sqrDistLowerBound) {
   COAL_UNUSED_VARIABLE(result);
   const Scalar dummy_precision = std::sqrt(Eigen::NumTraits<Scalar>::epsilon());
   COAL_UNUSED_VARIABLE(dummy_precision);

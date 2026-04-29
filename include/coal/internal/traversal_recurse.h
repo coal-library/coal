@@ -73,6 +73,99 @@ void propagateBVHFrontListCollisionRecurse(CollisionTraversalNodeBase* node,
                                            CollisionResult& result,
                                            BVHFrontList* front_list);
 
+/// @brief Templated, devirtualized variant of collisionRecurse.
+/// When called with a concrete `Node` type, the compiler resolves all
+/// virtual calls statically and can inline them, avoiding the indirect
+/// branches that dominate when using the base-pointer overload.
+template <typename Node>
+void collisionRecurseT(Node* node, unsigned int b1, unsigned int b2,
+                       BVHFrontList* front_list, Scalar& sqrDistLowerBound) {
+  Scalar sqrDistLowerBound1 = 0, sqrDistLowerBound2 = 0;
+  bool l1 = node->isFirstNodeLeaf(b1);
+  bool l2 = node->isSecondNodeLeaf(b2);
+  if (l1 && l2) {
+    updateFrontList(front_list, b1, b2);
+    node->leafCollides(b1, b2, sqrDistLowerBound);
+    return;
+  }
+
+  if (node->BVDisjoints(b1, b2, sqrDistLowerBound)) {
+    updateFrontList(front_list, b1, b2);
+    return;
+  }
+  if (node->firstOverSecond(b1, b2)) {
+    unsigned int c1 = (unsigned int)node->getFirstLeftChild(b1);
+    unsigned int c2 = (unsigned int)node->getFirstRightChild(b1);
+
+    collisionRecurseT(node, c1, b2, front_list, sqrDistLowerBound1);
+    if (node->canStop() && !front_list) return;
+    collisionRecurseT(node, c2, b2, front_list, sqrDistLowerBound2);
+    sqrDistLowerBound = sqrDistLowerBound1 < sqrDistLowerBound2
+                            ? sqrDistLowerBound1
+                            : sqrDistLowerBound2;
+  } else {
+    unsigned int c1 = (unsigned int)node->getSecondLeftChild(b2);
+    unsigned int c2 = (unsigned int)node->getSecondRightChild(b2);
+
+    collisionRecurseT(node, b1, c1, front_list, sqrDistLowerBound1);
+    if (node->canStop() && !front_list) return;
+    collisionRecurseT(node, b1, c2, front_list, sqrDistLowerBound2);
+    sqrDistLowerBound = sqrDistLowerBound1 < sqrDistLowerBound2
+                            ? sqrDistLowerBound1
+                            : sqrDistLowerBound2;
+  }
+}
+
+/// @brief Templated, devirtualized variant of distanceRecurse.
+template <typename Node>
+void distanceRecurseT(Node* node, unsigned int b1, unsigned int b2,
+                      BVHFrontList* front_list) {
+  bool l1 = node->isFirstNodeLeaf(b1);
+  bool l2 = node->isSecondNodeLeaf(b2);
+
+  if (l1 && l2) {
+    updateFrontList(front_list, b1, b2);
+    node->leafComputeDistance(b1, b2);
+    return;
+  }
+
+  unsigned int a1, a2, c1, c2;
+  if (node->firstOverSecond(b1, b2)) {
+    a1 = (unsigned int)node->getFirstLeftChild(b1);
+    a2 = b2;
+    c1 = (unsigned int)node->getFirstRightChild(b1);
+    c2 = b2;
+  } else {
+    a1 = b1;
+    a2 = (unsigned int)node->getSecondLeftChild(b2);
+    c1 = b1;
+    c2 = (unsigned int)node->getSecondRightChild(b2);
+  }
+
+  Scalar d1 = node->BVDistanceLowerBound(a1, a2);
+  Scalar d2 = node->BVDistanceLowerBound(c1, c2);
+
+  if (d2 < d1) {
+    if (!node->canStop(d2))
+      distanceRecurseT(node, c1, c2, front_list);
+    else
+      updateFrontList(front_list, c1, c2);
+    if (!node->canStop(d1))
+      distanceRecurseT(node, a1, a2, front_list);
+    else
+      updateFrontList(front_list, a1, a2);
+  } else {
+    if (!node->canStop(d1))
+      distanceRecurseT(node, a1, a2, front_list);
+    else
+      updateFrontList(front_list, a1, a2);
+    if (!node->canStop(d2))
+      distanceRecurseT(node, c1, c2, front_list);
+    else
+      updateFrontList(front_list, c1, c2);
+  }
+}
+
 }  // namespace coal
 
 /// @endcond
