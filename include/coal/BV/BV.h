@@ -49,6 +49,17 @@
 /** @brief Main namespace */
 namespace coal {
 
+template <typename BV>
+inline bool overlapPrecomputedRTranspose(const Matrix3s& R0_transpose,
+                                         const Vec3s& inv_T0, const BV& b1,
+                                         const BV& b2,
+                                         const CollisionRequest& request,
+                                         Scalar& sqrDistLowerBound) {
+  const Matrix3s R0(R0_transpose.transpose());
+  const Vec3s T0(-(R0 * inv_T0));
+  return overlap(R0, T0, b1, b2, request, sqrDistLowerBound);
+}
+
 /// @cond IGNORE
 namespace details {
 
