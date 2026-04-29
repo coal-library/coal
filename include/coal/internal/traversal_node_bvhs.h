@@ -137,7 +137,7 @@ class MeshCollisionTraversalNode : public BVHCollisionTraversalNode<BV> {
   };
 
   MeshCollisionTraversalNode(const CollisionRequest& request)
-      : BVHCollisionTraversalNode<BV>(request) {
+      : BVHCollisionTraversalNode<BV>(request), solver_(request) {
     vertices1 = NULL;
     vertices2 = NULL;
     tri_indices1 = NULL;
@@ -203,15 +203,11 @@ class MeshCollisionTraversalNode : public BVHCollisionTraversalNode<BV> {
     TriangleP tri1(P1, P2, P3);
     TriangleP tri2(Q1, Q2, Q3);
 
-    // TODO(louis): MeshCollisionTraversalNode should have its own GJKSolver.
-    GJKSolver solver(this->request);
-
     const bool compute_penetration =
         this->request.enable_contact || (this->request.security_margin < 0);
     Vec3s p1, p2, normal;
-    DistanceResult distanceResult;
     Scalar distance = internal::ShapeShapeDistance<TriangleP, TriangleP>(
-        &tri1, this->tf1, &tri2, this->tf2, &solver, compute_penetration, p1,
+        &tri1, this->tf1, &tri2, this->tf2, &solver_, compute_penetration, p1,
         p2, normal);
 
     const Scalar distToCollision = distance - this->request.security_margin;
@@ -238,6 +234,14 @@ class MeshCollisionTraversalNode : public BVHCollisionTraversalNode<BV> {
   Triangle32* tri_indices2;
 
   details::RelativeTransformation<!bool(RTIsIdentity)> RT;
+
+ private:
+  /// Per-traversal GJK/EPA solver. Hoisted out of leafCollides so its
+  /// vector buffers are allocated once per query rather than once per
+  /// triangle-pair leaf test (saves heap traffic from EPA::reset on each
+  /// leaf). The solver is mutable because leafCollides is const but GJK
+  /// evaluation mutates internal state per call.
+  mutable GJKSolver solver_;
 };
 
 /// @brief Traversal node for collision between two meshes if their underlying
