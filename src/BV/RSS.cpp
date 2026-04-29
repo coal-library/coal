@@ -116,8 +116,10 @@ bool inVoronoi(Scalar a, Scalar b, Scalar Anorm_dot_B, Scalar Anorm_dot_T,
 /// @brief Distance between two oriented rectangles; P and Q (optional return
 /// values) are the closest points in the rectangles, both are in the local
 /// frame of the first rectangle.
-Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
-                    const Scalar b[2], Vec3s* P = NULL, Vec3s* Q = NULL) {
+template <bool ComputePoints>
+Scalar rectDistanceImpl(const Matrix3s& Rab, Vec3s const& Tab,
+                        const Scalar a[2], const Scalar b[2], Vec3s* P,
+                        Vec3s* Q) {
   Scalar A0_dot_B0, A0_dot_B1, A1_dot_B0, A1_dot_B1;
 
   A0_dot_B0 = Rab(0, 0);
@@ -198,7 +200,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 0) * b[0] + Rab(1, 1) * u - t;
       S[2] = Tab[2] + Rab(2, 0) * b[0] + Rab(2, 1) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << a[0], t, 0;
         *Q = S + (*P);
       }
@@ -221,7 +223,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 1) * u - t;
       S[2] = Tab[2] + Rab(2, 1) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << a[0], t, 0;
         *Q = S + (*P);
       }
@@ -244,7 +246,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 0) * b[0] + Rab(1, 1) * u - t;
       S[2] = Tab[2] + Rab(2, 0) * b[0] + Rab(2, 1) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << 0, t, 0;
         *Q = S + (*P);
       }
@@ -266,7 +268,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 1) * u - t;
       S[2] = Tab[2] + Rab(2, 1) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << 0, t, 0;
         *Q = S + (*P);
       }
@@ -324,7 +326,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 1) * b[1] + Rab(1, 0) * u - t;
       S[2] = Tab[2] + Rab(2, 1) * b[1] + Rab(2, 0) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << a[0], t, 0;
         *Q = S + (*P);
       }
@@ -347,7 +349,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 0) * u - t;
       S[2] = Tab[2] + Rab(2, 0) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << a[0], t, 0;
         *Q = S + (*P);
       }
@@ -371,7 +373,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 1) * b[1] + Rab(1, 0) * u - t;
       S[2] = Tab[2] + Rab(2, 1) * b[1] + Rab(2, 0) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << 0, t, 0;
         *Q = S + (*P);
       }
@@ -393,7 +395,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 0) * u - t;
       S[2] = Tab[2] + Rab(2, 0) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << 0, t, 0;
         *Q = S + (*P);
       }
@@ -451,7 +453,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 0) * b[0] + Rab(1, 1) * u - a[1];
       S[2] = Tab[2] + Rab(2, 0) * b[0] + Rab(2, 1) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << t, a[1], 0;
         *Q = S + (*P);
       }
@@ -474,7 +476,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 1) * u - a[1];
       S[2] = Tab[2] + Rab(2, 1) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << t, a[1], 0;
         *Q = S + (*P);
       }
@@ -497,7 +499,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 0) * b[0] + Rab(1, 1) * u;
       S[2] = Tab[2] + Rab(2, 0) * b[0] + Rab(2, 1) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << t, 0, 0;
         *Q = S + (*P);
       }
@@ -519,7 +521,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 1) * u;
       S[2] = Tab[2] + Rab(2, 1) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << t, 0, 0;
         *Q = S + (*P);
       }
@@ -570,7 +572,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 1) * b[1] + Rab(1, 0) * u - a[1];
       S[2] = Tab[2] + Rab(2, 1) * b[1] + Rab(2, 0) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << t, a[1], 0;
         *Q = S + (*P);
       }
@@ -593,7 +595,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 0) * u - a[1];
       S[2] = Tab[2] + Rab(2, 0) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << t, a[1], 0;
         *Q = S + (*P);
       }
@@ -617,7 +619,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 1) * b[1] + Rab(1, 0) * u;
       S[2] = Tab[2] + Rab(2, 1) * b[1] + Rab(2, 0) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << t, 0, 0;
         *Q = S + (*P);
       }
@@ -639,7 +641,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
       S[1] = Tab[1] + Rab(1, 0) * u;
       S[2] = Tab[2] + Rab(2, 0) * u;
 
-      if (P && Q) {
+      if (ComputePoints) {
         *P << t, 0, 0;
         *Q = S + (*P);
       }
@@ -678,7 +680,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
     else
       S << 0, 0, -sep1;
 
-    if (P && Q) {
+    if (ComputePoints) {
       *Q = S;
       P->setZero();
     }
@@ -699,7 +701,7 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
 
     S = Q_ - P_;
 
-    if (P && Q) {
+    if (ComputePoints) {
       *P = P_;
       *Q = Q_;
     }
@@ -707,6 +709,15 @@ Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
 
   Scalar sep = (sep1 > sep2 ? sep1 : sep2);
   return (sep > 0 ? sep : 0);
+}
+
+Scalar rectDistance(const Matrix3s& Rab, Vec3s const& Tab, const Scalar a[2],
+                    const Scalar b[2], Vec3s* P = NULL, Vec3s* Q = NULL) {
+  if (P && Q) {
+    return rectDistanceImpl<true>(Rab, Tab, a, b, P, Q);
+  }
+
+  return rectDistanceImpl<false>(Rab, Tab, a, b, NULL, NULL);
 }
 
 bool RSS::overlap(const RSS& other) const {
