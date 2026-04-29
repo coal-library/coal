@@ -156,14 +156,32 @@ class MeshCollisionTraversalNode : public BVHCollisionTraversalNode<BV> {
   bool BVDisjoints(unsigned int b1, unsigned int b2,
                    Scalar& sqrDistLowerBound) const {
     if (this->enable_statistics) this->num_bv_tests++;
+    const BVNode<BV>& n1 = this->model1->getBV(b1);
+    const BVNode<BV>& n2 = this->model2->getBV(b2);
+    // Speculative prefetch of children for both BVH sides. If this BV pair
+    // overlaps the recursion descends immediately and one of these cache
+    // lines becomes the next `getBV(c)` access. The SAT/rect-distance test
+    // below takes ~50-130 ns, plenty of time for an L2/L3 prefetch to
+    // resolve. Wasted hint cost on disjoint pairs is ~4 cycles per call,
+    // far below the saving when the data is needed.
+    if (!n1.isLeaf()) {
+      const int c = n1.first_child;
+      __builtin_prefetch(&this->model1->getBV(c));
+      __builtin_prefetch(&this->model1->getBV(c + 1));
+    }
+    if (!n2.isLeaf()) {
+      const int c = n2.first_child;
+      __builtin_prefetch(&this->model2->getBV(c));
+      __builtin_prefetch(&this->model2->getBV(c + 1));
+    }
+
     bool disjoint;
     if (RTIsIdentity)
-      disjoint = !this->model1->getBV(b1).overlap(
-          this->model2->getBV(b2), this->request, sqrDistLowerBound);
+      disjoint = !n1.overlap(n2, this->request, sqrDistLowerBound);
     else {
-      disjoint = !overlapPrecomputedRTranspose(
-          RT._RTranspose(), RT._InvT(), this->model2->getBV(b2).bv,
-          this->model1->getBV(b1).bv, this->request, sqrDistLowerBound);
+      disjoint = !overlapPrecomputedRTranspose(RT._RTranspose(), RT._InvT(),
+                                               n2.bv, n1.bv, this->request,
+                                               sqrDistLowerBound);
     }
     if (disjoint)
       internal::updateDistanceLowerBoundFromBV(this->request, *this->result,
