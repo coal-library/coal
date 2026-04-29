@@ -98,6 +98,14 @@ if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
     ${test_benchmark_devirt_target}
     PUBLIC ${utility_target} Boost::filesystem ${PROJECT_NAME}
   )
+
+  set(test_benchmark_robot_target ${PROJECT_NAME}-test-benchmark-robot)
+  add_executable(${test_benchmark_robot_target} benchmark_robot.cpp)
+  set_standard_output_directory(${test_benchmark_robot_target})
+  target_link_libraries(
+    ${test_benchmark_robot_target}
+    PUBLIC ${utility_target} Boost::filesystem ${PROJECT_NAME}
+  )
 endif()
 
 ## Python tests
