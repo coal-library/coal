@@ -110,6 +110,7 @@ void serialize(Archive& ar, coal::ConvexBaseTpl<IndexType>& convex_base,
   }
 
   ar& make_nvp("center", convex_base.center);
+  if (Archive::is_loading::value) convex_base.buildSupportPointCache();
   // We don't save neighbors as they will be computed directly by calling
   // fillNeighbors.
 }

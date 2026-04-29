@@ -798,6 +798,17 @@ class ConvexBaseTpl : public ShapeBase {
   std::shared_ptr<std::vector<Vec3s>> points;
   unsigned int num_points;
 
+  /// @brief Structure-of-arrays copy of points used by SIMD support scans.
+  /// Refreshed by `initialize`, `deepcopy`, and serialization load.
+  /// If `*points` is mutated directly, callers must invoke
+  /// `buildSupportPointCache()` to resync.
+  std::shared_ptr<std::vector<Scalar>> support_points_x;
+  std::shared_ptr<std::vector<Scalar>> support_points_y;
+  std::shared_ptr<std::vector<Scalar>> support_points_z;
+
+  /// @brief Rebuild the SIMD support-point cache from points.
+  void buildSupportPointCache();
+
   /// @brief An array of the normals of the polygon.
   std::shared_ptr<std::vector<Vec3s>> normals;
   /// @brief An array of the offsets to the normals of the polygon.
