@@ -50,6 +50,7 @@
 #include "coal/narrowphase/narrowphase.h"
 #include "coal/internal/traversal.h"
 #include "coal/internal/shape_shape_func.h"
+#include "coal/internal/tri_tri_overlap.h"
 
 #include <cassert>
 
@@ -137,7 +138,10 @@ class MeshCollisionTraversalNode : public BVHCollisionTraversalNode<BV> {
   };
 
   MeshCollisionTraversalNode(const CollisionRequest& request)
-      : BVHCollisionTraversalNode<BV>(request) {
+      : BVHCollisionTraversalNode<BV>(request),
+        use_moller_fastpath_(!request.enable_contact &&
+                             !request.enable_distance_lower_bound &&
+                             request.security_margin == 0) {
     vertices1 = NULL;
     vertices2 = NULL;
     tri_indices1 = NULL;
@@ -200,6 +204,45 @@ class MeshCollisionTraversalNode : public BVHCollisionTraversalNode<BV> {
     const Vec3s& Q2 = vertices2[tri_id2[1]];
     const Vec3s& Q3 = vertices2[tri_id2[2]];
 
+    // Pure boolean-collision fast path: when the user has opted out of
+    // contact info, distance lower bound, and security margin, run Möller's
+    // tri-tri intersection test instead of GJK. Möller is ~30 FP ops with
+    // no iteration, vs GJK's iterative simplex search. We give up tightness
+    // on the leaf-level distance lower bound (consistently set to 0) to
+    // satisfy the post-traversal sqr-bound assert; the user has explicitly
+    // opted out of that information, so 0 is the honest "no info" answer.
+    if (use_moller_fastpath_) {
+      // Transform both triangles into a common (world) frame so the test is
+      // independent of the local-frame conventions of each model.
+      const Vec3s P1w = this->tf1.transform(P1);
+      const Vec3s P2w = this->tf1.transform(P2);
+      const Vec3s P3w = this->tf1.transform(P3);
+      const Vec3s Q1w = this->tf2.transform(Q1);
+      const Vec3s Q2w = this->tf2.transform(Q2);
+      const Vec3s Q3w = this->tf2.transform(Q3);
+
+      bool coplanar = false;
+      const bool overlap =
+          details::triTriOverlap(P1w, P2w, P3w, Q1w, Q2w, Q3w, coplanar);
+      if (!coplanar) {
+        sqrDistLowerBound = 0;
+        this->result->distance_lower_bound = 0;
+        if (overlap &&
+            this->result->numContacts() < this->request.num_max_contacts) {
+          // Synthetic contact: positions/normal are placeholders since the
+          // user has set enable_contact=false. We register one contact so
+          // result.isCollision() reflects the boolean answer.
+          const Vec3s pos = (P1w + Q1w) * Scalar(0.5);
+          this->result->addContact(Contact(this->model1, this->model2,
+                                           primitive_id1, primitive_id2, pos,
+                                           pos, Vec3s::Zero(), Scalar(0)));
+        }
+        return;
+      }
+      // Coplanar pair: fall through to the general GJK path. Coplanar tri-tri
+      // pairs are rare in practical motion-validation scenes.
+    }
+
     TriangleP tri1(P1, P2, P3);
     TriangleP tri2(Q1, Q2, Q3);
 
@@ -238,6 +281,14 @@ class MeshCollisionTraversalNode : public BVHCollisionTraversalNode<BV> {
   Triangle32* tri_indices2;
 
   details::RelativeTransformation<!bool(RTIsIdentity)> RT;
+
+ private:
+  /// True iff the request asks only for a boolean collision answer (no
+  /// contact, no distance lower bound, no security margin). In that case
+  /// leafCollides skips the GJK distance computation and runs Möller's
+  /// tri-tri intersection test directly. Cached at construction since the
+  /// request is fixed for a traversal.
+  const bool use_moller_fastpath_;
 };
 
 /// @brief Traversal node for collision between two meshes if their underlying
