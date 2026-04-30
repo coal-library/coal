@@ -32,6 +32,7 @@ if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
   add_coal_test(math math.cpp)
 
   add_coal_test(collision collision.cpp)
+  add_coal_test(gjk_hoist_no_state_pollution gjk_hoist_no_state_pollution.cpp)
   add_coal_test(contact_patch contact_patch.cpp)
   add_coal_test(distance distance.cpp)
   add_coal_test(swept_sphere_radius swept_sphere_radius.cpp)
