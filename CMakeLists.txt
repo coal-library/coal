@@ -80,6 +80,27 @@ option(
   "Build with tracy profiler for performance analysis"
   FALSE
 )
+option(
+  COAL_ENABLE_SIMD
+  "Enable internal SIMD acceleration paths when supported by the compiler and CPU."
+  TRUE
+)
+option(
+  COAL_ENABLE_NATIVE_SIMD_FLAGS
+  "When SIMD is enabled, compile Coal with native CPU SIMD architecture flags."
+  TRUE
+)
+option(
+  COAL_ENABLE_NO_SEMANTIC_INTERPOSITION
+  "When SIMD/native optimization is enabled, compile Coal with -fno-semantic-interposition on supported ELF compilers."
+  TRUE
+)
+set(
+  COAL_SIMD_ARCH_FLAGS
+  "auto"
+  CACHE STRING
+  "SIMD architecture flags to use when COAL_ENABLE_NATIVE_SIMD_FLAGS is ON. Use 'auto' to select flags from the host CPU architecture."
+)
 
 # Check if the submodule cmake have been initialized
 set(JRL_CMAKE_MODULES "${CMAKE_CURRENT_LIST_DIR}/cmake")
