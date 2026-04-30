@@ -305,6 +305,20 @@ class MemberDef(Reference):
     def s_name(self):
         return self.xml.find("name").text.strip()
 
+    def s_name_without_template_args(self):
+        # Strip any trailing <...> specialization from s_name(). Needed because
+        # the generated static_cast lives inside namespace doxygen, where the
+        # bare type names appearing in the template-argument list are not
+        # visible. Dropping them lets the static_cast pick the right
+        # specialization from the target function-pointer type.
+        # operator<, operator<<, operator<=> etc. embed '<' in the name itself
+        # — leave those untouched.
+        name = self.s_name()
+        if name.startswith("operator"):
+            return name
+        idx = name.find("<")
+        return name[:idx].rstrip() if idx >= 0 else name
+
     def s_docstring(self):
         return self.index.xml_docstring.getDocString(
             self.xml.find("briefdescription"),
@@ -756,7 +770,7 @@ class Index:
                 [
                     template_static_func_doc_body.format(
                         namespace=member.parent.innerNamespace(),
-                        membername=member.s_name(),
+                        membername=member.s_name_without_template_args(),
                         docstring=docstring,
                         rettype=member.s_rettype(),
                         argsstring=member.s_prototypeArgs(),
