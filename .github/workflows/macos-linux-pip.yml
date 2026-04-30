@@ -55,3 +55,22 @@ jobs:
       - run: cmake -B build -S . -DPython_EXECUTABLE=$(which python) -DCOAL_HAS_QHULL=ON -DCOAL_PYTHON_NANOBIND=OFF
       - run: cmake --build build -j 4
       - run: cmake --build build -t test
+
+  coal-pip-no-native-flags:
+    # Verifies the COAL_ENABLE_NATIVE_SIMD_FLAGS=OFF / COAL_ENABLE_NO_SEMANTIC_INTERPOSITION=OFF
+    # build still compiles and passes tests, so the non-native fallback path stays alive.
+    name: "CI on ubuntu (no-native-flags)"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'true'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -U pip
+      - run: python -m pip install cmeel-assimp cmeel-octomap cmeel-qhull eigenpy[build]
+      - run: echo "CMAKE_PREFIX_PATH=$(cmeel cmake)" >> $GITHUB_ENV
+      - run: cmake -B build -S . -DPython_EXECUTABLE=$(which python) -DCOAL_HAS_QHULL=ON -DCOAL_PYTHON_NANOBIND=OFF -DCOAL_ENABLE_NATIVE_SIMD_FLAGS=OFF -DCOAL_ENABLE_NO_SEMANTIC_INTERPOSITION=OFF
+      - run: cmake --build build -j 4
+      - run: cmake --build build -t test
