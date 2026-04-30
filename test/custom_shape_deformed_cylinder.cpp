@@ -41,6 +41,7 @@
 
 #define BOOST_TEST_MODULE COAL_CUSTOM_SHAPE_DEFORMED_CYLINDER
 #include <boost/test/included/unit_test.hpp>
+#include <boost/math/constants/constants.hpp>
 
 #include "coal/collision.h"
 #include "coal/contact_patch.h"
@@ -141,7 +142,7 @@ BOOST_AUTO_TEST_CASE(test_deformed_cylinder_node_type) {
 /// Collision and distance: 30° joint deformed cylinder vs Box.
 BOOST_AUTO_TEST_CASE(test_deformed_cylinder_vs_box) {
   // Two disks at a 30° joint angle, radius 0.5, separated by 2 units
-  const Scalar angle = M_PI / 6;  // 30°
+  const Scalar angle = boost::math::constants::pi<Scalar>() / 6;  // 30°
   const Scalar r = 0.5;
   Vec3s n1 = Vec3s::UnitZ();
   Vec3s n2(std::sin(angle), 0, std::cos(angle));
