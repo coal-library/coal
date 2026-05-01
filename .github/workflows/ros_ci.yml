@@ -28,41 +28,51 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  CI:
+  ros:
+    name: ROS ${{ matrix.ROS_DISTRO }} - ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        env:
-          - {ROS_DISTRO: humble}
-          - {ROS_DISTRO: jazzy}
-          - {ROS_DISTRO: kilted}
-          - {ROS_DISTRO: rolling}
+        include:
+          # ROS2 Humble Hawksbill (May 2022 - May 2027)
+          - ROS_DISTRO: humble
+            os: Ubuntu 22.04 (Jammy)
+
+          # ROS2 Jazzy Jalisco (May 2024 - May 2029)
+          - ROS_DISTRO: jazzy
+            os: Ubuntu 24.04 (Noble)
+
+          # ROS2 Kilted Kayu (May 2025 - December 2026)
+          - ROS_DISTRO: kilted
+            os: Ubuntu 24.04 (Noble)
+
+          # ROS2 Rolling Ridley
+          - ROS_DISTRO: rolling
+            os: Ubuntu 24.04 (Noble)
     env:
-      #CCACHE_DIR: /github/home/.ccache # Enable ccache
-      BUILDER: colcon
-      PRERELEASE: true
+      CMAKE_ARGS: -DBUILD_PYTHON_INTERFACE=ON -DCOAL_BUILD_TESTS=ON -DCOAL_BUILD_BENCHMARKS=ON
+      VERBOSE_OUTPUT: true
+      VERBOSE_TESTS: true
+      ROS_DISTRO: ${{ matrix.ROS_DISTRO }}
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/cache@v5
         with:
-          submodules: recursive
-      # This step will fetch/store the directory used by ccache before/after the ci run
-      #- uses: actions/cache@v3
-      #  with:
-      #    path: ${{ env.CCACHE_DIR }}
-      #    key: ccache-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}
-      # Run industrial_ci
-      - uses: 'ros-industrial/industrial_ci@0f4bd2d1b926eac95fd6bc5bd1fcb3051a6e927d'
-        env: ${{ matrix.env }}
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ matrix.ROS_DISTRO }}-${{github.run_id}}
+          restore-keys: ccache-${{ matrix.ROS_DISTRO }}-
+      - uses: ros-industrial/industrial_ci@f3c2dc8b4a9e6215f9c00f83e86ca0692970f81d
 
   check:
     if: always()
     name: check-ros-ci
 
     needs:
-    - CI
+    - ros
 
-    runs-on: Ubuntu-latest
+    runs-on: ubuntu-latest
 
     steps:
     - name: Decide whether the needed jobs succeeded or failed
