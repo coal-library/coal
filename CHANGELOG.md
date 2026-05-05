@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Backport removal of Boost::system
 
-## [3.0.2] - 1980-01-01
+## [3.0.2] - 2025-09-29
 
 ### Added
 - CMake: add COAL_DISABLE_HPP_FCL_WARNINGS option ([#709](https://github.com/coal-library/coal/pull/709))
