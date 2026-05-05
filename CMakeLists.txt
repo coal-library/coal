@@ -166,9 +166,6 @@ ADD_PROJECT_DEPENDENCY(Boost REQUIRED serialization filesystem)
 if(COAL_ENABLE_LOGGING)
   ADD_PROJECT_DEPENDENCY(Boost REQUIRED log)
 endif()
-if(BUILD_PYTHON_INTERFACE)
-  find_package(Boost REQUIRED COMPONENTS system)
-endif(BUILD_PYTHON_INTERFACE)
 
 if(Boost_VERSION_STRING VERSION_LESS 1.81)
   # Default C++ version should be C++11
