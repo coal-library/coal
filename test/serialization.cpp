@@ -142,8 +142,10 @@ void test_pointer_serialization(const T& value, T& other_value,
   test_pointer_serialization_impl<T>::run(value, other_value, mode);
 }
 
-template <typename T>
-void test_serialization(const T& value, T& other_value,
+template <typename T, typename Hook,
+          typename std::enable_if<!std::is_convertible<Hook, int>::value,
+                                  int>::type = 0>
+void test_serialization(const T& value, T& other_value, Hook post_load_hook,
                         const int mode = TXT | XML | BIN | STREAM) {
   const boost::filesystem::path tmp_path(boost::archive::tmpdir());
   const boost::filesystem::path txt_path("file.txt");
@@ -163,6 +165,7 @@ void test_serialization(const T& value, T& other_value,
       BOOST_CHECK(check(value, value));
 
       coal::serialization::loadFromText(other_value, filename);
+      post_load_hook(other_value);
       BOOST_CHECK(check(value, other_value));
     }
 
@@ -174,6 +177,7 @@ void test_serialization(const T& value, T& other_value,
 
       std::istringstream ss_in(ss_out.str());
       coal::serialization::loadFromStringStream(other_value, ss_in);
+      post_load_hook(other_value);
       BOOST_CHECK(check(value, other_value));
     }
 
@@ -184,6 +188,7 @@ void test_serialization(const T& value, T& other_value,
 
       const std::string str_in(str_out);
       coal::serialization::loadFromString(other_value, str_in);
+      post_load_hook(other_value);
       BOOST_CHECK(check(value, other_value));
     }
   }
@@ -197,6 +202,7 @@ void test_serialization(const T& value, T& other_value,
       BOOST_CHECK(check(value, value));
 
       coal::serialization::loadFromXML(other_value, filename, xml_tag);
+      post_load_hook(other_value);
       BOOST_CHECK(check(value, other_value));
     }
   }
@@ -209,6 +215,7 @@ void test_serialization(const T& value, T& other_value,
       BOOST_CHECK(check(value, value));
 
       coal::serialization::loadFromBinary(other_value, filename);
+      post_load_hook(other_value);
       BOOST_CHECK(check(value, other_value));
     }
   }
@@ -221,6 +228,7 @@ void test_serialization(const T& value, T& other_value,
       BOOST_CHECK(check(value, value));
 
       coal::serialization::loadFromBuffer(other_value, buffer);
+      post_load_hook(other_value);
       BOOST_CHECK(check(value, other_value));
     }
   }
@@ -236,10 +244,26 @@ void test_serialization(const T& value, T& other_value,
 
     std::shared_ptr<T> other_ptr = nullptr;
     coal::serialization::loadFromText(other_ptr, filename);
+    post_load_hook(*other_ptr);
     BOOST_CHECK(check_ptr(ptr.get(), other_ptr.get()));
   }
 
   test_pointer_serialization(value, other_value);
+}
+
+template <typename T>
+void test_serialization(const T& value, T& other_value,
+                        const int mode = TXT | XML | BIN | STREAM) {
+  test_serialization(value, other_value, [](T&) {}, mode);
+}
+
+template <typename T, typename Hook,
+          typename std::enable_if<!std::is_convertible<Hook, int>::value,
+                                  int>::type = 0>
+void test_serialization(const T& value, Hook post_load_hook,
+                        const int mode = TXT | XML | BIN | STREAM) {
+  T other_value;
+  test_serialization(value, other_value, post_load_hook, mode);
 }
 
 template <typename T>
@@ -255,8 +279,13 @@ BOOST_AUTO_TEST_CASE(test_aabb) {
 }
 
 BOOST_AUTO_TEST_CASE(test_collision_data) {
-  Contact contact(NULL, NULL, 1, 2, Vec3s::Ones(), Vec3s::Zero(), -10.);
-  test_serialization(contact);
+  Sphere sphere(1.);
+  Box box(Vec3s::Ones());
+
+  auto contact_remap = [&](Contact& c) { c.remap(&sphere, &box); };
+
+  Contact contact(&sphere, &box, 1, 2, Vec3s::Ones(), Vec3s::Zero(), -10.);
+  test_serialization(contact, contact_remap);
 
   CollisionRequest collision_request(CONTACT, 10);
   test_serialization(collision_request);
@@ -268,16 +297,26 @@ BOOST_AUTO_TEST_CASE(test_collision_data) {
   collision_result.normal.setOnes();
   collision_result.nearest_points[0].setRandom();
   collision_result.nearest_points[1].setRandom();
-  test_serialization(collision_result);
+  test_serialization(collision_result, [&](CollisionResult& cr) {
+    for (size_t i = 0; i < cr.numContacts(); ++i) {
+      Contact c = cr.getContact(i);
+      contact_remap(c);
+      cr.setContact(i, c);
+    }
+  });
 
   DistanceRequest distance_request(true, 1., 2.);
   test_serialization(distance_request);
 
   DistanceResult distance_result;
+  distance_result.min_distance = 1.234;
   distance_result.normal.setOnes();
   distance_result.nearest_points[0].setRandom();
   distance_result.nearest_points[1].setRandom();
-  test_serialization(distance_result);
+  distance_result.o1 = &sphere;
+  distance_result.o2 = &box;
+  test_serialization(distance_result,
+                     [&](DistanceResult& dr) { dr.remap(&sphere, &box); });
 
   {
     // Serializing contact patches.
