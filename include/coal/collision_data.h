@@ -1057,6 +1057,40 @@ struct COAL_DLLAPI ContactPatchResult {
     this->set(request);
   };
 
+  /// @brief Copy constructor.
+  ContactPatchResult(const ContactPatchResult& other) { *this = other; }
+
+  /// @brief Move constructor.
+  ContactPatchResult(ContactPatchResult&& other) noexcept {
+    *this = std::move(other);
+  }
+
+  /// @brief Copy assignment operator.
+  ContactPatchResult& operator=(const ContactPatchResult& other) {
+    if (this != &other) {
+      this->m_contact_patches_data = other.m_contact_patches_data;
+      this->m_id_available_patch = other.m_id_available_patch;
+      this->m_contact_patches.clear();
+      for (size_t i = 0; i < this->m_id_available_patch; ++i) {
+        this->m_contact_patches.emplace_back(this->m_contact_patches_data[i]);
+      }
+    }
+    return *this;
+  }
+
+  /// @brief Move assignment operator.
+  ContactPatchResult& operator=(ContactPatchResult&& other) noexcept {
+    if (this != &other) {
+      this->m_contact_patches_data = std::move(other.m_contact_patches_data);
+      this->m_id_available_patch = other.m_id_available_patch;
+      this->m_contact_patches.clear();
+      for (size_t i = 0; i < this->m_id_available_patch; ++i) {
+        this->m_contact_patches.emplace_back(this->m_contact_patches_data[i]);
+      }
+    }
+    return *this;
+  }
+
   /// @brief Number of contact patches in the result.
   size_t numContactPatches() const { return this->m_contact_patches.size(); }
 
