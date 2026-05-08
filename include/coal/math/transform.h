@@ -216,6 +216,26 @@ class COAL_DLLAPI Transform3s {
 
   bool operator!=(const Transform3s& other) const { return !(*this == other); }
 
+  /// @brief Prints the transform to the provided output stream.
+  void disp(std::ostream& os, const std::string& prefix = "") const {
+    using namespace std;
+    // clang-format off
+    os << prefix << "  Rotation:\n";
+    os << prefix << "    " << R(0, 0) << " " << R(0, 1) << " " << R(0, 2) << "\n";
+    os << prefix << "    " << R(1, 0) << " " << R(1, 1) << " " << R(1, 2) << "\n";
+    os << prefix << "    " << R(2, 0) << " " << R(2, 1) << " " << R(2, 2) << ",\n";
+    os << prefix << "  Translation: " << T.transpose() << "\n";
+    // clang-format on
+  }
+
+  /// \copydoc disp
+  friend std::ostream& operator<<(std::ostream& os, const Transform3s& tf) {
+    os << "Transform3s: {" << "\n";
+    tf.disp(os);
+    os << "}" << "\n";
+    return os;
+  }
+
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 

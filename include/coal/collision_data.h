@@ -51,6 +51,7 @@
 #include "coal/timings.h"
 #include "coal/narrowphase/narrowphase_defaults.h"
 #include "coal/logging.h"
+#include "coal/collision_utility.h"
 
 namespace coal {
 
@@ -162,6 +163,34 @@ struct COAL_DLLAPI Contact {
   bool operator!=(const Contact& other) const { return !(*this == other); }
 
   Scalar getDistanceToCollision(const CollisionRequest& request) const;
+
+  /// \brief Prints the contact to the provided output stream.
+  void disp(std::ostream& os, const std::string& prefix = "") const {
+    using namespace std;
+    os << prefix
+       << "  o1 type: " << (o1 ? get_node_type_name(o1->getNodeType()) : "null")
+       << ",\n";
+    os << prefix
+       << "  o2 type: " << (o2 ? get_node_type_name(o2->getNodeType()) : "null")
+       << ",\n";
+    os << prefix << "  b1: " << b1 << ",\n";
+    os << prefix << "  b2: " << b2 << ",\n";
+    os << prefix << "  normal: " << normal.transpose() << ",\n";
+    os << prefix << "  nearest_points[0]: " << nearest_points[0].transpose()
+       << ",\n";
+    os << prefix << "  nearest_points[1]: " << nearest_points[1].transpose()
+       << ",\n";
+    os << prefix << "  pos: " << pos.transpose() << ",\n";
+    os << prefix << "  penetration_depth: " << penetration_depth << ",\n";
+  }
+
+  /// \copydoc disp
+  friend std::ostream& operator<<(std::ostream& os, const Contact& contact) {
+    os << "Contact: {" << "\n";
+    contact.disp(os);
+    os << "}" << "\n";
+    return os;
+  }
 };
 
 struct QueryResult;
@@ -269,6 +298,34 @@ struct COAL_DLLAPI QueryRequest {
            collision_distance_threshold == other.collision_distance_threshold;
     COAL_COMPILER_DIAGNOSTIC_POP
   }
+
+  /// @brief Prints the query request to the provided output stream.
+  void disp(std::ostream& os, const std::string& prefix = "") const {
+    using namespace std;
+    os << prefix << "  gjk_initial_guess: "
+       << (gjk_initial_guess == GJKInitialGuess::DefaultGuess
+               ? "DefaultGuess"
+               : (GJKInitialGuess::CachedGuess ? "CachedGuess"
+                                               : "BoundingVolumeGuess"))
+       << ",\n";
+    os << prefix << "  cached_gjk_guess: " << cached_gjk_guess.transpose()
+       << ",\n";
+    os << prefix << "  cached_support_func_guess: "
+       << cached_support_func_guess.transpose() << ",\n";
+    os << prefix << "  gjk_max_iterations: " << gjk_max_iterations << ",\n";
+    os << prefix << "  gjk_tolerance: " << gjk_tolerance << ",\n";
+    os << prefix << "  gjk_variant: " << static_cast<int>(gjk_variant) << ",\n";
+    os << prefix << "  gjk_convergence_criterion: "
+       << static_cast<int>(gjk_convergence_criterion) << ",\n";
+    os << prefix << "  gjk_convergence_criterion_type: "
+       << static_cast<int>(gjk_convergence_criterion_type) << ",\n";
+    os << prefix << "  epa_max_iterations: " << epa_max_iterations << ",\n";
+    os << prefix << "  epa_tolerance: " << epa_tolerance << ",\n";
+    os << prefix << "  enable_timings: " << enable_timings << ",\n";
+    os << prefix
+       << "  collision_distance_threshold: " << collision_distance_threshold
+       << ",\n";
+  }
 };
 
 /// @brief base class for all query results
@@ -285,6 +342,16 @@ struct COAL_DLLAPI QueryResult {
   QueryResult()
       : cached_gjk_guess(Vec3s::Zero()),
         cached_support_func_guess(support_func_guess_t::Constant(-1)) {}
+
+  /// @brief Prints the query result to the provided output stream.
+  void disp(std::ostream& os, const std::string& prefix = "") const {
+    using namespace std;
+    os << prefix << "  cached_gjk_guess: " << cached_gjk_guess.transpose()
+       << ",\n";
+    os << prefix << "  cached_support_func_guess: "
+       << cached_support_func_guess.transpose() << ",\n";
+    os << prefix << "  timings: " << timings.user << ",\n";
+  }
 };
 
 inline void QueryRequest::updateGuess(const QueryResult& result) const {
@@ -378,6 +445,26 @@ struct COAL_DLLAPI CollisionRequest : QueryRequest {
            break_distance == other.break_distance &&
            distance_upper_bound == other.distance_upper_bound;
     COAL_COMPILER_DIAGNOSTIC_POP
+  }
+
+  /// @brief Prints the collision request to the provided output stream.
+  void disp(std::ostream& os, const std::string& prefix = "") const {
+    using namespace std;
+    QueryRequest::disp(os, prefix);
+    os << prefix << "  num_max_contacts: " << num_max_contacts << ",\n";
+    os << prefix << "  enable_contact: " << enable_contact << ",\n";
+    os << prefix << "  security_margin: " << security_margin << ",\n";
+    os << prefix << "  break_distance: " << break_distance << ",\n";
+    os << prefix << "  distance_upper_bound: " << distance_upper_bound << ",\n";
+  }
+
+  /// \copydoc disp
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const CollisionRequest& request) {
+    os << "CollisionRequest: {" << "\n";
+    request.disp(os);
+    os << "}" << "\n";
+    return os;
   }
 };
 
@@ -490,6 +577,35 @@ struct COAL_DLLAPI CollisionResult : QueryResult {
   /// @brief reposition Contact objects when fcl inverts them
   /// during their construction.
   void swapObjects();
+
+  /// \brief Prints the result to the provided output stream.
+  void disp(std::ostream& os, const std::string& prefix = "") const {
+    using namespace std;
+    QueryResult::disp(os, prefix);
+    os << prefix << "  distance_lower_bound: " << distance_lower_bound << ",\n";
+    os << prefix << "  normal: " << normal.transpose() << ",\n";
+    os << prefix << "  nearest_points[0]: " << nearest_points[0].transpose()
+       << ",\n";
+    os << prefix << "  nearest_points[1]: " << nearest_points[1].transpose()
+       << ",\n";
+    os << prefix << "  contacts: {" << "\n";
+    for (std::size_t i = 0; i < contacts.size(); ++i) {
+      os << prefix << "    Contact " << i << ": {" << "\n";
+      const Contact& contact = contacts[i];
+      contact.disp(os, prefix + "      ");
+      os << prefix << "    }\n";
+    }
+    os << prefix << "  }\n";
+  }
+
+  /// \copydoc disp
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const CollisionResult& res) {
+    os << "CollisionResult:" << "\n";
+    res.disp(os);
+    os << "}" << "\n";
+    return os;
+  }
 };
 
 /// @brief This structure allows to encode contact patches.
@@ -712,6 +828,32 @@ struct COAL_DLLAPI ContactPatch {
 
     return true;
   }
+
+  /// @brief Prints the contact patch to the provided output stream.
+  void disp(std::ostream& os, const std::string& prefix = "") const {
+    using namespace std;
+    os << prefix << "  tf: {" << "\n";
+    tf.disp(os, prefix + "    ");
+    os << prefix << "  },\n";
+    os << prefix << "  direction: "
+       << (direction == PatchDirection::DEFAULT ? "DEFAULT" : "INVERTED")
+       << ",\n";
+    os << prefix << "  penetration_depth: " << penetration_depth << ",\n";
+    os << prefix << "  points: {" << "\n";
+    for (size_t i = 0; i < this->size(); ++i) {
+      os << prefix << "    Point " << i << ": " << this->getPoint(i).transpose()
+         << ",\n";
+    }
+    os << prefix << "  }\n";
+  }
+
+  /// \copydoc disp
+  friend std::ostream& operator<<(std::ostream& os, const ContactPatch& patch) {
+    os << "ContactPatch: {" << "\n";
+    patch.disp(os);
+    os << "}" << "\n";
+    return os;
+  }
 };
 
 /// @brief Construct a frame from a `Contact`'s position and normal.
@@ -833,6 +975,25 @@ struct COAL_DLLAPI ContactPatchRequest {
            this->getNumSamplesCurvedShapes() ==
                other.getNumSamplesCurvedShapes() &&
            this->getPatchTolerance() == other.getPatchTolerance();
+  }
+
+  /// @brief Prints the contact patch request to the provided output stream.
+  void disp(std::ostream& os, const std::string& prefix = "") const {
+    using namespace std;
+    os << prefix << "  max_num_patch: " << max_num_patch << ",\n";
+    os << prefix
+       << "  num_samples_curved_shapes: " << getNumSamplesCurvedShapes()
+       << ",\n";
+    os << prefix << "  patch_tolerance: " << getPatchTolerance() << ",\n";
+  }
+
+  /// \copydoc disp
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const ContactPatchRequest& request) {
+    os << "ContactPatchRequest: {" << "\n";
+    request.disp(os);
+    os << "}" << "\n";
+    return os;
   }
 };
 
@@ -995,6 +1156,30 @@ struct COAL_DLLAPI ContactPatchResult {
       }
     }
   }
+
+  /// @brief Prints the contact patch result to the provided output stream.
+  void disp(std::ostream& os, const std::string& prefix = "") const {
+    using namespace std;
+    os << prefix << "  numContactPatches: " << this->numContactPatches()
+       << ",\n";
+    os << prefix << "  contact_patches: {" << "\n";
+    for (size_t i = 0; i < this->numContactPatches(); ++i) {
+      os << prefix << "  ContactPatch " << i << ": {" << "\n";
+      const ContactPatch& patch = this->getContactPatch(i);
+      patch.disp(os, prefix + "    ");
+      os << prefix << "  }\n";
+    }
+    os << prefix << "  }\n";
+  }
+
+  /// \copydoc disp
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const ContactPatchResult& result) {
+    os << "ContactPatchResult: {" << "\n";
+    result.disp(os);
+    os << "}" << "\n";
+    return os;
+  }
 };
 
 struct DistanceResult;
@@ -1063,6 +1248,25 @@ struct COAL_DLLAPI DistanceRequest : QueryRequest {
            enable_signed_distance == other.enable_signed_distance &&
            rel_err == other.rel_err && abs_err == other.abs_err;
     COAL_COMPILER_DIAGNOSTIC_POP
+  }
+
+  /// @brief Prints the distance request to the provided output stream.
+  void disp(std::ostream& os, const std::string& prefix = "") const {
+    using namespace std;
+    QueryRequest::disp(os, prefix);
+    os << prefix << "  enable_signed_distance: " << enable_signed_distance
+       << ",\n";
+    os << prefix << "  rel_err: " << rel_err << ",\n";
+    os << prefix << "  abs_err: " << abs_err << ",\n";
+  }
+
+  /// \copydoc disp
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const DistanceRequest& request) {
+    os << "DistanceRequest: {" << "\n";
+    request.disp(os);
+    os << "}" << "\n";
+    return os;
   }
 };
 
@@ -1184,6 +1388,40 @@ struct COAL_DLLAPI DistanceResult : QueryResult {
     //    *other.o2;
 
     return is_same;
+  }
+
+  /// @brief whether two DistanceResult are different or not
+  inline bool operator!=(const DistanceResult& other) const {
+    return !(*this == other);
+  }
+
+  /// @brief Prints the distance result to the provided output stream.
+  void disp(std::ostream& os, const std::string& prefix = "") const {
+    using namespace std;
+    QueryResult::disp(os, prefix);
+    os << prefix
+       << "  o1: " << (o1 ? get_node_type_name(o1->getNodeType()) : "null")
+       << ",\n";
+    os << prefix
+       << "  o2: " << (o2 ? get_node_type_name(o2->getNodeType()) : "null")
+       << ",\n";
+    os << prefix << "  b1: " << b1 << ",\n";
+    os << prefix << "  b2: " << b2 << ",\n";
+    os << prefix << "  min_distance: " << min_distance << ",\n";
+    os << prefix << "  normal: " << normal.transpose() << ",\n";
+    os << prefix << "  nearest_points[0]: " << nearest_points[0].transpose()
+       << ",\n";
+    os << prefix << "  nearest_points[1]: " << nearest_points[1].transpose()
+       << ",\n";
+  }
+
+  /// \copydoc disp
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const DistanceResult& result) {
+    os << "DistanceResult: {" << "\n";
+    result.disp(os);
+    os << "}" << "\n";
+    return os;
   }
 };
 
