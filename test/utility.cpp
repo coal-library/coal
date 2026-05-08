@@ -326,11 +326,6 @@ Quats makeQuat(Scalar w, Scalar x, Scalar y, Scalar z) {
   return q;
 }
 
-std::ostream& operator<<(std::ostream& os, const Transform3s& tf) {
-  return os << "[ " << tf.getTranslation().format(vfmt) << ", "
-            << tf.getQuatRotation().coeffs().format(vfmt) << " ]";
-}
-
 std::size_t getNbRun(const int& argc, char const* const* argv,
                      std::size_t defaultValue) {
   for (int i = 0; i < argc; ++i)
