@@ -42,6 +42,7 @@
 #include "coal.hh"
 #include "pickle.hh"
 #include "serializable.hh"
+#include "printable.hh"
 
 #ifdef COAL_HAS_DOXYGEN_AUTODOC
 #include "doxygen_autodoc/coal/math/transform.h"
@@ -169,7 +170,8 @@ void exposeMaths() {
       .def(self == self)
       .def(self != self)
       .def_pickle(PickleObject<Transform3s>())
-      .def(SerializableVisitor<Transform3s>());
+      .def(SerializableVisitor<Transform3s>())
+      .def(PrintableVisitor<Transform3s>());
 
   exposeTriangle<Triangle32::IndexType>("Triangle32");
   bp::scope().attr("Triangle") = bp::scope().attr("Triangle32");

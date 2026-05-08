@@ -168,8 +168,6 @@ std::string getNodeTypeName(NODE_TYPE node_type);
 
 Quats makeQuat(Scalar w, Scalar x, Scalar y, Scalar z);
 
-std::ostream& operator<<(std::ostream& os, const Transform3s& tf);
-
 /// Get the argument --nb-run from argv
 std::size_t getNbRun(const int& argc, char const* const* argv,
                      std::size_t defaultValue);

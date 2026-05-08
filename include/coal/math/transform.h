@@ -210,11 +210,40 @@ class COAL_DLLAPI Transform3s {
   /// @brief set the transform to a random transform
   inline void setRandom();
 
+  /// @brief Comparison operator
   bool operator==(const Transform3s& other) const {
     return (R == other.getRotation()) && (T == other.getTranslation());
   }
 
+  /// @brief Comparison operator
   bool operator!=(const Transform3s& other) const { return !(*this == other); }
+
+  /// @brief Prints the transform to the provided output stream.
+  void disp(std::ostream& os, const std::string& prefix = "") const {
+    using namespace std;
+    // formatting for matrix
+    const Eigen::IOFormat mfmt =
+        Eigen::IOFormat(Eigen::StreamPrecision, !Eigen::DontAlignCols,
+                        ", ",                     // coeff separator
+                        ",\n" + prefix + "    ",  // row separator
+                        "[", "]",                 // row prefix and suffix
+                        prefix + "    [", "]"     // matrix prefix and suffix
+        );
+    // formatting for vector
+    const Eigen::IOFormat vfmt =
+        Eigen::IOFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ",
+                        ", ", "", "", "[", "]");
+    os << prefix << "  Rotation:\n" << R.format(mfmt) << ",\n";
+    os << prefix << "  Translation: " << T.format(vfmt) << ",\n";
+  }
+
+  /// \copydoc disp
+  friend std::ostream& operator<<(std::ostream& os, const Transform3s& tf) {
+    os << "Transform3s: {" << "\n";
+    tf.disp(os);
+    os << "}" << "\n";
+    return os;
+  }
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

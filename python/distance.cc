@@ -46,6 +46,7 @@ COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
 COAL_COMPILER_DIAGNOSTIC_POP
 
 #include "serializable.hh"
+#include "printable.hh"
 
 #ifdef COAL_HAS_DOXYGEN_AUTODOC
 #include "doxygen_autodoc/functions.h"
@@ -109,7 +110,8 @@ void exposeDistanceAPI() {
         .DEF_RW_CLASS_ATTRIB(DistanceRequest, enable_signed_distance)
         .DEF_RW_CLASS_ATTRIB(DistanceRequest, rel_err)
         .DEF_RW_CLASS_ATTRIB(DistanceRequest, abs_err)
-        .def(SerializableVisitor<DistanceRequest>());
+        .def(SerializableVisitor<DistanceRequest>())
+        .def(PrintableVisitor<DistanceRequest>());
   }
   COAL_COMPILER_DIAGNOSTIC_POP
 
@@ -138,7 +140,8 @@ void exposeDistanceAPI() {
 
         .def("clear", &DistanceResult::clear,
              doxygen::member_func_doc(&DistanceResult::clear))
-        .def(SerializableVisitor<DistanceResult>());
+        .def(SerializableVisitor<DistanceResult>())
+        .def(PrintableVisitor<DistanceResult>());
   }
 
   if (!eigenpy::register_symbolic_link_to_registered_type<

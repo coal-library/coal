@@ -51,6 +51,7 @@ set(
   pickle.hh
   utils/std-pair.hh
   serializable.hh
+  printable.hh
 )
 
 set(

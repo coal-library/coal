@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - handle the specific cases of n_desired = 1 or 2 ([805](https://github.com/coal-library/coal/pull/805))
   - improve efficiency of ContactPatchSimplifierMaxArea and improve testing of patch simplifiers ([813](https://github.com/coal-library/coal/pull/813))
 - timings: + and += operators ([805](https://github.com/coal-library/coal/pull/805))
+- Add print methods for collision data (`Contact`, `CollisionRequest`, `CollisionResult`, `DistanceRequest`, `DistanceResult`, `ContactPatch`, `ContactPatchRequest` and `ContactPatchResult`) ([854](https://github.com/coal-library/coal/pull/854)).
+  - One can now do `std::cout << contact` for example.
+  - Added the `PrintableVisitor` in python bindings so that `print(contact)` works in python as well
 
 ### Removed
 - Remove direct dependency to ([#744](https://github.com/coal-library/coal/pull/744)):

@@ -44,6 +44,7 @@ COAL_COMPILER_DIAGNOSTIC_POP
 #include "coal.hh"
 #include "deprecation.hh"
 #include "serializable.hh"
+#include "printable.hh"
 
 #ifdef COAL_HAS_DOXYGEN_AUTODOC
 #include "doxygen_autodoc/functions.h"
@@ -166,7 +167,8 @@ void exposeCollisionAPI() {
         .DEF_RW_CLASS_ATTRIB(CollisionRequest, security_margin)
         .DEF_RW_CLASS_ATTRIB(CollisionRequest, break_distance)
         .DEF_RW_CLASS_ATTRIB(CollisionRequest, distance_upper_bound)
-        .def(SerializableVisitor<CollisionRequest>());
+        .def(SerializableVisitor<CollisionRequest>())
+        .def(PrintableVisitor<CollisionRequest>());
   }
 
   if (!eigenpy::register_symbolic_link_to_registered_type<
@@ -205,7 +207,9 @@ void exposeCollisionAPI() {
         .DEF_RW_CLASS_ATTRIB(Contact, pos)
         .DEF_RW_CLASS_ATTRIB(Contact, penetration_depth)
         .def(self == self)
-        .def(self != self);
+        .def(self != self)
+        .def(SerializableVisitor<Contact>())
+        .def(PrintableVisitor<Contact>());
   }
 
   if (!eigenpy::register_symbolic_link_to_registered_type<
@@ -245,7 +249,8 @@ void exposeCollisionAPI() {
              return_internal_reference<>())
 
         .DEF_RW_CLASS_ATTRIB(CollisionResult, distance_lower_bound)
-        .def(SerializableVisitor<CollisionResult>());
+        .def(SerializableVisitor<CollisionResult>())
+        .def(PrintableVisitor<CollisionResult>());
   }
 
   if (!eigenpy::register_symbolic_link_to_registered_type<
