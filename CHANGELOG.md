@@ -60,6 +60,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Python version update ([#774](https://github.com/coal-library/coal/pull/774)):
   - Project is now tested with Python 3.10 and 3.14
   - Python 3.10 is the minimal supported Python version
+- Nix: switch to flakoboros ([#852](https://github.com/coal-library/coal/pull/852))
 
 ## [3.0.3] - 2026-05-05
 

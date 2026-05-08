@@ -2,49 +2,55 @@
   description = "An extension of the Flexible Collision Library";
 
   inputs = {
-    flake-parts.url = "github:hercules-ci/flake-parts";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    gepetto.url = "github:gepetto/nix";
+
+    # eigenpy v3.12.0 does not handle eigen v5, so we need devel for now
+    eigenpy.url = "github:stack-of-tasks/eigenpy";
+    eigenpy.inputs.gepetto.follows = "gepetto";
   };
 
   outputs =
     inputs:
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } (
-      { self, lib, ... }:
+    inputs.gepetto.lib.mkFlakoboros inputs (
+      { lib, ... }:
       {
-        systems = inputs.nixpkgs.lib.systems.flakeExposed;
-        flake.overlays = {
-          default = final: prev: {
-            coal = prev.coal.overrideAttrs (super: {
-              cmakeFlags = super.cmakeFlags ++ [
-                "-DCOAL_DISABLE_HPP_FCL_WARNINGS=ON"
-                "-DGENERATE_PYTHON_STUBS=OFF"
+        overlays = [ inputs.eigenpy.overlays.flakoboros ];
+        extraDevPyPackages = [ "coal" ];
+        overrideAttrs.coal =
+          { drv-prev, ... }:
+          {
+            cmakeFlags = drv-prev.cmakeFlags ++ [
+              "-DCOAL_DISABLE_HPP_FCL_WARNINGS=ON"
+              "-DGENERATE_PYTHON_STUBS=OFF"
+            ];
+            src = lib.fileset.toSource {
+              root = ./.;
+              fileset = lib.fileset.unions [
+                ./CMakeLists.txt
+                ./doc
+                ./hpp-fclConfig.cmake
+                ./include
+                ./package.xml
+                ./python
+                ./python-nb
+                ./src
+                ./test
               ];
-              src = lib.fileset.toSource {
-                root = ./.;
-                fileset = lib.fileset.unions [
-                  ./CMakeLists.txt
-                  ./doc
-                  ./hpp-fclConfig.cmake
-                  ./include
-                  ./package.xml
-                  ./python
-                  ./python-nb
-                  ./src
-                  ./test
-                ];
-              };
-            });
-
+            };
+          };
+        extends = {
+          inherit (inputs.eigenpy.overlays) eigen5;
+          full = _final: prev: {
+            pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+              (_python-final: python-prev: {
+                coal = python-prev.coal.override { buildStandalone = false; };
+              })
+            ];
+          };
+          nanobind = _final: prev: {
             pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
               (python-final: python-prev: {
                 coal = python-prev.coal.overrideAttrs (super: {
-                  pname = "coal-bp";
-                  cmakeFlags = super.cmakeFlags ++ [
-                    "-DCOAL_PYTHON_NANOBIND=OFF"
-                  ];
-                });
-
-                coal-nb = python-final.coal.overrideAttrs (super: {
                   pname = "coal-nb";
                   cmakeFlags = super.cmakeFlags ++ [
                     "-DCOAL_PYTHON_NANOBIND=ON"
@@ -64,37 +70,6 @@
             ];
           };
         };
-        perSystem =
-          {
-            pkgs,
-            self',
-            system,
-            ...
-          }:
-          {
-            _module.args = {
-              pkgs = import inputs.nixpkgs {
-                inherit system;
-                overlays = [ self.overlays.default ];
-              };
-            };
-            apps.default = {
-              type = "app";
-              program = pkgs.python3.withPackages (_: [ self'.packages.default ]);
-            };
-            packages = {
-              default = self'.packages.coal-full-bp;
-              libcoal = pkgs.coal;
-              coal-bp = pkgs.python3Packages.coal;
-              coal-nb = pkgs.python3Packages.coal-nb;
-              coal-full-bp = (pkgs.python3Packages.coal.override { buildStandalone = false; }).overrideAttrs {
-                pname = "coal-full-bp";
-              };
-              coal-full-nb = (pkgs.python3Packages.coal-nb.override { buildStandalone = false; }).overrideAttrs {
-                pname = "coal-full-nb";
-              };
-            };
-          };
       }
     );
 }
