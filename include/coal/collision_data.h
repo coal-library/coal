@@ -1061,16 +1061,26 @@ struct COAL_DLLAPI ContactPatchResult {
   size_t numContactPatches() const { return this->m_contact_patches.size(); }
 
   /// @brief Returns a new unused contact patch from the internal data vector.
-  ContactPatchRef getUnusedContactPatch() {
+  ContactPatch& getUnusedContactPatch() {
     if (this->m_id_available_patch >= this->m_contact_patches_data.size()) {
       COAL_LOG_WARNING(
           "Trying to get an unused contact patch but all contact patches are "
           "used. Increasing size of contact patches vector, at the cost of a "
           "copy. You should increase `max_num_patch` in the "
-          "`ContactPatchRequest`.");
-      this->m_contact_patches_data.emplace_back(
-          this->m_contact_patches_data.back());
-      this->m_contact_patches_data.back().clear();
+          "`ContactPatchRequest` when setting up `ContactPatchResult`.");
+      bool need_to_reset_references = (this->m_contact_patches_data.size() ==
+                                       this->m_contact_patches_data.capacity());
+
+      this->m_contact_patches_data.emplace_back(ContactPatch());
+
+      if (need_to_reset_references) {
+        // If we have reached the capacity of the data vector, all references
+        // in `m_contact_patches` are invalidated. We need to reset them.
+        this->m_contact_patches.clear();
+        for (size_t i = 0; i < this->m_id_available_patch; ++i) {
+          this->m_contact_patches.emplace_back(this->m_contact_patches_data[i]);
+        }
+      }
     }
     ContactPatch& contact_patch =
         this->m_contact_patches_data[this->m_id_available_patch];
