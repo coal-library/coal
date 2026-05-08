@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add print methods for collision data (`Contact`, `CollisionRequest`, `CollisionResult`, `DistanceRequest`, `DistanceResult`, `ContactPatch`, `ContactPatchRequest` and `ContactPatchResult`) ([854](https://github.com/coal-library/coal/pull/854)).
   - One can now do `std::cout << contact` for example.
   - Added the `PrintableVisitor` in python bindings so that `print(contact)` works in python as well
+- Add `remap` method to `Contact` and `DistanceResult` to remap the `o1/o2` pointers (typically after serialization/deserialization) ([855](https://github.com/coal-library/coal/pull/855)).
 
 ### Removed
 - Remove direct dependency to ([#744](https://github.com/coal-library/coal/pull/744)):
