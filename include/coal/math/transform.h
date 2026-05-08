@@ -221,12 +221,21 @@ class COAL_DLLAPI Transform3s {
   /// @brief Prints the transform to the provided output stream.
   void disp(std::ostream& os, const std::string& prefix = "") const {
     using namespace std;
+    // formatting for matrix
+    const Eigen::IOFormat mfmt =
+        Eigen::IOFormat(Eigen::StreamPrecision, !Eigen::DontAlignCols,
+                        ", ",                     // coeff separator
+                        ",\n" + prefix + "    ",  // row separator
+                        "[", "]",                 // row prefix and suffix
+                        prefix + "    [", "]"     // matrix prefix and suffix
+        );
+    // formatting for vector
+    const Eigen::IOFormat vfmt =
+        Eigen::IOFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ",
+                        ", ", "", "", "[", "]");
     // clang-format off
-    os << prefix << "  Rotation:\n";
-    os << prefix << "    " << R(0, 0) << " " << R(0, 1) << " " << R(0, 2) << "\n";
-    os << prefix << "    " << R(1, 0) << " " << R(1, 1) << " " << R(1, 2) << "\n";
-    os << prefix << "    " << R(2, 0) << " " << R(2, 1) << " " << R(2, 2) << ",\n";
-    os << prefix << "  Translation: " << T.transpose() << "\n";
+    os << prefix << "  Rotation:\n" << R.format(mfmt) << ",\n";
+    os << prefix << "  Translation: " << T.format(vfmt) << ",\n";
     // clang-format on
   }
 
