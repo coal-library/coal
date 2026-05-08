@@ -210,10 +210,12 @@ class COAL_DLLAPI Transform3s {
   /// @brief set the transform to a random transform
   inline void setRandom();
 
+  /// @brief Comparison operator
   bool operator==(const Transform3s& other) const {
     return (R == other.getRotation()) && (T == other.getTranslation());
   }
 
+  /// @brief Comparison operator
   bool operator!=(const Transform3s& other) const { return !(*this == other); }
 
   /// @brief Prints the transform to the provided output stream.

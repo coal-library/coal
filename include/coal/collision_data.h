@@ -299,6 +299,11 @@ struct COAL_DLLAPI QueryRequest {
     COAL_COMPILER_DIAGNOSTIC_POP
   }
 
+  /// @brief whether two QueryRequest are different or not
+  inline bool operator!=(const QueryRequest& other) const {
+    return !(*this == other);
+  }
+
   /// @brief Prints the query request to the provided output stream.
   void disp(std::ostream& os, const std::string& prefix = "") const {
     using namespace std;
@@ -447,6 +452,11 @@ struct COAL_DLLAPI CollisionRequest : QueryRequest {
     COAL_COMPILER_DIAGNOSTIC_POP
   }
 
+  /// @brief whether two CollisionRequest are different or not
+  inline bool operator!=(const CollisionRequest& other) const {
+    return !(*this == other);
+  }
+
   /// @brief Prints the collision request to the provided output stream.
   void disp(std::ostream& os, const std::string& prefix = "") const {
     using namespace std;
@@ -523,6 +533,11 @@ struct COAL_DLLAPI CollisionResult : QueryResult {
            nearest_points[0] == other.nearest_points[0] &&
            nearest_points[1] == other.nearest_points[1] &&
            normal == other.normal;
+  }
+
+  /// @brief whether two CollisionResult are the same or not
+  bool operator!=(const CollisionResult& other) const {
+    return !(*this == other);
   }
 
   /// @brief return binary collision result
@@ -787,6 +802,9 @@ struct COAL_DLLAPI ContactPatch {
            this->points() == other.points();
   }
 
+  /// @brief Whether two contact patches are different or not.
+  bool operator!=(const ContactPatch& other) const { return !(*this == other); }
+
   /// @brief Whether two contact patches are the same or not.
   /// Checks for different order of the points.
   bool isSame(
@@ -977,6 +995,11 @@ struct COAL_DLLAPI ContactPatchRequest {
            this->getPatchTolerance() == other.getPatchTolerance();
   }
 
+  /// @brief Whether two ContactPatchRequest are different or not.
+  bool operator!=(const ContactPatchRequest& other) const {
+    return !(*this == other);
+  }
+
   /// @brief Prints the contact patch request to the provided output stream.
   void disp(std::ostream& os, const std::string& prefix = "") const {
     using namespace std;
@@ -1140,6 +1163,11 @@ struct COAL_DLLAPI ContactPatchResult {
     return true;
   }
 
+  /// @brief Whether two ContactPatchResult are different or not.
+  bool operator!=(const ContactPatchResult& other) const {
+    return !(*this == other);
+  }
+
   /// @brief Repositions the ContactPatch when they get inverted during their
   /// construction.
   void swapObjects() {
@@ -1248,6 +1276,11 @@ struct COAL_DLLAPI DistanceRequest : QueryRequest {
            enable_signed_distance == other.enable_signed_distance &&
            rel_err == other.rel_err && abs_err == other.abs_err;
     COAL_COMPILER_DIAGNOSTIC_POP
+  }
+
+  /// @brief whether two DistanceRequest are different or not
+  inline bool operator!=(const DistanceRequest& other) const {
+    return !(*this == other);
   }
 
   /// @brief Prints the distance request to the provided output stream.
