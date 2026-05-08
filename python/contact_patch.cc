@@ -36,10 +36,11 @@
 
 #include "coal/fwd.hh"
 #include "coal/contact_patch.h"
-#include "coal/serialization/collision_data.h"
+#include "coal/serialization/contact_patch.h"
 
 #include "coal.hh"
 #include "deprecation.hh"
+#include "printable.hh"
 #include "serializable.hh"
 
 #ifdef COAL_HAS_DOXYGEN_AUTODOC
@@ -80,7 +81,9 @@ void exposeContactPatchAPI() {
         .DEF_CLASS_FUNC(ContactPatch, getPointShape1)
         .DEF_CLASS_FUNC(ContactPatch, getPointShape2)
         .DEF_CLASS_FUNC(ContactPatch, clear)
-        .DEF_CLASS_FUNC(ContactPatch, isSame);
+        .DEF_CLASS_FUNC(ContactPatch, isSame)
+        .def(SerializableVisitor<ContactPatch>())
+        .def(PrintableVisitor<ContactPatch>());
   }
 
   if (!eigenpy::register_symbolic_link_to_registered_type<
@@ -103,7 +106,9 @@ void exposeContactPatchAPI() {
         .DEF_CLASS_FUNC(ContactPatchRequest, getNumSamplesCurvedShapes)
         .DEF_CLASS_FUNC(ContactPatchRequest, setNumSamplesCurvedShapes)
         .DEF_CLASS_FUNC(ContactPatchRequest, getPatchTolerance)
-        .DEF_CLASS_FUNC(ContactPatchRequest, setPatchTolerance);
+        .DEF_CLASS_FUNC(ContactPatchRequest, setPatchTolerance)
+        .def(SerializableVisitor<ContactPatchRequest>())
+        .def(PrintableVisitor<ContactPatchRequest>());
   }
 
   if (!eigenpy::register_symbolic_link_to_registered_type<
@@ -119,12 +124,15 @@ void exposeContactPatchAPI() {
                                init<>(arg("self"), "Default constructor."))
         .def(dv::init<ContactPatchResult, ContactPatchRequest>())
         .DEF_CLASS_FUNC(ContactPatchResult, numContactPatches)
-        .DEF_CLASS_FUNC(ContactPatchResult, getUnusedContactPatch)
+        .DEF_CLASS_FUNC2(ContactPatchResult, getUnusedContactPatch,
+                         return_value_policy<reference_existing_object>())
         .DEF_CLASS_FUNC2(ContactPatchResult, getContactPatch,
                          return_value_policy<copy_const_reference>())
         .DEF_CLASS_FUNC(ContactPatchResult, clear)
         .DEF_CLASS_FUNC(ContactPatchResult, set)
-        .DEF_CLASS_FUNC(ContactPatchResult, check);
+        .DEF_CLASS_FUNC(ContactPatchResult, check)
+        .def(SerializableVisitor<ContactPatchResult>())
+        .def(PrintableVisitor<ContactPatchResult>());
   }
 
   if (!eigenpy::register_symbolic_link_to_registered_type<
