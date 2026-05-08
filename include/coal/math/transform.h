@@ -233,10 +233,8 @@ class COAL_DLLAPI Transform3s {
     const Eigen::IOFormat vfmt =
         Eigen::IOFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ",
                         ", ", "", "", "[", "]");
-    // clang-format off
     os << prefix << "  Rotation:\n" << R.format(mfmt) << ",\n";
     os << prefix << "  Translation: " << T.format(vfmt) << ",\n";
-    // clang-format on
   }
 
   /// \copydoc disp
