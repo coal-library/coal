@@ -77,8 +77,18 @@ class COAL_DLLAPI ComputeDistance {
                     DistanceResult& result) const;
 
   bool operator==(const ComputeDistance& other) const {
-    return o1 == other.o1 && o2 == other.o2 && swap_geoms == other.swap_geoms &&
-           solver == other.solver && func == other.func;
+    COAL_EQUAL_OPERATOR_CHECK(((o1 == nullptr && other.o1 == nullptr) ||
+                               (o1 != nullptr && other.o1 != nullptr)));
+    COAL_EQUAL_OPERATOR_CHECK(((o2 == nullptr && other.o2 == nullptr) ||
+                               (o2 != nullptr && other.o2 != nullptr)));
+    if ((o1 && other.o1) && (o1 != other.o1))
+      COAL_EQUAL_OPERATOR_CHECK(*o1 == *other.o1);
+    if ((o2 && other.o2) && (o2 != other.o2))
+      COAL_EQUAL_OPERATOR_CHECK(*o2 == *other.o2);
+    COAL_EQUAL_OPERATOR_CHECK(swap_geoms == other.swap_geoms);
+    COAL_EQUAL_OPERATOR_CHECK(solver == other.solver);
+    COAL_EQUAL_OPERATOR_CHECK(func == other.func);
+    return true;
   }
 
   bool operator!=(const ComputeDistance& other) const {
