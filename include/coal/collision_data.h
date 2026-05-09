@@ -164,6 +164,15 @@ struct COAL_DLLAPI Contact {
 
   Scalar getDistanceToCollision(const CollisionRequest& request) const;
 
+  /// @brief (re)Map the pointers o1/o2 to the provided collision objects.
+  /// This is useful when deserializing a contact, as the pointers to the
+  /// collision objects are not valid anymore and need to be remapped to the
+  /// collision objects in the current context.
+  void remap(const CollisionGeometry* new_o1, const CollisionGeometry* new_o2) {
+    o1 = new_o1;
+    o2 = new_o2;
+  }
+
   /// \brief Prints the contact to the provided output stream.
   void disp(std::ostream& os, const std::string& prefix = "") const {
     using namespace std;
@@ -1389,6 +1398,15 @@ struct COAL_DLLAPI DistanceResult : QueryResult {
       : min_distance(min_distance_), o1(NULL), o2(NULL), b1(NONE), b2(NONE) {
     const Vec3s nan(Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN()));
     nearest_points[0] = nearest_points[1] = normal = nan;
+  }
+
+  /// @brief (re)Map the pointers o1/o2 to the provided collision objects.
+  /// This is useful when deserializing a result, as the pointers to the
+  /// collision objects are not valid anymore and need to be remapped to the
+  /// collision objects in the current context.
+  void remap(const CollisionGeometry* o1_, const CollisionGeometry* o2_) {
+    o1 = o1_;
+    o2 = o2_;
   }
 
   /// @brief add distance information into the result
