@@ -76,6 +76,9 @@
     COAL_THROW_PRETTY(message, exception);                  \
   }
 
+/// @brief Macro to be used in an equality operator and return false if the
+/// boolean is false. This is useful for debugging as this macro can be
+/// overridden to throw an exception, print a message etc.
 #ifndef COAL_EQUAL_OPERATOR_CHECK
 #define COAL_EQUAL_OPERATOR_CHECK(boolean) \
   if (!(boolean)) {                        \
