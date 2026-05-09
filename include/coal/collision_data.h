@@ -115,6 +115,24 @@ struct COAL_DLLAPI Contact {
         Vec3s::Constant(std::numeric_limits<Scalar>::max());
   }
 
+  /// @brief Copy constructor.
+  /// This constructor does a raw copy of the contact information, including the
+  /// pointers to the collision geometries.
+  Contact(const Contact& other) = default;
+  Contact& operator=(const Contact& other) = default;
+
+  /// @brief Copy constructor using an other contact and two CollisionGeometry
+  /// pointers. This constructor allows to copy the contact information from an
+  /// other contact, but remap the pointers to the collision geometries to the
+  /// provided ones. This is usefull in a deep-copy context, when the collision
+  /// geometries are also copied and the pointers in the contact need to be
+  /// remapped to the new collision geometries.
+  Contact(const Contact& other, const CollisionGeometry* new_o1,
+          const CollisionGeometry* new_o2)
+      : Contact(other) {
+    resolveReferences(new_o1, new_o2);
+  }
+
   Contact(const CollisionGeometry* o1_, const CollisionGeometry* o2_, int b1_,
           int b2_)
       : o1(o1_), o2(o2_), b1(b1_), b2(b2_) {
@@ -555,10 +573,41 @@ struct COAL_DLLAPI CollisionResult : QueryResult {
   std::array<Vec3s, 2> nearest_points;
 
  public:
+  /// @brief Default constructor.
   CollisionResult()
       : distance_lower_bound((std::numeric_limits<Scalar>::max)()) {
     nearest_points[0] = nearest_points[1] = normal =
         Vec3s::Constant(std::numeric_limits<Scalar>::max());
+  }
+
+  /// @brief Copy constructor.
+  CollisionResult(const CollisionResult& other) = default;
+  CollisionResult& operator=(const CollisionResult& other) = default;
+
+  /// @brief Copy constructor from an other CollisionResult and two vectors of
+  /// CollisionGeometry pointers.
+  /// This constructor allows to copy the collision result information from an
+  /// other collision result, but remap the pointers to the collision geometries
+  /// to the provided ones. This is usefull in a deep-copy context, when the
+  /// collision geometries are also copied and the pointers in the collision
+  /// result need to be remapped to the new collision geometries.
+  CollisionResult(const CollisionResult& other,
+                  const std::vector<const CollisionGeometry*>& new_geometries1,
+                  const std::vector<const CollisionGeometry*>& new_geometries2)
+      : CollisionResult(other) {
+    COAL_THROW_PRETTY_IF(
+        new_geometries1.size() != new_geometries2.size(), std::invalid_argument,
+        "The two vectors of collision geometries must have the same size.");
+    COAL_THROW_PRETTY_IF(
+        (contacts.size() != new_geometries1.size()) ||
+            (contacts.size() != new_geometries2.size()),
+        std::invalid_argument,
+        "The size of the vectors of collision geometries must be equal to "
+        "the number of contacts in the collision result.");
+
+    for (std::size_t i = 0; i < contacts.size(); ++i) {
+      contacts[i].resolveReferences(new_geometries1[i], new_geometries2[i]);
+    }
   }
 
   /// @brief Update the lower bound only if the distance is inferior.
@@ -1429,10 +1478,29 @@ struct COAL_DLLAPI DistanceResult : QueryResult {
   /// @brief invalid contact primitive information
   static const int NONE = -1;
 
+  /// @brief Default constructor.
   DistanceResult(Scalar min_distance_ = (std::numeric_limits<Scalar>::max)())
       : min_distance(min_distance_), o1(NULL), o2(NULL), b1(NONE), b2(NONE) {
     const Vec3s inf(Vec3s::Constant(std::numeric_limits<Scalar>::max()));
     nearest_points[0] = nearest_points[1] = normal = inf;
+  }
+
+  /// @brief Copy constructor.
+  /// This constructor does a raw copy of the contact information, including the
+  /// pointers to the collision geometries.
+  DistanceResult(const DistanceResult& other) = default;
+  DistanceResult& operator=(const DistanceResult& other) = default;
+
+  /// @brief Copy constructor using another result and two CollisionGeometry
+  /// pointers. This constructor allows to copy the contact information from an
+  /// other contact, but remap the pointers to the collision geometries to the
+  /// provided ones. This is usefull in a deep-copy context, when the collision
+  /// geometries are also copied and the pointers in the contact need to be
+  /// remapped to the new collision geometries.
+  DistanceResult(const DistanceResult& other, const CollisionGeometry* new_o1,
+                 const CollisionGeometry* new_o2)
+      : DistanceResult(other) {
+    resolveReferences(new_o1, new_o2);
   }
 
   /// @brief (re)Map the pointers o1/o2 to the provided collision objects.
