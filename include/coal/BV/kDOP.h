@@ -105,7 +105,8 @@ class COAL_DLLAPI KDOP {
 
   /// @brief Equality operator
   bool operator==(const KDOP& other) const {
-    return (dist_ == other.dist_).all();
+    COAL_EQUAL_OPERATOR_CHECK((dist_ == other.dist_).all());
+    return true;
   }
 
   /// @brief Difference operator

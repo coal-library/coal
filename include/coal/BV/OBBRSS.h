@@ -38,6 +38,7 @@
 #ifndef COAL_OBBRSS_H
 #define COAL_OBBRSS_H
 
+#include "coal/fwd.hh"
 #include "coal/BV/OBB.h"
 #include "coal/BV/RSS.h"
 
@@ -61,7 +62,9 @@ struct COAL_DLLAPI OBBRSS {
 
   /// @brief Equality operator
   bool operator==(const OBBRSS& other) const {
-    return obb == other.obb && rss == other.rss;
+    COAL_EQUAL_OPERATOR_CHECK(obb == other.obb);
+    COAL_EQUAL_OPERATOR_CHECK(rss == other.rss);
+    return true;
   }
 
   /// @brief Difference operator

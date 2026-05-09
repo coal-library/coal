@@ -38,6 +38,7 @@
 #ifndef COAL_RSS_H
 #define COAL_RSS_H
 
+#include "coal/fwd.hh"
 #include "coal/data_types.h"
 
 #include <boost/math/constants/constants.hpp>
@@ -77,9 +78,12 @@ struct COAL_DLLAPI RSS {
 
   /// @brief Equality operator
   bool operator==(const RSS& other) const {
-    return axes == other.axes && Tr == other.Tr &&
-           length[0] == other.length[0] && length[1] == other.length[1] &&
-           radius == other.radius;
+    COAL_EQUAL_OPERATOR_CHECK(axes == other.axes);
+    COAL_EQUAL_OPERATOR_CHECK(Tr == other.Tr);
+    COAL_EQUAL_OPERATOR_CHECK(length[0] == other.length[0]);
+    COAL_EQUAL_OPERATOR_CHECK(length[1] == other.length[1]);
+    COAL_EQUAL_OPERATOR_CHECK(radius == other.radius);
+    return true;
   }
 
   /// @brief Difference operator

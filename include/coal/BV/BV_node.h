@@ -74,9 +74,10 @@ struct COAL_DLLAPI BVNodeBase {
 
   /// @brief Equality operator
   bool operator==(const BVNodeBase& other) const {
-    return first_child == other.first_child &&
-           first_primitive == other.first_primitive &&
-           num_primitives == other.num_primitives;
+    COAL_EQUAL_OPERATOR_CHECK(first_child == other.first_child);
+    COAL_EQUAL_OPERATOR_CHECK(first_primitive == other.first_primitive);
+    COAL_EQUAL_OPERATOR_CHECK(num_primitives == other.num_primitives);
+    return true;
   }
 
   /// @brief Difference operator
@@ -111,7 +112,9 @@ struct COAL_DLLAPI BVNode : public BVNodeBase {
 
   /// @brief Equality operator
   bool operator==(const BVNode& other) const {
-    return Base::operator==(other) && bv == other.bv;
+    COAL_EQUAL_OPERATOR_CHECK(Base::operator==(other));
+    COAL_EQUAL_OPERATOR_CHECK(bv == other.bv);
+    return true;
   }
 
   /// @brief Difference operator
