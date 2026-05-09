@@ -504,7 +504,7 @@ struct COAL_DLLAPI GJKSolver {
         break;
       case details::GJK::Collision:
         if (!compute_penetration) {
-          // Skip EPA and set the witness points and the normal to nans.
+          // Skip EPA and set the witness points and the normal to inf.
           GJKCollisionExtractWitnessPointsAndNormal(tf1, distance, p1, p2,
                                                     normal);
         } else {
@@ -601,8 +601,8 @@ struct COAL_DLLAPI GJKSolver {
     this->support_func_cached_guess = this->gjk.support_hint;
 
     distance = Scalar(this->gjk.distance);
-    p1 = p2 = normal =
-        Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN());
+    // we set to max as a default value
+    p1 = p2 = normal = Vec3s::Constant(std::numeric_limits<Scalar>::max());
     // If we absolutely want to return some witness points, we could use
     // the following code (or simply merge the early stopped case with the
     // valid case below):
@@ -660,8 +660,7 @@ struct COAL_DLLAPI GJKSolver {
     this->support_func_cached_guess = this->gjk.support_hint;
 
     distance = Scalar(this->gjk.distance);
-    p1 = p2 = normal =
-        Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN());
+    p1 = p2 = normal = Vec3s::Constant(std::numeric_limits<Scalar>::max());
   }
 
   void EPAExtractWitnessPointsAndNormal(const Transform3s& tf1,
