@@ -43,7 +43,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add missing calls to computeLocalAABB for internal objects ([#819](https://github.com/coal-library/coal/pull/819))
 - Add missing override specifiers ([#820](https://github.com/coal-library/coal/pull/820))
 - Fix Python error when accessing `geometry.convex` on BVH geometris ([#833](https://github.com/coal-library/coal/pull/833))
-- Fix `Contact` and `CollisionResult` operator==: if the `o1/o2` pointers are different, we check whether or not the underlying geometries are the same ([#856](https://github.com/coal-library/coal/pull/820)). This is typically important in the context of serialization.
+- Fix `Contact`, `CollisionResult` and `DistanceResult` operator== ([#856](https://github.com/coal-library/coal/pull/820)):
+  - If the `o1/o2` pointers are different, we check whether or not the underlying geometries are the same. This is typically important in the context of serialization.
+  - Fix using NaN to initialize collision data (`Contact`, `CollisionResult`, `DistanceResult`). This prevents the absurd `Contact contact; contact == contact; // false` problem.
+  - Fix NaNs coming from GJK/EPA when the algorithms (correctly) early stopped. NaNs indicate failure. In the case that GJK/EPA early stopped but ran fine, we set non-computed data to inf instead of NaN.
 
 ### Changed
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))
