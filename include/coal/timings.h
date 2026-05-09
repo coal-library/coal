@@ -26,6 +26,16 @@ struct CPUTimes {
     system += rhs.system;
     return *this;
   }
+
+  bool operator==(const CPUTimes& rhs) const {
+    if (this == &rhs) return true;
+
+    COAL_EQUAL_OPERATOR_CHECK(wall == rhs.wall);
+    COAL_EQUAL_OPERATOR_CHECK(user == rhs.user);
+    COAL_EQUAL_OPERATOR_CHECK(system == rhs.system);
+
+    return true;
+  }
 };
 
 inline CPUTimes operator+(CPUTimes lhs, const CPUTimes& rhs) {

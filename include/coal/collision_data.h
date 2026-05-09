@@ -152,16 +152,38 @@ struct COAL_DLLAPI Contact {
     return b1 < other.b1;
   }
 
+  /// @brief Equality operator. Two contacts are considered equal if they have
+  /// the same normal, the same nearest points and the same penetration depth
+  /// and if the shapes they point to are equal.
+  /// Note: two contacts may be equal even if they point to different collision
+  /// geometries o1/o2, as long as these geometries are equal.
   bool operator==(const Contact& other) const {
-    return o1 == other.o1 && o2 == other.o2 && b1 == other.b1 &&
-           b2 == other.b2 && normal == other.normal && pos == other.pos &&
-           nearest_points[0] == other.nearest_points[0] &&
-           nearest_points[1] == other.nearest_points[1] &&
-           penetration_depth == other.penetration_depth;
+    if (this == &other) return true;
+
+    COAL_EQUAL_OPERATOR_CHECK(((o1 == nullptr && other.o1 == nullptr) ||
+                               (o1 != nullptr && other.o1 != nullptr)));
+    COAL_EQUAL_OPERATOR_CHECK(((o2 == nullptr && other.o2 == nullptr) ||
+                               (o2 != nullptr && other.o2 != nullptr)));
+    if ((o1 && other.o1) && (o1 != other.o1))
+      COAL_EQUAL_OPERATOR_CHECK(*o1 == *other.o1);
+    if ((o2 && other.o2) && (o2 != other.o2))
+      COAL_EQUAL_OPERATOR_CHECK(*o2 == *other.o2);
+    COAL_EQUAL_OPERATOR_CHECK(b1 == other.b1);
+    COAL_EQUAL_OPERATOR_CHECK(b2 == other.b2);
+    COAL_EQUAL_OPERATOR_CHECK(normal == other.normal);
+    COAL_EQUAL_OPERATOR_CHECK(pos == other.pos);
+    COAL_EQUAL_OPERATOR_CHECK(nearest_points[0] == other.nearest_points[0]);
+    COAL_EQUAL_OPERATOR_CHECK(nearest_points[1] == other.nearest_points[1]);
+    COAL_EQUAL_OPERATOR_CHECK(penetration_depth == other.penetration_depth);
+
+    return true;
   }
 
+  /// @brief Inequality operator. Negation of the equality operator.
   bool operator!=(const Contact& other) const { return !(*this == other); }
 
+  /// @brief Returns the distance to collision: penetration depth - security
+  /// margin.
   Scalar getDistanceToCollision(const CollisionRequest& request) const;
 
   /// @brief (re)Map the pointers o1/o2 to the provided collision objects.
@@ -356,6 +378,18 @@ struct COAL_DLLAPI QueryResult {
   QueryResult()
       : cached_gjk_guess(Vec3s::Zero()),
         cached_support_func_guess(support_func_guess_t::Constant(-1)) {}
+
+  /// @brief Comparison operator.
+  inline bool operator==(const QueryResult& other) const {
+    if (this == &other) return true;
+
+    COAL_EQUAL_OPERATOR_CHECK(cached_gjk_guess == other.cached_gjk_guess);
+    COAL_EQUAL_OPERATOR_CHECK(cached_support_func_guess ==
+                              other.cached_support_func_guess);
+    COAL_EQUAL_OPERATOR_CHECK(timings == other.timings);
+
+    return true;
+  }
 
   /// @brief Prints the query result to the provided output stream.
   void disp(std::ostream& os, const std::string& prefix = "") const {
@@ -1463,26 +1497,30 @@ struct COAL_DLLAPI DistanceResult : QueryResult {
     timings.clear();
   }
 
-  /// @brief whether two DistanceResult are the same or not
+  /// @brief Whether two DistanceResult are the same or not.
+  /// This compares the two results terms by terms.
+  /// Note: two results may be equal even if they point to different collision
+  /// geometries o1/o2, as long as these geometries are equal.
   inline bool operator==(const DistanceResult& other) const {
-    bool is_same = min_distance == other.min_distance &&
-                   nearest_points[0] == other.nearest_points[0] &&
-                   nearest_points[1] == other.nearest_points[1] &&
-                   normal == other.normal && o1 == other.o1 && o2 == other.o2 &&
-                   b1 == other.b1 && b2 == other.b2;
+    if (this == &other) return true;
 
-    // TODO: check also that two GeometryObject are indeed equal.
-    if ((o1 != NULL) ^ (other.o1 != NULL)) return false;
-    is_same &= (o1 == other.o1);
-    //    else if (o1 != NULL and other.o1 != NULL) is_same &= *o1 ==
-    //    *other.o1;
+    COAL_EQUAL_OPERATOR_CHECK((QueryResult::operator==(other)));
+    COAL_EQUAL_OPERATOR_CHECK(min_distance == other.min_distance);
+    COAL_EQUAL_OPERATOR_CHECK(nearest_points[0] == other.nearest_points[0]);
+    COAL_EQUAL_OPERATOR_CHECK(nearest_points[1] == other.nearest_points[1]);
+    COAL_EQUAL_OPERATOR_CHECK(normal == other.normal);
+    COAL_EQUAL_OPERATOR_CHECK(((o1 == nullptr && other.o1 == nullptr) ||
+                               (o1 != nullptr && other.o1 != nullptr)));
+    COAL_EQUAL_OPERATOR_CHECK(((o2 == nullptr && other.o2 == nullptr) ||
+                               (o2 != nullptr && other.o2 != nullptr)));
+    if ((o1 && other.o1) && (o1 != other.o1))
+      COAL_EQUAL_OPERATOR_CHECK(*o1 == *other.o1);
+    if ((o2 && other.o2) && (o2 != other.o2))
+      COAL_EQUAL_OPERATOR_CHECK(*o2 == *other.o2);
+    COAL_EQUAL_OPERATOR_CHECK(b1 == other.b1);
+    COAL_EQUAL_OPERATOR_CHECK(b2 == other.b2);
 
-    if ((o2 != NULL) ^ (other.o2 != NULL)) return false;
-    is_same &= (o2 == other.o2);
-    //    else if (o2 != NULL and other.o2 != NULL) is_same &= *o2 ==
-    //    *other.o2;
-
-    return is_same;
+    return true;
   }
 
   /// @brief whether two DistanceResult are different or not
