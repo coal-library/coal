@@ -19,7 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add print methods for collision data (`Contact`, `CollisionRequest`, `CollisionResult`, `DistanceRequest`, `DistanceResult`, `ContactPatch`, `ContactPatchRequest` and `ContactPatchResult`) ([854](https://github.com/coal-library/coal/pull/854)).
   - One can now do `std::cout << contact` for example.
   - Added the `PrintableVisitor` in python bindings so that `print(contact)` works in python as well
-- Add `remap` method to `Contact` and `DistanceResult` to remap the `o1/o2` pointers (typically after serialization/deserialization) ([855](https://github.com/coal-library/coal/pull/855)).
+- Added `resolveReferences` method to `Contact` and `DistanceResult` to remap the `o1/o2` pointers (typically after serialization/deserialization) ([855](https://github.com/coal-library/coal/pull/855)).
+- Added copy constructors to `Contact::Contact(const Contact& other, const CollisionGeometry* new_o1, const CollisionGeometry* new_o2)` and `DistanceResult::DistanceResult(const DistanceResult& other, const CollisionGeometry* new_o1, const CollisionGeometry* new_o2)` to allow copying a `Contact` or `DistanceResult` while remapping the `o1/o2` pointers to new geometries. This is typically useful in the context of deep-copying ([#856](https://github.com/coal-library/coal/pull/820)).
 
 ### Removed
 - Remove direct dependency to ([#744](https://github.com/coal-library/coal/pull/744)):
