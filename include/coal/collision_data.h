@@ -121,16 +121,17 @@ struct COAL_DLLAPI Contact {
   Contact(const Contact& other) = default;
   Contact& operator=(const Contact& other) = default;
 
-  /// @brief Copy constructor using an other contact and two CollisionGeometry
-  /// pointers. This constructor allows to copy the contact information from an
-  /// other contact, but remap the pointers to the collision geometries to the
-  /// provided ones. This is usefull in a deep-copy context, when the collision
-  /// geometries are also copied and the pointers in the contact need to be
-  /// remapped to the new collision geometries.
-  Contact(const Contact& other, const CollisionGeometry* new_o1,
-          const CollisionGeometry* new_o2)
+  /// @brief Copy constructor using an other contact and a pair of
+  /// CollisionGeometry pointers. This constructor allows to copy the contact
+  /// information from an other contact, but remap the pointers to the collision
+  /// geometries to the provided ones. This is usefull in a deep-copy context,
+  /// when the collision geometries are also copied and the pointers in the
+  /// contact need to be remapped to the new collision geometries.
+  Contact(
+      const Contact& other,
+      std::pair<const CollisionGeometry*, const CollisionGeometry*> new_o1_o2)
       : Contact(other) {
-    resolveReferences(new_o1, new_o2);
+    resolveReferences(new_o1_o2);
   }
 
   Contact(const CollisionGeometry* o1_, const CollisionGeometry* o2_, int b1_,
@@ -204,14 +205,14 @@ struct COAL_DLLAPI Contact {
   /// margin.
   Scalar getDistanceToCollision(const CollisionRequest& request) const;
 
-  /// @brief (re)Map the pointers o1/o2 to the provided collision objects.
+  /// @brief Resolve internal references to the pair of collision geometries.
   /// This is useful when deserializing a contact, as the pointers to the
   /// collision objects are not valid anymore and need to be remapped to the
   /// collision objects in the current context.
-  void resolveReferences(const CollisionGeometry* new_o1,
-                         const CollisionGeometry* new_o2) {
-    o1 = new_o1;
-    o2 = new_o2;
+  void resolveReferences(
+      std::pair<const CollisionGeometry*, const CollisionGeometry*> new_o1_o2) {
+    o1 = new_o1_o2.first;
+    o2 = new_o1_o2.second;
   }
 
   /// \brief Prints the contact to the provided output stream.
@@ -591,22 +592,29 @@ struct COAL_DLLAPI CollisionResult : QueryResult {
   /// to the provided ones. This is usefull in a deep-copy context, when the
   /// collision geometries are also copied and the pointers in the collision
   /// result need to be remapped to the new collision geometries.
-  CollisionResult(const CollisionResult& other,
-                  const std::vector<const CollisionGeometry*>& new_geometries1,
-                  const std::vector<const CollisionGeometry*>& new_geometries2)
+  CollisionResult(
+      const CollisionResult& other,
+      const std::vector<std::pair<const CollisionGeometry*,
+                                  const CollisionGeometry*>>& new_geometries)
       : CollisionResult(other) {
+    resolveReferences(new_geometries);
+  }
+
+  /// @brief Resolve the internal points the pointers in the contacts to the
+  /// provided pairs of collision geometries. This is useful when deep-copying
+  /// or deserializing a collision result, as the pointers to the collision
+  /// objects are not valid anymore and need to be remapped to the collision
+  /// objects in the current context.
+  void resolveReferences(
+      const std::vector<std::pair<const CollisionGeometry*,
+                                  const CollisionGeometry*>>& new_geometries) {
     COAL_THROW_PRETTY_IF(
-        new_geometries1.size() != new_geometries2.size(), std::invalid_argument,
-        "The two vectors of collision geometries must have the same size.");
-    COAL_THROW_PRETTY_IF(
-        (contacts.size() != new_geometries1.size()) ||
-            (contacts.size() != new_geometries2.size()),
-        std::invalid_argument,
+        contacts.size() != new_geometries.size(), std::invalid_argument,
         "The size of the vectors of collision geometries must be equal to "
         "the number of contacts in the collision result.");
 
     for (std::size_t i = 0; i < contacts.size(); ++i) {
-      contacts[i].resolveReferences(new_geometries1[i], new_geometries2[i]);
+      contacts[i].resolveReferences(new_geometries[i]);
     }
   }
 
@@ -1491,26 +1499,27 @@ struct COAL_DLLAPI DistanceResult : QueryResult {
   DistanceResult(const DistanceResult& other) = default;
   DistanceResult& operator=(const DistanceResult& other) = default;
 
-  /// @brief Copy constructor using another result and two CollisionGeometry
-  /// pointers. This constructor allows to copy the contact information from an
-  /// other contact, but remap the pointers to the collision geometries to the
-  /// provided ones. This is usefull in a deep-copy context, when the collision
-  /// geometries are also copied and the pointers in the contact need to be
-  /// remapped to the new collision geometries.
-  DistanceResult(const DistanceResult& other, const CollisionGeometry* new_o1,
-                 const CollisionGeometry* new_o2)
+  /// @brief Copy constructor using another result and a pair of
+  /// CollisionGeometry pointers. This constructor allows to copy the contact
+  /// information from an other contact, but remap the pointers to the collision
+  /// geometries to the provided ones. This is usefull in a deep-copy context,
+  /// when the collision geometries are also copied and the pointers in the
+  /// contact need to be remapped to the new collision geometries.
+  DistanceResult(
+      const DistanceResult& other,
+      std::pair<const CollisionGeometry*, const CollisionGeometry*> new_o1_o2)
       : DistanceResult(other) {
-    resolveReferences(new_o1, new_o2);
+    resolveReferences(new_o1_o2);
   }
 
   /// @brief (re)Map the pointers o1/o2 to the provided collision objects.
   /// This is useful when deserializing a result, as the pointers to the
   /// collision objects are not valid anymore and need to be remapped to the
   /// collision objects in the current context.
-  void resolveReferences(const CollisionGeometry* o1_,
-                         const CollisionGeometry* o2_) {
-    o1 = o1_;
-    o2 = o2_;
+  void resolveReferences(
+      std::pair<const CollisionGeometry*, const CollisionGeometry*> new_o1_o2) {
+    o1 = new_o1_o2.first;
+    o2 = new_o1_o2.second;
   }
 
   /// @brief add distance information into the result

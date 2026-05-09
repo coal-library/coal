@@ -286,7 +286,8 @@ BOOST_AUTO_TEST_CASE(test_collision_data) {
   // we need to add a post load hook to remap the contact's internal pointers to
   // the shapes
   Contact contact0(&sphere, &box, 1, 2, Vec3s::Ones(), Vec3s::Zero(), -10.);
-  test_serialization(contact0, [&](Contact& c) { c.remap(&sphere, &box); });
+  test_serialization(contact0,
+                     [&](Contact& c) { c.resolveReferences({&sphere, &box}); });
 
   // testing serialization with NULL pointers
   Contact contact1(NULL, NULL, 1, 2, Vec3s::Ones(), Vec3s::Zero(), -10.);
@@ -307,15 +308,7 @@ BOOST_AUTO_TEST_CASE(test_collision_data) {
   collision_result.nearest_points[0].setRandom();
   collision_result.nearest_points[1].setRandom();
   test_serialization(collision_result, [&](CollisionResult& cr) {
-    for (size_t i = 0; i < cr.numContacts(); ++i) {
-      Contact c = cr.getContact(i);
-      // case 0: remap to sphere/box
-      if (i == 0) c.remap(&sphere, &box);
-      // case 1: remap to NULL/NULL
-      if (i == 1) c.remap(NULL, NULL);
-      // case 2: do nothing
-      cr.setContact(i, c);
-    }
+    cr.resolveReferences({{&sphere, &box}, {NULL, NULL}, {NULL, NULL}});
   });
 
   DistanceRequest distance_request(true, 1., 2.);
@@ -328,8 +321,9 @@ BOOST_AUTO_TEST_CASE(test_collision_data) {
   distance_result.nearest_points[1].setRandom();
   distance_result.o1 = &sphere;
   distance_result.o2 = &box;
-  test_serialization(distance_result,
-                     [&](DistanceResult& dr) { dr.remap(&sphere, &box); });
+  test_serialization(distance_result, [&](DistanceResult& dr) {
+    dr.resolveReferences({&sphere, &box});
+  });
 
   {
     // Serializing contact patches.
