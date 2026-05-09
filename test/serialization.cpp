@@ -282,17 +282,18 @@ BOOST_AUTO_TEST_CASE(test_collision_data) {
   Sphere sphere(1.);
   Box box(Vec3s::Ones());
 
-  auto contact_remap = [&](Contact& c) { c.remap(&sphere, &box); };
+  Contact contact0(&sphere, &box, 1, 2, Vec3s::Ones(), Vec3s::Zero(), -10.);
+  test_serialization(contact0, [&](Contact& c) { c.remap(&sphere, &box); });
 
-  Contact contact(&sphere, &box, 1, 2, Vec3s::Ones(), Vec3s::Zero(), -10.);
-  test_serialization(contact, contact_remap);
+  Contact contact1(NULL, NULL, 1, 2, Vec3s::Ones(), Vec3s::Zero(), -10.);
+  test_serialization(contact1);
 
   CollisionRequest collision_request(CONTACT, 10);
   test_serialization(collision_request);
 
   CollisionResult collision_result;
-  collision_result.addContact(contact);
-  collision_result.addContact(contact);
+  collision_result.addContact(contact0);
+  collision_result.addContact(contact1);
   collision_result.distance_lower_bound = Scalar(0.1);
   collision_result.normal.setOnes();
   collision_result.nearest_points[0].setRandom();
@@ -300,7 +301,8 @@ BOOST_AUTO_TEST_CASE(test_collision_data) {
   test_serialization(collision_result, [&](CollisionResult& cr) {
     for (size_t i = 0; i < cr.numContacts(); ++i) {
       Contact c = cr.getContact(i);
-      contact_remap(c);
+      if (i == 0) c.remap(&sphere, &box);
+      if (i == 1) c.remap(NULL, NULL);
       cr.setContact(i, c);
     }
   });
