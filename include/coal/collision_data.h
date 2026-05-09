@@ -112,7 +112,7 @@ struct COAL_DLLAPI Contact {
   Contact() : o1(NULL), o2(NULL), b1(NONE), b2(NONE) {
     penetration_depth = (std::numeric_limits<Scalar>::max)();
     nearest_points[0] = nearest_points[1] = normal = pos =
-        Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN());
+        Vec3s::Constant(std::numeric_limits<Scalar>::max());
   }
 
   Contact(const CollisionGeometry* o1_, const CollisionGeometry* o2_, int b1_,
@@ -120,7 +120,7 @@ struct COAL_DLLAPI Contact {
       : o1(o1_), o2(o2_), b1(b1_), b2(b2_) {
     penetration_depth = (std::numeric_limits<Scalar>::max)();
     nearest_points[0] = nearest_points[1] = normal = pos =
-        Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN());
+        Vec3s::Constant(std::numeric_limits<Scalar>::max());
   }
 
   Contact(const CollisionGeometry* o1_, const CollisionGeometry* o2_, int b1_,
@@ -557,7 +557,7 @@ struct COAL_DLLAPI CollisionResult : QueryResult {
   CollisionResult()
       : distance_lower_bound((std::numeric_limits<Scalar>::max)()) {
     nearest_points[0] = nearest_points[1] = normal =
-        Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN());
+        Vec3s::Constant(std::numeric_limits<Scalar>::max());
   }
 
   /// @brief Update the lower bound only if the distance is inferior.
@@ -629,7 +629,7 @@ struct COAL_DLLAPI CollisionResult : QueryResult {
     contacts.clear();
     timings.clear();
     nearest_points[0] = nearest_points[1] = normal =
-        Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN());
+        Vec3s::Constant(std::numeric_limits<Scalar>::max());
   }
 
   /// @brief reposition Contact objects when fcl inverts them
@@ -1430,8 +1430,8 @@ struct COAL_DLLAPI DistanceResult : QueryResult {
 
   DistanceResult(Scalar min_distance_ = (std::numeric_limits<Scalar>::max)())
       : min_distance(min_distance_), o1(NULL), o2(NULL), b1(NONE), b2(NONE) {
-    const Vec3s nan(Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN()));
-    nearest_points[0] = nearest_points[1] = normal = nan;
+    const Vec3s inf(Vec3s::Constant(std::numeric_limits<Scalar>::max()));
+    nearest_points[0] = nearest_points[1] = normal = inf;
   }
 
   /// @brief (re)Map the pointers o1/o2 to the provided collision objects.
@@ -1487,13 +1487,13 @@ struct COAL_DLLAPI DistanceResult : QueryResult {
 
   /// @brief clear the result
   void clear() {
-    const Vec3s nan(Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN()));
+    const Vec3s inf(Vec3s::Constant(std::numeric_limits<Scalar>::max()));
     min_distance = (std::numeric_limits<Scalar>::max)();
     o1 = NULL;
     o2 = NULL;
     b1 = NONE;
     b2 = NONE;
-    nearest_points[0] = nearest_points[1] = normal = nan;
+    nearest_points[0] = nearest_points[1] = normal = inf;
     timings.clear();
   }
 

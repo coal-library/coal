@@ -282,11 +282,18 @@ BOOST_AUTO_TEST_CASE(test_collision_data) {
   Sphere sphere(1.);
   Box box(Vec3s::Ones());
 
+  // testing serialization with valid pointers
+  // we need to add a post load hook to remap the contact's internal pointers to
+  // the shapes
   Contact contact0(&sphere, &box, 1, 2, Vec3s::Ones(), Vec3s::Zero(), -10.);
   test_serialization(contact0, [&](Contact& c) { c.remap(&sphere, &box); });
 
+  // testing serialization with NULL pointers
   Contact contact1(NULL, NULL, 1, 2, Vec3s::Ones(), Vec3s::Zero(), -10.);
   test_serialization(contact1);
+
+  Contact contact2;
+  test_serialization(contact2);
 
   CollisionRequest collision_request(CONTACT, 10);
   test_serialization(collision_request);
@@ -294,6 +301,7 @@ BOOST_AUTO_TEST_CASE(test_collision_data) {
   CollisionResult collision_result;
   collision_result.addContact(contact0);
   collision_result.addContact(contact1);
+  collision_result.addContact(contact2);
   collision_result.distance_lower_bound = Scalar(0.1);
   collision_result.normal.setOnes();
   collision_result.nearest_points[0].setRandom();
@@ -301,8 +309,11 @@ BOOST_AUTO_TEST_CASE(test_collision_data) {
   test_serialization(collision_result, [&](CollisionResult& cr) {
     for (size_t i = 0; i < cr.numContacts(); ++i) {
       Contact c = cr.getContact(i);
+      // case 0: remap to sphere/box
       if (i == 0) c.remap(&sphere, &box);
+      // case 1: remap to NULL/NULL
       if (i == 1) c.remap(NULL, NULL);
+      // case 2: do nothing
       cr.setContact(i, c);
     }
   });
