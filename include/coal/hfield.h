@@ -86,10 +86,15 @@ struct COAL_DLLAPI HFNodeBase {
 
   /// @brief Comparison operator
   bool operator==(const HFNodeBase& other) const {
-    return first_child == other.first_child && x_id == other.x_id &&
-           x_size == other.x_size && y_id == other.y_id &&
-           y_size == other.y_size && max_height == other.max_height &&
-           contact_active_faces == other.contact_active_faces;
+    COAL_EQUAL_OPERATOR_CHECK(first_child == other.first_child);
+    COAL_EQUAL_OPERATOR_CHECK(x_id == other.x_id);
+    COAL_EQUAL_OPERATOR_CHECK(x_size == other.x_size);
+    COAL_EQUAL_OPERATOR_CHECK(y_id == other.y_id);
+    COAL_EQUAL_OPERATOR_CHECK(y_size == other.y_size);
+    COAL_EQUAL_OPERATOR_CHECK(max_height == other.max_height);
+    COAL_EQUAL_OPERATOR_CHECK(contact_active_faces ==
+                              other.contact_active_faces);
+    return true;
   }
 
   /// @brief Difference operator
@@ -135,7 +140,9 @@ struct COAL_DLLAPI HFNode : public HFNodeBase {
 
   /// @brief Equality operator
   bool operator==(const HFNode& other) const {
-    return Base::operator==(other) && bv == other.bv;
+    COAL_EQUAL_OPERATOR_CHECK(Base::operator==(other));
+    COAL_EQUAL_OPERATOR_CHECK(bv == other.bv);
+    return true;
   }
 
   /// @brief Difference operator
@@ -503,11 +510,16 @@ class COAL_DLLAPI HeightField : public CollisionGeometry {
     if (other_ptr == nullptr) return false;
     const HeightField& other = *other_ptr;
 
-    return x_dim == other.x_dim && y_dim == other.y_dim &&
-           heights == other.heights && min_height == other.min_height &&
-           max_height == other.max_height && x_grid == other.x_grid &&
-           y_grid == other.y_grid && bvs == other.bvs &&
-           num_bvs == other.num_bvs;
+    COAL_EQUAL_OPERATOR_CHECK(x_dim == other.x_dim);
+    COAL_EQUAL_OPERATOR_CHECK(y_dim == other.y_dim);
+    COAL_EQUAL_OPERATOR_CHECK(heights == other.heights);
+    COAL_EQUAL_OPERATOR_CHECK(min_height == other.min_height);
+    COAL_EQUAL_OPERATOR_CHECK(max_height == other.max_height);
+    COAL_EQUAL_OPERATOR_CHECK(x_grid == other.x_grid);
+    COAL_EQUAL_OPERATOR_CHECK(y_grid == other.y_grid);
+    COAL_EQUAL_OPERATOR_CHECK(bvs == other.bvs);
+    COAL_EQUAL_OPERATOR_CHECK(num_bvs == other.num_bvs);
+    return true;
   }
 };
 
