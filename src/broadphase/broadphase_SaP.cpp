@@ -840,7 +840,9 @@ SaPCollisionManager::SaPPair::SaPPair(CollisionObject* a, CollisionObject* b) {
 
 //==============================================================================
 bool SaPCollisionManager::SaPPair::operator==(const SaPPair& other) const {
-  return ((obj1 == other.obj1) && (obj2 == other.obj2));
+  COAL_EQUAL_OPERATOR_CHECK(obj1 == other.obj1);
+  COAL_EQUAL_OPERATOR_CHECK(obj2 == other.obj2);
+  return true;
 }
 
 //==============================================================================
