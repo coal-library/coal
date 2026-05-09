@@ -44,6 +44,7 @@
 
 #include "coal/config.hh"
 #include "coal/deprecated.hh"
+#include "coal/fwd.hh"
 
 #ifdef COAL_HAS_OCTOMAP
 #define OCTOMAP_VERSION_AT_LEAST(x, y, z) \
@@ -181,8 +182,10 @@ class TriangleTpl {
   static inline size_type size() { return 3; }
 
   bool operator==(const TriangleTpl& other) const {
-    return vids[0] == other.vids[0] && vids[1] == other.vids[1] &&
-           vids[2] == other.vids[2];
+    COAL_EQUAL_OPERATOR_CHECK(vids[0] == other.vids[0]);
+    COAL_EQUAL_OPERATOR_CHECK(vids[1] == other.vids[1]);
+    COAL_EQUAL_OPERATOR_CHECK(vids[2] == other.vids[2]);
+    return true;
   }
 
   bool operator!=(const TriangleTpl& other) const { return !(*this == other); }
@@ -269,8 +272,11 @@ struct QuadrilateralTpl {
   static inline size_type size() { return 4; }
 
   bool operator==(const QuadrilateralTpl& other) const {
-    return vids[0] == other.vids[0] && vids[1] == other.vids[1] &&
-           vids[2] == other.vids[2] && vids[3] == other.vids[3];
+    COAL_EQUAL_OPERATOR_CHECK(vids[0] == other.vids[0]);
+    COAL_EQUAL_OPERATOR_CHECK(vids[1] == other.vids[1]);
+    COAL_EQUAL_OPERATOR_CHECK(vids[2] == other.vids[2]);
+    COAL_EQUAL_OPERATOR_CHECK(vids[3] == other.vids[3]);
+    return true;
   }
 
   bool operator!=(const QuadrilateralTpl& other) const {
