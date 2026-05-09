@@ -238,7 +238,7 @@ class COAL_DLLAPI CollisionObject {
   }
 
   bool operator==(const CollisionObject& other) const {
-    COAL_EQUAL_OPERATOR_CHECK(compare_shared_ptr(cgeom, other.cgeom));
+    COAL_EQUAL_OPERATOR_CHECK(shared_ptrs_are_equal(cgeom, other.cgeom));
     COAL_EQUAL_OPERATOR_CHECK(t == other.t);
     COAL_EQUAL_OPERATOR_CHECK(user_data == other.user_data);
     return true;

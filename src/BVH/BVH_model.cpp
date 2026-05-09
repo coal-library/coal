@@ -86,10 +86,11 @@ bool BVHModelBase::isEqual(const CollisionGeometry& _other) const {
   if (other_ptr == nullptr) return false;
   const BVHModelBase& other = *other_ptr;
 
-  COAL_EQUAL_OPERATOR_CHECK(compare_shared_ptr(tri_indices, other.tri_indices));
-  COAL_EQUAL_OPERATOR_CHECK(compare_shared_ptr(vertices, other.vertices));
   COAL_EQUAL_OPERATOR_CHECK(
-      compare_shared_ptr(prev_vertices, other.prev_vertices));
+      shared_ptrs_are_equal(tri_indices, other.tri_indices));
+  COAL_EQUAL_OPERATOR_CHECK(shared_ptrs_are_equal(vertices, other.vertices));
+  COAL_EQUAL_OPERATOR_CHECK(
+      shared_ptrs_are_equal(prev_vertices, other.prev_vertices));
   return true;
 }
 

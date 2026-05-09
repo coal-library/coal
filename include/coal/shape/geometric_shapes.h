@@ -909,12 +909,13 @@ class ConvexBaseTpl : public ShapeBase {
 
     COAL_EQUAL_OPERATOR_CHECK(ShapeBase::isEqual(other));
     COAL_EQUAL_OPERATOR_CHECK(num_points == other.num_points);
-    COAL_EQUAL_OPERATOR_CHECK(compare_shared_ptr(points, other.points));
-    COAL_EQUAL_OPERATOR_CHECK(compare_shared_ptr(neighbors, other.neighbors));
+    COAL_EQUAL_OPERATOR_CHECK(shared_ptrs_are_equal(points, other.points));
     COAL_EQUAL_OPERATOR_CHECK(
-        compare_shared_ptr(nneighbors_, other.nneighbors_));
-    COAL_EQUAL_OPERATOR_CHECK(compare_shared_ptr(normals, other.normals));
-    COAL_EQUAL_OPERATOR_CHECK(compare_shared_ptr(offsets, other.offsets));
+        shared_ptrs_are_equal(neighbors, other.neighbors));
+    COAL_EQUAL_OPERATOR_CHECK(
+        shared_ptrs_are_equal(nneighbors_, other.nneighbors_));
+    COAL_EQUAL_OPERATOR_CHECK(shared_ptrs_are_equal(normals, other.normals));
+    COAL_EQUAL_OPERATOR_CHECK(shared_ptrs_are_equal(offsets, other.offsets));
     COAL_EQUAL_OPERATOR_CHECK(support_warm_starts.points ==
                               other.support_warm_starts.points);
     COAL_EQUAL_OPERATOR_CHECK(support_warm_starts.indices ==

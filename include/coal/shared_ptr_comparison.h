@@ -44,8 +44,8 @@ namespace coal {
 /// Returns true if both are null, both point to the same object,
 /// or both are non-null and their pointees compare equal.
 template <typename T>
-bool compare_shared_ptr(const std::shared_ptr<T>& ptr1,
-                        const std::shared_ptr<T>& ptr2) {
+bool shared_ptrs_are_equal(const std::shared_ptr<T>& ptr1,
+                           const std::shared_ptr<T>& ptr2) {
   if (ptr1 == ptr2) return true;
   if (ptr1 && ptr2) return *ptr1 == *ptr2;
   return false;

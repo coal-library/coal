@@ -446,7 +446,7 @@ class COAL_DLLAPI BVHModel : public BVHModelBase {
     const BVHModel& other = *other_ptr;
 
     COAL_EQUAL_OPERATOR_CHECK(Base::isEqual(_other));
-    COAL_EQUAL_OPERATOR_CHECK(compare_shared_ptr(bvs, other.bvs));
+    COAL_EQUAL_OPERATOR_CHECK(shared_ptrs_are_equal(bvs, other.bvs));
     return true;
   }
 };

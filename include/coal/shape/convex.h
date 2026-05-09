@@ -156,7 +156,7 @@ class ConvexTpl : public ConvexBaseTpl<typename PolygonT::IndexType> {
     if (other_ptr == nullptr) return false;
     COAL_EQUAL_OPERATOR_CHECK(Base::isEqual(_other));
     COAL_EQUAL_OPERATOR_CHECK(
-        compare_shared_ptr(polygons, other_ptr->polygons));
+        shared_ptrs_are_equal(polygons, other_ptr->polygons));
     return true;
   }
 };
