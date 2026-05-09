@@ -71,6 +71,13 @@
     throw exception(ss.str());                             \
   }
 
+#ifndef COAL_EQUAL_OPERATOR_CHECK
+#define COAL_EQUAL_OPERATOR_CHECK(boolean) \
+  if (!(boolean)) {                        \
+    return false;                          \
+  }
+#endif
+
 #ifdef COAL_TURN_ASSERT_INTO_EXCEPTION
 #define COAL_ASSERT(check, message, exception) \
   do {                                         \
