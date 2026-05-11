@@ -112,7 +112,26 @@ struct COAL_DLLAPI Contact {
   Contact() : o1(NULL), o2(NULL), b1(NONE), b2(NONE) {
     penetration_depth = (std::numeric_limits<Scalar>::max)();
     nearest_points[0] = nearest_points[1] = normal = pos =
-        Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN());
+        Vec3s::Constant(std::numeric_limits<Scalar>::max());
+  }
+
+  /// @brief Copy constructor.
+  /// This constructor does a raw copy of the contact information, including the
+  /// pointers to the collision geometries.
+  Contact(const Contact& other) = default;
+  Contact& operator=(const Contact& other) = default;
+
+  /// @brief Copy constructor using an other contact and a pair of
+  /// CollisionGeometry pointers. This constructor allows to copy the contact
+  /// information from an other contact, but remap the pointers to the collision
+  /// geometries to the provided ones. This is usefull in a deep-copy context,
+  /// when the collision geometries are also copied and the pointers in the
+  /// contact need to be remapped to the new collision geometries.
+  Contact(
+      const Contact& other,
+      std::pair<const CollisionGeometry*, const CollisionGeometry*> new_o1_o2)
+      : Contact(other) {
+    resolveReferences(new_o1_o2);
   }
 
   Contact(const CollisionGeometry* o1_, const CollisionGeometry* o2_, int b1_,
@@ -120,7 +139,7 @@ struct COAL_DLLAPI Contact {
       : o1(o1_), o2(o2_), b1(b1_), b2(b2_) {
     penetration_depth = (std::numeric_limits<Scalar>::max)();
     nearest_points[0] = nearest_points[1] = normal = pos =
-        Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN());
+        Vec3s::Constant(std::numeric_limits<Scalar>::max());
   }
 
   Contact(const CollisionGeometry* o1_, const CollisionGeometry* o2_, int b1_,
@@ -152,25 +171,48 @@ struct COAL_DLLAPI Contact {
     return b1 < other.b1;
   }
 
+  /// @brief Equality operator. Two contacts are considered equal if they have
+  /// the same normal, the same nearest points and the same penetration depth
+  /// and if the shapes they point to are equal.
+  /// Note: two contacts may be equal even if they point to different collision
+  /// geometries o1/o2, as long as these geometries are equal.
   bool operator==(const Contact& other) const {
-    return o1 == other.o1 && o2 == other.o2 && b1 == other.b1 &&
-           b2 == other.b2 && normal == other.normal && pos == other.pos &&
-           nearest_points[0] == other.nearest_points[0] &&
-           nearest_points[1] == other.nearest_points[1] &&
-           penetration_depth == other.penetration_depth;
+    if (this == &other) return true;
+
+    COAL_EQUAL_OPERATOR_CHECK(((o1 == nullptr && other.o1 == nullptr) ||
+                               (o1 != nullptr && other.o1 != nullptr)));
+    COAL_EQUAL_OPERATOR_CHECK(((o2 == nullptr && other.o2 == nullptr) ||
+                               (o2 != nullptr && other.o2 != nullptr)));
+    if ((o1 && other.o1) && (o1 != other.o1))
+      COAL_EQUAL_OPERATOR_CHECK(*o1 == *other.o1);
+    if ((o2 && other.o2) && (o2 != other.o2))
+      COAL_EQUAL_OPERATOR_CHECK(*o2 == *other.o2);
+    COAL_EQUAL_OPERATOR_CHECK(b1 == other.b1);
+    COAL_EQUAL_OPERATOR_CHECK(b2 == other.b2);
+    COAL_EQUAL_OPERATOR_CHECK(normal == other.normal);
+    COAL_EQUAL_OPERATOR_CHECK(pos == other.pos);
+    COAL_EQUAL_OPERATOR_CHECK(nearest_points[0] == other.nearest_points[0]);
+    COAL_EQUAL_OPERATOR_CHECK(nearest_points[1] == other.nearest_points[1]);
+    COAL_EQUAL_OPERATOR_CHECK(penetration_depth == other.penetration_depth);
+
+    return true;
   }
 
+  /// @brief Inequality operator. Negation of the equality operator.
   bool operator!=(const Contact& other) const { return !(*this == other); }
 
+  /// @brief Returns the distance to collision: penetration depth - security
+  /// margin.
   Scalar getDistanceToCollision(const CollisionRequest& request) const;
 
-  /// @brief (re)Map the pointers o1/o2 to the provided collision objects.
+  /// @brief Resolve internal references to the pair of collision geometries.
   /// This is useful when deserializing a contact, as the pointers to the
   /// collision objects are not valid anymore and need to be remapped to the
   /// collision objects in the current context.
-  void remap(const CollisionGeometry* new_o1, const CollisionGeometry* new_o2) {
-    o1 = new_o1;
-    o2 = new_o2;
+  void resolveReferences(
+      std::pair<const CollisionGeometry*, const CollisionGeometry*> new_o1_o2) {
+    o1 = new_o1_o2.first;
+    o2 = new_o1_o2.second;
   }
 
   /// \brief Prints the contact to the provided output stream.
@@ -357,6 +399,18 @@ struct COAL_DLLAPI QueryResult {
       : cached_gjk_guess(Vec3s::Zero()),
         cached_support_func_guess(support_func_guess_t::Constant(-1)) {}
 
+  /// @brief Comparison operator.
+  inline bool operator==(const QueryResult& other) const {
+    if (this == &other) return true;
+
+    COAL_EQUAL_OPERATOR_CHECK(cached_gjk_guess == other.cached_gjk_guess);
+    COAL_EQUAL_OPERATOR_CHECK(cached_support_func_guess ==
+                              other.cached_support_func_guess);
+    COAL_EQUAL_OPERATOR_CHECK(timings == other.timings);
+
+    return true;
+  }
+
   /// @brief Prints the query result to the provided output stream.
   void disp(std::ostream& os, const std::string& prefix = "") const {
     using namespace std;
@@ -520,10 +574,48 @@ struct COAL_DLLAPI CollisionResult : QueryResult {
   std::array<Vec3s, 2> nearest_points;
 
  public:
+  /// @brief Default constructor.
   CollisionResult()
       : distance_lower_bound((std::numeric_limits<Scalar>::max)()) {
     nearest_points[0] = nearest_points[1] = normal =
-        Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN());
+        Vec3s::Constant(std::numeric_limits<Scalar>::max());
+  }
+
+  /// @brief Copy constructor.
+  CollisionResult(const CollisionResult& other) = default;
+  CollisionResult& operator=(const CollisionResult& other) = default;
+
+  /// @brief Copy constructor from an other CollisionResult and two vectors of
+  /// CollisionGeometry pointers.
+  /// This constructor allows to copy the collision result information from an
+  /// other collision result, but remap the pointers to the collision geometries
+  /// to the provided ones. This is usefull in a deep-copy context, when the
+  /// collision geometries are also copied and the pointers in the collision
+  /// result need to be remapped to the new collision geometries.
+  CollisionResult(
+      const CollisionResult& other,
+      const std::vector<std::pair<const CollisionGeometry*,
+                                  const CollisionGeometry*>>& new_geometries)
+      : CollisionResult(other) {
+    resolveReferences(new_geometries);
+  }
+
+  /// @brief Resolve the internal points the pointers in the contacts to the
+  /// provided pairs of collision geometries. This is useful when deep-copying
+  /// or deserializing a collision result, as the pointers to the collision
+  /// objects are not valid anymore and need to be remapped to the collision
+  /// objects in the current context.
+  void resolveReferences(
+      const std::vector<std::pair<const CollisionGeometry*,
+                                  const CollisionGeometry*>>& new_geometries) {
+    COAL_THROW_PRETTY_IF(
+        contacts.size() != new_geometries.size(), std::invalid_argument,
+        "The size of the vectors of collision geometries must be equal to "
+        "the number of contacts in the collision result.");
+
+    for (std::size_t i = 0; i < contacts.size(); ++i) {
+      contacts[i].resolveReferences(new_geometries[i]);
+    }
   }
 
   /// @brief Update the lower bound only if the distance is inferior.
@@ -595,7 +687,7 @@ struct COAL_DLLAPI CollisionResult : QueryResult {
     contacts.clear();
     timings.clear();
     nearest_points[0] = nearest_points[1] = normal =
-        Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN());
+        Vec3s::Constant(std::numeric_limits<Scalar>::max());
   }
 
   /// @brief reposition Contact objects when fcl inverts them
@@ -1394,19 +1486,40 @@ struct COAL_DLLAPI DistanceResult : QueryResult {
   /// @brief invalid contact primitive information
   static const int NONE = -1;
 
+  /// @brief Default constructor.
   DistanceResult(Scalar min_distance_ = (std::numeric_limits<Scalar>::max)())
       : min_distance(min_distance_), o1(NULL), o2(NULL), b1(NONE), b2(NONE) {
-    const Vec3s nan(Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN()));
-    nearest_points[0] = nearest_points[1] = normal = nan;
+    const Vec3s inf(Vec3s::Constant(std::numeric_limits<Scalar>::max()));
+    nearest_points[0] = nearest_points[1] = normal = inf;
+  }
+
+  /// @brief Copy constructor.
+  /// This constructor does a raw copy of the contact information, including the
+  /// pointers to the collision geometries.
+  DistanceResult(const DistanceResult& other) = default;
+  DistanceResult& operator=(const DistanceResult& other) = default;
+
+  /// @brief Copy constructor using another result and a pair of
+  /// CollisionGeometry pointers. This constructor allows to copy the contact
+  /// information from an other contact, but remap the pointers to the collision
+  /// geometries to the provided ones. This is usefull in a deep-copy context,
+  /// when the collision geometries are also copied and the pointers in the
+  /// contact need to be remapped to the new collision geometries.
+  DistanceResult(
+      const DistanceResult& other,
+      std::pair<const CollisionGeometry*, const CollisionGeometry*> new_o1_o2)
+      : DistanceResult(other) {
+    resolveReferences(new_o1_o2);
   }
 
   /// @brief (re)Map the pointers o1/o2 to the provided collision objects.
   /// This is useful when deserializing a result, as the pointers to the
   /// collision objects are not valid anymore and need to be remapped to the
   /// collision objects in the current context.
-  void remap(const CollisionGeometry* o1_, const CollisionGeometry* o2_) {
-    o1 = o1_;
-    o2 = o2_;
+  void resolveReferences(
+      std::pair<const CollisionGeometry*, const CollisionGeometry*> new_o1_o2) {
+    o1 = new_o1_o2.first;
+    o2 = new_o1_o2.second;
   }
 
   /// @brief add distance information into the result
@@ -1453,36 +1566,40 @@ struct COAL_DLLAPI DistanceResult : QueryResult {
 
   /// @brief clear the result
   void clear() {
-    const Vec3s nan(Vec3s::Constant(std::numeric_limits<Scalar>::quiet_NaN()));
+    const Vec3s inf(Vec3s::Constant(std::numeric_limits<Scalar>::max()));
     min_distance = (std::numeric_limits<Scalar>::max)();
     o1 = NULL;
     o2 = NULL;
     b1 = NONE;
     b2 = NONE;
-    nearest_points[0] = nearest_points[1] = normal = nan;
+    nearest_points[0] = nearest_points[1] = normal = inf;
     timings.clear();
   }
 
-  /// @brief whether two DistanceResult are the same or not
+  /// @brief Whether two DistanceResult are the same or not.
+  /// This compares the two results terms by terms.
+  /// Note: two results may be equal even if they point to different collision
+  /// geometries o1/o2, as long as these geometries are equal.
   inline bool operator==(const DistanceResult& other) const {
-    bool is_same = min_distance == other.min_distance &&
-                   nearest_points[0] == other.nearest_points[0] &&
-                   nearest_points[1] == other.nearest_points[1] &&
-                   normal == other.normal && o1 == other.o1 && o2 == other.o2 &&
-                   b1 == other.b1 && b2 == other.b2;
+    if (this == &other) return true;
 
-    // TODO: check also that two GeometryObject are indeed equal.
-    if ((o1 != NULL) ^ (other.o1 != NULL)) return false;
-    is_same &= (o1 == other.o1);
-    //    else if (o1 != NULL and other.o1 != NULL) is_same &= *o1 ==
-    //    *other.o1;
+    COAL_EQUAL_OPERATOR_CHECK((QueryResult::operator==(other)));
+    COAL_EQUAL_OPERATOR_CHECK(min_distance == other.min_distance);
+    COAL_EQUAL_OPERATOR_CHECK(nearest_points[0] == other.nearest_points[0]);
+    COAL_EQUAL_OPERATOR_CHECK(nearest_points[1] == other.nearest_points[1]);
+    COAL_EQUAL_OPERATOR_CHECK(normal == other.normal);
+    COAL_EQUAL_OPERATOR_CHECK(((o1 == nullptr && other.o1 == nullptr) ||
+                               (o1 != nullptr && other.o1 != nullptr)));
+    COAL_EQUAL_OPERATOR_CHECK(((o2 == nullptr && other.o2 == nullptr) ||
+                               (o2 != nullptr && other.o2 != nullptr)));
+    if ((o1 && other.o1) && (o1 != other.o1))
+      COAL_EQUAL_OPERATOR_CHECK(*o1 == *other.o1);
+    if ((o2 && other.o2) && (o2 != other.o2))
+      COAL_EQUAL_OPERATOR_CHECK(*o2 == *other.o2);
+    COAL_EQUAL_OPERATOR_CHECK(b1 == other.b1);
+    COAL_EQUAL_OPERATOR_CHECK(b2 == other.b2);
 
-    if ((o2 != NULL) ^ (other.o2 != NULL)) return false;
-    is_same &= (o2 == other.o2);
-    //    else if (o2 != NULL and other.o2 != NULL) is_same &= *o2 ==
-    //    *other.o2;
-
-    return is_same;
+    return true;
   }
 
   /// @brief whether two DistanceResult are different or not

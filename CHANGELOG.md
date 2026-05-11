@@ -19,7 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add print methods for collision data (`Contact`, `CollisionRequest`, `CollisionResult`, `DistanceRequest`, `DistanceResult`, `ContactPatch`, `ContactPatchRequest` and `ContactPatchResult`) ([854](https://github.com/coal-library/coal/pull/854)).
   - One can now do `std::cout << contact` for example.
   - Added the `PrintableVisitor` in python bindings so that `print(contact)` works in python as well
-- Add `remap` method to `Contact` and `DistanceResult` to remap the `o1/o2` pointers (typically after serialization/deserialization) ([855](https://github.com/coal-library/coal/pull/855)).
+- Added `resolveReferences` method to `Contact` and `DistanceResult` to remap the `o1/o2` pointers (typically after serialization/deserialization) ([855](https://github.com/coal-library/coal/pull/855)).
+- Added copy constructors to `Contact::Contact(const Contact& other, const CollisionGeometry* new_o1, const CollisionGeometry* new_o2)` and `DistanceResult::DistanceResult(const DistanceResult& other, const CollisionGeometry* new_o1, const CollisionGeometry* new_o2)` to allow copying a `Contact` or `DistanceResult` while remapping the `o1/o2` pointers to new geometries. This is typically useful in the context of deep-copying ([#856](https://github.com/coal-library/coal/pull/820)).
 
 ### Removed
 - Remove direct dependency to ([#744](https://github.com/coal-library/coal/pull/744)):
@@ -43,6 +44,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add missing calls to computeLocalAABB for internal objects ([#819](https://github.com/coal-library/coal/pull/819))
 - Add missing override specifiers ([#820](https://github.com/coal-library/coal/pull/820))
 - Fix Python error when accessing `geometry.convex` on BVH geometris ([#833](https://github.com/coal-library/coal/pull/833))
+- Fix `Contact`, `CollisionResult` and `DistanceResult` operator== ([#856](https://github.com/coal-library/coal/pull/820)):
+  - If the `o1/o2` pointers are different, we check whether or not the underlying geometries are the same. This is typically important in the context of serialization.
+  - Fix using NaN to initialize collision data (`Contact`, `CollisionResult`, `DistanceResult`). This prevents the absurd `Contact contact; contact == contact; // false` problem.
+  - Fix NaNs coming from GJK/EPA when the algorithms (correctly) early stopped. NaNs indicate failure. In the case that GJK/EPA early stopped but ran fine, we set non-computed data to inf instead of NaN.
 
 ### Changed
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))
