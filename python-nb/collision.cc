@@ -62,14 +62,7 @@ void exposeCollisionAPI(nb::module_& m) {
            "num_max_contacts_"_a)
       .DEF_RW_CLASS_ATTRIB(CollisionRequest, num_max_contacts)
       .DEF_RW_CLASS_ATTRIB(CollisionRequest, enable_contact)
-      .def_prop_rw(
-          "enable_distance_lower_bound",
-          [](CollisionRequest& self) -> bool {
-            return self.enable_distance_lower_bound;
-          },
-          [](CollisionRequest& self, bool value) {
-            self.enable_distance_lower_bound = value;
-          })
+      .DEF_RW_CLASS_ATTRIB(CollisionRequest, enable_distance_lower_bound)
       .DEF_RW_CLASS_ATTRIB(CollisionRequest, security_margin)
       .DEF_RW_CLASS_ATTRIB(CollisionRequest, break_distance)
       .DEF_RW_CLASS_ATTRIB(CollisionRequest, distance_upper_bound)

@@ -459,8 +459,11 @@ struct COAL_DLLAPI CollisionRequest : QueryRequest {
   /// contact position) will return.
   bool enable_contact;
 
-  /// Whether a lower bound on distance is returned when objects are disjoint
-  COAL_DEPRECATED_MESSAGE(A lower bound on distance is always computed.)
+  /// Whether a tight lower bound on distance is returned when objects are
+  /// disjoint.
+  /// Note: a lower bound on distance is always computed, but it is not
+  /// necessarily tight. Setting this flag to true allows to compute a tight
+  /// lower bound on distance, at the cost of additional computations.
   bool enable_distance_lower_bound;
 
   /// @brief Distance below which objects are considered in collision.
