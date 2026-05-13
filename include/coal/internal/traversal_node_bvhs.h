@@ -200,19 +200,105 @@ class MeshCollisionTraversalNode : public BVHCollisionTraversalNode<BV> {
     const Vec3s& Q2 = vertices2[tri_id2[1]];
     const Vec3s& Q3 = vertices2[tri_id2[2]];
 
-    TriangleP tri1(P1, P2, P3);
-    TriangleP tri2(Q1, Q2, Q3);
+    if ((!this->request.enable_contact) &&
+        (this->request.security_margin == 0)) {
+      // Fast path: no security margin, we don't care about contact or tight
+      // lower bound so there is no need for more expensive distance
+      // computation.
 
-    // TODO(louis): MeshCollisionTraversalNode should have its own GJKSolver.
-    GJKSolver solver(this->request);
+      // Transform Q1/Q2/Q3 into mesh1's local frame using the pre-computed
+      // relative transform RT = (R1^T*R2, R1^T*(t2-t1)).
+      // P1/P2/P3 stay in mesh1's local frame — zero transform cost.
+      Vec3s Q1r, Q2r, Q3r;
+      if (RTIsIdentity) {
+        Q1r = Q1;
+        Q2r = Q2;
+        Q3r = Q3;
+      } else {
+        Q1r = RT._R() * Q1 + RT._T();
+        Q2r = RT._R() * Q2 + RT._T();
+        Q3r = RT._R() * Q3 + RT._T();
+      }
+      Scalar sqrDistLBFromTri = 0;
+      bool is_collision = internal::triangleTriangleOverlap(
+          P1, P2, P3, Q1r, Q2r, Q3r, sqrDistLBFromTri);
+      // fast path for collision checking without contact information and
+      // security margin, so no contact information is needed.
+      const Vec3s dummy = Vec3s::Constant(std::numeric_limits<Scalar>::max());
+      if (is_collision) {
+        sqrDistLowerBound = 0;
+        Scalar distance = 0;
+
+        internal::updateDistanceLowerBoundFromLeaf(
+            this->request, *(this->result), distance, dummy, dummy, dummy);
+
+        if (this->result->numContacts() < this->request.num_max_contacts) {
+          this->result->addContact(Contact(this->model1, this->model2,
+                                           primitive_id1, primitive_id2, dummy,
+                                           dummy, dummy, distance));
+        }
+      } else {
+        // SAT gave a positive lower bound on squared distance. Update both the
+        // traversal bound and result.distance_lower_bound.
+        sqrDistLowerBound = sqrDistLBFromTri;
+        internal::updateDistanceLowerBoundFromLeaf(
+            this->request, *(this->result), std::sqrt(sqrDistLBFromTri), dummy,
+            dummy, dummy);
+      }
+      return;
+    }
 
     const bool compute_penetration =
         this->request.enable_contact || (this->request.security_margin < 0);
+
     Vec3s p1, p2, normal;
-    DistanceResult distanceResult;
-    Scalar distance = internal::ShapeShapeDistance<TriangleP, TriangleP>(
-        &tri1, this->tf1, &tri2, this->tf2, &solver, compute_penetration, p1,
-        p2, normal);
+    Scalar distance;
+    Scalar d2;
+    {
+      d2 = RTIsIdentity ? TriangleDistance::sqrTriDistance(P1, P2, P3, Q1, Q2,
+                                                           Q3, p1, p2)
+                        : TriangleDistance::sqrTriDistance(
+                              P1, P2, P3, Q1, Q2, Q3, RT._R(), RT._T(), p1, p2);
+    }
+
+    if (d2 > 0) {
+      // Triangles are separated: sqrTriDistance gives witness points in tf1's
+      // local frame for the oriented case, world frame for the identity case.
+      distance = sqrt(d2);
+      if (!RTIsIdentity) {
+        p1 = this->tf1.transform(p1);
+        p2 = this->tf1.transform(p2);
+      }
+      normal = (p2 - p1) / distance;
+    } else {
+      // Triangles intersect.
+      if (compute_penetration) {
+        // Transform vertices to world frame to compute penetration.
+        Vec3s a1, b1, c1, a2, b2, c2;
+        if (RTIsIdentity) {
+          a1 = P1;
+          b1 = P2;
+          c1 = P3;
+          a2 = Q1;
+          b2 = Q2;
+          c2 = Q3;
+        } else {
+          a1 = this->tf1.transform(P1);
+          b1 = this->tf1.transform(P2);
+          c1 = this->tf1.transform(P3);
+          a2 = this->tf2.transform(Q1);
+          b2 = this->tf2.transform(Q2);
+          c2 = this->tf2.transform(Q3);
+        }
+        internal::computeTriangleTriangleContact(a1, b1, c1, a2, b2, c2,
+                                                 distance, normal, p1, p2);
+      } else {
+        // No contact info required; set normal and witness points to arbitrary
+        // values.
+        distance = 0;
+        p1 = p2 = normal = Vec3s::Constant(std::numeric_limits<Scalar>::max());
+      }
+    }
 
     const Scalar distToCollision = distance - this->request.security_margin;
 
