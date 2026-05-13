@@ -361,13 +361,44 @@ bool obbDisjointAndLowerBoundDistance(const Matrix3s& B, const Vec3s& T,
                     .array()
                     .max(Scalar(0)));
 
-  // Corner of b axis aligned bounding box the closest to the origin
-  squaredLowerBoundDistance = internal::obbDisjoint_check_A_axis(T, a, b, Bf);
-  if (squaredLowerBoundDistance > breakDistance2) return true;
+  if (request.enable_distance_lower_bound) {
+    // request explicitly asks for a lower bound on the distance, so we compute
+    // it as tight as possible
 
-  squaredLowerBoundDistance =
-      internal::obbDisjoint_check_B_axis(B, T, a, b, Bf);
-  if (squaredLowerBoundDistance > breakDistance2) return true;
+    // Corner of b axis aligned bounding box the closest to the origin
+    squaredLowerBoundDistance = internal::obbDisjoint_check_A_axis(T, a, b, Bf);
+    if (squaredLowerBoundDistance > breakDistance2) return true;
+
+    squaredLowerBoundDistance =
+        internal::obbDisjoint_check_B_axis(B, T, a, b, Bf);
+    if (squaredLowerBoundDistance > breakDistance2) return true;
+  } else {
+    // request does not explicitly ask for a lower bound on the distance, so we
+    // compute a lower bound that is not necessarily tight. this allows for
+    // early exit
+
+    // A-axis group: face normals of OBB1. Per-axis with accumulation and early
+    // exit. Valid lower bound because A[0..2] are orthonormal.
+    squaredLowerBoundDistance = 0;
+    for (int i = 0; i < 3; ++i) {
+      const Scalar gap = std::abs(T[i]) - a[i] - Bf.row(i).dot(b);
+      if (gap > 0) {
+        squaredLowerBoundDistance += gap * gap;
+        if (squaredLowerBoundDistance > breakDistance2) return true;
+      }
+    }
+
+    // B-axis group: face normals of OBB2. Per-axis with accumulation and early
+    // exit. Valid lower bound because B[0..2] are orthonormal.
+    squaredLowerBoundDistance = 0;
+    for (int i = 0; i < 3; ++i) {
+      const Scalar gap = std::abs(B.col(i).dot(T)) - Bf.col(i).dot(a) - b[i];
+      if (gap > 0) {
+        squaredLowerBoundDistance += gap * gap;
+        if (squaredLowerBoundDistance > breakDistance2) return true;
+      }
+    }
+  }
 
   // Ai x Bj
   int ja = 1, ka = 2;
