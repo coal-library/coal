@@ -58,6 +58,7 @@ if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
   add_coal_test(convex convex.cpp)
 
   add_coal_test(bvh_models bvh_models.cpp)
+  add_coal_test(bvh_bvh_triangle_consistency bvh_bvh_triangle_consistency.cpp)
   add_coal_test(collision_node_asserts collision_node_asserts.cpp)
   add_coal_test(hfields hfields.cpp)
 
