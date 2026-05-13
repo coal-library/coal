@@ -481,6 +481,19 @@ bool overlap(const Matrix3s& R0, const Vec3s& T0, const OBB& b1, const OBB& b2,
                                            sqrDistLowerBound);
 }
 
+bool overlapPrecomputedRTranspose(const Matrix3s& R0_transpose,
+                                  const Vec3s& inv_T0, const OBB& b1,
+                                  const OBB& b2,
+                                  const CollisionRequest& request,
+                                  Scalar& sqrDistLowerBound) {
+  Vec3s Ttemp(R0_transpose * b2.To + inv_T0 - b1.To);
+  Vec3s T(b1.axes.transpose() * Ttemp);
+  Matrix3s R(b1.axes.transpose() * R0_transpose * b2.axes);
+
+  return !obbDisjointAndLowerBoundDistance(R, T, b1.extent, b2.extent, request,
+                                           sqrDistLowerBound);
+}
+
 OBB translate(const OBB& bv, const Vec3s& t) {
   OBB res(bv);
   res.To += t;
