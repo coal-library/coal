@@ -38,6 +38,7 @@
 #ifndef COAL_AABB_H
 #define COAL_AABB_H
 
+#include "coal/fwd.hh"
 #include "coal/data_types.h"
 
 namespace coal {
@@ -89,7 +90,9 @@ class COAL_DLLAPI AABB {
 
   /// @brief Comparison operator
   bool operator==(const AABB& other) const {
-    return min_ == other.min_ && max_ == other.max_;
+    COAL_EQUAL_OPERATOR_CHECK(min_ == other.min_);
+    COAL_EQUAL_OPERATOR_CHECK(max_ == other.max_);
+    return true;
   }
 
   bool operator!=(const AABB& other) const { return !(*this == other); }

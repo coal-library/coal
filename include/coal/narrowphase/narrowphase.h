@@ -249,20 +249,27 @@ struct COAL_DLLAPI GJKSolver {
   COAL_COMPILER_DIAGNOSTIC_PUSH
   COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
   bool operator==(const GJKSolver& other) const {
-    return this->enable_cached_guess ==
-               other.enable_cached_guess &&  // use gjk_initial_guess instead
-           this->cached_guess == other.cached_guess &&
-           this->support_func_cached_guess == other.support_func_cached_guess &&
-           this->gjk_max_iterations == other.gjk_max_iterations &&
-           this->gjk_tolerance == other.gjk_tolerance &&
-           this->distance_upper_bound == other.distance_upper_bound &&
-           this->gjk_variant == other.gjk_variant &&
-           this->gjk_convergence_criterion == other.gjk_convergence_criterion &&
-           this->gjk_convergence_criterion_type ==
-               other.gjk_convergence_criterion_type &&
-           this->gjk_initial_guess == other.gjk_initial_guess &&
-           this->epa_max_iterations == other.epa_max_iterations &&
-           this->epa_tolerance == other.epa_tolerance;
+    COAL_EQUAL_OPERATOR_CHECK(this->enable_cached_guess ==
+                              other.enable_cached_guess);
+    COAL_EQUAL_OPERATOR_CHECK(this->cached_guess == other.cached_guess);
+    COAL_EQUAL_OPERATOR_CHECK(this->support_func_cached_guess ==
+                              other.support_func_cached_guess);
+    COAL_EQUAL_OPERATOR_CHECK(this->gjk_max_iterations ==
+                              other.gjk_max_iterations);
+    COAL_EQUAL_OPERATOR_CHECK(this->gjk_tolerance == other.gjk_tolerance);
+    COAL_EQUAL_OPERATOR_CHECK(this->distance_upper_bound ==
+                              other.distance_upper_bound);
+    COAL_EQUAL_OPERATOR_CHECK(this->gjk_variant == other.gjk_variant);
+    COAL_EQUAL_OPERATOR_CHECK(this->gjk_convergence_criterion ==
+                              other.gjk_convergence_criterion);
+    COAL_EQUAL_OPERATOR_CHECK(this->gjk_convergence_criterion_type ==
+                              other.gjk_convergence_criterion_type);
+    COAL_EQUAL_OPERATOR_CHECK(this->gjk_initial_guess ==
+                              other.gjk_initial_guess);
+    COAL_EQUAL_OPERATOR_CHECK(this->epa_max_iterations ==
+                              other.epa_max_iterations);
+    COAL_EQUAL_OPERATOR_CHECK(this->epa_tolerance == other.epa_tolerance);
+    return true;
   }
   COAL_COMPILER_DIAGNOSTIC_POP
 

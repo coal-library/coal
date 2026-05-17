@@ -331,23 +331,31 @@ struct COAL_DLLAPI QueryRequest {
 
   /// @brief whether two QueryRequest are the same or not
   inline bool operator==(const QueryRequest& other) const {
+    if (this == &other) return true;
+
     COAL_COMPILER_DIAGNOSTIC_PUSH
     COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
-    return gjk_initial_guess == other.gjk_initial_guess &&
-           enable_cached_gjk_guess == other.enable_cached_gjk_guess &&
-           gjk_variant == other.gjk_variant &&
-           gjk_convergence_criterion == other.gjk_convergence_criterion &&
-           gjk_convergence_criterion_type ==
-               other.gjk_convergence_criterion_type &&
-           gjk_tolerance == other.gjk_tolerance &&
-           gjk_max_iterations == other.gjk_max_iterations &&
-           cached_gjk_guess == other.cached_gjk_guess &&
-           cached_support_func_guess == other.cached_support_func_guess &&
-           epa_max_iterations == other.epa_max_iterations &&
-           epa_tolerance == other.epa_tolerance &&
-           enable_timings == other.enable_timings &&
-           collision_distance_threshold == other.collision_distance_threshold;
+    COAL_EQUAL_OPERATOR_CHECK(gjk_initial_guess == other.gjk_initial_guess);
+    COAL_EQUAL_OPERATOR_CHECK(enable_cached_gjk_guess ==
+                              other.enable_cached_gjk_guess);
+    COAL_EQUAL_OPERATOR_CHECK(gjk_variant == other.gjk_variant);
+    COAL_EQUAL_OPERATOR_CHECK(gjk_convergence_criterion ==
+                              other.gjk_convergence_criterion);
+    COAL_EQUAL_OPERATOR_CHECK(gjk_convergence_criterion_type ==
+                              other.gjk_convergence_criterion_type);
+    COAL_EQUAL_OPERATOR_CHECK(gjk_tolerance == other.gjk_tolerance);
+    COAL_EQUAL_OPERATOR_CHECK(gjk_max_iterations == other.gjk_max_iterations);
+    COAL_EQUAL_OPERATOR_CHECK(cached_gjk_guess == other.cached_gjk_guess);
+    COAL_EQUAL_OPERATOR_CHECK(cached_support_func_guess ==
+                              other.cached_support_func_guess);
+    COAL_EQUAL_OPERATOR_CHECK(epa_max_iterations == other.epa_max_iterations);
+    COAL_EQUAL_OPERATOR_CHECK(epa_tolerance == other.epa_tolerance);
+    COAL_EQUAL_OPERATOR_CHECK(enable_timings == other.enable_timings);
+    COAL_EQUAL_OPERATOR_CHECK(collision_distance_threshold ==
+                              other.collision_distance_threshold);
     COAL_COMPILER_DIAGNOSTIC_POP
+
+    return true;
   }
 
   /// @brief whether two QueryRequest are different or not
@@ -503,16 +511,22 @@ struct COAL_DLLAPI CollisionRequest : QueryRequest {
 
   /// @brief whether two CollisionRequest are the same or not
   inline bool operator==(const CollisionRequest& other) const {
+    if (this == &other) return true;
+
     COAL_COMPILER_DIAGNOSTIC_PUSH
     COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
-    return QueryRequest::operator==(other) &&
-           num_max_contacts == other.num_max_contacts &&
-           enable_contact == other.enable_contact &&
-           enable_distance_lower_bound == other.enable_distance_lower_bound &&
-           security_margin == other.security_margin &&
-           break_distance == other.break_distance &&
-           distance_upper_bound == other.distance_upper_bound;
+    COAL_EQUAL_OPERATOR_CHECK((QueryRequest::operator==(other)));
+    COAL_EQUAL_OPERATOR_CHECK(num_max_contacts == other.num_max_contacts);
+    COAL_EQUAL_OPERATOR_CHECK(enable_contact == other.enable_contact);
+    COAL_EQUAL_OPERATOR_CHECK(enable_distance_lower_bound ==
+                              other.enable_distance_lower_bound);
+    COAL_EQUAL_OPERATOR_CHECK(security_margin == other.security_margin);
+    COAL_EQUAL_OPERATOR_CHECK(break_distance == other.break_distance);
+    COAL_EQUAL_OPERATOR_CHECK(distance_upper_bound ==
+                              other.distance_upper_bound);
     COAL_COMPILER_DIAGNOSTIC_POP
+
+    return true;
   }
 
   /// @brief whether two CollisionRequest are different or not
@@ -629,11 +643,17 @@ struct COAL_DLLAPI CollisionResult : QueryResult {
 
   /// @brief whether two CollisionResult are the same or not
   inline bool operator==(const CollisionResult& other) const {
-    return contacts == other.contacts &&
-           distance_lower_bound == other.distance_lower_bound &&
-           nearest_points[0] == other.nearest_points[0] &&
-           nearest_points[1] == other.nearest_points[1] &&
-           normal == other.normal;
+    if (this == &other) return true;
+
+    COAL_EQUAL_OPERATOR_CHECK((QueryResult::operator==(other)));
+    COAL_EQUAL_OPERATOR_CHECK(contacts == other.contacts);
+    COAL_EQUAL_OPERATOR_CHECK(distance_lower_bound ==
+                              other.distance_lower_bound);
+    COAL_EQUAL_OPERATOR_CHECK(nearest_points[0] == other.nearest_points[0]);
+    COAL_EQUAL_OPERATOR_CHECK(nearest_points[1] == other.nearest_points[1]);
+    COAL_EQUAL_OPERATOR_CHECK(normal == other.normal);
+
+    return true;
   }
 
   /// @brief whether two CollisionResult are the same or not
@@ -898,9 +918,14 @@ struct COAL_DLLAPI ContactPatch {
   /// However, two contact patches can be identical, but have a different
   /// order for their points. Use `isEqual` in this case.
   bool operator==(const ContactPatch& other) const {
-    return this->tf == other.tf && this->direction == other.direction &&
-           this->penetration_depth == other.penetration_depth &&
-           this->points() == other.points();
+    if (this == &other) return true;
+
+    COAL_EQUAL_OPERATOR_CHECK(tf == other.tf);
+    COAL_EQUAL_OPERATOR_CHECK(direction == other.direction);
+    COAL_EQUAL_OPERATOR_CHECK(penetration_depth == other.penetration_depth);
+    COAL_EQUAL_OPERATOR_CHECK(points() == other.points());
+
+    return true;
   }
 
   /// @brief Whether two contact patches are different or not.
@@ -1090,10 +1115,14 @@ struct COAL_DLLAPI ContactPatchRequest {
 
   /// @brief Whether two ContactPatchRequest are identical or not.
   bool operator==(const ContactPatchRequest& other) const {
-    return this->max_num_patch == other.max_num_patch &&
-           this->getNumSamplesCurvedShapes() ==
-               other.getNumSamplesCurvedShapes() &&
-           this->getPatchTolerance() == other.getPatchTolerance();
+    if (this == &other) return true;
+
+    COAL_EQUAL_OPERATOR_CHECK(max_num_patch == other.max_num_patch);
+    COAL_EQUAL_OPERATOR_CHECK(getNumSamplesCurvedShapes() ==
+                              other.getNumSamplesCurvedShapes());
+    COAL_EQUAL_OPERATOR_CHECK(getPatchTolerance() == other.getPatchTolerance());
+
+    return true;
   }
 
   /// @brief Whether two ContactPatchRequest are different or not.
@@ -1293,16 +1322,14 @@ struct COAL_DLLAPI ContactPatchResult {
 
   /// @brief Whether two ContactPatchResult are identical or not.
   bool operator==(const ContactPatchResult& other) const {
-    if (this->numContactPatches() != other.numContactPatches()) {
-      return false;
-    }
+    if (this == &other) return true;
+
+    COAL_EQUAL_OPERATOR_CHECK(numContactPatches() == other.numContactPatches());
 
     for (size_t i = 0; i < this->numContactPatches(); ++i) {
       const ContactPatch& patch = this->getContactPatch(i);
       const ContactPatch& other_patch = other.getContactPatch(i);
-      if (!(patch == other_patch)) {
-        return false;
-      }
+      COAL_EQUAL_OPERATOR_CHECK(patch == other_patch);
     }
 
     return true;
@@ -1414,13 +1441,20 @@ struct COAL_DLLAPI DistanceRequest : QueryRequest {
 
   /// @brief whether two DistanceRequest are the same or not
   inline bool operator==(const DistanceRequest& other) const {
+    if (this == &other) return true;
+
     COAL_COMPILER_DIAGNOSTIC_PUSH
     COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
-    return QueryRequest::operator==(other) &&
-           enable_nearest_points == other.enable_nearest_points &&
-           enable_signed_distance == other.enable_signed_distance &&
-           rel_err == other.rel_err && abs_err == other.abs_err;
+    COAL_EQUAL_OPERATOR_CHECK((QueryRequest::operator==(other)));
+    COAL_EQUAL_OPERATOR_CHECK(enable_nearest_points ==
+                              other.enable_nearest_points);
+    COAL_EQUAL_OPERATOR_CHECK(enable_signed_distance ==
+                              other.enable_signed_distance);
+    COAL_EQUAL_OPERATOR_CHECK(rel_err == other.rel_err);
+    COAL_EQUAL_OPERATOR_CHECK(abs_err == other.abs_err);
     COAL_COMPILER_DIAGNOSTIC_POP
+
+    return true;
   }
 
   /// @brief whether two DistanceRequest are different or not

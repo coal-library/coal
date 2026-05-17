@@ -212,7 +212,9 @@ class COAL_DLLAPI Transform3s {
 
   /// @brief Comparison operator
   bool operator==(const Transform3s& other) const {
-    return (R == other.getRotation()) && (T == other.getTranslation());
+    COAL_EQUAL_OPERATOR_CHECK(R == other.getRotation());
+    COAL_EQUAL_OPERATOR_CHECK(T == other.getTranslation());
+    return true;
   }
 
   /// @brief Comparison operator

@@ -45,6 +45,7 @@
 
 #include "coal/collision_object.h"
 #include "coal/data_types.h"
+#include "coal/shared_ptr_comparison.h"
 
 #ifdef COAL_HAS_QHULL
 namespace orgQhull {
@@ -86,6 +87,17 @@ class COAL_DLLAPI ShapeBase : public CollisionGeometry {
   Scalar getSweptSphereRadius() const { return this->m_swept_sphere_radius; }
 
  protected:
+  bool isEqual(const CollisionGeometry& _other) const override {
+    const ShapeBase* other_ptr = dynamic_cast<const ShapeBase*>(&_other);
+    if (other_ptr == nullptr) return false;
+    const ShapeBase& other = *other_ptr;
+
+    COAL_EQUAL_OPERATOR_CHECK(getSweptSphereRadius() ==
+                              other.getSweptSphereRadius());
+
+    return true;
+  }
+
   /// \brief Radius of the sphere swept around the shape.
   /// Default value is 0.
   /// Note: this property differs from `inflated` method of certain
@@ -152,8 +164,12 @@ class COAL_DLLAPI TriangleP : public ShapeBase {
     if (other_ptr == nullptr) return false;
     const TriangleP& other = *other_ptr;
 
-    return a == other.a && b == other.b && c == other.c &&
-           getSweptSphereRadius() == other.getSweptSphereRadius();
+    COAL_EQUAL_OPERATOR_CHECK(ShapeBase::isEqual(other));
+    COAL_EQUAL_OPERATOR_CHECK(a == other.a);
+    COAL_EQUAL_OPERATOR_CHECK(b == other.b);
+    COAL_EQUAL_OPERATOR_CHECK(c == other.c);
+
+    return true;
   }
 
  public:
@@ -226,8 +242,10 @@ class COAL_DLLAPI Box : public ShapeBase {
     if (other_ptr == nullptr) return false;
     const Box& other = *other_ptr;
 
-    return halfSide == other.halfSide &&
-           getSweptSphereRadius() == other.getSweptSphereRadius();
+    COAL_EQUAL_OPERATOR_CHECK(ShapeBase::isEqual(other));
+    COAL_EQUAL_OPERATOR_CHECK(halfSide == other.halfSide);
+
+    return true;
   }
 
  public:
@@ -291,8 +309,10 @@ class COAL_DLLAPI Sphere : public ShapeBase {
     if (other_ptr == nullptr) return false;
     const Sphere& other = *other_ptr;
 
-    return radius == other.radius &&
-           getSweptSphereRadius() == other.getSweptSphereRadius();
+    COAL_EQUAL_OPERATOR_CHECK(ShapeBase::isEqual(other));
+    COAL_EQUAL_OPERATOR_CHECK(radius == other.radius);
+
+    return true;
   }
 
  public:
@@ -366,8 +386,10 @@ class COAL_DLLAPI Ellipsoid : public ShapeBase {
     if (other_ptr == nullptr) return false;
     const Ellipsoid& other = *other_ptr;
 
-    return radii == other.radii &&
-           getSweptSphereRadius() == other.getSweptSphereRadius();
+    COAL_EQUAL_OPERATOR_CHECK(ShapeBase::isEqual(other));
+    COAL_EQUAL_OPERATOR_CHECK(radii == other.radii);
+
+    return true;
   }
 
  public:
@@ -452,8 +474,11 @@ class COAL_DLLAPI Capsule : public ShapeBase {
     if (other_ptr == nullptr) return false;
     const Capsule& other = *other_ptr;
 
-    return radius == other.radius && halfLength == other.halfLength &&
-           getSweptSphereRadius() == other.getSweptSphereRadius();
+    COAL_EQUAL_OPERATOR_CHECK(ShapeBase::isEqual(other));
+    COAL_EQUAL_OPERATOR_CHECK(radius == other.radius);
+    COAL_EQUAL_OPERATOR_CHECK(halfLength == other.halfLength);
+
+    return true;
   }
 
  public:
@@ -545,8 +570,11 @@ class COAL_DLLAPI Cone : public ShapeBase {
     if (other_ptr == nullptr) return false;
     const Cone& other = *other_ptr;
 
-    return radius == other.radius && halfLength == other.halfLength &&
-           getSweptSphereRadius() == other.getSweptSphereRadius();
+    COAL_EQUAL_OPERATOR_CHECK(ShapeBase::isEqual(other));
+    COAL_EQUAL_OPERATOR_CHECK(radius == other.radius);
+    COAL_EQUAL_OPERATOR_CHECK(halfLength == other.halfLength);
+
+    return true;
   }
 
  public:
@@ -628,8 +656,11 @@ class COAL_DLLAPI Cylinder : public ShapeBase {
     if (other_ptr == nullptr) return false;
     const Cylinder& other = *other_ptr;
 
-    return radius == other.radius && halfLength == other.halfLength &&
-           getSweptSphereRadius() == other.getSweptSphereRadius();
+    COAL_EQUAL_OPERATOR_CHECK(ShapeBase::isEqual(other));
+    COAL_EQUAL_OPERATOR_CHECK(radius == other.radius);
+    COAL_EQUAL_OPERATOR_CHECK(halfLength == other.halfLength);
+
+    return true;
   }
 
  public:
@@ -644,9 +675,8 @@ struct ConvexBaseTplNeighbors {
   IndexType begin_id;
 
   bool operator==(const ConvexBaseTplNeighbors& other) const {
-    if (count != other.count) return false;
-    if (begin_id != other.begin_id) return false;
-
+    COAL_EQUAL_OPERATOR_CHECK(count == other.count);
+    COAL_EQUAL_OPERATOR_CHECK(begin_id == other.begin_id);
     return true;
   }
 
@@ -877,70 +907,22 @@ class ConvexBaseTpl : public ShapeBase {
     if (other_ptr == nullptr) return false;
     const ConvexBaseTpl& other = *other_ptr;
 
-    if (num_points != other.num_points) return false;
+    COAL_EQUAL_OPERATOR_CHECK(ShapeBase::isEqual(other));
+    COAL_EQUAL_OPERATOR_CHECK(num_points == other.num_points);
+    COAL_EQUAL_OPERATOR_CHECK(shared_ptrs_are_equal(points, other.points));
+    COAL_EQUAL_OPERATOR_CHECK(
+        shared_ptrs_are_equal(neighbors, other.neighbors));
+    COAL_EQUAL_OPERATOR_CHECK(
+        shared_ptrs_are_equal(nneighbors_, other.nneighbors_));
+    COAL_EQUAL_OPERATOR_CHECK(shared_ptrs_are_equal(normals, other.normals));
+    COAL_EQUAL_OPERATOR_CHECK(shared_ptrs_are_equal(offsets, other.offsets));
+    COAL_EQUAL_OPERATOR_CHECK(support_warm_starts.points ==
+                              other.support_warm_starts.points);
+    COAL_EQUAL_OPERATOR_CHECK(support_warm_starts.indices ==
+                              other.support_warm_starts.indices);
+    COAL_EQUAL_OPERATOR_CHECK(center == other.center);
 
-    if ((!(points.get()) && other.points.get()) ||
-        (points.get() && !(other.points.get())))
-      return false;
-    if (points.get() && other.points.get()) {
-      const std::vector<Vec3s>& points_ = *points;
-      const std::vector<Vec3s>& other_points_ = *(other.points);
-      for (unsigned int i = 0; i < num_points; ++i) {
-        if (points_[i] != (other_points_)[i]) return false;
-      }
-    }
-
-    if ((!(neighbors.get()) && other.neighbors.get()) ||
-        (neighbors.get() && !(other.neighbors.get())))
-      return false;
-    if (neighbors.get() && other.neighbors.get()) {
-      const std::vector<Neighbors>& neighbors_ = *neighbors;
-      const std::vector<Neighbors>& other_neighbors_ = *(other.neighbors);
-      for (unsigned int i = 0; i < num_points; ++i) {
-        if (neighbors_[i] != other_neighbors_[i]) return false;
-      }
-    }
-
-    if ((!(normals.get()) && other.normals.get()) ||
-        (normals.get() && !(other.normals.get())))
-      return false;
-    if (normals.get() && other.normals.get()) {
-      const std::vector<Vec3s>& normals_ = *normals;
-      const std::vector<Vec3s>& other_normals_ = *(other.normals);
-      for (unsigned int i = 0; i < num_normals_and_offsets; ++i) {
-        if (normals_[i] != other_normals_[i]) return false;
-      }
-    }
-
-    if ((!(offsets.get()) && other.offsets.get()) ||
-        (offsets.get() && !(other.offsets.get())))
-      return false;
-    if (offsets.get() && other.offsets.get()) {
-      const std::vector<Scalar>& offsets_ = *offsets;
-      const std::vector<Scalar>& other_offsets_ = *(other.offsets);
-      for (unsigned int i = 0; i < num_normals_and_offsets; ++i) {
-        if (offsets_[i] != other_offsets_[i]) return false;
-      }
-    }
-
-    if (this->support_warm_starts.points.size() !=
-            other.support_warm_starts.points.size() ||
-        this->support_warm_starts.indices.size() !=
-            other.support_warm_starts.indices.size()) {
-      return false;
-    }
-
-    for (size_t i = 0; i < this->support_warm_starts.points.size(); ++i) {
-      if (this->support_warm_starts.points[i] !=
-              other.support_warm_starts.points[i] ||
-          this->support_warm_starts.indices[i] !=
-              other.support_warm_starts.indices[i]) {
-        return false;
-      }
-    }
-
-    return center == other.center &&
-           getSweptSphereRadius() == other.getSweptSphereRadius();
+    return true;
   }
 
  public:
@@ -1042,8 +1024,11 @@ class COAL_DLLAPI Halfspace : public ShapeBase {
     if (other_ptr == nullptr) return false;
     const Halfspace& other = *other_ptr;
 
-    return n == other.n && d == other.d &&
-           getSweptSphereRadius() == other.getSweptSphereRadius();
+    COAL_EQUAL_OPERATOR_CHECK(ShapeBase::isEqual(other));
+    COAL_EQUAL_OPERATOR_CHECK(n == other.n);
+    COAL_EQUAL_OPERATOR_CHECK(d == other.d);
+
+    return true;
   }
 
  public:
@@ -1119,8 +1104,11 @@ class COAL_DLLAPI Plane : public ShapeBase {
     if (other_ptr == nullptr) return false;
     const Plane& other = *other_ptr;
 
-    return n == other.n && d == other.d &&
-           getSweptSphereRadius() == other.getSweptSphereRadius();
+    COAL_EQUAL_OPERATOR_CHECK(ShapeBase::isEqual(other));
+    COAL_EQUAL_OPERATOR_CHECK(n == other.n);
+    COAL_EQUAL_OPERATOR_CHECK(d == other.d);
+
+    return true;
   }
 
  public:

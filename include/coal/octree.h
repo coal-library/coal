@@ -270,10 +270,12 @@ class COAL_DLLAPI OcTree : public CollisionGeometry {
     if (other_ptr == nullptr) return false;
     const OcTree& other = *other_ptr;
 
-    return (tree.get() == other.tree.get() || toBoxes() == other.toBoxes()) &&
-           default_occupancy == other.default_occupancy &&
-           occupancy_threshold == other.occupancy_threshold &&
-           free_threshold == other.free_threshold;
+    COAL_EQUAL_OPERATOR_CHECK(tree.get() == other.tree.get() ||
+                              toBoxes() == other.toBoxes());
+    COAL_EQUAL_OPERATOR_CHECK(default_occupancy == other.default_occupancy);
+    COAL_EQUAL_OPERATOR_CHECK(occupancy_threshold == other.occupancy_threshold);
+    COAL_EQUAL_OPERATOR_CHECK(free_threshold == other.free_threshold);
+    return true;
   }
 
  public:

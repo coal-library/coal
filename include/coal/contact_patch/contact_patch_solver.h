@@ -187,15 +187,22 @@ struct COAL_DLLAPI ContactPatchSolver {
       const ShapeBase* shape, ShapeSupportData& support_data);
 
   bool operator==(const ContactPatchSolver& other) const {
-    return this->num_samples_curved_shapes == other.num_samples_curved_shapes &&
-           this->patch_tolerance == other.patch_tolerance &&
-           this->support_guess == other.support_guess &&
-           this->support_set_shape1 == other.support_set_shape1 &&
-           this->support_set_shape2 == other.support_set_shape2 &&
-           this->support_set_buffer == other.support_set_buffer &&
-           this->added_to_patch == other.added_to_patch &&
-           this->supportFuncShape1 == other.supportFuncShape1 &&
-           this->supportFuncShape2 == other.supportFuncShape2;
+    COAL_EQUAL_OPERATOR_CHECK(this->num_samples_curved_shapes ==
+                              other.num_samples_curved_shapes);
+    COAL_EQUAL_OPERATOR_CHECK(this->patch_tolerance == other.patch_tolerance);
+    COAL_EQUAL_OPERATOR_CHECK(this->support_guess == other.support_guess);
+    COAL_EQUAL_OPERATOR_CHECK(this->support_set_shape1 ==
+                              other.support_set_shape1);
+    COAL_EQUAL_OPERATOR_CHECK(this->support_set_shape2 ==
+                              other.support_set_shape2);
+    COAL_EQUAL_OPERATOR_CHECK(this->support_set_buffer ==
+                              other.support_set_buffer);
+    COAL_EQUAL_OPERATOR_CHECK(this->added_to_patch == other.added_to_patch);
+    COAL_EQUAL_OPERATOR_CHECK(this->supportFuncShape1 ==
+                              other.supportFuncShape1);
+    COAL_EQUAL_OPERATOR_CHECK(this->supportFuncShape2 ==
+                              other.supportFuncShape2);
+    return true;
   }
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

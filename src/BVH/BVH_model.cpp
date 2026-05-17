@@ -86,42 +86,11 @@ bool BVHModelBase::isEqual(const CollisionGeometry& _other) const {
   if (other_ptr == nullptr) return false;
   const BVHModelBase& other = *other_ptr;
 
-  bool result =
-      num_tris == other.num_tris && num_vertices == other.num_vertices;
-
-  if (!result) return false;
-
-  if ((!(tri_indices.get()) && other.tri_indices.get()) ||
-      (tri_indices.get() && !(other.tri_indices.get())))
-    return false;
-  if (tri_indices.get() && other.tri_indices.get()) {
-    const std::vector<Triangle32>& tri_indices_ = *(tri_indices);
-    const std::vector<Triangle32>& other_tri_indices_ = *(other.tri_indices);
-    for (size_t k = 0; k < static_cast<size_t>(num_tris); ++k)
-      if (tri_indices_[k] != other_tri_indices_[k]) return false;
-  }
-
-  if ((!(vertices.get()) && other.vertices.get()) ||
-      (vertices.get() && !(other.vertices.get())))
-    return false;
-  if (vertices.get() && other.vertices.get()) {
-    const std::vector<Vec3s>& vertices_ = *(vertices);
-    const std::vector<Vec3s>& other_vertices_ = *(other.vertices);
-    for (size_t k = 0; k < static_cast<size_t>(num_vertices); ++k)
-      if (vertices_[k] != other_vertices_[k]) return false;
-  }
-
-  if ((!(prev_vertices.get()) && other.prev_vertices.get()) ||
-      (prev_vertices.get() && !(other.prev_vertices.get())))
-    return false;
-  if (prev_vertices.get() && other.prev_vertices.get()) {
-    const std::vector<Vec3s>& prev_vertices_ = *(prev_vertices);
-    const std::vector<Vec3s>& other_prev_vertices_ = *(other.prev_vertices);
-    for (size_t k = 0; k < static_cast<size_t>(num_vertices); ++k) {
-      if (prev_vertices_[k] != other_prev_vertices_[k]) return false;
-    }
-  }
-
+  COAL_EQUAL_OPERATOR_CHECK(
+      shared_ptrs_are_equal(tri_indices, other.tri_indices));
+  COAL_EQUAL_OPERATOR_CHECK(shared_ptrs_are_equal(vertices, other.vertices));
+  COAL_EQUAL_OPERATOR_CHECK(
+      shared_ptrs_are_equal(prev_vertices, other.prev_vertices));
   return true;
 }
 

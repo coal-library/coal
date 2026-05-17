@@ -38,6 +38,7 @@
 #ifndef COAL_KIOS_H
 #define COAL_KIOS_H
 
+#include "coal/fwd.hh"
 #include "coal/BV/OBB.h"
 
 namespace coal {
@@ -58,7 +59,9 @@ class COAL_DLLAPI kIOS {
     Scalar r;
 
     bool operator==(const kIOS_Sphere& other) const {
-      return o == other.o && r == other.r;
+      COAL_EQUAL_OPERATOR_CHECK(o == other.o);
+      COAL_EQUAL_OPERATOR_CHECK(r == other.r);
+      return true;
     }
 
     bool operator!=(const kIOS_Sphere& other) const {
@@ -95,13 +98,11 @@ class COAL_DLLAPI kIOS {
  public:
   /// @brief Equality operator
   bool operator==(const kIOS& other) const {
-    bool res = obb == other.obb && num_spheres == other.num_spheres;
-    if (!res) return false;
-
+    COAL_EQUAL_OPERATOR_CHECK(obb == other.obb);
+    COAL_EQUAL_OPERATOR_CHECK(num_spheres == other.num_spheres);
     for (size_t k = 0; k < num_spheres; ++k) {
-      if (spheres[k] != other.spheres[k]) return false;
+      COAL_EQUAL_OPERATOR_CHECK(spheres[k] == other.spheres[k]);
     }
-
     return true;
   }
 

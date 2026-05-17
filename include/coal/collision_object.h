@@ -45,6 +45,7 @@
 #include "coal/fwd.hh"
 #include "coal/BV/AABB.h"
 #include "coal/math/transform.h"
+#include "coal/shared_ptr_comparison.h"
 
 namespace coal {
 
@@ -112,12 +113,14 @@ class COAL_DLLAPI CollisionGeometry {
 
   /// \brief Equality operator
   bool operator==(const CollisionGeometry& other) const {
-    return cost_density == other.cost_density &&
-           threshold_occupied == other.threshold_occupied &&
-           threshold_free == other.threshold_free &&
-           aabb_center == other.aabb_center &&
-           aabb_radius == other.aabb_radius && aabb_local == other.aabb_local &&
-           isEqual(other);
+    COAL_EQUAL_OPERATOR_CHECK(cost_density == other.cost_density);
+    COAL_EQUAL_OPERATOR_CHECK(threshold_occupied == other.threshold_occupied);
+    COAL_EQUAL_OPERATOR_CHECK(threshold_free == other.threshold_free);
+    COAL_EQUAL_OPERATOR_CHECK(aabb_center == other.aabb_center);
+    COAL_EQUAL_OPERATOR_CHECK(aabb_radius == other.aabb_radius);
+    COAL_EQUAL_OPERATOR_CHECK(aabb_local == other.aabb_local);
+    COAL_EQUAL_OPERATOR_CHECK(isEqual(other));
+    return true;
   }
 
   /// \brief Difference operator
@@ -235,7 +238,10 @@ class COAL_DLLAPI CollisionObject {
   }
 
   bool operator==(const CollisionObject& other) const {
-    return cgeom == other.cgeom && t == other.t && user_data == other.user_data;
+    COAL_EQUAL_OPERATOR_CHECK(shared_ptrs_are_equal(cgeom, other.cgeom));
+    COAL_EQUAL_OPERATOR_CHECK(t == other.t);
+    COAL_EQUAL_OPERATOR_CHECK(user_data == other.user_data);
+    return true;
   }
 
   bool operator!=(const CollisionObject& other) const {

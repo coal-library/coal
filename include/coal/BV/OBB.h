@@ -38,6 +38,7 @@
 #ifndef COAL_OBB_H
 #define COAL_OBB_H
 
+#include "coal/fwd.hh"
 #include "coal/data_types.h"
 
 namespace coal {
@@ -68,7 +69,10 @@ struct COAL_DLLAPI OBB {
 
   /// @brief Equality operator
   bool operator==(const OBB& other) const {
-    return axes == other.axes && To == other.To && extent == other.extent;
+    COAL_EQUAL_OPERATOR_CHECK(axes == other.axes);
+    COAL_EQUAL_OPERATOR_CHECK(To == other.To);
+    COAL_EQUAL_OPERATOR_CHECK(extent == other.extent);
+    return true;
   }
 
   /// @brief Difference operator

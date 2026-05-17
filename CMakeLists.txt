@@ -343,6 +343,7 @@ set(
   include/coal/serialization/quadrilateral.h
   include/coal/serialization/triangle.h
   include/coal/timings.h
+  include/coal/shared_ptr_comparison.h
 )
 
 # boost::span requires Boost >= 1.78.0.

@@ -149,6 +149,16 @@ class ConvexTpl : public ConvexBaseTpl<typename PolygonT::IndexType> {
                        ConvexTpl<OtherPolygonT>* copy);
 
   using Base::nneighbors_;
+
+ private:
+  virtual bool isEqual(const CollisionGeometry& _other) const override {
+    const ConvexTpl* other_ptr = dynamic_cast<const ConvexTpl*>(&_other);
+    if (other_ptr == nullptr) return false;
+    COAL_EQUAL_OPERATOR_CHECK(Base::isEqual(_other));
+    COAL_EQUAL_OPERATOR_CHECK(
+        shared_ptrs_are_equal(polygons, other_ptr->polygons));
+    return true;
+  }
 };
 
 template <typename PolygonT>

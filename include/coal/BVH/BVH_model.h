@@ -41,6 +41,7 @@
 
 #include "coal/fwd.hh"
 #include "coal/collision_object.h"
+#include "coal/shared_ptr_comparison.h"
 #include "coal/BVH/BVH_internal.h"
 #include "coal/BV/BV_node.h"
 
@@ -444,64 +445,8 @@ class COAL_DLLAPI BVHModel : public BVHModelBase {
     if (other_ptr == nullptr) return false;
     const BVHModel& other = *other_ptr;
 
-    bool res = Base::isEqual(other);
-    if (!res) return false;
-
-    // unsigned int other_num_primitives = 0;
-    // if(other.primitive_indices)
-    // {
-
-    //   switch(other.getModelType())
-    //   {
-    //     case BVH_MODEL_TRIANGLES:
-    //       other_num_primitives = num_tris;
-    //       break;
-    //     case BVH_MODEL_POINTCLOUD:
-    //       other_num_primitives = num_vertices;
-    //       break;
-    //     default:
-    //       ;
-    //   }
-    // }
-
-    //    unsigned int num_primitives = 0;
-    //    if(primitive_indices)
-    //    {
-    //
-    //      switch(other.getModelType())
-    //      {
-    //        case BVH_MODEL_TRIANGLES:
-    //          num_primitives = num_tris;
-    //          break;
-    //        case BVH_MODEL_POINTCLOUD:
-    //          num_primitives = num_vertices;
-    //          break;
-    //        default:
-    //          ;
-    //      }
-    //    }
-    //
-    //    if(num_primitives != other_num_primitives)
-    //      return false;
-    //
-    //    for(int k = 0; k < num_primitives; ++k)
-    //    {
-    //      if(primitive_indices[k] != other.primitive_indices[k])
-    //        return false;
-    //    }
-
-    if (num_bvs != other.num_bvs) return false;
-
-    if ((!(bvs.get()) && other.bvs.get()) || (bvs.get() && !(other.bvs.get())))
-      return false;
-    if (bvs.get() && other.bvs.get()) {
-      const bv_node_vector_t& bvs_ = *bvs;
-      const bv_node_vector_t& other_bvs_ = *(other.bvs);
-      for (unsigned int k = 0; k < num_bvs; ++k) {
-        if (bvs_[k] != other_bvs_[k]) return false;
-      }
-    }
-
+    COAL_EQUAL_OPERATOR_CHECK(Base::isEqual(_other));
+    COAL_EQUAL_OPERATOR_CHECK(shared_ptrs_are_equal(bvs, other.bvs));
     return true;
   }
 };
