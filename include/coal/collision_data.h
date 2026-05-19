@@ -369,8 +369,9 @@ struct COAL_DLLAPI QueryRequest {
     os << prefix << "  gjk_initial_guess: "
        << (gjk_initial_guess == GJKInitialGuess::DefaultGuess
                ? "DefaultGuess"
-               : (GJKInitialGuess::CachedGuess ? "CachedGuess"
-                                               : "BoundingVolumeGuess"))
+               : (gjk_initial_guess == GJKInitialGuess::CachedGuess
+                      ? "CachedGuess"
+                      : "BoundingVolumeGuess"))
        << ",\n";
     os << prefix << "  cached_gjk_guess: " << cached_gjk_guess.transpose()
        << ",\n";
