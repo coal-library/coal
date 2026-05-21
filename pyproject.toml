@@ -24,7 +24,7 @@ dependencies = [
 description = "An extension of the Flexible Collision Library"
 license = "BSD-3-Clause"
 name = "coal"
-version = "3.0.2"
+version = "3.0.3"
 
 [project.urls]
 changelog = "https://github.com/coal-library/coal/blob/devel/CHANGELOG.md"
