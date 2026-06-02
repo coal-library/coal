@@ -63,7 +63,7 @@ jobs:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ matrix.ROS_DISTRO }}-${{github.run_id}}
           restore-keys: ccache-${{ matrix.ROS_DISTRO }}-
-      - uses: ros-industrial/industrial_ci@f3c2dc8b4a9e6215f9c00f83e86ca0692970f81d
+      - uses: ros-industrial/industrial_ci@125164b9f1883cdf1858897a7146d1bebf2be5c6
 
   check:
     if: always()
