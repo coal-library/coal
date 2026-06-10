@@ -52,19 +52,19 @@ jobs:
             cxx_options: '-mavx2'
 
         include:
-          - os: windows-latest
+          - os: windows-2022
             environment: all
             cxx_options: ''
             build_type: Release
-          - os: windows-latest
+          - os: windows-2022
             environment: all-boost-python
             cxx_options: ''
             build_type: Release
-          - os: windows-latest
+          - os: windows-2022
             environment: all-clang-cl
             cxx_options: ''
             build_type: Release
-          - os: windows-latest
+          - os: windows-2022
             environment: default
             cxx_options: ''
             build_type: Debug
@@ -121,7 +121,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-15-intel, windows-latest]
+        os: [ubuntu-latest, macos-latest, macos-15-intel, windows-2022]
         environment: [all, all-boost-python]
 
     steps:
@@ -179,7 +179,7 @@ jobs:
   #   strategy:
   #     fail-fast: false
   #     matrix:
-  #       os: [ubuntu-latest, macos-latest, macos-15-intel, windows-latest]
+  #       os: [ubuntu-latest, macos-latest, macos-15-intel, windows-2022]
 
   #   steps:
   #   - uses: actions/checkout@v6
