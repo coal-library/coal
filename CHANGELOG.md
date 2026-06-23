@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- `coalConfig.cmake` declare the right Boost component to search ([#869](https://github.com/coal-library/coal/pull/869))
+
 ## [3.0.3] - 2026-05-05
 
 - Backport removal of Boost::system
