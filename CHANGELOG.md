@@ -49,7 +49,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - If the `o1/o2` pointers are different, we check whether or not the underlying geometries are the same. This is typically important in the context of serialization.
   - Fix using NaN to initialize collision data (`Contact`, `CollisionResult`, `DistanceResult`). This prevents the absurd `Contact contact; contact == contact; // false` problem.
   - Fix NaNs coming from GJK/EPA when the algorithms (correctly) early stopped. NaNs indicate failure. In the case that GJK/EPA early stopped but ran fine, we set non-computed data to inf instead of NaN.
-- `coalConfig.cmake` declare the right Boost component to search ([#869](https://github.com/coal-library/coal/pull/869))
 
 ### Changed
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))
@@ -72,6 +71,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Project is now tested with Python 3.10 and 3.14
   - Python 3.10 is the minimal supported Python version
 - Nix: switch to flakoboros ([#852](https://github.com/coal-library/coal/pull/852))
+
+## [3.0.4] - 2026-06-29
+
+- `coalConfig.cmake` declare the right Boost component to search ([#869](https://github.com/coal-library/coal/pull/869))
 
 ## [3.0.3] - 2026-05-05
 
@@ -629,7 +632,8 @@ Now Eigen is at the heart of linear algebra computations.
 First release
 
 
-[Unreleased]: https://github.com/coal-library/coal/compare/v3.0.3...HEAD
+[Unreleased]: https://github.com/coal-library/coal/compare/v3.0.4...HEAD
+[3.0.4]: https://github.com/coal-library/coal/compare/v3.0.3...v3.0.4
 [3.0.3]: https://github.com/coal-library/coal/compare/v3.0.2...v3.0.3
 [3.0.2]: https://github.com/coal-library/coal/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/coal-library/coal/compare/v3.0.0...v3.0.1
