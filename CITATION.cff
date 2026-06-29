@@ -18,8 +18,8 @@ authors:
     given-names: Louis
 title: "Coal - An extension of the Flexible Collision Library"
 abstract: "An extension of the Flexible Collision Library"
-version: 3.0.3
-date-released: "2026-05-05"
+version: 3.0.4
+date-released: "2026-06-29"
 license: BSD-2-Clause
 url: "https://github.com/coal-library/coal"
 
