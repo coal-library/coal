@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [3.0.4] - 2026-06-29
+
 - `coalConfig.cmake` declare the right Boost component to search ([#869](https://github.com/coal-library/coal/pull/869))
 
 ## [3.0.3] - 2026-05-05
@@ -564,7 +566,8 @@ Now Eigen is at the heart of linear algebra computations.
 First release
 
 
-[Unreleased]: https://github.com/coal-library/coal/compare/v3.0.3...HEAD
+[Unreleased]: https://github.com/coal-library/coal/compare/v3.0.4...HEAD
+[3.0.4]: https://github.com/coal-library/coal/compare/v3.0.3...v3.0.4
 [3.0.3]: https://github.com/coal-library/coal/compare/v3.0.2...v3.0.3
 [3.0.2]: https://github.com/coal-library/coal/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/coal-library/coal/compare/v3.0.0...v3.0.1
