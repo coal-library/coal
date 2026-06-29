@@ -144,26 +144,7 @@ void exposeCollisionAPI() {
         .def(dv::init<CollisionRequest, const CollisionRequestFlag, size_t>())
         .DEF_RW_CLASS_ATTRIB(CollisionRequest, num_max_contacts)
         .DEF_RW_CLASS_ATTRIB(CollisionRequest, enable_contact)
-        .add_property(
-            "enable_distance_lower_bound",
-            bp::make_function(
-                +[](CollisionRequest& self) -> bool {
-                  return self.enable_distance_lower_bound;
-                },
-                deprecated_warning_policy<>(
-                    "enable_distance_lower_bound has been marked as "
-                    "deprecated. "
-                    "A lower bound on distance is always computed.\n")),
-            bp::make_function(
-                +[](CollisionRequest& self, const bool value) -> void {
-                  self.enable_distance_lower_bound = value;
-                },
-                deprecated_warning_policy<>(
-                    "enable_distance_lower_bound has been marked as "
-                    "deprecated. "
-                    "A lower bound on distance is always computed.\n")),
-            doxygen::class_attrib_doc<CollisionRequest>(
-                "enable_distance_lower_bound"))
+        .DEF_RW_CLASS_ATTRIB(CollisionRequest, enable_distance_lower_bound)
         .DEF_RW_CLASS_ATTRIB(CollisionRequest, security_margin)
         .DEF_RW_CLASS_ATTRIB(CollisionRequest, break_distance)
         .DEF_RW_CLASS_ATTRIB(CollisionRequest, distance_upper_bound)

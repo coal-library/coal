@@ -177,6 +177,23 @@ bool overlap(const Matrix3s& R0, const Vec3s& T0, const kIOS& b1,
   return b1.overlap(b2_temp, request, sqrDistLowerBound);
 }
 
+bool overlapPrecomputedRTranspose(const Matrix3s& R0_transpose,
+                                  const Vec3s& inv_T0, const kIOS& b1,
+                                  const kIOS& b2,
+                                  const CollisionRequest& request,
+                                  Scalar& sqrDistLowerBound) {
+  kIOS b2_temp = b2;
+  for (unsigned int i = 0; i < b2_temp.num_spheres; ++i) {
+    b2_temp.spheres[i].o.noalias() =
+        R0_transpose * b2_temp.spheres[i].o + inv_T0;
+  }
+
+  b2_temp.obb.To.noalias() = R0_transpose * b2_temp.obb.To + inv_T0;
+  b2_temp.obb.axes.applyOnTheLeft(R0_transpose);
+
+  return b1.overlap(b2_temp, request, sqrDistLowerBound);
+}
+
 Scalar distance(const Matrix3s& R0, const Vec3s& T0, const kIOS& b1,
                 const kIOS& b2, Vec3s* P, Vec3s* Q) {
   kIOS b2_temp = b2;

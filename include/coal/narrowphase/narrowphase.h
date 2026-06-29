@@ -358,6 +358,73 @@ struct COAL_DLLAPI GJKSolver {
     return distance;
   }
 
+  /// @brief Specialization of `shapeDistance` for the case where both shapes
+  /// are triangles. It is more efficient to pre-compute the relative
+  /// transformation between the two shapes before calling GJK/EPA.
+  Scalar shapeDistance(const TriangleP& s1, const Transform3s& tf1,
+                       const TriangleP& s2, const Transform3s& tf2,
+                       const bool /*compute_penetration*/, Vec3s& p1, Vec3s& p2,
+                       Vec3s& normal) const {
+    // Transform the triangles in world frame
+    const TriangleP t1(tf1.transform(s1.a), tf1.transform(s1.b),
+                       tf1.transform(s1.c));
+
+    const TriangleP t2(tf2.transform(s2.a), tf2.transform(s2.b),
+                       tf2.transform(s2.c));
+
+    // Reset GJK algorithm
+    //   We don't need to take into account swept-sphere radius in GJK
+    //   iterations; the result will be corrected after GJK terminates.
+    this->minkowski_difference
+        .set<::coal::details::SupportOptions::NoSweptSphere>(&t1, &t2);
+    this->gjk.reset(this->gjk_max_iterations, this->gjk_tolerance);
+
+    // Get GJK initial guess
+    Vec3s guess;
+    if (this->gjk_initial_guess == GJKInitialGuess::CachedGuess ||
+        this->enable_cached_guess) {
+      guess = this->cached_guess;
+    } else {
+      guess = (t1.a + t1.b + t1.c - t2.a - t2.b - t2.c) / 3;
+    }
+    support_func_guess_t support_hint;
+    this->epa.status =
+        details::EPA::DidNotRun;  // EPA is never called in this function
+
+    Vec3ps guess_ = guess.cast<SolverScalar>();
+    details::GJK::Status gjk_status =
+        this->gjk.evaluate(this->minkowski_difference, guess_, support_hint);
+
+    this->cached_guess = this->gjk.getGuessFromSimplex().cast<Scalar>();
+    this->support_func_cached_guess = this->gjk.support_hint;
+
+    // Retrieve witness points and normal
+    Vec3ps p1_, p2_, normal_;
+    this->gjk.getWitnessPointsAndNormal(this->minkowski_difference, p1_, p2_,
+                                        normal_);
+    p1 = p1_.cast<Scalar>();
+    p2 = p2_.cast<Scalar>();
+    normal = normal_.cast<Scalar>();
+    Scalar distance = Scalar(this->gjk.distance);
+
+    if (gjk_status == details::GJK::Collision) {
+      Vec3s u((t1.b - t1.a).cross(t1.c - t1.a));
+      normal = u.normalized();
+      Scalar depth1((t1.a - t2.a).dot(normal));
+      Scalar depth2((t1.a - t2.b).dot(normal));
+      Scalar depth3((t1.a - t2.c).dot(normal));
+      distance = -std::max(depth1, std::max(depth2, depth3));
+    } else {
+      // No collision
+      // TODO On degenerated case, the closest point may be wrong
+      // (i.e. an object face normal is colinear to gjk.ray
+      // assert (dist == (w0 - w1).norm());
+      assert(this->gjk.ray.norm() > this->gjk.getTolerance());
+    }
+
+    return distance;
+  }
+
  protected:
   /// @brief initialize GJK.
   /// This method assumes `minkowski_difference` has been set.
