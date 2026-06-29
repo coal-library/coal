@@ -7,6 +7,7 @@
     # eigenpy v3.12.0 does not handle eigen v5, so we need devel for now
     eigenpy.url = "github:stack-of-tasks/eigenpy";
     eigenpy.inputs.gepetto.follows = "gepetto";
+    jrl-cmakemodules.follows = "eigenpy/jrl-cmakemodules";
   };
 
   outputs =
@@ -14,7 +15,10 @@
     inputs.gepetto.lib.mkFlakoboros inputs (
       { lib, ... }:
       {
-        overlays = [ inputs.eigenpy.overlays.flakoboros ];
+        overlays = [
+          inputs.jrl-cmakemodules.overlays.flakoboros
+          inputs.eigenpy.overlays.flakoboros
+        ];
         extraDevPyPackages = [ "coal" ];
         overrideAttrs.coal =
           { drv-prev, ... }:

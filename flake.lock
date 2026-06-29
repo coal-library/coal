@@ -466,7 +466,11 @@
     "root": {
       "inputs": {
         "eigenpy": "eigenpy",
-        "gepetto": "gepetto"
+        "gepetto": "gepetto",
+        "jrl-cmakemodules": [
+          "eigenpy",
+          "jrl-cmakemodules"
+        ]
       }
     },
     "rosdistro": {
