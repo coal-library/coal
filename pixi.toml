@@ -31,7 +31,7 @@ name = { workspace = true }
 version = { workspace = true }
 
 [package.build]
-backend = { name = "pixi-build-cmake", version = "0.3.*" }
+backend = { name = "pixi-build-cmake", version = "*" }
 
 [package.build.config]
 extra-args = [
@@ -66,7 +66,7 @@ eigen = ">=3.4.0"
 eigen-abi-devel = ">=3.4.0"
 assimp = ">=5.4"
 numpy = ">=1.22.0"
-python = ">=3.9.0"
+python = "*"
 eigenpy = ">=3.7.0"
 octomap = ">=1.10"
 

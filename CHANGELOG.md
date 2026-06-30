@@ -71,6 +71,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Project is now tested with Python 3.10 and 3.14
   - Python 3.10 is the minimal supported Python version
 - Nix: switch to flakoboros ([#852](https://github.com/coal-library/coal/pull/852))
+- Allow to use Python variant in pixi build ([#872](https://github.com/coal-library/coal/pull/872))
 
 ## [3.0.4] - 2026-06-29
 
