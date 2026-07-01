@@ -80,7 +80,7 @@ jobs:
         key: ccache-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.cxx_options }}-${{ matrix.environment }}-${{ github.sha }}
         restore-keys: ccache-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.cxx_options }}-${{ matrix.environment }}-
 
-    - uses: prefix-dev/setup-pixi@v0.9.6
+    - uses: prefix-dev/setup-pixi@v0.10.0
       with:
         cache: true
         environments: ${{ matrix.environment }}
@@ -135,7 +135,7 @@ jobs:
         key: ccache-python-standalone-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.environment }}-${{ github.sha }}
         restore-keys: ccache-python-standalone-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.environment }}-
 
-    - uses: prefix-dev/setup-pixi@v0.9.6
+    - uses: prefix-dev/setup-pixi@v0.10.0
       with:
         cache: true
         environments: ${{ matrix.environment }}
@@ -186,7 +186,7 @@ jobs:
   #     with:
   #       submodules: recursive
 
-  #   - uses: prefix-dev/setup-pixi@v0.9.6
+  #   - uses: prefix-dev/setup-pixi@v0.10.0
   #     env:
   #       CMAKE_BUILD_PARALLEL_LEVEL: 2
   #     with:
