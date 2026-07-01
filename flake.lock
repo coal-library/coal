@@ -8,11 +8,11 @@
         "jrl-cmakemodules": "jrl-cmakemodules"
       },
       "locked": {
-        "lastModified": 1781090285,
-        "narHash": "sha256-qYa88xaMI3RW+oZ+JvaEVlmVIUcYBh8YwIq2vwevqd0=",
+        "lastModified": 1782893948,
+        "narHash": "sha256-W6rihqLGgj9SawoHRd68Rxql958KYVlqbGH2RnzQIBE=",
         "owner": "stack-of-tasks",
         "repo": "eigenpy",
-        "rev": "5930668fe16bc1c22e7e271c7242a18b352af617",
+        "rev": "181c92e341896db5824b1c7062fd762b5fcc8904",
         "type": "github"
       },
       "original": {
@@ -226,11 +226,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782629166,
-        "narHash": "sha256-O5VYnyYxzBcL767XrfhJxJr9P7mDPWLecfwgNMjXchI=",
+        "lastModified": 1782843986,
+        "narHash": "sha256-YxzK+K/Zzw24cV6uaVsLDMTLDpONz0bZRSXW7HVW3HA=",
         "owner": "gepetto",
         "repo": "nix",
-        "rev": "5038bcd2dd04557299f8cc3e980c8e0b4107de3e",
+        "rev": "bb788a93d4d821772070fd5ab40491cef0910a5b",
         "type": "github"
       },
       "original": {
@@ -293,11 +293,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779806325,
-        "narHash": "sha256-fTXnyBrwu7yGaeTC2aEL17q92QXCQtH84UHT/yXAF9Q=",
+        "lastModified": 1782767220,
+        "narHash": "sha256-CCLmZFYX0fU/r9+I3eLTUlvyXCzqkWExrAa6EaUzmM0=",
         "owner": "jrl-umi3218",
         "repo": "jrl-cmakemodules",
-        "rev": "6facf32996100c86276f61dada4d10f0993851be",
+        "rev": "2bffcade6e002e60428014f5e0658583711b4253",
         "type": "github"
       },
       "original": {
