@@ -73,10 +73,10 @@ octomap = ">=1.10"
 [package.run-dependencies]
 eigen = ">=3.4.0"
 
-[package.target.win.host-dependencies]
+[package.host-dependencies."if(win)"]
 qhull = ">=2020.2"
 
-[package.target.unix.host-dependencies]
+[package.host-dependencies."if(unix)"]
 qhull = ">=2020.2"
 qhull-static = ">=2020.2"
 
