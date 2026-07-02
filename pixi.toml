@@ -21,7 +21,7 @@ eigen = ">=3.4.0"
 assimp = ">=5.4"
 numpy = ">=1.22.0"
 python = ">=3.9.0"
-doxygen = ">=1.8"
+doxygen = ">=1.8,<1.17"
 lxml = ">=5.3"
 pylatexenc = ">=2.10"
 nanoeigenpy = ">=0.3.0"
@@ -57,7 +57,7 @@ pkg-config = ">=0.29.2"
 git = ">=2.47.0"
 lxml = ">=5.3"
 pylatexenc = ">=2.10"
-doxygen = ">=1.8"
+doxygen = ">=1.8,<1.17"
 
 [package.host-dependencies]
 libboost-devel = ">=1.80.0"
@@ -73,10 +73,10 @@ octomap = ">=1.10"
 [package.run-dependencies]
 eigen = ">=3.4.0"
 
-[package.target.win.host-dependencies]
+[package.host-dependencies."if(win)"]
 qhull = ">=2020.2"
 
-[package.target.unix.host-dependencies]
+[package.host-dependencies."if(unix)"]
 qhull = ">=2020.2"
 qhull-static = ">=2020.2"
 
