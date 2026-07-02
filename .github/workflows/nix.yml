@@ -15,7 +15,7 @@ jobs:
         os: [ubuntu, macos]
         extends: ["", "pkgs-eigen5", "pkgs-full", "pkgs-nanobind"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: cachix/install-nix-action@v31
       - uses: cachix/cachix-action@v17
         with:
