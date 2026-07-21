@@ -773,8 +773,8 @@ BOOST_AUTO_TEST_CASE(test_support_direction_scale_invariance) {
   cast_sphere.computeLocalAABB();
 
   const std::vector<Vec3s> dirs = {
-      Vec3s(1, 0, 0), Vec3s(0, -1, 0),
-      Vec3s(0, 0, 1), Vec3s(1, 1, 1),
+      Vec3s(1, 0, 0),  Vec3s(0, -1, 0),
+      Vec3s(0, 0, 1),  Vec3s(1, 1, 1),
       Vec3s(-2, 3, 5), Vec3s(Scalar(0.3), Scalar(-1.7), Scalar(2.2))};
   const Scalar scale = Scalar(3.7);
 
@@ -847,8 +847,7 @@ BOOST_AUTO_TEST_CASE(test_default_compute_shape_support_delegates) {
       &box,      &sphere,   &ellipsoid, &capsule, &cone,
       &cylinder, &triangle, &convex,    &plane,   &halfspace};
   const std::vector<Vec3s> dirs = {
-      Vec3s(1, 0, 0), Vec3s(0, -1, 0),
-      Vec3s(0, 0, 1), Vec3s(1, 1, 1),
+      Vec3s(1, 0, 0), Vec3s(0, -1, 0), Vec3s(0, 0, 1), Vec3s(1, 1, 1),
       Vec3s(Scalar(0.3), Scalar(-1.7), Scalar(2.2))};
 
   for (const ShapeBase* shape : shapes) {
