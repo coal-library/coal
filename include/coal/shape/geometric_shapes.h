@@ -87,9 +87,18 @@ class COAL_DLLAPI ShapeBase : public CollisionGeometry {
   /// This radius is always >= 0.
   Scalar getSweptSphereRadius() const { return this->m_swept_sphere_radius; }
 
-  /// @brief Compute the support point of this shape in the given direction.
+  /// @brief Compute the support point of this shape in the given direction,
+  /// i.e. a point of the shape which maximizes the dot product with dir.
   /// The output support point is expressed in the local frame of the shape
-  /// and does not account for the swept sphere radius.
+  /// and is the "core" support: it does not account for the swept-sphere
+  /// radius (e.g. Sphere returns the origin, Capsule returns a segment
+  /// endpoint — their radii live in Coal's swept-sphere accounting). Callers
+  /// who want the inflated surface point should use
+  /// details::getSupport<details::SupportOptions::WithSweptSphere> instead.
+  /// The default implementation delegates to the built-in support functions
+  /// for all built-in node types (unbounded shapes — Plane, Halfspace —
+  /// return zero) and throws std::logic_error for a shape reporting
+  /// GEOM_CUSTOM that did not override this method.
   /// Override getNodeType() to return GEOM_CUSTOM and this method to enable
   /// custom shapes to participate in GJK/EPA collision and distance
   /// computations.
@@ -101,16 +110,7 @@ class COAL_DLLAPI ShapeBase : public CollisionGeometry {
   /// @param[in,out] hint warm-start hint (used mainly for convex shapes).
   /// @param[in,out] data temporary data for support computation.
   virtual void computeShapeSupport(const Vec3s& dir, Vec3s& support, int& hint,
-                                   details::ShapeSupportData& data) const {
-    COAL_UNUSED_VARIABLE(dir);
-    COAL_UNUSED_VARIABLE(support);
-    COAL_UNUSED_VARIABLE(hint);
-    COAL_UNUSED_VARIABLE(data);
-    COAL_THROW_PRETTY(
-        "computeShapeSupport not implemented for this shape type. Override "
-        "getNodeType() and this method to use custom shapes with GJK/EPA.",
-        std::logic_error);
-  }
+                                   details::ShapeSupportData& data) const;
 
   /// @brief Whether the Nesterov normalize heuristic should be used
   /// for this shape in GJK. Override for custom shapes if needed.
