@@ -93,7 +93,10 @@ class COAL_DLLAPI ShapeBase : public CollisionGeometry {
   /// Override getNodeType() to return GEOM_CUSTOM and this method to enable
   /// custom shapes to participate in GJK/EPA collision and distance
   /// computations.
-  /// @param[in] dir support direction. Always unit-length when called by Coal.
+  /// @param[in] dir support direction; may be non-unit-length. The support
+  /// point of a convex shape is invariant to the magnitude of dir; normalize
+  /// internally if your formula requires a unit direction (as the built-in
+  /// Cylinder does for its radial component).
   /// @param[out] support the computed support point.
   /// @param[in,out] hint warm-start hint (used mainly for convex shapes).
   /// @param[in,out] data temporary data for support computation.
