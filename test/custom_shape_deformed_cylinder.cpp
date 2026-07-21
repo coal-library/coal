@@ -48,6 +48,7 @@
 #include "coal/distance.h"
 #include "coal/math/transform.h"
 #include "coal/shape/geometric_shapes.h"
+#include "coal/narrowphase/support_functions.h"
 
 using namespace coal;
 
@@ -250,4 +251,43 @@ BOOST_AUTO_TEST_CASE(test_deformed_cylinder_contact_patch) {
   BOOST_CHECK_NO_THROW(coal::computeContactPatch(&dc, tf1, &box, tf2, col_res,
                                                  patch_req, patch_res));
   BOOST_CHECK(patch_res.numContactPatches() > 0);
+}
+
+/// Support points must be invariant to the magnitude of the support
+/// direction: GJK passes raw, possibly non-unit-length directions.
+BOOST_AUTO_TEST_CASE(test_deformed_cylinder_support_scale_invariance) {
+  const Scalar angle = boost::math::constants::pi<Scalar>() / 6;  // 30°
+  DeformedCylinder dc(Vec3s(0, 0, 0), Vec3s::UnitZ(), Scalar(0.5),
+                      Vec3s(0, 0, 2),
+                      Vec3s(std::sin(angle), 0, std::cos(angle)), Scalar(0.5));
+  dc.setSweptSphereRadius(Scalar(0.1));
+  dc.computeLocalAABB();
+
+  const std::vector<Vec3s> dirs = {
+      Vec3s(1, 0, 0), Vec3s(0, -1, 0),
+      Vec3s(0, 0, 1), Vec3s(1, 1, 1),
+      Vec3s(-2, 3, 5), Vec3s(Scalar(0.3), Scalar(-1.7), Scalar(2.2))};
+  const Scalar scale = Scalar(3.7);
+
+  for (const Vec3s& dir : dirs) {
+    int hint1 = 0;
+    int hint2 = 0;
+    const Vec3s s1 =
+        details::getSupport<details::SupportOptions::NoSweptSphere>(&dc, dir,
+                                                                    hint1);
+    const Vec3s s2 =
+        details::getSupport<details::SupportOptions::NoSweptSphere>(
+            &dc, scale * dir, hint2);
+    BOOST_CHECK_SMALL((s1 - s2).norm(), Scalar(1e-12));
+
+    hint1 = 0;
+    hint2 = 0;
+    const Vec3s ss1 =
+        details::getSupport<details::SupportOptions::WithSweptSphere>(&dc, dir,
+                                                                      hint1);
+    const Vec3s ss2 =
+        details::getSupport<details::SupportOptions::WithSweptSphere>(
+            &dc, scale * dir, hint2);
+    BOOST_CHECK_SMALL((ss1 - ss2).norm(), Scalar(1e-12));
+  }
 }

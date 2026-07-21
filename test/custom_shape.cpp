@@ -81,12 +81,12 @@ class CustomSphere : public ShapeBase {
     aabb_radius = r;
   }
 
-  // Support function: for a sphere the support is simply radius * dir
-  // (direction is already unit-length as required by Coal).
+  // Support function: radius * normalize(dir). The direction is the raw,
+  // possibly non-unit-length GJK direction.
   // Note: do NOT add swept sphere radius here; Coal handles it separately.
   void computeShapeSupport(const Vec3s& dir, Vec3s& support, int& /*hint*/,
                            details::ShapeSupportData& /*data*/) const override {
-    support = radius * dir;
+    support = radius * dir.normalized();
   }
 
   bool isEqual(const CollisionGeometry& other) const override {
@@ -756,4 +756,49 @@ BOOST_AUTO_TEST_CASE(test_custom_shape_contact_patch_no_throw) {
 
   Ellipsoid ellipsoid(radius, radius, radius);
   test_pair(&custom, tf1, &ellipsoid, tf_near);
+}
+
+/// Support points must be invariant to the magnitude of the support
+/// direction: GJK passes raw, possibly non-unit-length directions.
+BOOST_AUTO_TEST_CASE(test_support_direction_scale_invariance) {
+  CustomSphere sphere(0.7);
+  sphere.setSweptSphereRadius(Scalar(0.2));
+  sphere.computeLocalAABB();
+
+  const Transform3s cast_tf(
+      Quats(Eigen::AngleAxis<Scalar>(Scalar(0.3), Vec3s(1, 2, 3).normalized())),
+      Vec3s(Scalar(0.3), Scalar(-0.2), Scalar(1.1)));
+  CastSphere cast_sphere(0.5, cast_tf);
+  cast_sphere.computeLocalAABB();
+
+  const std::vector<Vec3s> dirs = {
+      Vec3s(1, 0, 0), Vec3s(0, -1, 0),
+      Vec3s(0, 0, 1), Vec3s(1, 1, 1),
+      Vec3s(-2, 3, 5), Vec3s(Scalar(0.3), Scalar(-1.7), Scalar(2.2))};
+  const Scalar scale = Scalar(3.7);
+
+  for (const ShapeBase* shape : {static_cast<const ShapeBase*>(&sphere),
+                                 static_cast<const ShapeBase*>(&cast_sphere)}) {
+    for (const Vec3s& dir : dirs) {
+      int hint1 = 0;
+      int hint2 = 0;
+      const Vec3s s1 =
+          details::getSupport<details::SupportOptions::NoSweptSphere>(
+              shape, dir, hint1);
+      const Vec3s s2 =
+          details::getSupport<details::SupportOptions::NoSweptSphere>(
+              shape, scale * dir, hint2);
+      BOOST_CHECK_SMALL((s1 - s2).norm(), Scalar(1e-12));
+
+      hint1 = 0;
+      hint2 = 0;
+      const Vec3s ss1 =
+          details::getSupport<details::SupportOptions::WithSweptSphere>(
+              shape, dir, hint1);
+      const Vec3s ss2 =
+          details::getSupport<details::SupportOptions::WithSweptSphere>(
+              shape, scale * dir, hint2);
+      BOOST_CHECK_SMALL((ss1 - ss2).norm(), Scalar(1e-12));
+    }
+  }
 }
