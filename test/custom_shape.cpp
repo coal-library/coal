@@ -51,6 +51,7 @@
 #include "coal/shape/geometric_shapes_utility.h"
 #include "coal/BVH/BVH_model.h"
 #include "coal/shape/geometric_shape_to_BVH_model.h"
+#include "utility.h"
 #include "coal/hfield.h"
 #include "coal/contact_patch.h"
 
@@ -801,4 +802,87 @@ BOOST_AUTO_TEST_CASE(test_support_direction_scale_invariance) {
       BOOST_CHECK_SMALL((ss1 - ss2).norm(), Scalar(1e-12));
     }
   }
+}
+
+// ============================================================================
+// A GEOM_CUSTOM shape that does not override computeShapeSupport().
+// ============================================================================
+class NoOverrideCustomShape : public ShapeBase {
+ public:
+  NoOverrideCustomShape* clone() const override {
+    return new NoOverrideCustomShape(*this);
+  }
+
+  NODE_TYPE getNodeType() const override { return GEOM_CUSTOM; }
+
+  void computeLocalAABB() override {
+    aabb_local.min_ = Vec3s::Constant(-1);
+    aabb_local.max_ = Vec3s::Constant(1);
+    aabb_center = Vec3s::Zero();
+    aabb_radius = std::sqrt(Scalar(3));
+  }
+
+  bool isEqual(const CollisionGeometry& other) const override {
+    return dynamic_cast<const NoOverrideCustomShape*>(&other) != nullptr;
+  }
+};
+
+/// The default computeShapeSupport() delegates to the built-in support
+/// functions: it returns the same core (NoSweptSphere) support point as
+/// details::getSupport for every built-in shape.
+BOOST_AUTO_TEST_CASE(test_default_compute_shape_support_delegates) {
+  const Box box(Scalar(1.0), Scalar(1.2), Scalar(0.8));
+  const Sphere sphere(Scalar(0.5));
+  const Ellipsoid ellipsoid(Scalar(0.5), Scalar(0.7), Scalar(0.9));
+  const Capsule capsule(Scalar(0.4), Scalar(1.0));
+  const Cone cone(Scalar(0.4), Scalar(1.0));
+  const Cylinder cylinder(Scalar(0.4), Scalar(1.0));
+  const TriangleP triangle(Vec3s(0, 0, 0), Vec3s(1, 0, 0), Vec3s(0, 1, 0));
+  const ConvexTpl<Triangle32> convex =
+      constructPolytopeFromEllipsoid(Ellipsoid(0.6, 0.8, 1.0));
+  const Plane plane(Vec3s(0, 0, 1), Scalar(0));
+  const Halfspace halfspace(Vec3s(0, 0, 1), Scalar(0));
+
+  const std::vector<const ShapeBase*> shapes = {
+      &box,      &sphere,   &ellipsoid, &capsule, &cone,
+      &cylinder, &triangle, &convex,    &plane,   &halfspace};
+  const std::vector<Vec3s> dirs = {
+      Vec3s(1, 0, 0), Vec3s(0, -1, 0),
+      Vec3s(0, 0, 1), Vec3s(1, 1, 1),
+      Vec3s(Scalar(0.3), Scalar(-1.7), Scalar(2.2))};
+
+  for (const ShapeBase* shape : shapes) {
+    for (const Vec3s& dir : dirs) {
+      int hint_virtual = 0;
+      int hint_direct = 0;
+      details::ShapeSupportData data_virtual;
+      details::ShapeSupportData data_direct;
+      Vec3s support;
+      shape->computeShapeSupport(dir, support, hint_virtual, data_virtual);
+      const Vec3s expected =
+          details::getSupport<details::SupportOptions::NoSweptSphere>(
+              shape, dir, hint_direct, data_direct);
+      BOOST_CHECK(support == expected);
+    }
+  }
+
+  // Unbounded shapes have no support point; the dispatch returns zero.
+  int hint = 0;
+  details::ShapeSupportData data;
+  Vec3s support;
+  plane.computeShapeSupport(Vec3s(0, 0, 1), support, hint, data);
+  BOOST_CHECK(support.isZero());
+}
+
+/// A GEOM_CUSTOM shape without a computeShapeSupport() override is a
+/// programming error and must throw, not recurse or return garbage.
+BOOST_AUTO_TEST_CASE(test_custom_shape_without_override_throws) {
+  NoOverrideCustomShape shape;
+  shape.computeLocalAABB();
+  Vec3s support;
+  int hint = 0;
+  details::ShapeSupportData data;
+  BOOST_CHECK_THROW(
+      shape.computeShapeSupport(Vec3s(0, 0, 1), support, hint, data),
+      std::logic_error);
 }

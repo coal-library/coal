@@ -37,6 +37,7 @@
 
 #include "coal/shape/geometric_shapes.h"
 #include "coal/shape/geometric_shapes_utility.h"
+#include "coal/narrowphase/support_functions.h"
 
 #ifdef COAL_HAS_QHULL
 #include <libqhullcpp/QhullError.h>
@@ -56,6 +57,21 @@ using orgQhull::QhullVertexSet;
 #endif
 
 namespace coal {
+
+void ShapeBase::computeShapeSupport(const Vec3s& dir, Vec3s& support, int& hint,
+                                    details::ShapeSupportData& data) const {
+  // Guard before delegating: details::getSupport dispatches GEOM_CUSTOM back
+  // to this virtual, so a custom shape missing its override must stop here
+  // instead of recursing.
+  if (getNodeType() == GEOM_CUSTOM) {
+    COAL_THROW_PRETTY(
+        "computeShapeSupport not implemented for this custom shape. Override "
+        "this method to use custom shapes with GJK/EPA.",
+        std::logic_error);
+  }
+  support = details::getSupport<details::SupportOptions::NoSweptSphere>(
+      this, dir, hint, data);
+}
 
 template <typename IndexType>
 ConvexBaseTpl<IndexType>* ConvexBaseTpl<IndexType>::convexHull(
