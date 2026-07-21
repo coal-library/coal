@@ -264,8 +264,8 @@ BOOST_AUTO_TEST_CASE(test_deformed_cylinder_support_scale_invariance) {
   dc.computeLocalAABB();
 
   const std::vector<Vec3s> dirs = {
-      Vec3s(1, 0, 0), Vec3s(0, -1, 0),
-      Vec3s(0, 0, 1), Vec3s(1, 1, 1),
+      Vec3s(1, 0, 0),  Vec3s(0, -1, 0),
+      Vec3s(0, 0, 1),  Vec3s(1, 1, 1),
       Vec3s(-2, 3, 5), Vec3s(Scalar(0.3), Scalar(-1.7), Scalar(2.2))};
   const Scalar scale = Scalar(3.7);
 
