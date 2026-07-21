@@ -114,6 +114,10 @@ class COAL_DLLAPI ShapeBase : public CollisionGeometry {
 
   /// @brief Whether the Nesterov normalize heuristic should be used
   /// for this shape in GJK. Override for custom shapes if needed.
+  /// When wrapping another shape, delegate via
+  /// details::getNormalizeSupportDirection(&inner); the call resolves through
+  /// the inner shape's node type, so it terminates for any acyclic
+  /// delegation.
   virtual bool needNesterovNormalizeHeuristic() const { return false; }
 
  protected:
