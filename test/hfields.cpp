@@ -727,7 +727,7 @@ BOOST_AUTO_TEST_CASE(hfield_contacts_follow_world_transform) {
   const Scalar field_top = 0.;
   const Scalar sphere_radius = 0.2;
   const Scalar penetration = 0.001;
-  const Scalar tolerance = 1e-6;
+  const Scalar tolerance = 1e-12;
 
   // A constant heightfield has the same top contact surface as this box. The
   // box provides an independent analytical reference for the specialized
@@ -769,7 +769,7 @@ BOOST_AUTO_TEST_CASE(hfield_contacts_follow_world_transform) {
           rotation, hfield_pose.transform(
                         Vec3s(0., 0., (field_top + field_bottom) / Scalar(2))));
 
-      const CollisionRequest request;
+      CollisionRequest request;
 
       CollisionResult hfield_result;
       collide(&hfield, hfield_pose, &sphere, sphere_pose, request,
