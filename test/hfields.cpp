@@ -720,6 +720,102 @@ BOOST_AUTO_TEST_CASE(test_hfield_bin_active_faces) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(hfield_contacts_follow_world_transform) {
+  const Scalar field_x = 4.;
+  const Scalar field_y = 4.;
+  const Scalar field_bottom = -1.;
+  const Scalar field_top = 0.;
+  const Scalar sphere_radius = 0.2;
+  const Scalar penetration = 0.001;
+  const Scalar tolerance = 1e-6;
+
+  // A constant heightfield has the same top contact surface as this box. The
+  // box provides an independent analytical reference for the specialized
+  // heightfield-shape traversal.
+  const MatrixXs heights = MatrixXs::Zero(21, 21);
+  const HeightField<OBBRSS> hfield(field_x, field_y, heights, field_bottom);
+  const Box equivalent_box(field_x, field_y, field_top - field_bottom);
+  const Sphere sphere(sphere_radius);
+
+  const Matrix3s tilted_rotation =
+      (Eigen::AngleAxis<Scalar>(Scalar(0.55), Vec3s(1., 2., 0.5).normalized()) *
+       Eigen::AngleAxis<Scalar>(Scalar(-0.31), Vec3s::UnitZ()))
+          .toRotationMatrix();
+
+  const std::vector<std::pair<const char*, Transform3s>> field_poses{
+      {"identity", Transform3s::Identity()},
+      {"translated", Transform3s(Matrix3s::Identity(), Vec3s(2., -2., 0.3))},
+      {"translated and rotated",
+       Transform3s(tilted_rotation, Vec3s(1.2, -0.8, 0.7))},
+  };
+
+  for (const auto& [name, hfield_pose] : field_poses) {
+    BOOST_TEST_CONTEXT(name) {
+      // Place the sphere over the interior of one cell and penetrate the top
+      // surface by a known amount in the heightfield's local frame.
+      const Vec3s local_witness1(0.05, -0.07, field_top);
+      const Vec3s local_sphere_center(local_witness1[0], local_witness1[1],
+                                      field_top + sphere_radius - penetration);
+
+      const Matrix3s& rotation = hfield_pose.rotation();
+      const Vec3s expected_normal = rotation * Vec3s::UnitZ();
+      const Vec3s expected_witness1 = hfield_pose.transform(local_witness1);
+      const Vec3s expected_witness2 =
+          expected_witness1 - penetration * expected_normal;
+
+      const Transform3s sphere_pose(rotation,
+                                    hfield_pose.transform(local_sphere_center));
+      const Transform3s box_pose(
+          rotation, hfield_pose.transform(
+                        Vec3s(0., 0., (field_top + field_bottom) / Scalar(2))));
+
+      const CollisionRequest request;
+
+      CollisionResult hfield_result;
+      collide(&hfield, hfield_pose, &sphere, sphere_pose, request,
+              hfield_result);
+      BOOST_REQUIRE(hfield_result.isCollision());
+      BOOST_REQUIRE_EQUAL(hfield_result.numContacts(), 1);
+
+      CollisionResult box_result;
+      collide(&equivalent_box, box_pose, &sphere, sphere_pose, request,
+              box_result);
+      BOOST_REQUIRE(box_result.isCollision());
+      BOOST_REQUIRE_EQUAL(box_result.numContacts(), 1);
+
+      const Contact& hfield_contact = hfield_result.getContact(0);
+      const Contact& box_contact = box_result.getContact(0);
+
+      // First verify that the analytical box behaves as expected, then demand
+      // the same world-space result from the native heightfield path.
+      BOOST_CHECK_SMALL(box_contact.penetration_depth + penetration, tolerance);
+      BOOST_CHECK(
+          box_contact.nearest_points[0].isApprox(expected_witness1, tolerance));
+      BOOST_CHECK(
+          box_contact.nearest_points[1].isApprox(expected_witness2, tolerance));
+      BOOST_CHECK(box_contact.normal.isApprox(expected_normal, tolerance));
+
+      BOOST_CHECK_SMALL(hfield_contact.penetration_depth + penetration,
+                        tolerance);
+      BOOST_CHECK(hfield_contact.nearest_points[0].isApprox(expected_witness1,
+                                                            tolerance));
+      BOOST_CHECK(hfield_contact.nearest_points[1].isApprox(expected_witness2,
+                                                            tolerance));
+      BOOST_CHECK(hfield_contact.normal.isApprox(expected_normal, tolerance));
+
+      BOOST_CHECK_SMALL(
+          hfield_contact.penetration_depth - box_contact.penetration_depth,
+          tolerance);
+      BOOST_CHECK(hfield_contact.nearest_points[0].isApprox(
+          box_contact.nearest_points[0], tolerance));
+      BOOST_CHECK(hfield_contact.nearest_points[1].isApprox(
+          box_contact.nearest_points[1], tolerance));
+      BOOST_CHECK(
+          hfield_contact.normal.isApprox(box_contact.normal, tolerance));
+    }
+  }
+}
+
 BOOST_AUTO_TEST_CASE(test_hfield_single_bin) {
   const Scalar sphere_radius = 1.;
   Sphere sphere(sphere_radius);
