@@ -383,8 +383,8 @@ bool binCorrection(const ConvexTpl<Polygone>& convex,
     // sphere swept radius of the shape.
     // TODO: take into account the swept-sphere radius of the bin.
     const Vec3s _support = getSupport<details::SupportOptions::WithSweptSphere>(
-        &shape,
-        -local_shape_pose.rotation().transpose() * local_face_normal, hint);
+        &shape, -local_shape_pose.rotation().transpose() * local_face_normal,
+        hint);
     const Vec3s local_support = local_shape_pose.transform(_support);
 
     // Project support into the inclined bin having triangle
