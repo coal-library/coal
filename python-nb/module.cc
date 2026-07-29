@@ -78,7 +78,7 @@ void exposeOctree(nb::module_& m);
 #endif
 void exposeBroadPhase(nb::module_& m);
 
-NB_MODULE(COAL_PYTHON_LIBNAME, m) {
+NB_MODULE(coal_pywrap_nb, m) {
   exposeVersion(m);
   exposeMaths(m);
   exposeCollisionGeometries(m);
