@@ -12,7 +12,7 @@ set(
   printable.hh
 )
 
-if(ENABLE_DOXYGEN_AUTODOC)
+if(ENABLE_PYTHON_DOXYGEN_AUTODOC)
   add_custom_target(
     generate_doxygen_cpp_doc
     COMMAND
@@ -56,10 +56,16 @@ target_link_libraries(coal_pywrap PRIVATE eigenpy::eigenpy coal)
 jrl_target_set_default_compile_options(coal_pywrap PRIVATE)
 jrl_target_set_output_directory(coal_pywrap OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/site-packages/coal)
 
-target_compile_definitions(
-  coal_pywrap
-  PRIVATE $<$<BOOL:${ENABLE_DOXYGEN_AUTODOC}>:COAL_HAS_DOXYGEN_AUTODOC>
-)
+if(ENABLE_PYTHON_DOXYGEN_AUTODOC)
+  # The sources include the generated headers as doxygen_autodoc/<...>.h, and
+  # those in turn include the documented private headers as <narrowphase/...>
+  target_include_directories(
+    coal_pywrap
+    PRIVATE ${CMAKE_CURRENT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/src
+  )
+  add_dependencies(coal_pywrap generate_doxygen_cpp_doc)
+  target_compile_definitions(coal_pywrap PRIVATE COAL_HAS_DOXYGEN_AUTODOC)
+endif()
 
 jrl_python_generate_init_py(
     coal_pywrap
