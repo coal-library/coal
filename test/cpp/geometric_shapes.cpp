@@ -37,7 +37,7 @@
 /** \author Jia Pan */
 
 #define BOOST_TEST_MODULE COAL_GEOMETRIC_SHAPES
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include "coal/narrowphase/narrowphase.h"
 #include "coal/collision.h"

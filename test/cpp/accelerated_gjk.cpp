@@ -35,7 +35,7 @@
 /** \author Louis Montaut */
 
 #define BOOST_TEST_MODULE COAL_NESTEROV_GJK
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include <Eigen/Geometry>
 #include "coal/narrowphase/narrowphase.h"

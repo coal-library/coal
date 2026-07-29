@@ -34,11 +34,11 @@
 
 /** \author Florent Lamiraux <florent@laas.fr> */
 
-#define _USE_MATH_DEFINES
 #include <cmath>
 
 #define BOOST_TEST_MODULE COAL_BOX_BOX
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
+#include <boost/math/constants/constants.hpp>
 
 #define CHECK_CLOSE_TO_0(x, eps) BOOST_CHECK_CLOSE((x + 1.0), (1.0), (eps))
 
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(distance_box_box_1) {
 BOOST_AUTO_TEST_CASE(distance_box_box_2) {
   CollisionGeometryPtr_t s1(new coal::Box(6, 10, 2));
   CollisionGeometryPtr_t s2(new coal::Box(2, 2, 2));
-  static Scalar pi = Scalar(M_PI);
+  constexpr auto pi = boost::math::constants::pi<Scalar>();
   Transform3s tf1;
   Transform3s tf2(
       coal::makeQuat(cos(Scalar(pi / 8)), sin(Scalar(pi / 8)) / sqrt(Scalar(3)),
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(distance_box_box_2) {
 BOOST_AUTO_TEST_CASE(distance_box_box_3) {
   CollisionGeometryPtr_t s1(new coal::Box(1, 1, 1));
   CollisionGeometryPtr_t s2(new coal::Box(1, 1, 1));
-  static Scalar pi = Scalar(M_PI);
+  constexpr auto pi = boost::math::constants::pi<Scalar>();
   Transform3s tf1(coal::makeQuat(cos(pi / 8), 0, 0, sin(pi / 8)),
                   Vec3s(-2, 1, .5));
   Transform3s tf2(coal::makeQuat(cos(pi / 8), 0, sin(pi / 8), 0),

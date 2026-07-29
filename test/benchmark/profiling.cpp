@@ -25,7 +25,6 @@
 #include "coal/narrowphase/narrowphase.h"
 #include "coal/mesh_loader/assimp.h"
 #include "utility.h"
-#include "fcl_resources/config.h"
 
 using namespace coal;
 
@@ -120,7 +119,7 @@ size_t Ntransform = 100;
 Scalar limit = 20;
 bool verbose = false;
 
-#define OUT(x) \
+#define LOG_COUT(x) \
   if (verbose) std::cout << x << std::endl
 #define CHECK_PARAM_NB(NB, NAME) \
   if (iarg + NB >= argc)         \
@@ -132,7 +131,7 @@ void handleParam(int& iarg, const int& argc, char** argv,
     if (a == "-nb_transform") {
       CHECK_PARAM_NB(1, nb_transform);
       Ntransform = (size_t)atoi(argv[iarg + 1]);
-      OUT("nb_transform = " << Ntransform);
+      LOG_COUT("nb_transform = " << Ntransform);
       iarg += 2;
     } else if (a == "-enable_distance_lower_bound") {
       CHECK_PARAM_NB(1, enable_distance_lower_bound);
@@ -173,21 +172,22 @@ Geometry makeGeomFromParam(int& iarg, const int& argc, char** argv) {
     type = "sphere";
   } else if (a == "-mesh") {
     CHECK_PARAM_NB(2, Mesh);
-    OUT("Loading " << argv[iarg + 2] << " as BVHModel<" << argv[iarg + 1]
-                   << ">...");
+    LOG_COUT("Loading " << argv[iarg + 2] << " as BVHModel<" << argv[iarg + 1]
+                        << ">...");
     if (strcmp(argv[iarg + 1], "obb") == 0) {
       o = meshToGeom<OBB>(argv[iarg + 2]);
-      OUT("Mesh has " << dynamic_pointer_cast<BVHModel<OBB> >(o)->num_tris
-                      << " triangles");
+      LOG_COUT("Mesh has " << dynamic_pointer_cast<BVHModel<OBB> >(o)->num_tris
+                           << " triangles");
       type = "mesh_obb";
     } else if (strcmp(argv[iarg + 1], "obbrss") == 0) {
       o = meshToGeom<OBBRSS>(argv[iarg + 2]);
-      OUT("Mesh has " << dynamic_pointer_cast<BVHModel<OBBRSS> >(o)->num_tris
+      LOG_COUT(
+          "Mesh has " << dynamic_pointer_cast<BVHModel<OBBRSS> >(o)->num_tris
                       << " triangles");
       type = "mesh_obbrss";
     } else
       throw std::invalid_argument("BV type must be obb or obbrss");
-    OUT("done.");
+    LOG_COUT("done.");
     iarg += 3;
     if (iarg < argc && strcmp(argv[iarg], "crop") == 0) {
       CHECK_PARAM_NB(6, Crop);
@@ -196,15 +196,15 @@ Geometry makeGeomFromParam(int& iarg, const int& argc, char** argv) {
                 Scalar(atof(argv[iarg + 3]))),
           Vec3s(Scalar(atof(argv[iarg + 4])), Scalar(atof(argv[iarg + 5])),
                 Scalar(atof(argv[iarg + 6]))));
-      OUT("Cropping " << aabb.min_.transpose() << " ---- "
-                      << aabb.max_.transpose() << " ...");
+      LOG_COUT("Cropping " << aabb.min_.transpose() << " ---- "
+                           << aabb.max_.transpose() << " ...");
       o->computeLocalAABB();
-      OUT("Mesh AABB is " << o->aabb_local.min_.transpose() << " ---- "
-                          << o->aabb_local.max_.transpose() << " ...");
+      LOG_COUT("Mesh AABB is " << o->aabb_local.min_.transpose() << " ---- "
+                               << o->aabb_local.max_.transpose() << " ...");
       o.reset(extract(o.get(), Transform3s(), aabb));
       if (!o) throw std::invalid_argument("Failed to crop.");
-      OUT("Crop has " << dynamic_pointer_cast<BVHModel<OBB> >(o)->num_tris
-                      << " triangles");
+      LOG_COUT("Crop has " << dynamic_pointer_cast<BVHModel<OBB> >(o)->num_tris
+                           << " triangles");
       iarg += 7;
     }
   } else if (a == "-capsule") {

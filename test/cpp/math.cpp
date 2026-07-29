@@ -33,11 +33,11 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define _USE_MATH_DEFINES
 #include <cmath>
 
 #define BOOST_TEST_MODULE COAL_MATH
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
+#include <boost/math/constants/constants.hpp>
 
 #include "coal/data_types.h"
 #include "coal/math/transform.h"
@@ -111,8 +111,9 @@ Vec3s rotate(Vec3s input, Scalar w, Vec3s vec) {
 }
 
 BOOST_AUTO_TEST_CASE(quaternion) {
+  constexpr auto pi = boost::math::constants::pi<Scalar>();
   Quats q1(Quats::Identity()), q2, q3;
-  q2 = fromAxisAngle(Vec3s(0, 0, 1), Scalar(M_PI / 2));
+  q2 = fromAxisAngle(Vec3s(0, 0, 1), Scalar(pi / 2));
   q3 = q2.inverse();
 
   Vec3s v(1, -1, 0);
@@ -124,7 +125,8 @@ BOOST_AUTO_TEST_CASE(quaternion) {
 }
 
 BOOST_AUTO_TEST_CASE(transform) {
-  Quats q = fromAxisAngle(Vec3s(0, 0, 1), Scalar(M_PI / 2));
+  constexpr auto pi = boost::math::constants::pi<Scalar>();
+  Quats q = fromAxisAngle(Vec3s(0, 0, 1), Scalar(pi / 2));
   Vec3s T(0, 1, 2);
   Transform3s tf(q, T);
 

@@ -36,10 +36,8 @@
 /** \author Jeongseok Lee */
 
 #define BOOST_TEST_MODULE COAL_BVH_MODELS
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <boost/filesystem.hpp>
-
-#include "fcl_resources/config.h"
 
 #include "coal/collision.h"
 #include "coal/BVH/BVH_model.h"

@@ -37,7 +37,7 @@
 
 #define BOOST_TEST_MODULE COAL_OCTREE
 #include <fstream>
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <boost/filesystem.hpp>
 
 #include "coal/BVH/BVH_model.h"
@@ -49,7 +49,6 @@
 #include "coal/internal/BV_splitter.h"
 
 #include "utility.h"
-#include "fcl_resources/config.h"
 
 namespace utf = boost::unit_test::framework;
 

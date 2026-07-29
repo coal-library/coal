@@ -35,7 +35,7 @@
 /** \author Joseph Mirabel */
 
 #define BOOST_TEST_MODULE COAL_GEOMETRIC_SHAPES
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include "coal/shape/convex.h"
 #include "coal/collision.h"

@@ -33,7 +33,7 @@
  */
 
 #define BOOST_TEST_MODULE COAL_DISTANCE_LOWER_BOUND
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <boost/filesystem.hpp>
 
 #include "coal/fwd.hh"
@@ -44,7 +44,6 @@
 #include "coal/collision.h"
 #include "coal/distance.h"
 #include "utility.h"
-#include "fcl_resources/config.h"
 
 using coal::BVHModel;
 using coal::CollisionGeometryPtr_t;

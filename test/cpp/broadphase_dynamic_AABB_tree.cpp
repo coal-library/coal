@@ -37,7 +37,7 @@
 /** Tests the dynamic axis-aligned bounding box tree.*/
 
 #define BOOST_TEST_MODULE COAL_BROADPHASE_DYNAMIC_AABB_TREE
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 // #include "coal/data_types.h"
 #include "coal/shape/geometric_shapes.h"

@@ -1,6 +1,6 @@
 #define BOOST_TEST_MODULE COAL_GJK_ASSERTS
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <boost/math/constants/constants.hpp>
 #include "coal/BVH/BVH_model.h"
 #include "coal/collision.h"
