@@ -114,7 +114,9 @@ configure = { cmd = [
   "-DBUILD_TESTING=ON",
   "-DCOAL_ENABLE_LOGGING=$COAL_ENABLE_LOGGING",
   "-DCOAL_BUILD_WITH_TRACY=$COAL_BUILD_WITH_TRACY",
-  "-DCOAL_BUILD_DOCUMENTATION=ON",
+  "-DBUILD_DOCUMENTATION=ON",
+  "-DINSTALL_DOCUMENTATION=ON",
+  "-DENABLE_PYTHON_DOXYGEN_AUTODOC=ON",
   "-DCOAL_BUILD_WITH_OCTOMAP=$COAL_BUILD_WITH_OCTOMAP",
   "-DCOAL_HAS_QHULL=$COAL_HAS_QHULL",
 ] }
@@ -249,7 +251,7 @@ llvm-tools = "*"
 [environments]
 default = { features = ["python-latest"], solve-group = "python-latest" }
 clang = { features = ["clang", "python-latest"] }
-lint = { features = ["lint"], solve-group = "python-latest" }
+lint = { features = ["lint"], solve-group = "python-latest" , no-default-feature = true}
 qhull = { features = ["qhull", "python-latest"], solve-group = "python-latest" }
 octomap = { features = [
   "octomap",

@@ -18,20 +18,36 @@ jrl_configure_defaults()
 # ----------------------------------------------------
 # --- OPTIONS  ---------------------------------------
 # ----------------------------------------------------
-jrl_option(COAL_INSTALL_DOCUMENTATION "Generate and install the documentation" OFF)
-jrl_option(COAL_INSTALL_HEADERS "Install the header files" ON)
 jrl_option(
-  COAL_BUILD_DOCUMENTATION
-  "Build the documentation"
+  BUILD_PYTHON_INTERFACE
+  "Build the Python bindings (either with Boost.Python or Nanobind)"
   OFF
-  CONDITION COAL_INSTALL_DOCUMENTATION
+)
+
+jrl_option(
+  COAL_PYTHON_NANOBIND
+  "Build the nanobind-based bindings."
+  OFF
+  CONDITION BUILD_PYTHON_INTERFACE
   FALLBACK OFF
 )
+
+jrl_option(BUILD_DOCUMENTATION "Build the Doxygen documentation" OFF)
+
+jrl_option(
+  INSTALL_DOCUMENTATION
+  "Install the Doxygen documentation"
+  OFF
+  CONDITION BUILD_DOCUMENTATION
+  FALLBACK OFF
+)
+
+# Not supported by the nanobind bindings
 jrl_option(
   ENABLE_PYTHON_DOXYGEN_AUTODOC
-  "Enable automatic documentation of Python bindings from Doxygen documentation"
+  "Enable automatic documentation of the Boost.Python bindings from the Doxygen documentation"
   ON
-  CONDITION COAL_BUILD_DOCUMENTATION
+  CONDITION [[BUILD_DOCUMENTATION AND BUILD_PYTHON_INTERFACE AND NOT COAL_PYTHON_NANOBIND]]
   FALLBACK OFF
 )
 jrl_option(BUILD_TESTING "Build the tests" ON)
@@ -71,20 +87,6 @@ jrl_option(
   COAL_HAS_QHULL
   "Build with QHull support"
   OFF
-)
-
-jrl_option(
-  BUILD_PYTHON_INTERFACE
-  "Build the Python bindings (either with Boost.Python or Nanobind)"
-  OFF
-)
-
-jrl_option(
-  COAL_PYTHON_NANOBIND
-  "Build the nanobind-based bindings."
-  OFF
-  CONDITION BUILD_PYTHON_INTERFACE
-  FALLBACK OFF
 )
 
 jrl_option(
@@ -147,11 +149,11 @@ if(BUILD_PYTHON_INTERFACE AND NOT COAL_PYTHON_NANOBIND)
   jrl_find_package(eigenpy CONFIG REQUIRED)
 endif()
 
-if(COAL_BUILD_DOCUMENTATION)
+if(BUILD_DOCUMENTATION)
   jrl_find_package(Doxygen REQUIRED COMPONENTS dot)
 endif()
 
-if(BUILD_PYTHON_INTERFACE AND ENABLE_PYTHON_DOXYGEN_AUTODOC)
+if(ENABLE_PYTHON_DOXYGEN_AUTODOC)
   jrl_check_python_module(lxml REQUIRED)
   jrl_check_python_module(pylatexenc REQUIRED)
 endif()
@@ -614,6 +616,12 @@ if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
   endif()
 endif()
 
+# Must come before the bindings, they consume the Doxygen XML output
+if(BUILD_DOCUMENTATION)
+  message(STATUS "[coal] Building documentation.")
+  add_subdirectory(doc)
+endif()
+
 if(BUILD_PYTHON_INTERFACE AND COAL_PYTHON_NANOBIND)
   message(STATUS "[coal] Building nanobind-based Python bindings.")
   add_subdirectory(python-nb)
@@ -622,11 +630,6 @@ endif()
 if(BUILD_PYTHON_INTERFACE AND NOT COAL_PYTHON_NANOBIND)
   message(STATUS "[coal] Building Boost.Python-based Python bindings.")
   add_subdirectory(python)
-endif()
-
-if(COAL_BUILD_DOCUMENTATION)
-  message(STATUS "[coal] Building documentation.")
-  add_subdirectory(doc)
 endif()
 
 if(BUILD_TESTING)
