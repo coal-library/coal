@@ -13,9 +13,9 @@ function(coal_python_add_test name)
   set_tests_properties(
     ${test_name}
     PROPERTIES
-      ENVIRONMENT "PYTHONPATH=$<TARGET_FILE_DIR:${coal_python_bindings}>/.."
+      ENVIRONMENT_MODIFICATION
+        "PYTHONPATH=path_list_prepend:$<TARGET_FILE_DIR:${coal_python_bindings}>/.."
       LABELS "python"
-      DEPENDS ${coal_python_bindings}
   )
 endfunction()
 
