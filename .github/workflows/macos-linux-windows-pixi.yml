@@ -106,14 +106,14 @@ jobs:
       run: |
         pixi run -e ${{ matrix.environment }} build
 
-    - name: Install Coal [MacOS/Linux/Windows]
-      run: |
-        pixi run -e ${{ matrix.environment }} install
-
     - name: Test Coal [MacOS/Linux/Windows]
       if: matrix.run_tests == true
       run: |
-        pixi run -e ${{ matrix.environment }} test
+        pixi run -e ${{ matrix.environment }} --skip-deps test
+
+    - name: Install Coal [MacOS/Linux/Windows]
+      run: |
+        pixi run -e ${{ matrix.environment }} --skip-deps install
 
     - name: Show ccache statistics [MacOS/Linux/Windows]
       run: |
