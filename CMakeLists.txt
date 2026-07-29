@@ -1,575 +1,650 @@
-#
-# Software License Agreement (BSD License)
-#
-# Copyright (c) 2014-2025 CNRS-LAAS, INRIA Author: Florent Lamiraux, Joseph
-# Mirabel All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-# * Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
-# * Redistributions in binary form must reproduce the above copyright notice,
-#   this list of conditions and the following disclaimer in the documentation
-#   and/or other materials provided with the distribution.
-# * Neither the name of CNRS-LAAS. nor the names of its contributors may be used
-#   to endorse or promote products derived from this software without specific
-#   prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# Copyright 2025-2026 Inria
+# Copyright 2014-2025 CNRS-LAAS, Inria.
 
 cmake_minimum_required(VERSION 3.22)
-set(CXX_DISABLE_WERROR TRUE)
 
-set(PROJECT_NAME coal)
-set(PROJECT_ORG "coal-library")
-set(
-  PROJECT_DESCRIPTION
-  "Coal, The Collision Detection Library. Previously known as HPP-FCL, fork of FCL -- The Flexible Collision Library"
+project(
+  coal
+  VERSION 3.0.4
+  DESCRIPTION
+    "Coal, The Collision Detection Library. Previously known as HPP-FCL, fork of FCL -- The Flexible Collision Library"
+  HOMEPAGE_URL "https://github.com/coal-library/coal"
 )
-set(PROJECT_URL "https://github.com/coal-library/coal")
-if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
-  set(PROJECT_USE_CMAKE_EXPORT TRUE)
-endif()
-set(PROJECT_COMPATIBILITY_VERSION AnyNewerVersion)
-# To enable jrl-cmakemodules compatibility with workspace we must define the two
-# following lines
-set(PROJECT_AUTO_RUN_FINALIZE FALSE)
-set(PROJECT_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
-set(PROJECT_USE_KEYWORD_LINK_LIBRARIES TRUE)
-set(DOXYGEN_USE_TEMPLATE_CSS TRUE)
+include(cmake/get-jrl-cmakemodules.cmake)
+
+jrl_configure_defaults()
 
 # ----------------------------------------------------
 # --- OPTIONS  ---------------------------------------
-# Need to be set before including base.cmake
 # ----------------------------------------------------
-option(INSTALL_DOCUMENTATION "Generate and install the documentation" OFF)
-option(SUFFIX_SO_VERSION "Suffix library name with its version" OFF)
-option(
+jrl_option(COAL_INSTALL_DOCUMENTATION "Generate and install the documentation" OFF)
+jrl_option(COAL_INSTALL_HEADERS "Install the header files" ON)
+jrl_option(
+  COAL_BUILD_DOCUMENTATION
+  "Build the documentation"
+  OFF
+  CONDITION COAL_INSTALL_DOCUMENTATION
+  FALLBACK OFF
+)
+jrl_option(
+  ENABLE_PYTHON_DOXYGEN_AUTODOC
+  "Enable automatic documentation of Python bindings from Doxygen documentation"
+  ON
+  CONDITION COAL_BUILD_DOCUMENTATION
+  FALLBACK OFF
+)
+jrl_option(BUILD_TESTING "Build the tests" ON)
+jrl_option(COAL_BUILD_BENCHMARKS "Build the benchmarks" ON)
+jrl_option(SUFFIX_SO_VERSION "Suffix library name with its version" OFF)
+jrl_option(
   COAL_TURN_ASSERT_INTO_EXCEPTION
   "Turn some critical Coal asserts to exception."
-  FALSE
+  OFF
 )
-option(
+jrl_option(
   COAL_ENABLE_LOGGING
   "Activate logging for warnings or error messages. Turned on by default in Debug."
-  FALSE
+  OFF
 )
-option(
+jrl_option(
   COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL
   "Make Coal retro-compatible with HPP-FCL."
-  FALSE
+  OFF
 )
-option(
+jrl_option(
   COAL_USE_FLOAT_PRECISION
   "Use float precision (32-bit) instead of the default double precision (64-bit)"
-  FALSE
+  OFF
 )
-option(
+jrl_option(
   COAL_BUILD_WITH_TRACY
   "Build with tracy profiler for performance analysis"
-  FALSE
+  OFF
+)
+jrl_option(
+  COAL_BUILD_WITH_OCTOMAP
+  "Build with Octomap support"
+  OFF
+)
+jrl_option(
+  COAL_HAS_QHULL
+  "Build with QHull support"
+  OFF
 )
 
-# Check if the submodule cmake have been initialized
-set(JRL_CMAKE_MODULES "${CMAKE_CURRENT_LIST_DIR}/cmake")
-if(EXISTS "${JRL_CMAKE_MODULES}/base.cmake")
-  message(STATUS "JRL cmakemodules found in 'cmake/' git submodule")
-else()
-  find_package(jrl-cmakemodules QUIET CONFIG)
-  if(jrl-cmakemodules_FOUND)
-    get_property(
-      JRL_CMAKE_MODULES
-      TARGET jrl-cmakemodules::jrl-cmakemodules
-      PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-    )
-    message(STATUS "JRL cmakemodules found on system at ${JRL_CMAKE_MODULES}")
-  else()
-    message(STATUS "JRL cmakemodules not found. Let's fetch it.")
-    include(FetchContent)
-    FetchContent_Declare(
-      "jrl-cmakemodules"
-      GIT_REPOSITORY "https://github.com/jrl-umi3218/jrl-cmakemodules.git"
-    )
-    FetchContent_MakeAvailable("jrl-cmakemodules")
-    FetchContent_GetProperties("jrl-cmakemodules" SOURCE_DIR JRL_CMAKE_MODULES)
-  endif()
-endif()
-
-# Use BoostConfig module distributed by boost library instead of using FindBoost
-# module distributed by CMake. There is one unresolved issue with FindBoost and
-# clang-cl so we deactivate it in this case.
-if(NOT WIN32 OR NOT ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
-  if(POLICY CMP0167)
-    cmake_policy(SET CMP0167 NEW)
-    # Set a default value to this policy to avoid issue with find_dependency
-    # macro redefinition with different policy in some modules.
-    set(CMAKE_POLICY_DEFAULT_CMP0167 NEW)
-  endif()
-endif()
-
-include("${JRL_CMAKE_MODULES}/base.cmake")
-COMPUTE_PROJECT_ARGS(PROJECT_ARGS LANGUAGES CXX)
-project(${PROJECT_NAME} ${PROJECT_ARGS})
-
-include("${JRL_CMAKE_MODULES}/boost.cmake")
-include("${JRL_CMAKE_MODULES}/python.cmake")
-include("${JRL_CMAKE_MODULES}/apple.cmake")
-include("${JRL_CMAKE_MODULES}/ide.cmake")
-include("${JRL_CMAKE_MODULES}/tracy.cmake")
-include(CMakeDependentOption)
-
-set(
-  CMAKE_MODULE_PATH
-  ${JRL_CMAKE_MODULES}/find-external/assimp/
-  ${CMAKE_MODULE_PATH}
+jrl_option(
+  BUILD_PYTHON_INTERFACE
+  "Build the Python bindings (either with Boost.Python or Nanobind)"
+  OFF
 )
 
-function(set_standard_output_directory target)
-  set_target_properties(
-    ${target}
-    PROPERTIES
-      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin
-      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
-      ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
-  )
-endfunction()
-
-SET_DEFAULT_CMAKE_BUILD_TYPE("RelWithDebInfo")
-
-# If needed, fix CMake policy for APPLE systems
-APPLY_DEFAULT_APPLE_CONFIGURATION()
-
-cmake_dependent_option(
+jrl_option(
   COAL_PYTHON_NANOBIND
   "Build the nanobind-based bindings."
   OFF
-  BUILD_PYTHON_INTERFACE
-  OFF
+  CONDITION BUILD_PYTHON_INTERFACE
+  FALLBACK OFF
 )
-# Stubs only optional for legacy Boost.Python bindings
-if(NOT COAL_PYTHON_NANOBIND)
-  cmake_dependent_option(
-    GENERATE_PYTHON_STUBS
-    "Generate the Python stubs for the Python bindings (only for legacy Boost.Python bindings)"
-    OFF
-    BUILD_PYTHON_INTERFACE
-    OFF
-  )
-endif()
 
-ADD_PROJECT_DEPENDENCY(Eigen3 REQUIRED PKG_CONFIG_REQUIRES "eigen3 >= 3.0.0")
-
-# -- tracy profiling (optional)
-if(COAL_BUILD_WITH_TRACY)
-  # assume it is installed somewhere
-  ADD_PROJECT_DEPENDENCY(Tracy REQUIRED)
-  set_target_properties(
-    Tracy::TracyClient
-    PROPERTIES POSITION_INDEPENDENT_CODE True
-  )
-endif(COAL_BUILD_WITH_TRACY)
-
-# Required dependencies
-SET_BOOST_DEFAULT_OPTIONS()
-EXPORT_BOOST_DEFAULT_OPTIONS()
-ADD_PROJECT_DEPENDENCY(
-  Boost
-  REQUIRED
-  COMPONENTS
-  serialization
-  filesystem
+jrl_option(
+  GENERATE_PYTHON_STUBS
+  "Generate the Python stubs for the Python bindings"
+  ON
+  CONDITION BUILD_PYTHON_INTERFACE
+  FALLBACK OFF
 )
+
+# ----------------------------------------------------
+# --- Dependencies  ----------------------------------
+# ----------------------------------------------------
+
+jrl_find_package(Eigen3 CONFIG REQUIRED)
+
+jrl_find_package(Boost CONFIG REQUIRED COMPONENTS serialization filesystem)
+
+jrl_find_package(assimp CONFIG REQUIRED)
+
 if(COAL_ENABLE_LOGGING)
-  ADD_PROJECT_DEPENDENCY(Boost REQUIRED COMPONENTS log)
+  jrl_find_package(Boost CONFIG REQUIRED COMPONENTS log)
 endif()
 
-CHECK_MINIMAL_CXX_STANDARD(17 ENFORCE)
-
-# Optional dependencies
-ADD_PROJECT_DEPENDENCY(octomap 1.8.0 PKG_CONFIG_REQUIRES "octomap >= 1.8")
-if(octomap_FOUND)
-  set(COAL_HAS_OCTOMAP TRUE)
-  string(REPLACE "." ";" VERSION_LIST ${octomap_VERSION})
-  list(GET VERSION_LIST 0 OCTOMAP_MAJOR_VERSION)
-  list(GET VERSION_LIST 1 OCTOMAP_MINOR_VERSION)
-  list(GET VERSION_LIST 2 OCTOMAP_PATCH_VERSION)
-  message(STATUS "COAL uses Octomap")
-else()
-  set(COAL_HAS_OCTOMAP FALSE)
-  message(STATUS "COAL does not use Octomap")
+if(COAL_BUILD_WITH_TRACY)
+  jrl_find_package(Tracy CONFIG REQUIRED)
 endif()
 
-option(COAL_HAS_QHULL "use qhull library to compute convex hulls." FALSE)
+if(COAL_BUILD_WITH_OCTOMAP)
+  jrl_find_package(octomap 1.8.0 CONFIG REQUIRED)
+endif()
+
 if(COAL_HAS_QHULL)
-  find_package(Qhull REQUIRED COMPONENTS qhull_r qhullcpp)
+  jrl_find_package(Qhull CONFIG REQUIRED COMPONENTS qhull_r qhullcpp)
 endif()
 
-find_package(assimp REQUIRED)
+if(BUILD_TESTING)
+  jrl_find_package(Boost CONFIG REQUIRED COMPONENTS unit_test_framework)
+endif()
 
-set(
-  ${PROJECT_NAME}_HEADERS
-  include/coal/alloca.h
-  include/coal/collision_data.h
-  include/coal/BV/kIOS.h
-  include/coal/BV/BV.h
-  include/coal/BV/RSS.h
-  include/coal/BV/OBBRSS.h
-  include/coal/BV/BV_node.h
-  include/coal/BV/AABB.h
-  include/coal/BV/OBB.h
-  include/coal/BV/kDOP.h
-  include/coal/broadphase/broadphase.h
-  include/coal/broadphase/broadphase_SSaP.h
-  include/coal/broadphase/broadphase_SaP.h
-  include/coal/broadphase/broadphase_bruteforce.h
-  include/coal/broadphase/broadphase_collision_manager.h
-  include/coal/broadphase/broadphase_continuous_collision_manager-inl.h
-  include/coal/broadphase/broadphase_continuous_collision_manager.h
-  include/coal/broadphase/broadphase_dynamic_AABB_tree-inl.h
-  include/coal/broadphase/broadphase_dynamic_AABB_tree.h
-  include/coal/broadphase/broadphase_dynamic_AABB_tree_array-inl.h
-  include/coal/broadphase/broadphase_dynamic_AABB_tree_array.h
-  include/coal/broadphase/broadphase_interval_tree.h
-  include/coal/broadphase/broadphase_spatialhash-inl.h
-  include/coal/broadphase/broadphase_spatialhash.h
-  include/coal/broadphase/broadphase_callbacks.h
-  include/coal/broadphase/default_broadphase_callbacks.h
-  include/coal/broadphase/detail/hierarchy_tree-inl.h
-  include/coal/broadphase/detail/hierarchy_tree.h
-  include/coal/broadphase/detail/hierarchy_tree_array-inl.h
-  include/coal/broadphase/detail/hierarchy_tree_array.h
-  include/coal/broadphase/detail/interval_tree.h
-  include/coal/broadphase/detail/interval_tree_node.h
-  include/coal/broadphase/detail/morton-inl.h
-  include/coal/broadphase/detail/morton.h
-  include/coal/broadphase/detail/node_base-inl.h
-  include/coal/broadphase/detail/node_base.h
-  include/coal/broadphase/detail/node_base_array-inl.h
-  include/coal/broadphase/detail/node_base_array.h
-  include/coal/broadphase/detail/simple_hash_table-inl.h
-  include/coal/broadphase/detail/simple_hash_table.h
-  include/coal/broadphase/detail/simple_interval-inl.h
-  include/coal/broadphase/detail/simple_interval.h
-  include/coal/broadphase/detail/sparse_hash_table-inl.h
-  include/coal/broadphase/detail/sparse_hash_table.h
-  include/coal/broadphase/detail/spatial_hash-inl.h
-  include/coal/broadphase/detail/spatial_hash.h
-  include/coal/narrowphase/narrowphase.h
-  include/coal/narrowphase/gjk.h
-  include/coal/narrowphase/narrowphase_defaults.h
-  include/coal/narrowphase/minkowski_difference.h
-  include/coal/narrowphase/support_data.h
-  include/coal/narrowphase/support_functions.h
-  include/coal/shape/convex.h
-  include/coal/shape/convex.hxx
-  include/coal/shape/geometric_shape_to_BVH_model.h
-  include/coal/shape/geometric_shapes.h
-  include/coal/shape/geometric_shapes.hxx
-  include/coal/shape/geometric_shapes_traits.h
-  include/coal/shape/geometric_shapes_utility.h
-  include/coal/distance_func_matrix.h
-  include/coal/collision.h
-  include/coal/collision_func_matrix.h
-  include/coal/contact_patch.h
-  include/coal/contact_patch_func_matrix.h
-  include/coal/contact_patch/contact_patch_solver.h
-  include/coal/contact_patch/contact_patch_solver.hxx
-  include/coal/contact_patch/contact_patch_simplifier.h
-  include/coal/contact_patch/polygon_convex_hull.h
-  include/coal/distance.h
-  include/coal/math/matrix_3f.h
-  include/coal/math/vec_3f.h
-  include/coal/math/types.h
-  include/coal/math/transform.h
-  include/coal/data_types.h
-  include/coal/BVH/BVH_internal.h
-  include/coal/BVH/BVH_model.h
-  include/coal/BVH/BVH_front.h
-  include/coal/BVH/BVH_utility.h
-  include/coal/collision_object.h
-  include/coal/collision_utility.h
-  include/coal/hfield.h
-  include/coal/fwd.hh
-  include/coal/logging.h
-  include/coal/mesh_loader/assimp.h
-  include/coal/mesh_loader/loader.h
-  include/coal/internal/BV_fitter.h
-  include/coal/internal/BV_splitter.h
-  include/coal/internal/shape_shape_func.h
-  include/coal/internal/shape_shape_contact_patch_func.h
-  include/coal/internal/intersect.h
-  include/coal/internal/intersect.hxx
-  include/coal/internal/tools.h
-  include/coal/internal/traversal_node_base.h
-  include/coal/internal/traversal_node_bvh_shape.h
-  include/coal/internal/traversal_node_bvhs.h
-  include/coal/internal/traversal_node_hfield_shape.h
-  include/coal/internal/traversal_node_setup.h
-  include/coal/internal/traversal_node_shapes.h
-  include/coal/internal/traversal_recurse.h
-  include/coal/internal/traversal.h
-  include/coal/serialization/fwd.h
-  include/coal/serialization/serializer.h
-  include/coal/serialization/archive.h
-  include/coal/serialization/transform.h
-  include/coal/serialization/AABB.h
-  include/coal/serialization/BV_node.h
-  include/coal/serialization/BV_splitter.h
-  include/coal/serialization/BVH_model.h
-  include/coal/serialization/collision_data.h
-  include/coal/serialization/contact_patch.h
-  include/coal/serialization/collision_object.h
-  include/coal/serialization/convex.h
-  include/coal/serialization/eigen.h
-  include/coal/serialization/geometric_shapes.h
-  include/coal/serialization/memory.h
-  include/coal/serialization/OBB.h
-  include/coal/serialization/RSS.h
-  include/coal/serialization/OBBRSS.h
-  include/coal/serialization/kIOS.h
-  include/coal/serialization/kDOP.h
-  include/coal/serialization/hfield.h
-  include/coal/serialization/quadrilateral.h
-  include/coal/serialization/triangle.h
-  include/coal/timings.h
-  include/coal/shared_ptr_comparison.h
+if(BUILD_PYTHON_INTERFACE AND COAL_PYTHON_NANOBIND)
+  jrl_find_python(3.10 REQUIRED COMPONENTS Interpreter Development.Module)
+  jrl_find_nanobind(2.5.0 CONFIG REQUIRED)
+endif()
+
+if(BUILD_PYTHON_INTERFACE AND NOT COAL_PYTHON_NANOBIND)
+  jrl_find_python(3.10 REQUIRED COMPONENTS Interpreter Development.Module)
+  jrl_find_package(Boost CONFIG REQUIRED COMPONENTS python)
+endif()
+
+if(BUILD_PYTHON_INTERFACE AND BUILD_STANDALONE_PYTHON_INTERFACE)
+  jrl_find_package(coal CONFIG REQUIRED)
+endif()
+
+if(BUILD_PYTHON_INTERFACE AND COAL_PYTHON_NANOBIND)
+  jrl_find_package(nanoeigenpy CONFIG REQUIRED)
+endif()
+
+if(BUILD_PYTHON_INTERFACE AND NOT COAL_PYTHON_NANOBIND)
+  jrl_find_package(eigenpy CONFIG REQUIRED)
+endif()
+
+if(COAL_BUILD_DOCUMENTATION)
+  jrl_find_package(Doxygen REQUIRED COMPONENTS dot)
+endif()
+
+if(BUILD_PYTHON_INTERFACE AND ENABLE_PYTHON_DOXYGEN_AUTODOC)
+  jrl_check_python_module(lxml REQUIRED)
+  jrl_check_python_module(pylatexenc REQUIRED)
+endif()
+
+# ----------------------------------------------------
+
+add_library(coal SHARED)
+jrl_target_enforce_msvc_conformance(coal PRIVATE)
+target_compile_features(coal PUBLIC cxx_std_17)
+
+if(WIN32)
+  # There is an issue with MSVC 2017-2022 and Eigen (due to std::aligned_storage).
+  # See https://github.com/ceres-solver/ceres-solver/issues/481
+  target_compile_definitions(coal PRIVATE _ENABLE_EXTENDED_ALIGNED_STORAGE)
+  target_compile_definitions(coal PUBLIC NOMINMAX)
+endif()
+
+target_compile_definitions(
+  coal
+  PUBLIC
+    $<$<BOOL:${COAL_USE_FLOAT_PRECISION}>:COAL_USE_FLOAT_PRECISION>
+    $<$<BOOL:${COAL_TURN_ASSERT_INTO_EXCEPTION}>:COAL_TURN_ASSERT_INTO_EXCEPTION>
+    $<$<BOOL:${COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL}>:COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL>
+    $<$<BOOL:${COAL_BUILD_WITH_OCTOMAP}>:COAL_HAS_OCTOMAP>
+    $<$<BOOL:${COAL_BUILD_WITH_OCTOMAP}>:COAL_HAVE_OCTOMAP>
+    $<$<BOOL:${COAL_BUILD_WITH_OCTOMAP}>:FCL_HAVE_OCTOMAP>
+    $<$<BOOL:${COAL_HAS_QHULL}>:COAL_HAS_QHULL>
+    $<$<BOOL:${COAL_BUILD_WITH_TRACY}>:COAL_TRACY_ENABLE>
+    $<$<BOOL:${COAL_ENABLE_LOGGING}>:COAL_ENABLE_LOGGING>
+)
+
+# For some reason, we need to remove the BOOST_SERIALIZATION_DYN_LINK
+# compile definition on Windows with Clang, or there will be linking issues.
+# Ref: https://github.com/boostorg/boost_install/issues/79
+# To reproduce: https://github.com/ahoarau/boost-serialization-clang-cl
+if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  set_property(TARGET Boost::serialization PROPERTY INTERFACE_COMPILE_DEFINITIONS)
+endif()
+
+target_link_libraries(
+  coal
+  PUBLIC
+    Eigen3::Eigen
+    Boost::serialization
+    Boost::filesystem
+    assimp::assimp
+    $<$<BOOL:${COAL_ENABLE_LOGGING}>:Boost::log>
+    $<$<BOOL:${COAL_BUILD_WITH_OCTOMAP}>:octomap>
+    $<$<BOOL:${COAL_HAS_QHULL}>:Qhull::qhullcpp>
+    $<$<BOOL:${COAL_HAS_QHULL}>:Qhull::qhull_r>
+    $<$<BOOL:${COAL_BUILD_WITH_TRACY}>:Tracy::TracyClient>
+)
+
+target_include_directories(
+  coal
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 # boost::span requires Boost >= 1.78.0.
 # On Ubuntu 22.04 the system Boost is 1.74 and is too old.
+# In this case, we add include/coal/third_party as include directory.
+if(Boost_VERSION VERSION_LESS 1.78)
+  target_include_directories(
+    coal
+    PUBLIC
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/coal/third_party>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coal/third_party>
+  )
+endif()
+
+jrl_target_generate_config_header(coal PUBLIC FILENAME coal/config.hh VERSION ${PROJECT_VERSION})
+jrl_target_generate_warning_header(coal PUBLIC FILENAME coal/warning.hh)
+jrl_target_generate_deprecated_header(coal PUBLIC FILENAME coal/deprecated.hh)
+jrl_target_generate_tracy_header(coal PUBLIC FILENAME coal/tracy.hh)
+
+target_sources(
+  coal
+  PRIVATE
+    src/collision.cpp
+    src/contact_patch.cpp
+    src/contact_patch/contact_patch_solver.cpp
+    src/contact_patch/contact_patch_simplifier.cpp
+    src/contact_patch/polygon_convex_hull.cpp
+    src/contact_patch_func_matrix.cpp
+    src/distance_func_matrix.cpp
+    src/collision_data.cpp
+    src/collision_node.cpp
+    src/collision_object.cpp
+    src/BV/RSS.cpp
+    src/BV/AABB.cpp
+    src/BV/kIOS.cpp
+    src/BV/kDOP.cpp
+    src/BV/OBBRSS.cpp
+    src/BV/OBB.cpp
+    src/broadphase/default_broadphase_callbacks.cpp
+    src/broadphase/broadphase_dynamic_AABB_tree.cpp
+    src/broadphase/broadphase_dynamic_AABB_tree_array.cpp
+    src/broadphase/broadphase_bruteforce.cpp
+    src/broadphase/broadphase_collision_manager.cpp
+    src/broadphase/broadphase_SaP.cpp
+    src/broadphase/broadphase_SSaP.cpp
+    src/broadphase/broadphase_interval_tree.cpp
+    src/broadphase/detail/interval_tree.cpp
+    src/broadphase/detail/interval_tree_node.cpp
+    src/broadphase/detail/simple_interval.cpp
+    src/broadphase/detail/spatial_hash.cpp
+    src/broadphase/detail/morton.cpp
+    src/narrowphase/gjk.cpp
+    src/narrowphase/minkowski_difference.cpp
+    src/narrowphase/support_functions.cpp
+    src/narrowphase/details.h
+    src/shape/geometric_shapes.cpp
+    src/shape/geometric_shapes_utility.cpp
+    src/distance/box_halfspace.cpp
+    src/distance/box_plane.cpp
+    src/distance/box_sphere.cpp
+    src/distance/capsule_capsule.cpp
+    src/distance/capsule_halfspace.cpp
+    src/distance/capsule_plane.cpp
+    src/distance/cone_halfspace.cpp
+    src/distance/cone_plane.cpp
+    src/distance/cylinder_halfspace.cpp
+    src/distance/cylinder_plane.cpp
+    src/distance/sphere_sphere.cpp
+    src/distance/sphere_cylinder.cpp
+    src/distance/sphere_halfspace.cpp
+    src/distance/sphere_plane.cpp
+    src/distance/sphere_capsule.cpp
+    src/distance/ellipsoid_halfspace.cpp
+    src/distance/ellipsoid_plane.cpp
+    src/distance/convex_halfspace.cpp
+    src/distance/convex_plane.cpp
+    src/distance/triangle_halfspace.cpp
+    src/distance/triangle_plane.cpp
+    src/distance/triangle_triangle.cpp
+    src/distance/triangle_sphere.cpp
+    src/distance/halfspace_plane.cpp
+    src/distance/plane_plane.cpp
+    src/distance/halfspace_halfspace.cpp
+    src/intersect.cpp
+    src/math/transform.cpp
+    src/traversal/traversal_recurse.cpp
+    src/distance.cpp
+    src/BVH/BVH_utility.cpp
+    src/BVH/BV_fitter.cpp
+    src/BVH/BVH_model.cpp
+    src/BVH/BV_splitter.cpp
+    src/collision_func_matrix.cpp
+    src/collision_utility.cpp
+    src/mesh_loader/assimp.cpp
+    src/mesh_loader/loader.cpp
+    src/hfield.cpp
+    src/serialization/serialization.cpp
+    $<$<BOOL:${COAL_BUILD_WITH_OCTOMAP}>:src/octree.cpp>
+)
+
+jrl_target_headers(coal PUBLIC
+  HEADERS
+    include/coal/collision_data.h
+    include/coal/BV/kIOS.h
+    include/coal/BV/BV.h
+    include/coal/BV/RSS.h
+    include/coal/BV/OBBRSS.h
+    include/coal/BV/BV_node.h
+    include/coal/BV/AABB.h
+    include/coal/BV/OBB.h
+    include/coal/BV/kDOP.h
+    include/coal/broadphase/broadphase.h
+    include/coal/broadphase/broadphase_SSaP.h
+    include/coal/broadphase/broadphase_SaP.h
+    include/coal/broadphase/broadphase_bruteforce.h
+    include/coal/broadphase/broadphase_collision_manager.h
+    include/coal/broadphase/broadphase_continuous_collision_manager-inl.h
+    include/coal/broadphase/broadphase_continuous_collision_manager.h
+    include/coal/broadphase/broadphase_dynamic_AABB_tree-inl.h
+    include/coal/broadphase/broadphase_dynamic_AABB_tree.h
+    include/coal/broadphase/broadphase_dynamic_AABB_tree_array-inl.h
+    include/coal/broadphase/broadphase_dynamic_AABB_tree_array.h
+    include/coal/broadphase/broadphase_interval_tree.h
+    include/coal/broadphase/broadphase_spatialhash-inl.h
+    include/coal/broadphase/broadphase_spatialhash.h
+    include/coal/broadphase/broadphase_callbacks.h
+    include/coal/broadphase/default_broadphase_callbacks.h
+    include/coal/broadphase/detail/hierarchy_tree-inl.h
+    include/coal/broadphase/detail/hierarchy_tree.h
+    include/coal/broadphase/detail/hierarchy_tree_array-inl.h
+    include/coal/broadphase/detail/hierarchy_tree_array.h
+    include/coal/broadphase/detail/interval_tree.h
+    include/coal/broadphase/detail/interval_tree_node.h
+    include/coal/broadphase/detail/morton-inl.h
+    include/coal/broadphase/detail/morton.h
+    include/coal/broadphase/detail/node_base-inl.h
+    include/coal/broadphase/detail/node_base.h
+    include/coal/broadphase/detail/node_base_array-inl.h
+    include/coal/broadphase/detail/node_base_array.h
+    include/coal/broadphase/detail/simple_hash_table-inl.h
+    include/coal/broadphase/detail/simple_hash_table.h
+    include/coal/broadphase/detail/simple_interval-inl.h
+    include/coal/broadphase/detail/simple_interval.h
+    include/coal/broadphase/detail/sparse_hash_table-inl.h
+    include/coal/broadphase/detail/sparse_hash_table.h
+    include/coal/broadphase/detail/spatial_hash-inl.h
+    include/coal/broadphase/detail/spatial_hash.h
+    include/coal/narrowphase/narrowphase.h
+    include/coal/narrowphase/gjk.h
+    include/coal/narrowphase/narrowphase_defaults.h
+    include/coal/narrowphase/minkowski_difference.h
+    include/coal/narrowphase/support_data.h
+    include/coal/narrowphase/support_functions.h
+    include/coal/shape/convex.h
+    include/coal/shape/convex.hxx
+    include/coal/shape/geometric_shape_to_BVH_model.h
+    include/coal/shape/geometric_shapes.h
+    include/coal/shape/geometric_shapes.hxx
+    include/coal/shape/geometric_shapes_traits.h
+    include/coal/shape/geometric_shapes_utility.h
+    include/coal/distance_func_matrix.h
+    include/coal/collision.h
+    include/coal/collision_func_matrix.h
+    include/coal/contact_patch.h
+    include/coal/contact_patch_func_matrix.h
+    include/coal/contact_patch/contact_patch_solver.h
+    include/coal/contact_patch/contact_patch_solver.hxx
+    include/coal/contact_patch/contact_patch_simplifier.h
+    include/coal/contact_patch/polygon_convex_hull.h
+    include/coal/distance.h
+    include/coal/math/matrix_3f.h
+    include/coal/math/vec_3f.h
+    include/coal/math/types.h
+    include/coal/math/transform.h
+    include/coal/data_types.h
+    include/coal/BVH/BVH_internal.h
+    include/coal/BVH/BVH_model.h
+    include/coal/BVH/BVH_front.h
+    include/coal/BVH/BVH_utility.h
+    include/coal/collision_object.h
+    include/coal/collision_utility.h
+    include/coal/hfield.h
+    include/coal/fwd.hh
+    include/coal/logging.h
+    include/coal/mesh_loader/assimp.h
+    include/coal/mesh_loader/loader.h
+    include/coal/internal/BV_fitter.h
+    include/coal/internal/BV_splitter.h
+    include/coal/internal/shape_shape_func.h
+    include/coal/internal/shape_shape_contact_patch_func.h
+    include/coal/internal/intersect.h
+    include/coal/internal/intersect.hxx
+    include/coal/internal/tools.h
+    include/coal/internal/traversal_node_base.h
+    include/coal/internal/traversal_node_bvh_shape.h
+    include/coal/internal/traversal_node_bvhs.h
+    include/coal/internal/traversal_node_hfield_shape.h
+    include/coal/internal/traversal_node_setup.h
+    include/coal/internal/traversal_node_shapes.h
+    include/coal/internal/traversal_recurse.h
+    include/coal/internal/traversal.h
+    include/coal/serialization/fwd.h
+    include/coal/serialization/serializer.h
+    include/coal/serialization/archive.h
+    include/coal/serialization/transform.h
+    include/coal/serialization/AABB.h
+    include/coal/serialization/BV_node.h
+    include/coal/serialization/BV_splitter.h
+    include/coal/serialization/BVH_model.h
+    include/coal/serialization/collision_data.h
+    include/coal/serialization/contact_patch.h
+    include/coal/serialization/collision_object.h
+    include/coal/serialization/convex.h
+    include/coal/serialization/eigen.h
+    include/coal/serialization/geometric_shapes.h
+    include/coal/serialization/memory.h
+    include/coal/serialization/OBB.h
+    include/coal/serialization/RSS.h
+    include/coal/serialization/OBBRSS.h
+    include/coal/serialization/kIOS.h
+    include/coal/serialization/kDOP.h
+    include/coal/serialization/hfield.h
+    include/coal/serialization/quadrilateral.h
+    include/coal/serialization/triangle.h
+    include/coal/timings.h
+    include/coal/alloca.h
+  BASE_DIRS include
+)
+# boost::span requires Boost >= 1.78.0.
+# On Ubuntu 22.04 the system Boost is 1.74 and is too old.
 # We must install boost/core/span headers.
 if(Boost_VERSION VERSION_LESS 1.78)
-  message(INFO "Boost <= 1.78 detected: boost::span headers will be installed")
-  list(
-    APPEND ${PROJECT_NAME}_HEADERS
+  message(STATUS "Boost <= 1.78 detected: boost::span headers will be installed")
+  jrl_target_headers(coal PUBLIC
+    HEADERS
     include/coal/third_party/boost/core/data.hpp
     include/coal/third_party/boost/core/detail/assert.hpp
     include/coal/third_party/boost/core/make_span.hpp
     include/coal/third_party/boost/core/span.hpp
+    BASE_DIRS include
   )
 endif()
 
-if(
-  COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL
-  AND NOT BUILD_STANDALONE_PYTHON_INTERFACE
-)
-  set(
-    HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS
-    include/hpp/fcl/broadphase/broadphase_bruteforce.h
-    include/hpp/fcl/broadphase/broadphase_callbacks.h
-    include/hpp/fcl/broadphase/broadphase_collision_manager.h
-    include/hpp/fcl/broadphase/broadphase_continuous_collision_manager.h
-    include/hpp/fcl/broadphase/broadphase_continuous_collision_manager-inl.h
-    include/hpp/fcl/broadphase/broadphase_dynamic_AABB_tree_array.h
-    include/hpp/fcl/broadphase/broadphase_dynamic_AABB_tree_array-inl.h
-    include/hpp/fcl/broadphase/broadphase_dynamic_AABB_tree.h
-    include/hpp/fcl/broadphase/broadphase_dynamic_AABB_tree-inl.h
-    include/hpp/fcl/broadphase/broadphase.h
-    include/hpp/fcl/broadphase/broadphase_interval_tree.h
-    include/hpp/fcl/broadphase/broadphase_SaP.h
-    include/hpp/fcl/broadphase/broadphase_spatialhash.h
-    include/hpp/fcl/broadphase/broadphase_spatialhash-inl.h
-    include/hpp/fcl/broadphase/broadphase_SSaP.h
-    include/hpp/fcl/broadphase/default_broadphase_callbacks.h
-    include/hpp/fcl/broadphase/detail/hierarchy_tree_array.h
-    include/hpp/fcl/broadphase/detail/hierarchy_tree_array-inl.h
-    include/hpp/fcl/broadphase/detail/hierarchy_tree.h
-    include/hpp/fcl/broadphase/detail/hierarchy_tree-inl.h
-    include/hpp/fcl/broadphase/detail/interval_tree.h
-    include/hpp/fcl/broadphase/detail/interval_tree_node.h
-    include/hpp/fcl/broadphase/detail/morton.h
-    include/hpp/fcl/broadphase/detail/morton-inl.h
-    include/hpp/fcl/broadphase/detail/node_base_array.h
-    include/hpp/fcl/broadphase/detail/node_base_array-inl.h
-    include/hpp/fcl/broadphase/detail/node_base.h
-    include/hpp/fcl/broadphase/detail/node_base-inl.h
-    include/hpp/fcl/broadphase/detail/simple_hash_table.h
-    include/hpp/fcl/broadphase/detail/simple_hash_table-inl.h
-    include/hpp/fcl/broadphase/detail/simple_interval.h
-    include/hpp/fcl/broadphase/detail/simple_interval-inl.h
-    include/hpp/fcl/broadphase/detail/sparse_hash_table.h
-    include/hpp/fcl/broadphase/detail/sparse_hash_table-inl.h
-    include/hpp/fcl/broadphase/detail/spatial_hash.h
-    include/hpp/fcl/broadphase/detail/spatial_hash-inl.h
-    include/hpp/fcl/BV/AABB.h
-    include/hpp/fcl/BV/BV.h
-    include/hpp/fcl/BV/BV_node.h
-    include/hpp/fcl/BVH/BVH_front.h
-    include/hpp/fcl/BVH/BVH_internal.h
-    include/hpp/fcl/BVH/BVH_model.h
-    include/hpp/fcl/BVH/BVH_utility.h
-    include/hpp/fcl/BV/kDOP.h
-    include/hpp/fcl/BV/kIOS.h
-    include/hpp/fcl/BV/OBB.h
-    include/hpp/fcl/BV/OBBRSS.h
-    include/hpp/fcl/BV/RSS.h
-    include/hpp/fcl/coal.hpp
-    include/hpp/fcl/collision_data.h
-    include/hpp/fcl/collision_func_matrix.h
-    include/hpp/fcl/collision.h
-    include/hpp/fcl/collision_object.h
-    include/hpp/fcl/collision_utility.h
-    include/hpp/fcl/config.hh
-    include/hpp/fcl/contact_patch/contact_patch_solver.h
-    include/hpp/fcl/contact_patch/contact_patch_solver.hxx
-    include/hpp/fcl/contact_patch_func_matrix.h
-    include/hpp/fcl/contact_patch.h
-    include/hpp/fcl/data_types.h
-    include/hpp/fcl/deprecated.hh
-    include/hpp/fcl/distance_func_matrix.h
-    include/hpp/fcl/distance.h
-    include/hpp/fcl/fwd.hh
-    include/hpp/fcl/hfield.h
-    include/hpp/fcl/internal/BV_fitter.h
-    include/hpp/fcl/internal/BV_splitter.h
-    include/hpp/fcl/internal/intersect.h
-    include/hpp/fcl/internal/shape_shape_contact_patch_func.h
-    include/hpp/fcl/internal/shape_shape_func.h
-    include/hpp/fcl/internal/tools.h
-    include/hpp/fcl/internal/traversal.h
-    include/hpp/fcl/internal/traversal_node_base.h
-    include/hpp/fcl/internal/traversal_node_bvhs.h
-    include/hpp/fcl/internal/traversal_node_bvh_shape.h
-    include/hpp/fcl/internal/traversal_node_hfield_shape.h
-    include/hpp/fcl/internal/traversal_node_setup.h
-    include/hpp/fcl/internal/traversal_node_shapes.h
-    include/hpp/fcl/internal/traversal_recurse.h
-    include/hpp/fcl/internal/traversal_node_octree.h
-    include/hpp/fcl/logging.h
-    include/hpp/fcl/math/matrix_3f.h
-    include/hpp/fcl/math/transform.h
-    include/hpp/fcl/math/types.h
-    include/hpp/fcl/math/vec_3f.h
-    include/hpp/fcl/mesh_loader/assimp.h
-    include/hpp/fcl/mesh_loader/loader.h
-    include/hpp/fcl/narrowphase/gjk.h
-    include/hpp/fcl/narrowphase/minkowski_difference.h
-    include/hpp/fcl/narrowphase/narrowphase_defaults.h
-    include/hpp/fcl/narrowphase/narrowphase.h
-    include/hpp/fcl/narrowphase/support_data.h
-    include/hpp/fcl/narrowphase/support_functions.h
-    include/hpp/fcl/narrowphase/support_functions.hxx
-    include/hpp/fcl/octree.h
-    include/hpp/fcl/serialization/AABB.h
-    include/hpp/fcl/serialization/archive.h
-    include/hpp/fcl/serialization/BVH_model.h
-    include/hpp/fcl/serialization/BV_node.h
-    include/hpp/fcl/serialization/BV_splitter.h
-    include/hpp/fcl/serialization/collision_data.h
-    include/hpp/fcl/serialization/collision_object.h
-    include/hpp/fcl/serialization/contact_patch.h
-    include/hpp/fcl/serialization/convex.h
-    include/hpp/fcl/serialization/eigen.h
-    include/hpp/fcl/serialization/fwd.h
-    include/hpp/fcl/serialization/geometric_shapes.h
-    include/hpp/fcl/serialization/hfield.h
-    include/hpp/fcl/serialization/kDOP.h
-    include/hpp/fcl/serialization/kIOS.h
-    include/hpp/fcl/serialization/memory.h
-    include/hpp/fcl/serialization/OBB.h
-    include/hpp/fcl/serialization/OBBRSS.h
-    include/hpp/fcl/serialization/octree.h
-    include/hpp/fcl/serialization/quadrilateral.h
-    include/hpp/fcl/serialization/RSS.h
-    include/hpp/fcl/serialization/serializer.h
-    include/hpp/fcl/serialization/transform.h
-    include/hpp/fcl/serialization/triangle.h
-    include/hpp/fcl/shape/convex.h
-    include/hpp/fcl/shape/convex.hxx
-    include/hpp/fcl/shape/geometric_shapes.h
-    include/hpp/fcl/shape/geometric_shapes.hxx
-    include/hpp/fcl/shape/geometric_shapes_traits.h
-    include/hpp/fcl/shape/geometric_shapes_utility.h
-    include/hpp/fcl/shape/geometric_shape_to_BVH_model.h
-    include/hpp/fcl/timings.h
-    include/hpp/fcl/warning.hh
+if(COAL_BUILD_WITH_OCTOMAP)
+  jrl_target_headers(coal PUBLIC
+    HEADERS
+      include/coal/octree.h
+      include/coal/serialization/octree.h
+      include/coal/internal/traversal_node_octree.h
+    BASE_DIRS include
   )
-  list(APPEND ${PROJECT_NAME}_HEADERS ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS})
-  if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
-    HEADER_INSTALL(
-      COMPONENT hpp-fcl-compatibility
-      ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS}
+endif()
+
+if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
+  add_library(coal-hpp-fcl-compatibility INTERFACE)
+  target_link_libraries(coal-hpp-fcl-compatibility INTERFACE coal)
+  target_include_directories(
+    coal-hpp-fcl-compatibility
+    INTERFACE
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  )
+
+  jrl_target_headers(coal-hpp-fcl-compatibility PUBLIC
+    HEADERS
+      include/hpp/fcl/broadphase/broadphase_bruteforce.h
+      include/hpp/fcl/broadphase/broadphase_callbacks.h
+      include/hpp/fcl/broadphase/broadphase_collision_manager.h
+      include/hpp/fcl/broadphase/broadphase_continuous_collision_manager.h
+      include/hpp/fcl/broadphase/broadphase_continuous_collision_manager-inl.h
+      include/hpp/fcl/broadphase/broadphase_dynamic_AABB_tree_array.h
+      include/hpp/fcl/broadphase/broadphase_dynamic_AABB_tree_array-inl.h
+      include/hpp/fcl/broadphase/broadphase_dynamic_AABB_tree.h
+      include/hpp/fcl/broadphase/broadphase_dynamic_AABB_tree-inl.h
+      include/hpp/fcl/broadphase/broadphase.h
+      include/hpp/fcl/broadphase/broadphase_interval_tree.h
+      include/hpp/fcl/broadphase/broadphase_SaP.h
+      include/hpp/fcl/broadphase/broadphase_spatialhash.h
+      include/hpp/fcl/broadphase/broadphase_spatialhash-inl.h
+      include/hpp/fcl/broadphase/broadphase_SSaP.h
+      include/hpp/fcl/broadphase/default_broadphase_callbacks.h
+      include/hpp/fcl/broadphase/detail/hierarchy_tree_array.h
+      include/hpp/fcl/broadphase/detail/hierarchy_tree_array-inl.h
+      include/hpp/fcl/broadphase/detail/hierarchy_tree.h
+      include/hpp/fcl/broadphase/detail/hierarchy_tree-inl.h
+      include/hpp/fcl/broadphase/detail/interval_tree.h
+      include/hpp/fcl/broadphase/detail/interval_tree_node.h
+      include/hpp/fcl/broadphase/detail/morton.h
+      include/hpp/fcl/broadphase/detail/morton-inl.h
+      include/hpp/fcl/broadphase/detail/node_base_array.h
+      include/hpp/fcl/broadphase/detail/node_base_array-inl.h
+      include/hpp/fcl/broadphase/detail/node_base.h
+      include/hpp/fcl/broadphase/detail/node_base-inl.h
+      include/hpp/fcl/broadphase/detail/simple_hash_table.h
+      include/hpp/fcl/broadphase/detail/simple_hash_table-inl.h
+      include/hpp/fcl/broadphase/detail/simple_interval.h
+      include/hpp/fcl/broadphase/detail/simple_interval-inl.h
+      include/hpp/fcl/broadphase/detail/sparse_hash_table.h
+      include/hpp/fcl/broadphase/detail/sparse_hash_table-inl.h
+      include/hpp/fcl/broadphase/detail/spatial_hash.h
+      include/hpp/fcl/broadphase/detail/spatial_hash-inl.h
+      include/hpp/fcl/BV/AABB.h
+      include/hpp/fcl/BV/BV.h
+      include/hpp/fcl/BV/BV_node.h
+      include/hpp/fcl/BVH/BVH_front.h
+      include/hpp/fcl/BVH/BVH_internal.h
+      include/hpp/fcl/BVH/BVH_model.h
+      include/hpp/fcl/BVH/BVH_utility.h
+      include/hpp/fcl/BV/kDOP.h
+      include/hpp/fcl/BV/kIOS.h
+      include/hpp/fcl/BV/OBB.h
+      include/hpp/fcl/BV/OBBRSS.h
+      include/hpp/fcl/BV/RSS.h
+      include/hpp/fcl/coal.hpp
+      include/hpp/fcl/collision_data.h
+      include/hpp/fcl/collision_func_matrix.h
+      include/hpp/fcl/collision.h
+      include/hpp/fcl/collision_object.h
+      include/hpp/fcl/collision_utility.h
+      include/hpp/fcl/config.hh
+      include/hpp/fcl/contact_patch/contact_patch_solver.h
+      include/hpp/fcl/contact_patch/contact_patch_solver.hxx
+      include/hpp/fcl/contact_patch_func_matrix.h
+      include/hpp/fcl/contact_patch.h
+      include/hpp/fcl/data_types.h
+      include/hpp/fcl/deprecated.hh
+      include/hpp/fcl/distance_func_matrix.h
+      include/hpp/fcl/distance.h
+      include/hpp/fcl/fwd.hh
+      include/hpp/fcl/hfield.h
+      include/hpp/fcl/internal/BV_fitter.h
+      include/hpp/fcl/internal/BV_splitter.h
+      include/hpp/fcl/internal/intersect.h
+      include/hpp/fcl/internal/shape_shape_contact_patch_func.h
+      include/hpp/fcl/internal/shape_shape_func.h
+      include/hpp/fcl/internal/tools.h
+      include/hpp/fcl/internal/traversal.h
+      include/hpp/fcl/internal/traversal_node_base.h
+      include/hpp/fcl/internal/traversal_node_bvhs.h
+      include/hpp/fcl/internal/traversal_node_bvh_shape.h
+      include/hpp/fcl/internal/traversal_node_hfield_shape.h
+      include/hpp/fcl/internal/traversal_node_setup.h
+      include/hpp/fcl/internal/traversal_node_shapes.h
+      include/hpp/fcl/internal/traversal_recurse.h
+      include/hpp/fcl/logging.h
+      include/hpp/fcl/math/matrix_3f.h
+      include/hpp/fcl/math/transform.h
+      include/hpp/fcl/math/types.h
+      include/hpp/fcl/math/vec_3f.h
+      include/hpp/fcl/mesh_loader/assimp.h
+      include/hpp/fcl/mesh_loader/loader.h
+      include/hpp/fcl/narrowphase/gjk.h
+      include/hpp/fcl/narrowphase/minkowski_difference.h
+      include/hpp/fcl/narrowphase/narrowphase_defaults.h
+      include/hpp/fcl/narrowphase/narrowphase.h
+      include/hpp/fcl/narrowphase/support_data.h
+      include/hpp/fcl/narrowphase/support_functions.h
+      include/hpp/fcl/narrowphase/support_functions.hxx
+      include/hpp/fcl/serialization/AABB.h
+      include/hpp/fcl/serialization/archive.h
+      include/hpp/fcl/serialization/BVH_model.h
+      include/hpp/fcl/serialization/BV_node.h
+      include/hpp/fcl/serialization/BV_splitter.h
+      include/hpp/fcl/serialization/collision_data.h
+      include/hpp/fcl/serialization/collision_object.h
+      include/hpp/fcl/serialization/contact_patch.h
+      include/hpp/fcl/serialization/convex.h
+      include/hpp/fcl/serialization/eigen.h
+      include/hpp/fcl/serialization/fwd.h
+      include/hpp/fcl/serialization/geometric_shapes.h
+      include/hpp/fcl/serialization/hfield.h
+      include/hpp/fcl/serialization/kDOP.h
+      include/hpp/fcl/serialization/kIOS.h
+      include/hpp/fcl/serialization/memory.h
+      include/hpp/fcl/serialization/OBB.h
+      include/hpp/fcl/serialization/OBBRSS.h
+      include/hpp/fcl/serialization/quadrilateral.h
+      include/hpp/fcl/serialization/RSS.h
+      include/hpp/fcl/serialization/serializer.h
+      include/hpp/fcl/serialization/transform.h
+      include/hpp/fcl/serialization/triangle.h
+      include/hpp/fcl/shape/convex.h
+      include/hpp/fcl/shape/convex.hxx
+      include/hpp/fcl/shape/geometric_shapes.h
+      include/hpp/fcl/shape/geometric_shapes.hxx
+      include/hpp/fcl/shape/geometric_shapes_traits.h
+      include/hpp/fcl/shape/geometric_shapes_utility.h
+      include/hpp/fcl/shape/geometric_shape_to_BVH_model.h
+      include/hpp/fcl/timings.h
+      include/hpp/fcl/warning.hh
+    BASE_DIRS include
+  )
+
+  if(COAL_BUILD_WITH_OCTOMAP)
+    jrl_target_headers(coal-hpp-fcl-compatibility PUBLIC
+      HEADERS
+        include/hpp/fcl/octree.h
+        include/hpp/fcl/serialization/octree.h
+        include/hpp/fcl/internal/traversal_node_octree.h
+      BASE_DIRS include
     )
   endif()
 endif()
 
-if(COAL_HAS_OCTOMAP)
-  list(
-    APPEND ${PROJECT_NAME}_HEADERS
-    include/coal/octree.h
-    include/coal/serialization/octree.h
-    include/coal/internal/traversal_node_octree.h
-  )
-endif(COAL_HAS_OCTOMAP)
+if(BUILD_PYTHON_INTERFACE AND COAL_PYTHON_NANOBIND)
+  message(STATUS "[coal] Building nanobind-based Python bindings.")
+  add_subdirectory(python-nb)
+endif()
 
-add_subdirectory(doc)
-if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
-  add_subdirectory(src)
+if(BUILD_PYTHON_INTERFACE AND NOT COAL_PYTHON_NANOBIND)
+  message(STATUS "[coal] Building Boost.Python-based Python bindings.")
+  add_subdirectory(python)
 endif()
-if(BUILD_PYTHON_INTERFACE)
-  if(BUILD_STANDALONE_PYTHON_INTERFACE)
-    ADD_PROJECT_DEPENDENCY(${PROJECT_NAME} REQUIRED CONFIG)
-  endif()
-  add_custom_target(${PROJECT_NAME}_python)
-  set_target_properties(
-    ${PROJECT_NAME}_python
-    PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD True
-  )
-  if(COAL_PYTHON_NANOBIND)
-    find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
-    # jrl-cmakemodules use PYTHON_EXECUTABLE defined in FINDPYTHON macro.
-    # Since we doesn't call it in this branch, we must redefine it.
-    set(PYTHON_EXECUTABLE ${Python_EXECUTABLE})
-    add_subdirectory(python-nb)
-  else()
-    set(PYTHON_COMPONENTS Interpreter Development NumPy)
-    FINDPYTHON(REQUIRED)
-    ADD_PROJECT_PRIVATE_DEPENDENCY(eigenpy 2.9.2 REQUIRED)
-    add_subdirectory(python)
-  endif()
+
+if(COAL_BUILD_DOCUMENTATION)
+  message(STATUS "[coal] Building documentation.")
+  add_subdirectory(doc)
 endif()
+
 if(BUILD_TESTING)
+  message(STATUS "[coal] Building tests.")
+  enable_testing()
   add_subdirectory(test)
-endif(BUILD_TESTING)
-
-PKG_CONFIG_APPEND_LIBS("coal")
-if(COAL_HAS_OCTOMAP)
-  # FCL_HAVE_OCTOMAP kept for backward compatibility reasons.
-  PKG_CONFIG_APPEND_CFLAGS(
-    "-DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DFCL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=${OCTOMAP_MAJOR_VERSION} -DOCTOMAP_MINOR_VERSION=${OCTOMAP_MINOR_VERSION} -DOCTOMAP_PATCH_VERSION=${OCTOMAP_PATCH_VERSION}"
-  )
-endif(COAL_HAS_OCTOMAP)
-
-if(
-  COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL
-  AND NOT BUILD_STANDALONE_PYTHON_INTERFACE
-)
-  include(CMakePackageConfigHelpers)
-  write_basic_package_version_file(
-    hpp-fclConfigVersion.cmake
-    VERSION 3.0.0
-    COMPATIBILITY AnyNewerVersion
-  )
-  install(
-    FILES
-      hpp-fclConfig.cmake
-      ${CMAKE_CURRENT_BINARY_DIR}/hpp-fclConfigVersion.cmake
-    DESTINATION lib/cmake/hpp-fcl
-    COMPONENT hpp-fcl-compatibility
-  )
-  include("${JRL_CMAKE_MODULES}/install-helpers.cmake")
-  ADD_INSTALL_TARGET(NAME hpp-fcl-compatibility COMPONENT hpp-fcl-compatibility)
 endif()
 
-SETUP_PROJECT_FINALIZE()
+jrl_add_export_component(TARGETS coal NAME coal)
+if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
+  jrl_add_export_component(TARGETS coal-hpp-fcl-compatibility NAME coal-hpp-fcl-compatibility)
+endif()
+jrl_export_package()
+
+jrl_generate_ros2_package_files(
+  INSTALL_CPP_PACKAGE_FILES [[NOT BUILD_STANDALONE_PYTHON_INTERFACE]]
+  INSTALL_PYTHON_PACKAGE_FILES [[BUILD_PYTHON_INTERFACE]]
+)
+
+jrl_print_dependencies_summary()
+jrl_print_options_summary()
