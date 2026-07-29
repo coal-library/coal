@@ -267,6 +267,7 @@ target_sources(
     src/narrowphase/details.h
     src/shape/geometric_shapes.cpp
     src/shape/geometric_shapes_utility.cpp
+    src/distance/box_capsule.cpp
     src/distance/box_halfspace.cpp
     src/distance/box_plane.cpp
     src/distance/box_sphere.cpp
