@@ -21,7 +21,7 @@ jrl_configure_defaults()
 jrl_option(
   BUILD_PYTHON_INTERFACE
   "Build the Python bindings (either with Boost.Python or Nanobind)"
-  OFF
+  ON
 )
 
 jrl_option(
