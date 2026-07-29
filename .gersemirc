@@ -1,4 +1,4 @@
-definitions: [./CMakeLists.txt,./cmake,./python,./src,./test]
-line_length: 80
+definitions: [./CMakeLists.txt, ./test]
+line_length: 100
 indent: 2
 warn_about_unknown_commands: false
