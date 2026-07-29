@@ -38,7 +38,7 @@
 #define BOOST_TEST_MODULE COAL_DISTANCE
 #include <chrono>
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <boost/filesystem.hpp>
 
 #include "coal/internal/traversal_node_bvhs.h"
@@ -47,7 +47,6 @@
 #include "coal/internal/BV_splitter.h"
 
 #include "utility.h"
-#include "fcl_resources/config.h"
 
 using namespace coal;
 namespace utf = boost::unit_test::framework;

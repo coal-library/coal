@@ -35,7 +35,7 @@
 /** \author Florent Lamiraux */
 
 #define BOOST_TEST_MODULE COAL_GEOMETRIC_SHAPES
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #define CHECK_CLOSE_TO_0(x, eps) BOOST_CHECK_CLOSE((x + 1.0), (1.0), (eps))
 

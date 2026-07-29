@@ -36,7 +36,7 @@
 /** @author Jia Pan */
 
 #define BOOST_TEST_MODULE COAL_BROADPHASE_COLLISION_1
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include "coal/broadphase/broadphase_bruteforce.h"
 #include "coal/broadphase/broadphase_spatialhash.h"

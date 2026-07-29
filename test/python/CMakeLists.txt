@@ -1,28 +1,26 @@
-set(
-  ${PROJECT_NAME}_PYTHON_TESTS
-  geometric_shapes
-  api
-  collision
-  collision_manager
-  pickling
-)
-
 if(COAL_PYTHON_NANOBIND)
-  set(PYTHON_BINDINGS_BINARY_DIR "python-nb")
+  set(coal_python_bindings coal_pywrap_nb)
 else()
-  set(PYTHON_BINDINGS_BINARY_DIR "python")
+  set(coal_python_bindings coal_pywrap)
 endif()
 
-message(
-  STATUS
-  "  Python tests will be run with Python executable at ${Python_EXECUTABLE}"
-)
-
-add_dependencies(build_tests ${PROJECT_NAME}_python)
-foreach(TEST ${${PROJECT_NAME}_PYTHON_TESTS})
-  ADD_PYTHON_UNIT_TEST(
-    "${PROJECT_NAME}-py-${TEST}"
-    "test/python_unit/${TEST}.py"
-    ${PYTHON_BINDINGS_BINARY_DIR}
+function(coal_python_add_test name)
+  set(test_name "coal: Python ${name}")
+  add_test(
+    NAME ${test_name}
+    COMMAND $<TARGET_FILE:Python::Interpreter> ${CMAKE_CURRENT_SOURCE_DIR}/test_${name}.py
   )
-endforeach()
+  set_tests_properties(
+    ${test_name}
+    PROPERTIES
+      ENVIRONMENT "PYTHONPATH=$<TARGET_FILE_DIR:${coal_python_bindings}>/.."
+      LABELS "python"
+      DEPENDS ${coal_python_bindings}
+  )
+endfunction()
+
+coal_python_add_test(api)
+coal_python_add_test(collision_manager)
+coal_python_add_test(collision)
+coal_python_add_test(geometric_shapes)
+coal_python_add_test(pickling)

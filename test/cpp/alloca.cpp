@@ -3,7 +3,7 @@
 //
 
 #define BOOST_TEST_MODULE COAL_ALLOCA
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include "coal/data_types.h"
 #include "coal/alloca.h"

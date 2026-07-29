@@ -4,7 +4,7 @@
 //
 
 #define BOOST_TEST_MODULE COAL_PATCH_SIMPLIFIER
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include "coal/contact_patch/polygon_convex_hull.h"
 #include "coal/contact_patch/contact_patch_simplifier.h"

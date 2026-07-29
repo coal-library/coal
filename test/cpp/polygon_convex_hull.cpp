@@ -38,7 +38,7 @@
 #include <cmath>
 
 #define BOOST_TEST_MODULE COAL_POLYGON_CONVEX_HULL
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include "coal/contact_patch/polygon_convex_hull.h"
 

@@ -36,7 +36,7 @@
 
 #define BOOST_TEST_MODULE COAL_GJK
 #include <time.h>
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include <Eigen/Geometry>
 #include "coal/narrowphase/narrowphase.h"

@@ -35,7 +35,7 @@
 /** \author Louis Montaut */
 
 #define BOOST_TEST_MODULE COAL_NORMAL_AND_NEAREST_POINTS
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include "coal/fwd.hh"
 #include "coal/shape/geometric_shapes.h"

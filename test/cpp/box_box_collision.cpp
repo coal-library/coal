@@ -1,5 +1,5 @@
 #define BOOST_TEST_MODULE COAL_BOX_BOX_COLLISION
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include <Eigen/Geometry>
 #include "coal/narrowphase/narrowphase.h"
