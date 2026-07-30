@@ -154,33 +154,6 @@ test-packaging = { depends-on = ["_test-packaging-build"] }
 dependencies = { pre-commit = ">=3.6.2" }
 tasks = { lint = { cmd = "pre-commit run --all" } }
 
-# Increment the version number with COAL_VERSION variable
-[feature.new-version.dependencies]
-tomlkit = ">=0.13.2"
-
-[feature.new-version.tasks]
-configure-new-version = { cmd = [
-  "CXXFLAGS=$COAL_CXX_FLAGS",
-  "cmake",
-  "-G",
-  "Ninja",
-  "-B",
-  "build_new_version",
-  "-S",
-  ".",
-  # Don't use standard layout because it's not well implemented on Windows
-  "-DPYTHON_STANDARD_LAYOUT=OFF",
-  "-DPython_EXECUTABLE=$PYTHON_EXECUTABLE",
-  "-DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX",
-  "-DCMAKE_BUILD_TYPE=$COAL_BUILD_TYPE",
-  "-DGENERATE_PYTHON_STUBS=ON",
-  "-DCOAL_HAS_QHULL=ON",
-  "-DCOAL_PYTHON_NANOBIND=$COAL_PYTHON_NANOBIND",
-] }
-release-new-version = { cmd = "VERSION=$COAL_VERSION cmake --build build_new_version --target release", depends-on = [
-  "configure-new-version",
-] }
-
 # QHull support
 [feature.qhull.target.win]
 dependencies = { qhull = ">=2020.2" }
@@ -296,14 +269,6 @@ all-clang-cl = { features = [
   "qhull",
   "octomap",
   "clang-cl",
-  "python-latest",
-], solve-group = "python-latest" }
-# Release a new software version
-new-version = { features = [
-  "logging",
-  "qhull",
-  "octomap",
-  "new-version",
   "python-latest",
 ], solve-group = "python-latest" }
 # test-pixi-build = { features = ["test-pixi-build"], no-default-feature = true }
