@@ -117,6 +117,7 @@ configure = { cmd = [
   "-DENABLE_PYTHON_DOXYGEN_AUTODOC=ON",
   "-DCOAL_BUILD_WITH_OCTOMAP=$COAL_BUILD_WITH_OCTOMAP",
   "-DCOAL_HAS_QHULL=$COAL_HAS_QHULL",
+  "-DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL=ON"
 ] }
 build = { cmd = "cmake --build build", depends-on = ["configure"] }
 clean = { cmd = "rm -rf build" }

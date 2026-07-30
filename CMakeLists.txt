@@ -467,6 +467,10 @@ endif()
 
 if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL)
   add_library(coal-hpp-fcl-compatibility INTERFACE)
+
+  # FetchContent backward compatibility with hpp-fcl
+  add_library(hpp-fcl::hpp-fcl ALIAS coal-hpp-fcl-compatibility)
+
   target_link_libraries(coal-hpp-fcl-compatibility INTERFACE coal)
   target_include_directories(
     coal-hpp-fcl-compatibility
@@ -636,6 +640,19 @@ if(BUILD_TESTING)
   message(STATUS "[coal] Building tests.")
   enable_testing()
   add_subdirectory(test)
+endif()
+
+if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL AND NOT BUILD_STANDALONE_PYTHON_INTERFACE)
+  include(CMakePackageConfigHelpers)
+  write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/hpp-fclConfigVersion.cmake
+    VERSION 3.0.0
+    COMPATIBILITY AnyNewerVersion
+  )
+  install(
+    FILES hpp-fclConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/hpp-fclConfigVersion.cmake
+    DESTINATION lib/cmake/hpp-fcl
+  )
 endif()
 
 jrl_add_export_component(TARGETS coal NAME coal)
