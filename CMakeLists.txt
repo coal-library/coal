@@ -307,6 +307,7 @@ target_sources(
 
 jrl_target_headers(coal PUBLIC
   HEADERS
+    include/coal/alloca.h
     include/coal/collision_data.h
     include/coal/BV/kIOS.h
     include/coal/BV/BV.h
@@ -430,7 +431,7 @@ jrl_target_headers(coal PUBLIC
     include/coal/serialization/quadrilateral.h
     include/coal/serialization/triangle.h
     include/coal/timings.h
-    include/coal/alloca.h
+    include/coal/shared_ptr_comparison.h
   BASE_DIRS include
 )
 # boost::span requires Boost >= 1.78.0.
