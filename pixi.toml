@@ -27,7 +27,7 @@ lxml = ">=5.3"
 pylatexenc = ">=2.10"
 nanoeigenpy = ">=0.3.0"
 assimp = ">=5.4"
-graphviz = ">=13.1.2,<14"
+graphviz = "*"
 jrl-cmakemodules = ">=2.1.0"
 
 [package]
