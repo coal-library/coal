@@ -5,7 +5,7 @@ else()
 endif()
 
 function(coal_python_add_test name)
-  set(test_name "coal: Python ${name}")
+  set(test_name "coal-test-py-${name}")
   add_test(
     NAME ${test_name}
     COMMAND $<TARGET_FILE:Python::Interpreter> ${CMAKE_CURRENT_SOURCE_DIR}/test_${name}.py
