@@ -129,23 +129,17 @@ endif()
 if(BUILD_PYTHON_INTERFACE AND COAL_PYTHON_NANOBIND)
   jrl_find_python(3.10 REQUIRED COMPONENTS Interpreter Development.Module)
   jrl_find_nanobind(2.5.0 CONFIG REQUIRED)
+  jrl_find_package(nanoeigenpy CONFIG REQUIRED)
 endif()
 
 if(BUILD_PYTHON_INTERFACE AND NOT COAL_PYTHON_NANOBIND)
   jrl_find_python(3.10 REQUIRED COMPONENTS Interpreter Development.Module)
   jrl_find_package(Boost CONFIG REQUIRED COMPONENTS python3)
+  jrl_find_package(eigenpy CONFIG REQUIRED)
 endif()
 
 if(BUILD_PYTHON_INTERFACE AND BUILD_STANDALONE_PYTHON_INTERFACE)
   jrl_find_package(coal CONFIG REQUIRED)
-endif()
-
-if(BUILD_PYTHON_INTERFACE AND COAL_PYTHON_NANOBIND)
-  jrl_find_package(nanoeigenpy CONFIG REQUIRED)
-endif()
-
-if(BUILD_PYTHON_INTERFACE AND NOT COAL_PYTHON_NANOBIND)
-  jrl_find_package(eigenpy CONFIG REQUIRED)
 endif()
 
 if(BUILD_DOCUMENTATION)
