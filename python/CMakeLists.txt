@@ -89,6 +89,7 @@ jrl_python_compile_all(DIRECTORY
 )
 
 jrl_python_compute_install_dir(python_install_dir)
+install(TARGETS coal_pywrap DESTINATION ${python_install_dir}/coal)
 install(
   DIRECTORY ${CMAKE_BINARY_DIR}/lib/site-packages/coal ${CMAKE_CURRENT_SOURCE_DIR}/coal
   DESTINATION ${python_install_dir}
