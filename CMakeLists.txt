@@ -52,7 +52,6 @@ jrl_option(
 )
 jrl_option(BUILD_TESTING "Build the tests" ON)
 jrl_option(COAL_BUILD_BENCHMARKS "Build the benchmarks" ON)
-jrl_option(SUFFIX_SO_VERSION "Suffix library name with its version" OFF)
 jrl_option(
   COAL_TURN_ASSERT_INTO_EXCEPTION
   "Turn some critical Coal asserts to exception."
