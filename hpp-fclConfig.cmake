@@ -8,6 +8,7 @@ if(NOT COAL_DISABLE_HPP_FCL_WARNINGS)
 endif()
 
 if(NOT TARGET coal::coal)
+  include(CMakeFindDependencyMacro)
   find_dependency(coal REQUIRED)
 endif()
 
