@@ -58,6 +58,7 @@ jobs:
 
           # Test the legacy clang-cl compiler on Windows
           - os: windows-2022
+            build_type: Release
             environment: all-clang-cl
 
           # Enable builds with AVX2 optimizations
