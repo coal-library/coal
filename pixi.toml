@@ -28,7 +28,7 @@ pylatexenc = ">=2.10"
 nanoeigenpy = ">=0.3.0"
 assimp = ">=5.4"
 graphviz = ">=13.1.2,<14"
-jrl-cmakemodules = ">=2.1.0,<3"
+jrl-cmakemodules = ">=2.1.0"
 
 [package]
 name = { workspace = true }
@@ -64,7 +64,7 @@ python = ">=3.10"
 python_abi = ">=3.10"
 eigenpy = ">=3.7.0"
 octomap = ">=1.10"
-jrl-cmakemodules = ">=2.1.0,<3"
+jrl-cmakemodules = ">=2.1.0"
 
 [package.run-dependencies]
 eigen = ">=3.4.0"
