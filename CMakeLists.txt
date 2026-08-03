@@ -160,7 +160,7 @@ endif()
 # ----------------------------------------------------
 
 add_library(coal SHARED)
-jrl_target_enforce_msvc_conformance(coal PRIVATE)
+jrl_target_enforce_msvc_conformance(coal PUBLIC)
 target_compile_features(coal PUBLIC cxx_std_17)
 
 if(WIN32)
