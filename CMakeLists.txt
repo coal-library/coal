@@ -134,7 +134,7 @@ endif()
 
 if(BUILD_PYTHON_INTERFACE AND NOT COAL_PYTHON_NANOBIND)
   jrl_find_python(3.10 REQUIRED COMPONENTS Interpreter Development.Module)
-  jrl_find_package(Boost CONFIG REQUIRED COMPONENTS python)
+  jrl_find_package(Boost CONFIG REQUIRED COMPONENTS python3)
 endif()
 
 if(BUILD_PYTHON_INTERFACE AND BUILD_STANDALONE_PYTHON_INTERFACE)
