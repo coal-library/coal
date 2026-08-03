@@ -100,26 +100,26 @@ jrl_option(
 # --- Dependencies  ----------------------------------
 # ----------------------------------------------------
 
-jrl_find_package(Eigen3 CONFIG REQUIRED)
+jrl_find_package(Eigen3 CONFIG REQUIRED EXPECTED_TARGETS Eigen3::Eigen)
 
-jrl_find_package(Boost CONFIG REQUIRED COMPONENTS serialization filesystem)
+jrl_find_package(Boost CONFIG REQUIRED COMPONENTS serialization filesystem EXPECTED_TARGETS Boost::serialization Boost::filesystem)
 
-jrl_find_package(assimp CONFIG REQUIRED)
+jrl_find_package(assimp CONFIG REQUIRED EXPECTED_TARGETS assimp::assimp)
 
 if(COAL_ENABLE_LOGGING)
-  jrl_find_package(Boost CONFIG REQUIRED COMPONENTS log)
+  jrl_find_package(Boost CONFIG REQUIRED COMPONENTS log EXPECTED_TARGETS Boost::log)
 endif()
 
 if(COAL_BUILD_WITH_TRACY)
-  jrl_find_package(Tracy CONFIG REQUIRED)
+  jrl_find_package(Tracy CONFIG REQUIRED EXPECTED_TARGETS Tracy::TracyClient)
 endif()
 
 if(COAL_BUILD_WITH_OCTOMAP)
-  jrl_find_package(octomap 1.8.0 CONFIG REQUIRED)
+  jrl_find_package(octomap 1.8.0 CONFIG REQUIRED EXPECTED_TARGETS octomap)
 endif()
 
 if(COAL_HAS_QHULL)
-  jrl_find_package(Qhull CONFIG REQUIRED COMPONENTS qhull_r qhullcpp)
+  jrl_find_package(Qhull CONFIG REQUIRED COMPONENTS qhull_r qhullcpp EXPECTED_TARGETS Qhull::qhull_r Qhull::qhullcpp)
 endif()
 
 if(BUILD_TESTING)
