@@ -212,6 +212,12 @@ dependencies = { clangxx = "<22.1", lld = "*" }
 [feature.clang.target.win-64.dependencies]
 llvm-tools = "*"
 
+# NOTE: on Linux, clang defaults to the conda binutils ld, which needs
+# LLVMgold.so to handle LTO objects (nanobind modules are built with LTO).
+# That plugin is not shipped by conda-forge llvm, so use lld instead.
+[feature.clang.target.linux-64.activation.env]
+LDFLAGS = "$LDFLAGS -fuse-ld=lld"
+
 # [feature.test-pixi-build]
 # dependencies = { coal = { path = "." }, cmake = ">=3.22", python = "*", cxx-compiler = ">=1.7.0" }
 
