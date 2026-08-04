@@ -37,6 +37,8 @@ jobs:
       # Since pixi will install a compiler, the compiler mtime will be changed.
       # This can invalidate the cache (https://ccache.dev/manual/latest.html#config_compiler_check)
       CCACHE_COMPILERCHECK: content
+      # Only set for the macos-15-intel tracy build, empty everywhere else.
+      TRACY_NO_INVARIANT_CHECK: ${{ matrix.tracy_no_invariant_check }}
 
     strategy:
       fail-fast: false
@@ -55,6 +57,14 @@ jobs:
           # Even with the TRACY_NO_INVARIANT_CHECK=1 env var set.
           - environment: all-tracy
             run_tests: false
+
+          # The macos-15-intel runner is a VM whose CPU does not expose an
+          # invariant TSC, so the Tracy client aborts at profiler init. This
+          # breaks the nanobind stub generation, which imports coal at build
+          # time. Timings from a VM are meaningless anyway, so skip the check.
+          - os: macos-15-intel
+            environment: all-tracy
+            tracy_no_invariant_check: '1'
 
           # Test the legacy clang-cl compiler on Windows
           - os: windows-2022
