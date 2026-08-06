@@ -95,6 +95,7 @@ jrl_option(
   CONDITION BUILD_PYTHON_INTERFACE
   FALLBACK OFF
 )
+jrl_option(SUFFIX_SO_VERSION "Suffix library name with its version" OFF)
 
 # ----------------------------------------------------
 # --- Dependencies  ----------------------------------
@@ -156,6 +157,12 @@ endif()
 add_library(coal SHARED)
 jrl_target_enforce_msvc_conformance(coal PUBLIC)
 target_compile_features(coal PUBLIC cxx_std_17)
+if(SUFFIX_SO_VERSION)
+  set_target_properties(
+    coal
+    PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR}
+  )
+endif()
 
 if(WIN32)
   # There is an issue with MSVC 2017-2022 and Eigen (due to std::aligned_storage).
