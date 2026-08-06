@@ -74,7 +74,7 @@ set(DOXYGEN_DOT_IMAGE_FORMAT SVG)
 # src/ is documented as well: ENABLE_PYTHON_DOXYGEN_AUTODOC picks up the
 # coal::details free functions declared in src/narrowphase/details.h
 doxygen_add_docs(
-  doc
+  coal-doc
   ALL
   ${PROJECT_SOURCE_DIR}/include
   ${PROJECT_SOURCE_DIR}/src
