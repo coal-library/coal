@@ -117,7 +117,7 @@ configure = { cmd = [
   "-DENABLE_PYTHON_DOXYGEN_AUTODOC=ON",
   "-DCOAL_BUILD_WITH_OCTOMAP=$COAL_BUILD_WITH_OCTOMAP",
   "-DCOAL_HAS_QHULL=$COAL_HAS_QHULL",
-  "-DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL=ON"
+  "-DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL=ON",
 ] }
 build = { cmd = "cmake --build build", depends-on = ["configure"] }
 clean = { cmd = "rm -rf build" }
@@ -153,6 +153,9 @@ test-packaging = { depends-on = ["_test-packaging-build"] }
 [feature.lint]
 dependencies = { pre-commit = ">=3.6.2" }
 tasks = { lint = { cmd = "pre-commit run --all" } }
+
+[feature.new-version]
+dependencies = { jrl-cmakemodules-scripts = "*" }
 
 # QHull support
 [feature.qhull.target.win]
@@ -229,7 +232,8 @@ LDFLAGS = "$LDFLAGS -fuse-ld=lld"
 [environments]
 default = { features = ["python-latest"], solve-group = "python-latest" }
 clang = { features = ["clang", "python-latest"] }
-lint = { features = ["lint"], solve-group = "python-latest" , no-default-feature = true}
+lint = { features = ["lint"], no-default-feature = true }
+new-version = { features = ["new-version"], no-default-feature = true }
 qhull = { features = ["qhull", "python-latest"], solve-group = "python-latest" }
 octomap = { features = [
   "octomap",
