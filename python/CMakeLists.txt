@@ -14,7 +14,7 @@ set(
 
 if(ENABLE_PYTHON_DOXYGEN_AUTODOC)
   add_custom_target(
-    generate_doxygen_cpp_doc
+    coal_generate_doxygen_cpp_doc
     COMMAND
       $<TARGET_FILE:Python::Interpreter> ${PROJECT_SOURCE_DIR}/doc/python/doxygen_xml_parser.py
       ${PROJECT_BINARY_DIR}/doc/doxygen-xml/index.xml ${CMAKE_CURRENT_BINARY_DIR}/doxygen_autodoc >
@@ -24,7 +24,7 @@ if(ENABLE_PYTHON_DOXYGEN_AUTODOC)
       ${CMAKE_CURRENT_BINARY_DIR}/doxygen_autodoc.log
     COMMENT "Generating Doxygen C++ documentation"
   )
-  add_dependencies(generate_doxygen_cpp_doc doc)
+  add_dependencies(coal_generate_doxygen_cpp_doc coal-doc)
 
   list(
     APPEND coal_pywrap_HEADERS
@@ -63,7 +63,7 @@ if(ENABLE_PYTHON_DOXYGEN_AUTODOC)
     coal_pywrap
     PRIVATE ${CMAKE_CURRENT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/src
   )
-  add_dependencies(coal_pywrap generate_doxygen_cpp_doc)
+  add_dependencies(coal_pywrap coal_generate_doxygen_cpp_doc)
   target_compile_definitions(coal_pywrap PRIVATE COAL_HAS_DOXYGEN_AUTODOC)
 endif()
 
