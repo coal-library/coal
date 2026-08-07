@@ -101,6 +101,4 @@ install(
   PATTERN "*.pyc"
   PATTERN "*.pyi"
   PATTERN "*.typed"
-  PATTERN "*.so"
-  PATTERN "*.pyd"
 )
