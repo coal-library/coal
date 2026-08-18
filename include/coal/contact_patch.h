@@ -50,6 +50,9 @@ namespace coal {
 /// more info on the content of the input/output of this function. Also, please
 /// read @ref ContactPatch if you want to fully understand what is meant by
 /// "contact patch".
+/// @note Whichever order the pair is given in, the i-th contact patch lies on
+/// the plane of the i-th contact of `collision_result` and
+/// `ContactPatch::getNormal` returns that contact's normal.
 COAL_DLLAPI void computeContactPatch(const CollisionGeometry* o1,
                                      const Transform3s& tf1,
                                      const CollisionGeometry* o2,

@@ -38,6 +38,7 @@
 #include <boost/test/included/unit_test.hpp>
 
 #include "coal/contact_patch.h"
+#include "coal/BVH/BVH_model.h"
 
 #include "utility.h"
 
@@ -1165,6 +1166,95 @@ BOOST_AUTO_TEST_CASE(edge_case_segment_face) {
 
       const ContactPatch& contact_patch = patch_res.getContactPatch(0);
       BOOST_CHECK(expected.isSame(contact_patch, tol));
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(box_mesh_swapped_geometries) {
+  // A shape given first and a mesh second is dispatched mesh-first, and the
+  // result is corrected by `ContactPatchResult::swapObjects`. The patch must
+  // report the normal of the contact it was built from, whichever order the
+  // pair is given in.
+  const Scalar halfside = Scalar(0.5);
+  const Box box(2 * halfside, 2 * halfside, 2 * halfside);
+
+  const std::vector<Vec3s> vertices = {Vec3s(-2, -2, 0), Vec3s(2, -2, 0),
+                                       Vec3s(2, 2, 0), Vec3s(-2, 2, 0)};
+  const std::vector<Triangle32> triangles = {Triangle32(0, 1, 2),
+                                             Triangle32(0, 2, 3)};
+  BVHModel<OBBRSS> mesh;
+  mesh.beginModel();
+  mesh.addSubModel(vertices, triangles);
+  mesh.endModel();
+
+  const Transform3s tf_mesh;
+  Transform3s tf_box;
+  // set translation to have a collision
+  const Scalar offset = Scalar(0.001);
+  tf_box.setTranslation(Vec3s(0, 0, halfside - offset));
+
+  const size_t num_max_contact = 1;
+  const CollisionRequest col_req(CollisionRequestFlag::CONTACT,
+                                 num_max_contact);
+  const ContactPatchRequest patch_req;
+  const Scalar tol = Scalar(1e-8);
+
+  const auto check_patch_matches_contact = [&](const CollisionGeometry* o1,
+                                               const Transform3s& tf1,
+                                               const CollisionGeometry* o2,
+                                               const Transform3s& tf2) {
+    CollisionResult col_res;
+    coal::collide(o1, tf1, o2, tf2, col_req, col_res);
+    BOOST_REQUIRE(col_res.isCollision());
+
+    ContactPatchResult patch_res(patch_req);
+    coal::computeContactPatch(o1, tf1, o2, tf2, col_res, patch_req, patch_res);
+    BOOST_REQUIRE(patch_res.numContactPatches() == 1);
+
+    const Contact& contact = col_res.getContact(0);
+    const ContactPatch& contact_patch = patch_res.getContactPatch(0);
+    BOOST_CHECK(contact_patch.size() == 1);
+    EIGEN_VECTOR_IS_APPROX(contact_patch.getPoint(0), contact.pos, tol);
+    EIGEN_VECTOR_IS_APPROX(contact_patch.tf.translation(), contact.pos, tol);
+    EIGEN_VECTOR_IS_APPROX(contact_patch.getNormal(), contact.normal, tol);
+    BOOST_CHECK(std::abs(contact_patch.penetration_depth -
+                         contact.penetration_depth) < tol);
+  };
+
+  check_patch_matches_contact(&box, tf_box, &mesh, tf_mesh);  // shape first
+  check_patch_matches_contact(&mesh, tf_mesh, &box, tf_box);  // control
+}
+
+BOOST_AUTO_TEST_CASE(swap_objects) {
+  // `swapObjects` only re-expresses each patch in a rotated frame: the world
+  // position of every point of a patch and the normal `getNormal` reports are
+  // left unchanged by it.
+  const size_t num_patches = 2;
+  const ContactPatchRequest patch_req(num_patches);
+  ContactPatchResult patch_res(patch_req);
+
+  const std::vector<Vec3s> points = {Vec3s(1, 0, 0), Vec3s(2, 1, 0),
+                                     Vec3s(3, -1, 0)};
+  for (size_t i = 0; i < num_patches; ++i) {
+    ContactPatch& patch = patch_res.getUnusedContactPatch();
+    patch.tf.setTranslation(Vec3s(0, 0, Scalar(i)));
+    for (const Vec3s& point : points) {
+      patch.addPoint(patch.tf.transform(point));
+    }
+  }
+  BOOST_REQUIRE(patch_res.numContactPatches() == num_patches);
+
+  const ContactPatchResult patch_res_before = patch_res;
+  patch_res.swapObjects();
+
+  const Scalar tol = Scalar(1e-8);
+  for (size_t i = 0; i < num_patches; ++i) {
+    const ContactPatch& before = patch_res_before.getContactPatch(i);
+    const ContactPatch& after = patch_res.getContactPatch(i);
+    BOOST_REQUIRE(after.size() == before.size());
+    EIGEN_VECTOR_IS_APPROX(after.getNormal(), before.getNormal(), tol);
+    for (size_t j = 0; j < after.size(); ++j) {
+      EIGEN_VECTOR_IS_APPROX(after.getPoint(j), before.getPoint(j), tol);
     }
   }
 }
