@@ -42,9 +42,12 @@
 // #include "coal/data_types.h"
 #include "coal/shape/geometric_shapes.h"
 #include "coal/broadphase/broadphase_dynamic_AABB_tree.h"
+#include "coal/broadphase/default_broadphase_callbacks.h"
+#include "coal/distance.h"
 
 #include <iostream>
 #include <memory>
+#include <random>
 
 using namespace coal;
 
@@ -140,4 +143,87 @@ BOOST_AUTO_TEST_CASE(DynamicAABBTreeCollisionManager_class) {
     dynamic_tree.update();
     dynamic_tree.distance(&callback);
   }
+}
+
+// Specialized (non-GJK) shape pairs must merge into a shared DistanceResult
+// with the same min semantics as the GJK path (DistanceResult::update).
+BOOST_AUTO_TEST_CASE(specialized_shape_distance_keeps_minimum) {
+  const Box box(0.2, 0.2, 0.2);
+  const Sphere sphere(0.05);
+  const Transform3s identity;
+  Transform3s tf_near;
+  tf_near.setTranslation(Vec3s(0.3, 0., 0.));
+  Transform3s tf_far;
+  tf_far.setTranslation(Vec3s(1., 0., 0.));
+
+  DistanceRequest request;
+  DistanceResult result;
+  const Scalar d_near =
+      distance(&box, identity, &sphere, tf_near, request, result);
+  const Vec3s p_near0 = result.nearest_points[0];
+  const Vec3s p_near1 = result.nearest_points[1];
+  const Scalar d_far =
+      distance(&box, identity, &sphere, tf_far, request, result);
+
+  BOOST_CHECK_CLOSE(d_near, 0.15, 1e-6);
+  BOOST_CHECK_CLOSE(d_far, 0.85, 1e-6);
+  BOOST_CHECK_EQUAL(result.min_distance, d_near);
+  BOOST_CHECK(result.nearest_points[0] == p_near0);
+  BOOST_CHECK(result.nearest_points[1] == p_near1);
+}
+
+// Broadphase distance over a mix of specialized (sphere-box, sphere-capsule)
+// and GJK (capsule-box) pairs must return the pairwise minimum.
+BOOST_AUTO_TEST_CASE(
+    DynamicAABBTreeCollisionManager_distance_specialized_pairs) {
+  std::vector<CollisionObjectPtr_t> objs1, objs2;
+  for (int i = 0; i < 4; ++i)
+    objs1.push_back(
+        std::make_shared<CollisionObject>(std::make_shared<Sphere>(0.05)));
+  for (int i = 0; i < 4; ++i)
+    objs1.push_back(std::make_shared<CollisionObject>(
+        std::make_shared<Capsule>(0.04, 0.2)));
+  for (int i = 0; i < 6; ++i)
+    objs2.push_back(std::make_shared<CollisionObject>(
+        std::make_shared<Box>(0.3, 0.3, 0.3)));
+
+  DynamicAABBTreeCollisionManager m1, m2;
+  for (const auto& o : objs1) m1.registerObject(o.get());
+  for (const auto& o : objs2) m2.registerObject(o.get());
+  m1.setup();
+  m2.setup();
+
+  std::mt19937 gen(0);
+  std::uniform_real_distribution<Scalar> uni(-1., 1.);
+  const DistanceRequest request;
+  int n_checked = 0;
+  for (int trial = 0; trial < 300; ++trial) {
+    for (const auto& o : objs1)
+      o->setTranslation(Vec3s(uni(gen), uni(gen), uni(gen)));
+    for (const auto& o : objs2)
+      o->setTranslation(Vec3s(uni(gen), uni(gen), uni(gen)));
+    m1.update();
+    m2.update();
+
+    DistanceResult pairwise;
+    for (const auto& a : objs1)
+      for (const auto& b : objs2) {
+        DistanceResult r;
+        distance(a.get(), b.get(), request, r);
+        pairwise.update(r);
+      }
+    if (pairwise.min_distance <= 0) continue;  // broadphase stops on contact
+    ++n_checked;
+
+    DistanceCallBackDefault callback;
+    m1.distance(&m2, &callback);
+    const DistanceResult& res = callback.data.result;
+    BOOST_CHECK_CLOSE(res.min_distance, pairwise.min_distance, 1e-6);
+    BOOST_CHECK_EQUAL(res.o1, pairwise.o1);
+    BOOST_CHECK_EQUAL(res.o2, pairwise.o2);
+    BOOST_CHECK_SMALL((res.nearest_points[0] - res.nearest_points[1]).norm() -
+                          pairwise.min_distance,
+                      Scalar(1e-6));
+  }
+  BOOST_CHECK(n_checked > 100);
 }
