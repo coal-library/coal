@@ -40,6 +40,8 @@
 
 /// @cond INTERNAL
 
+#include <algorithm>
+
 #include "coal/collision_data.h"
 #include "coal/collision_utility.h"
 #include "coal/narrowphase/narrowphase.h"
@@ -233,9 +235,11 @@ std::size_t ShapeShapeCollide(const CollisionGeometry* o1,
       DistanceResult& result) {                                                \
     if (request.isSatisfied(result)) return result.min_distance;               \
     Vec3s p1, p2, normal;                                                      \
-    const Scalar distance = internal::ShapeShapeDistance<T1, T2>(              \
+    Scalar distance = internal::ShapeShapeDistance<T1, T2>(                    \
         o1, tf1, o2, tf2, nsolver, request.enable_signed_distance, p1, p2,     \
         normal);                                                               \
+    if (!request.enable_signed_distance)                                       \
+      distance = (std::max)(distance, Scalar(0));                              \
     result.update(distance, o1, o2, DistanceResult::NONE,                      \
                   DistanceResult::NONE, p1, p2, normal);                       \
     return distance;                                                           \
@@ -248,9 +252,11 @@ std::size_t ShapeShapeCollide(const CollisionGeometry* o1,
       DistanceResult& result) {                                                \
     if (request.isSatisfied(result)) return result.min_distance;               \
     Vec3s p1, p2, normal;                                                      \
-    const Scalar distance = internal::ShapeShapeDistance<T2, T1>(              \
+    Scalar distance = internal::ShapeShapeDistance<T2, T1>(                    \
         o1, tf1, o2, tf2, nsolver, request.enable_signed_distance, p1, p2,     \
         normal);                                                               \
+    if (!request.enable_signed_distance)                                       \
+      distance = (std::max)(distance, Scalar(0));                              \
     result.update(distance, o1, o2, DistanceResult::NONE,                      \
                   DistanceResult::NONE, p1, p2, normal);                       \
     return distance;                                                           \
@@ -271,9 +277,11 @@ std::size_t ShapeShapeCollide(const CollisionGeometry* o1,
       DistanceResult& result) {                                                \
     if (request.isSatisfied(result)) return result.min_distance;               \
     Vec3s p1, p2, normal;                                                      \
-    const Scalar distance = internal::ShapeShapeDistance<T, T>(                \
+    Scalar distance = internal::ShapeShapeDistance<T, T>(                      \
         o1, tf1, o2, tf2, nsolver, request.enable_signed_distance, p1, p2,     \
         normal);                                                               \
+    if (!request.enable_signed_distance)                                       \
+      distance = (std::max)(distance, Scalar(0));                              \
     result.update(distance, o1, o2, DistanceResult::NONE,                      \
                   DistanceResult::NONE, p1, p2, normal);                       \
     return distance;                                                           \
