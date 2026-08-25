@@ -40,6 +40,7 @@
 #define COAL_OCTREE_H
 
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 
 #include <octomap/octomap.h>
@@ -281,6 +282,27 @@ class COAL_DLLAPI OcTree : public CollisionGeometry {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
+
+/// @brief Handle identifying an octree node, reported as `b1`/`b2` for octree
+/// contacts and distance results.
+///
+/// The handle is unique among the nodes of a tree and stays the same for as
+/// long as that node lives, which is what makes it usable as a grouping or
+/// lookup key within a query or a solve.
+///
+/// It is deliberately opaque. It is not a cell index and carries no spatial
+/// meaning, it says nothing about the order in which leaves are enumerated, and
+/// it is not reproducible: a second run, or a second tree built from the same
+/// data, yields different handles for the same cells. Use the contact position
+/// if you need to know *which* cell was touched.
+static inline int octreeNodeHandle(const OcTree::OcTreeNode* node) {
+  // Every node address is a multiple of the node's alignment, so dividing by it
+  // is injective and widens the range that survives the mask below. Clearing
+  // the sign bit keeps the handle distinguishable from Contact::NONE, which is
+  // -1.
+  const std::uintptr_t address = reinterpret_cast<std::uintptr_t>(node);
+  return static_cast<int>((address / alignof(OcTree::OcTreeNode)) & 0x7FFFFFFF);
+}
 
 /// @brief compute the bounding volume of an octree node's i-th child
 static inline void computeChildBV(const AABB& root_bv, unsigned int i,
