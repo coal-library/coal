@@ -37,6 +37,8 @@
 
 #define BOOST_TEST_MODULE COAL_OCTREE
 #include <fstream>
+#include <set>
+#include <utility>
 #include <boost/test/included/unit_test.hpp>
 #include <boost/filesystem.hpp>
 
@@ -291,5 +293,146 @@ BOOST_AUTO_TEST_CASE(octree_height_field) {
       std::cout << "distance mesh box: " << dres.min_distance << std::endl;
       BOOST_CHECK(dres.min_distance < sqrt(2.) * resolution);
     }
+  }
+}
+
+// The octree side of a contact or distance result carries an opaque node
+// handle: unique per node, stable while the tree is unmodified, and never NONE.
+// It is not a cell index, so nothing here asserts a range -- what is asserted
+// is the identity contract consumers rely on, and that the other operand keeps
+// its real primitive index.
+BOOST_AUTO_TEST_CASE(octree_reports_stable_node_handle) {
+  Scalar resolution(10.);
+  std::vector<Vec3s> pEnv;
+  std::vector<Triangle32> tEnv;
+  boost::filesystem::path path(TEST_RESOURCES_DIR);
+  loadOBJFile((path / "env.obj").string().c_str(), pEnv, tEnv);
+
+  BVHModel<OBBRSS> envMesh;
+  makeMesh(pEnv, tEnv, envMesh);
+  envMesh.computeLocalAABB();
+
+  OcTree envOctree(
+      coal::loadOctreeFile((path / "env.octree").string(), resolution));
+  envOctree.computeLocalAABB();
+
+  const Transform3s tf;  // identity: the operands are guaranteed to overlap
+  CollisionRequest request(coal::CONTACT, 1000);
+
+  const CollisionGeometry* octree = &envOctree;
+
+  // Every contact must carry a handle wherever the octree sits.
+  auto collectHandles = [octree](const CollisionResult& result) {
+    BOOST_REQUIRE(result.isCollision());
+    std::vector<int> handles;
+    for (const Contact& contact : result.getContacts()) {
+      if (contact.o1 == octree) {
+        BOOST_CHECK_GE(contact.b1, 0);
+        handles.push_back(contact.b1);
+      }
+      if (contact.o2 == octree) {
+        BOOST_CHECK_GE(contact.b2, 0);
+        handles.push_back(contact.b2);
+      }
+    }
+    BOOST_CHECK(!handles.empty());
+    return handles;
+  };
+
+  // octree vs shape
+  Box box;
+  Transform3s box_tf;
+  constructBox(envOctree.aabb_local, tf, box, box_tf);
+  box.computeLocalAABB();
+  {
+    CollisionResult result1, result2;
+    coal::collide(&envOctree, tf, &box, box_tf, request, result1);
+    coal::collide(&envOctree, tf, &box, box_tf, request, result2);
+    const std::vector<int> handles = collectHandles(result1);
+    // Repeating the query must reproduce the handles exactly; that stability is
+    // the whole value of the field to a caller grouping contacts by cell.
+    BOOST_CHECK(handles == collectHandles(result2));
+    // Distinct nodes must get distinct handles. This can only be asserted where
+    // contacts are in bijection with nodes, which is the single-shape case: a
+    // mesh or height field operand yields one contact per (node, primitive), so
+    // one node legitimately recurs across several contacts there.
+    const std::set<int> distinct(handles.begin(), handles.end());
+    BOOST_CHECK_EQUAL(distinct.size(), handles.size());
+  }
+
+  // octree vs mesh: the mesh side must still carry its triangle id
+  {
+    CollisionResult result;
+    coal::collide(&envOctree, tf, &envMesh, tf, request, result);
+    collectHandles(result);
+    bool found_triangle_id = false;
+    // One node may recur here, but each (node, triangle) pair must be reported
+    // at most once.
+    std::set<std::pair<int, int> > pairs;
+    for (const Contact& contact : result.getContacts())
+      BOOST_CHECK(pairs.insert(std::make_pair(contact.b1, contact.b2)).second);
+    for (const Contact& contact : result.getContacts()) {
+      if (contact.o2 == &envMesh && contact.b2 != Contact::NONE) {
+        BOOST_CHECK_GE(contact.b2, 0);
+        BOOST_CHECK_LT(contact.b2, (int)envMesh.num_tris);
+        found_triangle_id = true;
+      }
+    }
+    BOOST_CHECK(found_triangle_id);
+  }
+
+  // octree vs octree: both sides are the same octree, so both carry handles
+  {
+    CollisionResult result;
+    coal::collide(&envOctree, tf, &envOctree, tf, request, result);
+    collectHandles(result);
+  }
+
+  // octree vs height field, both operand orders: the handle must follow the
+  // octree across the swap rather than staying on one side.
+  const AABB& octree_aabb = envOctree.aabb_local;
+  const MatrixXs heights =
+      MatrixXs::Constant(100, 100, octree_aabb.max_[2] + Scalar(1));
+  HeightField<AABB> hfield(octree_aabb.max_[0] - octree_aabb.min_[0],
+                           octree_aabb.max_[1] - octree_aabb.min_[1], heights,
+                           octree_aabb.min_[2] - Scalar(1));
+  hfield.computeLocalAABB();
+  // Centre the field on the octree in XY; it already spans the octree in Z.
+  Transform3s hfield_tf;
+  hfield_tf.setTranslation(Vec3s(
+      Scalar(0.5) * (octree_aabb.min_[0] + octree_aabb.max_[0]),
+      Scalar(0.5) * (octree_aabb.min_[1] + octree_aabb.max_[1]), Scalar(0)));
+  {
+    CollisionResult result1, result2;
+    coal::collide(&envOctree, tf, &hfield, hfield_tf, request, result1);
+    coal::collide(&hfield, hfield_tf, &envOctree, tf, request, result2);
+    collectHandles(result1);
+    collectHandles(result2);
+  }
+
+  // A distance result takes b1/b2 from the closest leaf pair and owes the same
+  // contract. Height fields are absent because octree/height-field distance is
+  // not implemented.
+  {
+    const DistanceRequest dreq;
+    DistanceResult dres;
+
+    coal::distance(&envOctree, tf, &box, box_tf, dreq, dres);
+    BOOST_CHECK(dres.o1 == octree);
+    BOOST_CHECK_GE(dres.b1, 0);
+    BOOST_CHECK(dres.b2 == DistanceResult::NONE);
+
+    dres.clear();
+    coal::distance(&envOctree, tf, &envMesh, tf, dreq, dres);
+    BOOST_CHECK(dres.o1 == octree);
+    BOOST_CHECK_GE(dres.b1, 0);
+    // The mesh side must still carry its triangle id.
+    BOOST_CHECK_GE(dres.b2, 0);
+    BOOST_CHECK_LT(dres.b2, (int)envMesh.num_tris);
+
+    dres.clear();
+    coal::distance(&envOctree, tf, &envOctree, tf, dreq, dres);
+    BOOST_CHECK_GE(dres.b1, 0);
+    BOOST_CHECK_GE(dres.b2, 0);
   }
 }
