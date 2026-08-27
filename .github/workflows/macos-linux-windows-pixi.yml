@@ -1,4 +1,4 @@
-name: CI - MacOS/Linux/Windows via Pixi
+name: CI - Pixi - MacOS/Linux/Windows
 
 on:
   push:
@@ -27,52 +27,72 @@ concurrency:
 
 jobs:
   coal-pixi:
-    name: Standard - ${{ matrix.os }} - Env ${{ matrix.environment }} ${{ matrix.build_type }} ${{ matrix.cxx_options }}
+    name: Pixi - ${{ matrix.os }} - Env ${{ matrix.environment }} - ${{ matrix.build_type }} ${{ matrix.cxx_options }}
     runs-on: ${{ matrix.os }}
     env:
-      CCACHE_BASEDIR: "${GITHUB_WORKSPACE}"
-      CCACHE_DIR: "${GITHUB_WORKSPACE}/.ccache"
+      CCACHE_BASEDIR: ${{ github.workspace}}
+      CCACHE_DIR: ${{ github.workspace}}/.ccache
       CCACHE_COMPRESS: true
       CCACHE_COMPRESSLEVEL: 6
       # Since pixi will install a compiler, the compiler mtime will be changed.
       # This can invalidate the cache (https://ccache.dev/manual/latest.html#config_compiler_check)
       CCACHE_COMPILERCHECK: content
+      # Only set for the macos-15-intel tracy build, empty everywhere else.
+      TRACY_NO_INVARIANT_CHECK: ${{ matrix.tracy_no_invariant_check }}
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-15-intel]
-        environment: [all, all-python-oldest, all-boost-python]
+        os: [ubuntu-24.04, macos-26, macos-15-intel, windows-2022]
+        environment: [default, all, all-python-oldest, all-boost-python, all-clang, all-tracy]
         build_type: [Release, Debug]
-        cxx_options: ['', '-mavx2']
-        exclude:
-          - os: macos-latest
-            cxx_options: '-mavx2'
-          - os: macos-15-intel
-            cxx_options: '-mavx2'
 
         include:
+          # Define the variable for CMAKE_CXX_FLAGS
+          - cxx_options: ''
+          - run_tests: true
+
+          # Disable tests for tracy builds.
+          # FIXME: the coal-test-frontlist might crash on the CI
+          # Even with the TRACY_NO_INVARIANT_CHECK=1 env var set.
+          - environment: all-tracy
+            run_tests: false
+
+          # The macos-15-intel runner is a VM whose CPU does not expose an
+          # invariant TSC, so the Tracy client aborts at profiler init. This
+          # breaks the nanobind stub generation, which imports coal at build
+          # time. Timings from a VM are meaningless anyway, so skip the check.
+          - os: macos-15-intel
+            environment: all-tracy
+            tracy_no_invariant_check: '1'
+
+          # Test the legacy clang-cl compiler on Windows
           - os: windows-2022
-            environment: all
-            cxx_options: ''
             build_type: Release
-          - os: windows-2022
-            environment: all-boost-python
-            cxx_options: ''
-            build_type: Release
-          - os: windows-2022
             environment: all-clang-cl
-            cxx_options: ''
+
+          # Enable builds with AVX2 optimizations
+          - os: ubuntu-24.04
+            environment: all
             build_type: Release
+            cxx_options: '-mavx2'
+
+          - os: macos-15-intel
+            environment: all
+            build_type: Release
+            cxx_options: '-mavx2'
+
+        exclude:
+          # Do not run Debug tests with Tracy to reduce CI load
+          - build_type: Debug
+            environment: all-tracy
+
+          # Disable Debug builds on windows
           - os: windows-2022
-            environment: default
-            cxx_options: ''
             build_type: Debug
 
     steps:
     - uses: actions/checkout@v7
-      with:
-        submodules: recursive
 
     - uses: actions/cache@v6
       with:
@@ -87,7 +107,7 @@ jobs:
 
     - name: Clear ccache statistics [MacOS/Linux/Windows]
       run: |
-        pixi run -e ${{ matrix.environment }} ccache -z
+        pixi run -e ${{ matrix.environment }} ccache -svz
 
     - name: Build Coal [MacOS/Linux/Windows]
       env:
@@ -98,9 +118,13 @@ jobs:
         pixi run -e ${{ matrix.environment }} build
 
     - name: Test Coal [MacOS/Linux/Windows]
-      if: ${{ ! (contains(matrix.os, 'windows') && matrix.build_type == 'Debug') }}
+      if: matrix.run_tests == true
       run: |
-        pixi run -e ${{ matrix.environment }} ctest --test-dir build --output-on-failure
+        pixi run -e ${{ matrix.environment }} --skip-deps test
+
+    - name: Install Coal [MacOS/Linux/Windows]
+      run: |
+        pixi run -e ${{ matrix.environment }} --skip-deps install
 
     - name: Show ccache statistics [MacOS/Linux/Windows]
       run: |
@@ -126,8 +150,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v7
-      with:
-        submodules: recursive
 
     - uses: actions/cache@v6
       with:
@@ -142,28 +164,21 @@ jobs:
 
     - name: Clear ccache statistics [MacOS/Linux/Windows]
       run: |
-        pixi run -e ${{ matrix.environment }} ccache -z
+        pixi run -e ${{ matrix.environment }} ccache -svz
 
     - name: Build Coal cpp [MacOS/Linux/Windows]
       env:
         CMAKE_BUILD_PARALLEL_LEVEL: 2
-      shell: bash -el {0}
       run: |
-        pixi run -e ${{ matrix.environment }} configure \
-          -DBUILD_PYTHON_INTERFACE=OFF \
-          -B build_cpp
+        pixi run -e ${{ matrix.environment }} configure -DBUILD_PYTHON_INTERFACE=OFF -B build_cpp
         pixi run -e ${{ matrix.environment }} cmake --build build_cpp --target all
         pixi run -e ${{ matrix.environment }} cmake --install build_cpp
 
     - name: Build Coal standalone python [MacOS/Linux/Windows]
       env:
         CMAKE_BUILD_PARALLEL_LEVEL: 2
-      shell: bash -el {0}
       run: |
-        pixi run -e ${{ matrix.environment }} configure \
-          -DBUILD_PYTHON_INTERFACE=ON \
-          -DBUILD_STANDALONE_PYTHON_INTERFACE=ON \
-          -B build_python
+        pixi run -e ${{ matrix.environment }} configure -DBUILD_PYTHON_INTERFACE=ON -DBUILD_STANDALONE_PYTHON_INTERFACE=ON -B build_python
         pixi run -e ${{ matrix.environment }} cmake --build build_python --target all
         pixi run -e ${{ matrix.environment }} cmake --install build_python
         pixi run -e ${{ matrix.environment }} python -c "import coal"
@@ -183,14 +198,11 @@ jobs:
 
   #   steps:
   #   - uses: actions/checkout@v7
-  #     with:
-  #       submodules: recursive
 
   #   - uses: prefix-dev/setup-pixi@v0.10.0
   #     env:
   #       CMAKE_BUILD_PARALLEL_LEVEL: 2
   #     with:
-  #       cache: true
   #       environments: test-pixi-build
 
   #   - name: Test package [MacOS/Linux/Windows]
@@ -206,7 +218,7 @@ jobs:
     - coal-python-standalone-pixi
     # - coal-pixi-build
 
-    runs-on: Ubuntu-latest
+    runs-on: ubuntu-latest
 
     steps:
     - name: Decide whether the needed jobs succeeded or failed

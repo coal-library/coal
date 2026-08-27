@@ -1,35 +1,13 @@
-# Copyright 2025 INRIA
-
-# Detect the installed nanobind package and import it into CMake
-execute_process(
-  COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-  OUTPUT_VARIABLE nanobind_ROOT
-)
-# Honor nanobind_ROOT
-cmake_policy(PUSH)
-cmake_policy(SET CMP0074 NEW)
-find_package(nanobind CONFIG REQUIRED)
-cmake_policy(POP)
-find_package(Boost REQUIRED)
-
-# Nanoeigenpy
-find_package(nanoeigenpy CONFIG REQUIRED)
-
-set(PYTHON_LIB_NAME_V2 ${PROJECT_NAME}_pywrap_nb)
-
-# Headers
 set(
-  PYTHON_LIB_HEADERS
+  coal_pywrap_nb_HEADERS
   broadphase/broadphase_callbacks_collision_manager.hh
   fwd.h
   pickle.hh
   serializable.hh
 )
 
-# Sources
 set(
-  PYTHON_LIB_SOURCES
+  coal_wrap_nb_SOURCES
   broadphase/broadphase.cc
   aabb.cc
   bvh.cc
@@ -44,58 +22,42 @@ set(
   shapes.cc
   module.cc
 )
-if(COAL_HAS_OCTOMAP)
-  list(APPEND PYTHON_LIB_SOURCES octree.cc)
-endif(COAL_HAS_OCTOMAP)
+if(COAL_BUILD_WITH_OCTOMAP)
+  list(APPEND coal_wrap_nb_SOURCES octree.cc)
+endif()
 
-nanobind_add_module(${PYTHON_LIB_NAME_V2} NB_STATIC LTO NB_SUPPRESS_WARNINGS ${PYTHON_LIB_SOURCES})
-target_link_libraries(
-  ${PYTHON_LIB_NAME_V2}
-  PRIVATE ${PROJECT_NAME}::${PROJECT_NAME} Boost::boost
-)
-target_compile_definitions(
-  ${PYTHON_LIB_NAME_V2}
-  PRIVATE COAL_PYTHON_LIBNAME=${PYTHON_LIB_NAME_V2}
-)
+nanobind_add_module(coal_pywrap_nb NB_STATIC LTO NB_SUPPRESS_WARNINGS ${coal_wrap_nb_SOURCES} ${coal_pywrap_nb_HEADERS})
+jrl_target_enforce_msvc_conformance(coal_pywrap_nb PRIVATE)
+target_link_libraries(coal_pywrap_nb PRIVATE coal)
+jrl_target_set_output_directory(coal_pywrap_nb OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/site-packages/coal)
 
-set(MODULE_DIR ${PROJECT_NAME})
-
-set_target_properties(
-  ${PYTHON_LIB_NAME_V2}
-  PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${MODULE_DIR}"
+jrl_python_generate_init_py(
+    coal_pywrap_nb
+    OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib/site-packages/coal/__init__.py
 )
 
-set(PYTHON_LIB_STUB_FILE ${MODULE_DIR}/${PYTHON_LIB_NAME_V2}.pyi)
-
-nanobind_add_stub(
-  ${PYTHON_LIB_NAME_V2}_stub
-  VERBOSE
-  MODULE ${PROJECT_NAME}.${PYTHON_LIB_NAME_V2}
-  OUTPUT ${PYTHON_LIB_STUB_FILE}
-  DEPENDS ${PYTHON_LIB_NAME_V2}
-  PYTHON_PATH ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_DIR}
-)
-add_dependencies(${PROJECT_NAME}_python ${PYTHON_LIB_NAME_V2})
-ADD_SOURCE_GROUP(PYTHON_LIB_SOURCES)
-
-set(PYTHON_FILES __init__.py windows_dll_manager.py)
-foreach(pyfile ${PYTHON_FILES})
-  message(STATUS "Building python file ${pyfile}")
-  PYTHON_BUILD(${MODULE_DIR} ${pyfile})
-  install(
-    FILES ${MODULE_DIR}/${pyfile}
-    DESTINATION ${Python_SITELIB}/${MODULE_DIR}
+if(GENERATE_PYTHON_STUBS)
+  nanobind_add_stub(
+    coal_pywrap_nb_stub
+    MODULE coal.coal_pywrap_nb
+    OUTPUT ${CMAKE_BINARY_DIR}/lib/site-packages/coal/coal_pywrap_nb.pyi
+    PYTHON_PATH ${CMAKE_BINARY_DIR}/lib/site-packages
+    DEPENDS coal_pywrap_nb
   )
-endforeach(pyfile)
+endif()
 
-install(
-  TARGETS ${PYTHON_LIB_NAME_V2}
-  EXPORT ${TARGETS_EXPORT_NAME}
-  LIBRARY DESTINATION ${Python_SITELIB}/${MODULE_DIR}
+jrl_python_compile_all(
+  DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
+jrl_python_compute_install_dir(python_install_dir)
+install(TARGETS coal_pywrap_nb DESTINATION ${python_install_dir}/coal)
 install(
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/${PYTHON_LIB_STUB_FILE}
-  DESTINATION ${Python_SITELIB}/${MODULE_DIR}
+  DIRECTORY ${CMAKE_BINARY_DIR}/lib/site-packages/coal
+  DESTINATION ${python_install_dir}
+  FILES_MATCHING
+  PATTERN "*.py"
+  PATTERN "*.pyc"
+  PATTERN "*.pyi"
+  PATTERN "*.typed"
 )

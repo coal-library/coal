@@ -18,13 +18,17 @@ git = ">=2.47.0"
 nanobind = ">=2.5.0,<3"
 libboost-devel = ">=1.80.0"
 eigen = ">=3.4.0"
-assimp = ">=5.4"
+eigen-abi-devel = ">=3.4.0"
 numpy = ">=1.22.0"
-python = ">=3.9.0"
+python = ">=3.10"
+python_abi = ">=3.10"
 doxygen = ">=1.8,<1.17"
 lxml = ">=5.3"
 pylatexenc = ">=2.10"
 nanoeigenpy = ">=0.3.0"
+assimp = ">=5.4"
+graphviz = "*"
+jrl-cmakemodules = ">=2.1.0"
 
 [package]
 name = { workspace = true }
@@ -35,16 +39,6 @@ backend = { name = "pixi-build-cmake", version = "*" }
 
 [package.build.config]
 extra-args = [
-  "-DGENERATE_PYTHON_STUBS=ON",
-  "-DBUILD_TESTING=OFF",
-  "-DCOAL_HAS_QHULL=ON",
-  "-DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL=ON",
-  "-DCOAL_PYTHON_NANOBIND=OFF",
-]
-
-[package.build.target.win-64.config]
-extra-args = [
-  "-DPYTHON_SITELIB=%PREFIX%/Lib/site-packages",
   "-DGENERATE_PYTHON_STUBS=ON",
   "-DBUILD_TESTING=OFF",
   "-DCOAL_HAS_QHULL=ON",
@@ -66,9 +60,11 @@ eigen = ">=3.4.0"
 eigen-abi-devel = ">=3.4.0"
 assimp = ">=5.4"
 numpy = ">=1.22.0"
-python = "*"
+python = ">=3.10"
+python_abi = ">=3.10"
 eigenpy = ">=3.7.0"
 octomap = ">=1.10"
+jrl-cmakemodules = ">=2.1.0"
 
 [package.run-dependencies]
 eigen = ">=3.4.0"
@@ -108,51 +104,58 @@ configure = { cmd = [
   "build",
   "-S",
   ".",
-  # Don't use standard layout because it's not well implemented on Windows
-  "-DPYTHON_STANDARD_LAYOUT=OFF",
-  "-DPython_EXECUTABLE=$PYTHON_EXECUTABLE",
+  "-DJRL_CMAKEMODULES_SOURCE_DIR=$JRL_CMAKEMODULES_SOURCE_DIR",
   "-DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX",
   "-DCMAKE_BUILD_TYPE=$COAL_BUILD_TYPE",
   "-DGENERATE_PYTHON_STUBS=$COAL_PYTHON_STUBS",
-  "-DCOAL_HAS_QHULL=$COAL_HAS_QHULL",
   "-DCOAL_PYTHON_NANOBIND=$COAL_PYTHON_NANOBIND",
+  "-DBUILD_TESTING=ON",
+  "-DCOAL_ENABLE_LOGGING=$COAL_ENABLE_LOGGING",
+  "-DCOAL_BUILD_WITH_TRACY=$COAL_BUILD_WITH_TRACY",
+  "-DBUILD_DOCUMENTATION=ON",
+  "-DINSTALL_DOCUMENTATION=ON",
+  "-DENABLE_PYTHON_DOXYGEN_AUTODOC=ON",
+  "-DCOAL_BUILD_WITH_OCTOMAP=$COAL_BUILD_WITH_OCTOMAP",
+  "-DCOAL_HAS_QHULL=$COAL_HAS_QHULL",
+  "-DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL=ON",
 ] }
-build = { cmd = "cmake --build build --target all", depends-on = ["configure"] }
+build = { cmd = "cmake --build build", depends-on = ["configure"] }
 clean = { cmd = "rm -rf build" }
 test = { cmd = "ctest --test-dir build --output-on-failure", depends-on = [
   "build",
 ] }
+install = { cmd = "cmake --build build --target install", depends-on = [
+  "build",
+] }
+test-import-python = { depends-on = [
+  "install",
+], cmd = [
+  "python",
+  "-c",
+  "import coal; print(coal.__version__)",
+] }
+_test-packaging-configure = { cmd = [
+  "cmake",
+  "-G",
+  "Ninja",
+  "-S",
+  "test/packaging/cmake",
+  "-B",
+  "build/test-packaging",
+], depends-on = [
+  "install",
+] }
+_test-packaging-build = { cmd = "cmake --build build/test-packaging", depends-on = [
+  "_test-packaging-configure",
+] }
+test-packaging = { depends-on = ["_test-packaging-build"] }
 
 [feature.lint]
 dependencies = { pre-commit = ">=3.6.2" }
 tasks = { lint = { cmd = "pre-commit run --all" } }
 
-# Increment the version number with COAL_VERSION variable
-[feature.new-version.dependencies]
-tomlkit = ">=0.13.2"
-
-[feature.new-version.tasks]
-configure-new-version = { cmd = [
-  "CXXFLAGS=$COAL_CXX_FLAGS",
-  "cmake",
-  "-G",
-  "Ninja",
-  "-B",
-  "build_new_version",
-  "-S",
-  ".",
-  # Don't use standard layout because it's not well implemented on Windows
-  "-DPYTHON_STANDARD_LAYOUT=OFF",
-  "-DPython_EXECUTABLE=$PYTHON_EXECUTABLE",
-  "-DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX",
-  "-DCMAKE_BUILD_TYPE=$COAL_BUILD_TYPE",
-  "-DGENERATE_PYTHON_STUBS=ON",
-  "-DCOAL_HAS_QHULL=ON",
-  "-DCOAL_PYTHON_NANOBIND=$COAL_PYTHON_NANOBIND",
-] }
-release-new-version = { cmd = "VERSION=$COAL_VERSION cmake --build build_new_version --target release", depends-on = [
-  "configure-new-version",
-] }
+[feature.new-version]
+dependencies = { jrl-cmakemodules-scripts = "*" }
 
 # QHull support
 [feature.qhull.target.win]
@@ -170,6 +173,16 @@ activation.env = { COAL_PYTHON_NANOBIND = "OFF" }
 # Octomap support
 [feature.octomap]
 dependencies = { octomap = ">=1.10" }
+activation = { env = { COAL_BUILD_WITH_OCTOMAP = "ON" } }
+
+# Boost Logging support
+[feature.logging]
+activation = { env = { COAL_ENABLE_LOGGING = "ON" } }
+
+# Tracy support
+[feature.tracy]
+dependencies = { tracy-profiler = ">=0.7.7" }
+activation = { env = { COAL_BUILD_WITH_TRACY = "ON" } }
 
 [feature.python-latest.dependencies]
 python = "3.14.*"
@@ -182,34 +195,45 @@ typing_extensions = ">=4.13.2"
 # Use clang-cl on Windows
 # If something go wrong, we can check this repository:
 # https://github.com/conda-forge/clang-win-activation-feedstock/tree/main
-# coal-octree test is crashing on Windows when building with clang > 22.1
 [feature.clang-cl]
 platforms = ["win-64"]
-dependencies = { clangxx = "<22.1", lld = "*" }
+dependencies = { clangxx = "*", lld = "*" }
 
 # Absolute path is needed to avoid using system clang-cl
 [feature.clang-cl.activation.env]
-CC = "%CONDA_PREFIX%\\Library\\bin\\clang-cl"
-CXX = "%CONDA_PREFIX%\\Library\\bin\\clang-cl"
+CC = "%CONDA_PREFIX%/Library/bin/clang-cl"
+CXX = "%CONDA_PREFIX%/Library/bin/clang-cl"
 
-# Use clang on GNU/Linux
+# Use clang on Windows/Linux/macOS
+# coal-octree test is crashing on Windows when building with clang > 22.1
 [feature.clang]
-platforms = ["linux-64"]
 activation = { env = { CC = "clang", CXX = "clang++" } }
-dependencies = { clangxx = "*" }
+dependencies = { clangxx = "<22.1", lld = "*" }
+
+# NOTE: llvm-tools is only needed on windows to have llvm-ar (CMAKE_AR)
+# On linux, macOS clang++ provide "ar"
+[feature.clang.target.win-64.dependencies]
+llvm-tools = "*"
+
+# NOTE: on Linux, clang defaults to the conda binutils ld, which needs
+# LLVMgold.so to handle LTO objects (nanobind modules are built with LTO).
+# That plugin is not shipped by conda-forge llvm, so use lld instead.
+[feature.clang.target.linux-64.activation.env]
+LDFLAGS = "$LDFLAGS -fuse-ld=lld"
 
 # [feature.test-pixi-build]
-# dependencies = { coal = { path = "." }, cmake = ">=3.22", python = "*" }
+# dependencies = { coal = { path = "." }, cmake = ">=3.22", python = "*", cxx-compiler = ">=1.7.0" }
 
 # [feature.test-pixi-build.tasks]
-# test-cmake = "cmake -S test/pixi_build -B build_test_pixi_build"
-# test-python = "python -c 'import coal'"
+# test-cmake = "cmake -S test/pixi_build -B build/test_pixi_build"
+# test-python = "python -c 'import coal; print(coal.__version__)'"
 # test = { depends-on = ["test-cmake", "test-python"] }
 
 [environments]
 default = { features = ["python-latest"], solve-group = "python-latest" }
 clang = { features = ["clang", "python-latest"] }
-lint = { features = ["lint"], solve-group = "python-latest" }
+lint = { features = ["lint"], no-default-feature = true }
+new-version = { features = ["new-version"], no-default-feature = true }
 qhull = { features = ["qhull", "python-latest"], solve-group = "python-latest" }
 octomap = { features = [
   "octomap",
@@ -217,33 +241,44 @@ octomap = { features = [
 ], solve-group = "python-latest" }
 python-oldest = { features = ["python-oldest"], solve-group = "python-oldest" }
 all = { features = [
+  "logging",
+  "qhull",
+  "octomap",
+  "python-latest",
+], solve-group = "python-latest" }
+all-tracy = { features = [
+  "logging",
+  "tracy",
   "qhull",
   "octomap",
   "python-latest",
 ], solve-group = "python-latest" }
 # No solve-group, because boost.python will be legacy
 all-boost-python = { features = [
+  "logging",
   "qhull",
   "octomap",
   "python-latest",
   "boost-python",
 ] }
 all-python-oldest = { features = [
+  "logging",
   "qhull",
   "octomap",
   "python-oldest",
 ], solve-group = "python-oldest" }
+all-clang = { features = [
+  "logging",
+  "qhull",
+  "octomap",
+  "clang",
+  "python-latest",
+], solve-group = "python-latest" }
 all-clang-cl = { features = [
+  "logging",
   "qhull",
   "octomap",
   "clang-cl",
-  "python-latest",
-], solve-group = "python-latest" }
-# Release a new software version
-new-version = { features = [
-  "new-version",
-  "qhull",
-  "octomap",
   "python-latest",
 ], solve-group = "python-latest" }
 # test-pixi-build = { features = ["test-pixi-build"], no-default-feature = true }
