@@ -4,10 +4,9 @@
   inputs = {
     gepetto.url = "github:gepetto/nix";
 
-    # eigenpy v3.12.0 does not handle eigen v5, so we need devel for now
+    # use eigenpy build against eigen 5 from cache
     eigenpy.url = "github:stack-of-tasks/eigenpy";
     eigenpy.inputs.gepetto.follows = "gepetto";
-    jrl-cmakemodules.follows = "eigenpy/jrl-cmakemodules";
   };
 
   outputs =
@@ -15,10 +14,7 @@
     inputs.gepetto.lib.mkFlakoboros inputs (
       { lib, ... }:
       {
-        overlays = [
-          inputs.jrl-cmakemodules.overlays.flakoboros
-          inputs.eigenpy.overlays.flakoboros
-        ];
+        overlays = [ inputs.eigenpy.overlays.flakoboros ];
         extraDevPyPackages = [ "coal" ];
         overrideAttrs.coal =
           { drv-prev, ... }:
