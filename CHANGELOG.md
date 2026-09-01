@@ -31,6 +31,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Boost::thread
 
 ### Fixed
+- Specialized shape-shape distance functions (sphere/capsule/plane/halfspace/triangle pairs) now merge into `DistanceResult` with min semantics (`DistanceResult::update`) instead of overwriting `min_distance`. Broadphase distance queries mixing specialized and GJK pairs previously returned the last evaluated pair instead of the closest one ([#885](https://github.com/coal-library/coal/pull/885))
+- Specialized shape-shape distance functions now honor `DistanceRequest::enable_signed_distance` (previously they always returned the signed distance, so `min_distance` could be negative with the flag off) ([#885](https://github.com/coal-library/coal/pull/885))
 - Fix doc parsing via doxygen scripts ([#678](https://github.com/coal-library/coal/pull/678) [#699](https://github.com/coal-library/coal/pull/699))
 - Correctly calculate AABB for pruned octrees ([#741](https://github.com/coal-library/coal/pull/741))
 - Fix contact counting in octree collision detection with ShapeShapeCollide ([#746](https://github.com/coal-library/coal/pull/746))

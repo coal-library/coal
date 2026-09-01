@@ -40,6 +40,8 @@
 
 /// @cond INTERNAL
 
+#include <algorithm>
+
 #include "coal/collision_data.h"
 #include "coal/collision_utility.h"
 #include "coal/narrowphase/narrowphase.h"
@@ -231,14 +233,16 @@ std::size_t ShapeShapeCollide(const CollisionGeometry* o1,
       const CollisionGeometry* o2, const Transform3s& tf2,                     \
       const GJKSolver* nsolver, const DistanceRequest& request,                \
       DistanceResult& result) {                                                \
-    result.o1 = o1;                                                            \
-    result.o2 = o2;                                                            \
-    result.b1 = DistanceResult::NONE;                                          \
-    result.b2 = DistanceResult::NONE;                                          \
-    result.min_distance = internal::ShapeShapeDistance<T1, T2>(                \
-        o1, tf1, o2, tf2, nsolver, request.enable_signed_distance,             \
-        result.nearest_points[0], result.nearest_points[1], result.normal);    \
-    return result.min_distance;                                                \
+    if (request.isSatisfied(result)) return result.min_distance;               \
+    Vec3s p1, p2, normal;                                                      \
+    Scalar distance = internal::ShapeShapeDistance<T1, T2>(                    \
+        o1, tf1, o2, tf2, nsolver, request.enable_signed_distance, p1, p2,     \
+        normal);                                                               \
+    if (!request.enable_signed_distance)                                       \
+      distance = (std::max)(distance, Scalar(0));                              \
+    result.update(distance, o1, o2, DistanceResult::NONE,                      \
+                  DistanceResult::NONE, p1, p2, normal);                       \
+    return distance;                                                           \
   }                                                                            \
   template <>                                                                  \
   inline COAL_DLLAPI Scalar ShapeShapeDistance<T2, T1>(                        \
@@ -246,14 +250,16 @@ std::size_t ShapeShapeCollide(const CollisionGeometry* o1,
       const CollisionGeometry* o2, const Transform3s& tf2,                     \
       const GJKSolver* nsolver, const DistanceRequest& request,                \
       DistanceResult& result) {                                                \
-    result.o1 = o1;                                                            \
-    result.o2 = o2;                                                            \
-    result.b1 = DistanceResult::NONE;                                          \
-    result.b2 = DistanceResult::NONE;                                          \
-    result.min_distance = internal::ShapeShapeDistance<T2, T1>(                \
-        o1, tf1, o2, tf2, nsolver, request.enable_signed_distance,             \
-        result.nearest_points[0], result.nearest_points[1], result.normal);    \
-    return result.min_distance;                                                \
+    if (request.isSatisfied(result)) return result.min_distance;               \
+    Vec3s p1, p2, normal;                                                      \
+    Scalar distance = internal::ShapeShapeDistance<T2, T1>(                    \
+        o1, tf1, o2, tf2, nsolver, request.enable_signed_distance, p1, p2,     \
+        normal);                                                               \
+    if (!request.enable_signed_distance)                                       \
+      distance = (std::max)(distance, Scalar(0));                              \
+    result.update(distance, o1, o2, DistanceResult::NONE,                      \
+                  DistanceResult::NONE, p1, p2, normal);                       \
+    return distance;                                                           \
   }
 
 #define SHAPE_SELF_DISTANCE_SPECIALIZATION(T)                                  \
@@ -269,14 +275,16 @@ std::size_t ShapeShapeCollide(const CollisionGeometry* o1,
       const CollisionGeometry* o2, const Transform3s& tf2,                     \
       const GJKSolver* nsolver, const DistanceRequest& request,                \
       DistanceResult& result) {                                                \
-    result.o1 = o1;                                                            \
-    result.o2 = o2;                                                            \
-    result.b1 = DistanceResult::NONE;                                          \
-    result.b2 = DistanceResult::NONE;                                          \
-    result.min_distance = internal::ShapeShapeDistance<T, T>(                  \
-        o1, tf1, o2, tf2, nsolver, request.enable_signed_distance,             \
-        result.nearest_points[0], result.nearest_points[1], result.normal);    \
-    return result.min_distance;                                                \
+    if (request.isSatisfied(result)) return result.min_distance;               \
+    Vec3s p1, p2, normal;                                                      \
+    Scalar distance = internal::ShapeShapeDistance<T, T>(                      \
+        o1, tf1, o2, tf2, nsolver, request.enable_signed_distance, p1, p2,     \
+        normal);                                                               \
+    if (!request.enable_signed_distance)                                       \
+      distance = (std::max)(distance, Scalar(0));                              \
+    result.update(distance, o1, o2, DistanceResult::NONE,                      \
+                  DistanceResult::NONE, p1, p2, normal);                       \
+    return distance;                                                           \
   }
 
 SHAPE_SHAPE_DISTANCE_SPECIALIZATION(Box, Halfspace)
