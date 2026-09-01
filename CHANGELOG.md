@@ -72,6 +72,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Python 3.10 is the minimal supported Python version
 - Nix: switch to flakoboros ([#852](https://github.com/coal-library/coal/pull/852))
 - Allow to use Python variant in pixi build ([#872](https://github.com/coal-library/coal/pull/872))
+- Close the unbalanced diagnostic push in `narrowphase.h`, which disabled warnings for the rest of every downstream translation unit ([#890](https://github.com/coal-library/coal/pull/890))
 
 ## [3.0.4] - 2026-06-29
 
