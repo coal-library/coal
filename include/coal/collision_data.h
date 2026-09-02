@@ -66,13 +66,15 @@ struct COAL_DLLAPI Contact {
   /// @brief contact primitive in object 1
   /// if object 1 is mesh or point cloud, it is the triangle or point id
   /// if object 1 is geometry shape, it is NONE (-1),
-  /// if object 1 is octree, it is the id of the cell
+  /// if object 1 is octree, it is a node handle, see
+  /// @ref coal::octreeNodeHandle
   int b1;
 
   /// @brief contact primitive in object 2
   /// if object 2 is mesh or point cloud, it is the triangle or point id
   /// if object 2 is geometry shape, it is NONE (-1),
-  /// if object 2 is octree, it is the id of the cell
+  /// if object 2 is octree, it is a node handle, see
+  /// @ref coal::octreeNodeHandle
   int b2;
 
   /// @brief contact normal, pointing from o1 to o2.
@@ -1509,13 +1511,15 @@ struct COAL_DLLAPI DistanceResult : QueryResult {
   /// @brief information about the nearest point in object 1
   /// if object 1 is mesh or point cloud, it is the triangle or point id
   /// if object 1 is geometry shape, it is NONE (-1),
-  /// if object 1 is octree, it is the id of the cell
+  /// if object 1 is octree, it is a node handle, see
+  /// @ref coal::octreeNodeHandle
   int b1;
 
   /// @brief information about the nearest point in object 2
   /// if object 2 is mesh or point cloud, it is the triangle or point id
   /// if object 2 is geometry shape, it is NONE (-1),
-  /// if object 2 is octree, it is the id of the cell
+  /// if object 2 is octree, it is a node handle, see
+  /// @ref coal::octreeNodeHandle
   int b2;
 
   /// @brief invalid contact primitive information
