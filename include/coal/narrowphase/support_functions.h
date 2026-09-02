@@ -63,6 +63,13 @@ namespace details {
 template <int _SupportOptions = SupportOptions::NoSweptSphere>
 Vec3s getSupport(const ShapeBase* shape, const Vec3s& dir, int& hint);
 
+/// @brief Same as getSupport, but reuses caller-provided ShapeSupportData
+/// to avoid per-call allocation of the visited vector for ConvexBase shapes.
+/// Useful for custom shapes that delegate to an inner shape repeatedly.
+template <int _SupportOptions = SupportOptions::NoSweptSphere>
+Vec3s getSupport(const ShapeBase* shape, const Vec3s& dir, int& hint,
+                 ShapeSupportData& support_data);
+
 /// @brief Triangle support function.
 template <int _SupportOptions = SupportOptions::NoSweptSphere>
 void getShapeSupport(const TriangleP* triangle, const Vec3s& dir,
@@ -107,6 +114,13 @@ template <int _SupportOptions = SupportOptions::NoSweptSphere,
           typename IndexType>
 void getShapeSupport(const ConvexBaseTpl<IndexType>* convex, const Vec3s& dir,
                      Vec3s& support, int& hint, ShapeSupportData& /*unused*/);
+
+/// @brief Generic ShapeBase support function.
+/// This overload uses virtual dispatch via ShapeBase::computeShapeSupport(),
+/// allowing custom shapes to participate in GJK/EPA computations.
+template <int _SupportOptions = SupportOptions::NoSweptSphere>
+void getShapeSupport(const ShapeBase* shape, const Vec3s& dir, Vec3s& support,
+                     int& hint, ShapeSupportData& support_data);
 
 /// @brief Cast a `ConvexBase` to a `LargeConvex` to use the log version of
 /// `getShapeSupport`. This is **much** faster than the linear version of
@@ -282,6 +296,15 @@ void getShapeSupportSet(const LargeConvex<IndexType>* convex,
                         SupportSet& support_set, int& hint,
                         ShapeSupportData& support_data,
                         size_t /*unused*/ num_sampled_supports = 6,
+                        Scalar tol = Scalar(1e-3));
+
+/// @brief Generic ShapeBase support set function.
+/// This overload uses virtual dispatch for custom shapes.
+/// The default behavior computes a single support point.
+template <int _SupportOptions = SupportOptions::NoSweptSphere>
+void getShapeSupportSet(const ShapeBase* shape, SupportSet& support_set,
+                        int& hint, ShapeSupportData& support_data,
+                        size_t num_sampled_supports = 6,
                         Scalar tol = Scalar(1e-3));
 
 /// @brief Computes the convex-hull of support_set. For now, this function is
