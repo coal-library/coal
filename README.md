@@ -17,6 +17,22 @@ Due to these major changes, it was decided in 2024 to rename the HPP-FCL project
 
 If you use **Coal** in your projects and research papers, we would appreciate it if you would [cite it](https://raw.githubusercontent.com/coal-library/coal/devel/CITATION.bib).
 
+## Table of contents
+
+- [Coal — An extension of the Flexible Collision Library](#coal--an-extension-of-the-flexible-collision-library)
+   * [New features](#new-features)
+   * [A high-performance library](#a-high-performance-library)
+   * [Open-source projects relying on Coal](#open-source-projects-relying-on-coal)
+   * [Installation](#installation)
+      + [Conda](#conda)
+      + [Docker](#docker)
+   * [C++ example](#c-example)
+   * [Python example](#python-example)
+   * [Contribution](#contribution)
+   * [Core-dev team](#core-dev-team)
+   * [Credits](#credits)
+   * [Acknowledgments](#acknowledgments)
+
 ## New features
 
 Compared to the original [FCL](https://github.com/flexible-collision-library/fcl) library, the main new features are:
@@ -84,10 +100,6 @@ conda install coal -c conda-forge
 ```
 docker run --rm -it ghcr.io/coal-library/coal:devel
 ```
-
-## Build
-
-You can find build instruction [here](./development/build.md).
 
 ## C++ example
 Both the C++ library and the python bindings can be installed as simply as `conda -c conda-forge install coal`.
@@ -231,6 +243,50 @@ if __name__ == "__main__":
     # Before running another collision call, it is important to clear the old one
     col_res.clear()
 ```
+
+## Contribution
+
+If you want to ask a question, report a bug, request a new feature or contribute with a pull request, please follow the [contribution guideline](./development/contributing.md).
+
+## Core-dev team
+
+The currently active core developers of **coal** are:
+
+-   [Justin Carpentier](https://jcarpent.github.io) (Inria): main developer and manager of the project
+-   [Louis Montaut](https://lmontaut.github.io/) (Inria): main developer
+-   [Guilhem Saurel](https://www.laas.fr/fr/annuaire/gsaurel) (LAAS-CNRS): CI/CD, packaging
+-   [Joris Vaillant](https://github.com/jorisv) (Inria): core developer and project manager
+-   [Yann de Mont-Marin](https://ymontmarin.github.io/) (Inria): core developer
+-   [Jeanne Matheron](https://github.com/j-matheron) (Inria): core developer
+
+## Credits
+
+In addition to the core dev team, the following people have also been involved in the development of **coal** and are warmly thanked for their contributions:
+
+-   [Joseph Mirabel](http://jmirabel.github.io/) (LAAS-CNRS, then Eureka Robotics): long-time HPP-FCL maintainer, GJK/EPA, Python bindings, BVH, serialization
+-   [Florent Lamiraux](https://github.com/florent-lamiraux) (LAAS-CNRS): initial HPP-FCL developments, octree support
+-   [Wilson Jallet](https://github.com/ManifoldFR) (Inria): nanobind Python bindings, broadphase functional API
+-   [Lucile Remigy](https://github.com/LucileRemigy) (LAAS-CNRS): octree support, features extension
+-   [Wolfgang Merkt](http://www.wolfgangmerkt.com/) (University of Oxford): ROS integration and support, portability fixes
+-   [Gabriele Buondonno](https://github.com/gabrielebndn) (LAAS-CNRS): shapes inertia, Python bindings, bug fixes
+-   [Lucas Haubert](https://github.com/Lucas-Haubert) (ENS Paris-Saclay): nanobind Python bindings, octree bindings
+-   [Roelof Oomen](https://github.com/rjoomen): bug fixes
+-   [Antoine Hoarau](https://github.com/ahoarau): Windows support, ROS CI
+-   Steve Tonneau (LAAS-CNRS): collision requests and results, bug fixes
+-   Florian Valenza (Astek): assimp mesh loader support, features extension
+-   [Robin Strudel](https://github.com/rstrudel) (Inria): capsule distance computation, bug fixes
+-   Thierry Moisan: Python 3.13 support, Python bindings
+-   [Javier V. Gómez](https://github.com/jvgomez) (Rapyuta Robotics): OctoMap support and CI
+-   [Andreas Orthey](https://github.com/aorthey): bug fixes
+-   [xndcn](https://github.com/xndcn): octree collision bug fixes
+-   zyi: Python bindings bug fixes
+-   [Chris Lalancette](https://github.com/clalancette): ROS packaging
+-   [Stéphane Caron](https://github.com/stephane-caron): build fixes
+-   [Lars Berscheid](https://github.com/pantor): code cleanups
+-   Akseppal: bug fixes
+-   [Victor Engmark](https://github.com/l0b0): maintenance fixes
+
+If you have participated in the development of **coal**, please add your name and contribution to this list.
 
 ## Acknowledgments
 
