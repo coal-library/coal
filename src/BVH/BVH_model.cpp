@@ -882,13 +882,12 @@ int BVHModel<BV>::recursiveBuildTree(int bv_id, unsigned int first_primitive,
 
     unsigned int c1 = 0;
     const std::vector<Vec3s>& vertices_ = *vertices;
-    const std::vector<Triangle32>& tri_indices_ = *tri_indices;
     for (unsigned int i = 0; i < num_primitives; ++i) {
       Vec3s p;
       if (type == BVH_MODEL_POINTCLOUD)
         p = vertices_[cur_primitive_indices[i]];
       else if (type == BVH_MODEL_TRIANGLES) {
-        const Triangle32& t = tri_indices_[cur_primitive_indices[i]];
+        const Triangle32& t = (*tri_indices)[cur_primitive_indices[i]];
         const Vec3s& p1 = vertices_[t[0]];
         const Vec3s& p2 = vertices_[t[1]];
         const Vec3s& p3 = vertices_[t[2]];
