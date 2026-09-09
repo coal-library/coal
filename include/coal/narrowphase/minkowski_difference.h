@@ -179,6 +179,10 @@ struct COAL_DLLAPI MinkowskiDiff {
   }
 };
 
+/// @brief Runtime query for the NeedNesterovNormalizeHeuristic shape trait.
+/// Uses shape_traits for built-in shapes, virtual dispatch for GEOM_CUSTOM.
+COAL_DLLAPI bool getNormalizeSupportDirection(const ShapeBase* shape);
+
 }  // namespace details
 
 }  // namespace coal
