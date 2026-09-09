@@ -49,6 +49,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - If the `o1/o2` pointers are different, we check whether or not the underlying geometries are the same. This is typically important in the context of serialization.
   - Fix using NaN to initialize collision data (`Contact`, `CollisionResult`, `DistanceResult`). This prevents the absurd `Contact contact; contact == contact; // false` problem.
   - Fix NaNs coming from GJK/EPA when the algorithms (correctly) early stopped. NaNs indicate failure. In the case that GJK/EPA early stopped but ran fine, we set non-computed data to inf instead of NaN.
+- Octree contacts no longer report an undefined-behaviour `b1`/`b2`. The value was computed as `node - tree->getRoot()`, a pointer subtraction between two unrelated heap allocations, so it was undefined behaviour and could be an arbitrary signed offset. Octree contacts and distance results now report `coal::octreeNodeHandle`, a well-defined non-negative handle with the same meaning the field has carried since the node pointer was folded into `Contact`: unique per node and stable while the node lives, but not a cell index ([#886](https://github.com/coal-library/coal/pull/886))
 
 ### Changed
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))
