@@ -775,9 +775,10 @@ struct COAL_DLLAPI ContactPatch {
   /// pair i.e. from shape1 to shape2 when calling `collide(shape1, shape2)`.
   /// The PatchDirection enum allows to identify if the patch points from
   /// shape 1 to shape 2 (Default type) or from shape 2 to shape 1 (Inverted
-  /// type). The Inverted type should only be used for internal Coal
-  /// computations (it allows to properly define two separate contact patches in
-  /// the same frame).
+  /// type). The Inverted type is used for internal Coal computations (it allows
+  /// to properly define two separate contact patches in the same frame) and by
+  /// `ContactPatchResult::swapObjects`, which mirrors the frame of a patch and
+  /// flips this field so that the patch keeps pointing from shape1 to shape2.
   enum PatchDirection { DEFAULT = 0, INVERTED = 1 };
 
   /// @brief Direction of this contact patch.
@@ -1343,6 +1344,9 @@ struct COAL_DLLAPI ContactPatchResult {
 
   /// @brief Repositions the ContactPatch when they get inverted during their
   /// construction.
+  /// @note This only changes the frame each patch is expressed in. The world
+  /// position of the patch points and the normal returned by
+  /// `ContactPatch::getNormal` are left unchanged.
   void swapObjects() {
     // Create new transform: it's the reflection of `tf` along the z-axis.
     // This corresponds to doing a PI rotation along the y-axis, i.e. the x-axis
@@ -1352,9 +1356,15 @@ struct COAL_DLLAPI ContactPatchResult {
       patch.tf.rotation().col(0) *= -1.0;
       patch.tf.rotation().col(2) *= -1.0;
 
-      for (size_t j = 0; j < patch.size(); ++j) {
-        patch.point(i)(0) *= Scalar(-1);  // only invert the x-axis
+      for (Vec2s& point : patch.points()) {
+        point(0) *= Scalar(-1);  // only invert the x-axis
       }
+
+      // Flipping the frame's z-axis flips `getNormal`; compensate here.
+      patch.direction =
+          (patch.direction == ContactPatch::PatchDirection::DEFAULT)
+              ? ContactPatch::PatchDirection::INVERTED
+              : ContactPatch::PatchDirection::DEFAULT;
     }
   }
 
