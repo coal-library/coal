@@ -3,6 +3,7 @@
 #include "coal/data_types.h"
 #include "coal/math/transform.h"
 #include "coal/serialization/transform.h"
+#include "coal/serialization/triangle.h"
 
 #include "serializable.hh"
 #include "pickle.hh"
@@ -37,7 +38,8 @@ void exposeTriangle(nb::module_& m, const std::string& classname) {
            })
       .def("set", &TriangleType::set)
       .def_static("size", &TriangleType::size)
-      .def(nb::self == nb::self);
+      .def(nb::self == nb::self)
+      .def(python::v2::PickleVisitor<TriangleType>());
 }
 
 void exposeMaths(nb::module_& m) {
@@ -94,11 +96,14 @@ void exposeMaths(nb::module_& m) {
 
   exposeTriangle<Triangle32::IndexType>(m, "Triangle32");
   m.attr("Triangle") = m.attr("Triangle32");
-  exposeTriangle<Triangle16::IndexType>(m, "Triangle16");
 
-  nb::bind_vector<std::vector<Triangle32>>(m, "StdVec_Triangle32");
+  nb::bind_vector<std::vector<Triangle32>>(m, "StdVec_Triangle32")
+      .def(python::v2::PickleVisitor<std::vector<Triangle32>>());
   m.attr("StdVec_Triangle") = m.attr("StdVec_Triangle32");
-  nb::bind_vector<std::vector<Triangle16>>(m, "StdVec_Triangle16");
+
+  exposeTriangle<Triangle16::IndexType>(m, "Triangle16");
+  nb::bind_vector<std::vector<Triangle16>>(m, "StdVec_Triangle16")
+      .def(python::v2::PickleVisitor<std::vector<Triangle16>>());
 
   nb::bind_vector<std::vector<Vec3s>>(m, "StdVec_Vec3s")
       .def(python::v2::PickleVisitor<std::vector<Vec3s>>());

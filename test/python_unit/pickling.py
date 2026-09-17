@@ -57,6 +57,21 @@ class TestGeometryPickling(TestCase):
         half_space = coal.Halfspace(np.array([0.0, 0.0, 1.0]), 2.0)
         self.pickling(half_space)
 
+    def test_std_vectors(self):
+        vec = coal.StdVec_Vec3s()
+        vec.append(np.array((0.0, 0.0, 0.0)))
+        vec.append(np.array((1.0, 0.0, 0.0)))
+        self.pickling(vec)
+
+        tri = coal.StdVec_Triangle()
+        tri.append(coal.Triangle(0, 1, 2))
+        tri.append(coal.Triangle(0, 1, 3))
+        self.pickling(tri)
+
+        tri16 = coal.StdVec_Triangle16()
+        tri16.append(coal.Triangle16(0, 1, 2))
+        self.pickling(tri16)
+
 
 if __name__ == "__main__":
     unittest.main()
