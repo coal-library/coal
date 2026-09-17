@@ -100,5 +100,6 @@ void exposeMaths(nb::module_& m) {
   m.attr("StdVec_Triangle") = m.attr("StdVec_Triangle32");
   nb::bind_vector<std::vector<Triangle16>>(m, "StdVec_Triangle16");
 
-  nb::bind_vector<std::vector<Vec3s>>(m, "StdVec_Vec3s");
+  nb::bind_vector<std::vector<Vec3s>>(m, "StdVec_Vec3s")
+      .def(python::v2::PickleVisitor<std::vector<Vec3s>>());
 }
