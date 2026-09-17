@@ -41,6 +41,7 @@
 #include "coal.hh"
 #include "deprecation.hh"
 #include "printable.hh"
+#include "pickle.hh"
 #include "serializable.hh"
 
 #ifdef COAL_HAS_DOXYGEN_AUTODOC
@@ -82,6 +83,8 @@ void exposeContactPatchAPI() {
         .DEF_CLASS_FUNC(ContactPatch, getPointShape2)
         .DEF_CLASS_FUNC(ContactPatch, clear)
         .DEF_CLASS_FUNC(ContactPatch, isSame)
+        .def(self == self)
+        .def_pickle(PickleObject<ContactPatch>())
         .def(SerializableVisitor<ContactPatch>())
         .def(PrintableVisitor<ContactPatch>());
   }
@@ -89,7 +92,9 @@ void exposeContactPatchAPI() {
   if (!eigenpy::register_symbolic_link_to_registered_type<
           std::vector<ContactPatch>>()) {
     class_<std::vector<ContactPatch>>("StdVec_ContactPatch")
-        .def(vector_indexing_suite<std::vector<ContactPatch>>());
+        .def(vector_indexing_suite<std::vector<ContactPatch>>())
+        .def(self == self)
+        .def_pickle(PickleObject<std::vector<ContactPatch>>());
   }
 
   if (!eigenpy::register_symbolic_link_to_registered_type<
@@ -107,6 +112,8 @@ void exposeContactPatchAPI() {
         .DEF_CLASS_FUNC(ContactPatchRequest, setNumSamplesCurvedShapes)
         .DEF_CLASS_FUNC(ContactPatchRequest, getPatchTolerance)
         .DEF_CLASS_FUNC(ContactPatchRequest, setPatchTolerance)
+        .def(self == self)
+        .def_pickle(PickleObject<ContactPatchRequest>())
         .def(SerializableVisitor<ContactPatchRequest>())
         .def(PrintableVisitor<ContactPatchRequest>());
   }
@@ -114,7 +121,9 @@ void exposeContactPatchAPI() {
   if (!eigenpy::register_symbolic_link_to_registered_type<
           std::vector<ContactPatchRequest>>()) {
     class_<std::vector<ContactPatchRequest>>("StdVec_ContactPatchRequest")
-        .def(vector_indexing_suite<std::vector<ContactPatchRequest>>());
+        .def(vector_indexing_suite<std::vector<ContactPatchRequest>>())
+        .def(self == self)
+        .def_pickle(PickleObject<std::vector<ContactPatchRequest>>());
   }
 
   if (!eigenpy::register_symbolic_link_to_registered_type<
@@ -131,6 +140,8 @@ void exposeContactPatchAPI() {
         .DEF_CLASS_FUNC(ContactPatchResult, clear)
         .DEF_CLASS_FUNC(ContactPatchResult, set)
         .DEF_CLASS_FUNC(ContactPatchResult, check)
+        .def(self == self)
+        .def_pickle(PickleObject<ContactPatchResult>())
         .def(SerializableVisitor<ContactPatchResult>())
         .def(PrintableVisitor<ContactPatchResult>());
   }
@@ -138,7 +149,9 @@ void exposeContactPatchAPI() {
   if (!eigenpy::register_symbolic_link_to_registered_type<
           std::vector<ContactPatchResult>>()) {
     class_<std::vector<ContactPatchResult>>("StdVec_ContactPatchResult")
-        .def(vector_indexing_suite<std::vector<ContactPatchResult>>());
+        .def(vector_indexing_suite<std::vector<ContactPatchResult>>())
+        .def(self == self)
+        .def_pickle(PickleObject<std::vector<ContactPatchResult>>());
   }
 
   doxygen::def(
