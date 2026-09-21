@@ -285,6 +285,7 @@ In addition to the core dev team, the following people have also been involved i
 -   [Lars Berscheid](https://github.com/pantor): code cleanups
 -   Akseppal: bug fixes
 -   [Victor Engmark](https://github.com/l0b0): maintenance fixes
+-   [Sean Curtis](https://github.com/SeanCurtis-TRI) (Toyota Research Institute): code cleanups
 
 If you have participated in the development of **coal**, please add your name and contribution to this list.
 
