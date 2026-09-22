@@ -52,35 +52,35 @@ jobs:
             cxx_options: '-mavx2'
 
         include:
-          - os: windows-latest
+          - os: windows-2022
             environment: all
             cxx_options: ''
             build_type: Release
-          - os: windows-latest
+          - os: windows-2022
             environment: all-boost-python
             cxx_options: ''
             build_type: Release
-          - os: windows-latest
+          - os: windows-2022
             environment: all-clang-cl
             cxx_options: ''
             build_type: Release
-          - os: windows-latest
+          - os: windows-2022
             environment: default
             cxx_options: ''
             build_type: Debug
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: recursive
 
-    - uses: actions/cache@v5
+    - uses: actions/cache@v6
       with:
         path: .ccache
         key: ccache-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.cxx_options }}-${{ matrix.environment }}-${{ github.sha }}
         restore-keys: ccache-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.cxx_options }}-${{ matrix.environment }}-
 
-    - uses: prefix-dev/setup-pixi@v0.9.5
+    - uses: prefix-dev/setup-pixi@v0.10.2
       with:
         cache: true
         environments: ${{ matrix.environment }}
@@ -121,21 +121,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-15-intel, windows-latest]
+        os: [ubuntu-latest, macos-latest, macos-15-intel, windows-2022]
         environment: [all, all-boost-python]
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: recursive
 
-    - uses: actions/cache@v5
+    - uses: actions/cache@v6
       with:
         path: .ccache
         key: ccache-python-standalone-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.environment }}-${{ github.sha }}
         restore-keys: ccache-python-standalone-macos-linux-windows-pixi-${{ matrix.os }}-${{ matrix.environment }}-
 
-    - uses: prefix-dev/setup-pixi@v0.9.5
+    - uses: prefix-dev/setup-pixi@v0.10.2
       with:
         cache: true
         environments: ${{ matrix.environment }}
@@ -179,14 +179,14 @@ jobs:
   #   strategy:
   #     fail-fast: false
   #     matrix:
-  #       os: [ubuntu-latest, macos-latest, macos-15-intel, windows-latest]
+  #       os: [ubuntu-latest, macos-latest, macos-15-intel, windows-2022]
 
   #   steps:
-  #   - uses: actions/checkout@v6
+  #   - uses: actions/checkout@v7
   #     with:
   #       submodules: recursive
 
-  #   - uses: prefix-dev/setup-pixi@v0.9.5
+  #   - uses: prefix-dev/setup-pixi@v0.10.2
   #     env:
   #       CMAKE_BUILD_PARALLEL_LEVEL: 2
   #     with:

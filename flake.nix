@@ -4,7 +4,7 @@
   inputs = {
     gepetto.url = "github:gepetto/nix";
 
-    # eigenpy v3.12.0 does not handle eigen v5, so we need devel for now
+    # use eigenpy build against eigen 5 from cache
     eigenpy.url = "github:stack-of-tasks/eigenpy";
     eigenpy.inputs.gepetto.follows = "gepetto";
   };

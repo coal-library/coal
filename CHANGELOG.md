@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- nanobind : add fixed to allow pinocchio's binding portage to nanobind ([#893] (https://github.com/coal-library/coal/pull/893))
 - broadphase: add functional API for collision and distance callbacks ([#724](https://github.com/coal-library/coal/pull/724))
 - Added a second set of Python bindings based on nanobind ([#659](https://github.com/coal-library/coal/pull/659))
 - ROS: jrl_cmakemodules dependency + kilted CI ([#769](https://github.com/coal-library/coal/pull/769))
@@ -50,6 +51,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - If the `o1/o2` pointers are different, we check whether or not the underlying geometries are the same. This is typically important in the context of serialization.
   - Fix using NaN to initialize collision data (`Contact`, `CollisionResult`, `DistanceResult`). This prevents the absurd `Contact contact; contact == contact; // false` problem.
   - Fix NaNs coming from GJK/EPA when the algorithms (correctly) early stopped. NaNs indicate failure. In the case that GJK/EPA early stopped but ran fine, we set non-computed data to inf instead of NaN.
+- Fix `ContactPatchResult::swapObjects`: flip `ContactPatch::direction` along with the patch frame, and reflect every point of a patch instead of one of them, so `getNormal` reports the contact normal for shape-first queries against meshes and height fields ([#884](https://github.com/coal-library/coal/pull/884))
 
 ### Changed
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))
@@ -72,7 +74,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Project is now tested with Python 3.10 and 3.14
   - Python 3.10 is the minimal supported Python version
 - Nix: switch to flakoboros ([#852](https://github.com/coal-library/coal/pull/852))
+- Allow to use Python variant in pixi build ([#872](https://github.com/coal-library/coal/pull/872))
+- Close the unbalanced diagnostic push in `narrowphase.h`, which disabled warnings for the rest of every downstream translation unit ([#890](https://github.com/coal-library/coal/pull/890))
 - The triangle-triangle collision queries are now specialized and don't use the GJK+EPA solver ([#858](https://github.com/coal-library/coal/pull/858)).
+
+## [3.0.4] - 2026-06-29
+
+- `coalConfig.cmake` declare the right Boost component to search ([#869](https://github.com/coal-library/coal/pull/869))
 
 ## [3.0.3] - 2026-05-05
 
@@ -630,7 +638,8 @@ Now Eigen is at the heart of linear algebra computations.
 First release
 
 
-[Unreleased]: https://github.com/coal-library/coal/compare/v3.0.3...HEAD
+[Unreleased]: https://github.com/coal-library/coal/compare/v3.0.4...HEAD
+[3.0.4]: https://github.com/coal-library/coal/compare/v3.0.3...v3.0.4
 [3.0.3]: https://github.com/coal-library/coal/compare/v3.0.2...v3.0.3
 [3.0.2]: https://github.com/coal-library/coal/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/coal-library/coal/compare/v3.0.0...v3.0.1

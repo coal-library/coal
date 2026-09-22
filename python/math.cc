@@ -38,6 +38,7 @@
 #include "coal/fwd.hh"
 #include "coal/math/transform.h"
 #include "coal/serialization/transform.h"
+#include "coal/serialization/triangle.h"
 
 #include "coal.hh"
 #include "pickle.hh"
@@ -180,17 +181,23 @@ void exposeMaths() {
   if (!eigenpy::register_symbolic_link_to_registered_type<
           std::vector<Vec3s> >()) {
     class_<std::vector<Vec3s> >("StdVec_Vec3s")
-        .def(vector_indexing_suite<std::vector<Vec3s> >());
+        .def(vector_indexing_suite<std::vector<Vec3s> >())
+        .def(self == self)
+        .def_pickle(PickleObject<std::vector<Vec3s> >());
   }
   if (!eigenpy::register_symbolic_link_to_registered_type<
           std::vector<Triangle32> >()) {
     class_<std::vector<Triangle32> >("StdVec_Triangle32")
-        .def(vector_indexing_suite<std::vector<Triangle32> >());
+        .def(vector_indexing_suite<std::vector<Triangle32> >())
+        .def(self == self)
+        .def_pickle(PickleObject<std::vector<Triangle32> >());
     bp::scope().attr("StdVec_Triangle") = bp::scope().attr("StdVec_Triangle32");
   }
   if (!eigenpy::register_symbolic_link_to_registered_type<
           std::vector<Triangle16> >()) {
     class_<std::vector<Triangle16> >("StdVec_Triangle16")
-        .def(vector_indexing_suite<std::vector<Triangle16> >());
+        .def(vector_indexing_suite<std::vector<Triangle16> >())
+        .def(self == self)
+        .def_pickle(PickleObject<std::vector<Triangle16> >());
   }
 }

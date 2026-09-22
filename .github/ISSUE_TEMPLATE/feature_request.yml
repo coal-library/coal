@@ -1,0 +1,49 @@
+name: 💡 Feature request
+description: Suggest an idea to improve coal
+title: "[Feature]: feature title"
+labels: ["feature request"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Follow the [contributing guidelines](../../development/contributing.md).
+
+        If you have a question about how to use coal, open a [discussion](https://github.com/coal-library/coal/discussions).
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 🚀 Feature
+      description: A clear and concise description of the feature proposal.
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Outline the motivation for the proposal. Is the request related to a problem? For example, "I'm always frustrated when [...]". If it
+        is related to another GitHub issue, link it here.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: A clear and concise description of the alternative solutions or features you considered.
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context or screenshots about the feature request here.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      options:
+        - label: I have checked that there is no similar [issue](https://github.com/coal-library/coal/issues)/[discussion](https://github.com/coal-library/coal/discussions)
+            in the repo
+          required: true
+        - label: I have used an AI assistant

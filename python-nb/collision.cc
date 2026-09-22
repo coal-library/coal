@@ -8,6 +8,7 @@ COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
 COAL_COMPILER_DIAGNOSTIC_POP
 
 #include "serializable.hh"
+#include "pickle.hh"
 
 #include "fwd.h"
 #include <nanobind/operators.h>
@@ -66,9 +67,12 @@ void exposeCollisionAPI(nb::module_& m) {
       .DEF_RW_CLASS_ATTRIB(CollisionRequest, security_margin)
       .DEF_RW_CLASS_ATTRIB(CollisionRequest, break_distance)
       .DEF_RW_CLASS_ATTRIB(CollisionRequest, distance_upper_bound)
+      .def(nb::self == nb::self)
+      .def(python::v2::PickleVisitor<CollisionRequest>())
       .def(python::v2::SerializableVisitor<CollisionRequest>());
 
-  nb::bind_vector<std::vector<CollisionRequest>>(m, "StdVec_CollisionRequest");
+  nb::bind_vector<std::vector<CollisionRequest>>(m, "StdVec_CollisionRequest")
+      .def(python::v2::PickleVisitor<std::vector<CollisionRequest>>());
   COAL_COMPILER_DIAGNOSTIC_POP
 
   nb::class_<Contact>(m, "Contact")
@@ -99,9 +103,11 @@ void exposeCollisionAPI(nb::module_& m) {
       .DEF_RW_CLASS_ATTRIB(Contact, pos)
       .DEF_RW_CLASS_ATTRIB(Contact, penetration_depth)
       .def(nb::self == nb::self)
-      .def(nb::self != nb::self);
+      .def(nb::self != nb::self)
+      .def(python::v2::PickleVisitor<Contact>());
 
-  nb::bind_vector<std::vector<Contact>>(m, "StdVec_Contact");
+  nb::bind_vector<std::vector<Contact>>(m, "StdVec_Contact")
+      .def(python::v2::PickleVisitor<std::vector<Contact>>());
 
   nb::class_<QueryResult>(m, "QueryResult")
       .DEF_RW_CLASS_ATTRIB(QueryResult, cached_gjk_guess)
@@ -126,9 +132,12 @@ void exposeCollisionAPI(nb::module_& m) {
           },
           nb::rv_policy::reference_internal)
       .DEF_RW_CLASS_ATTRIB(CollisionResult, distance_lower_bound)
+      .def(nb::self == nb::self)
+      .def(python::v2::PickleVisitor<CollisionResult>())
       .def(python::v2::SerializableVisitor<CollisionResult>());
 
-  nb::bind_vector<std::vector<CollisionResult>>(m, "StdVec_CollisionResult");
+  nb::bind_vector<std::vector<CollisionResult>>(m, "StdVec_CollisionResult")
+      .def(python::v2::PickleVisitor<std::vector<CollisionResult>>());
 
   m.def(
       "collide",

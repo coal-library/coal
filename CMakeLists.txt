@@ -183,18 +183,18 @@ endif(COAL_BUILD_WITH_TRACY)
 # Required dependencies
 SET_BOOST_DEFAULT_OPTIONS()
 EXPORT_BOOST_DEFAULT_OPTIONS()
-ADD_PROJECT_DEPENDENCY(Boost REQUIRED serialization filesystem)
+ADD_PROJECT_DEPENDENCY(
+  Boost
+  REQUIRED
+  COMPONENTS
+  serialization
+  filesystem
+)
 if(COAL_ENABLE_LOGGING)
-  ADD_PROJECT_DEPENDENCY(Boost REQUIRED log)
+  ADD_PROJECT_DEPENDENCY(Boost REQUIRED COMPONENTS log)
 endif()
 
-if(Boost_VERSION_STRING VERSION_LESS 1.81)
-  # Default C++ version should be C++11
-  CHECK_MINIMAL_CXX_STANDARD(11 ENFORCE)
-else()
-  # Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)
-  CHECK_MINIMAL_CXX_STANDARD(14 ENFORCE)
-endif()
+CHECK_MINIMAL_CXX_STANDARD(17 ENFORCE)
 
 # Optional dependencies
 ADD_PROJECT_DEPENDENCY(octomap 1.8.0 PKG_CONFIG_REQUIRES "octomap >= 1.8")

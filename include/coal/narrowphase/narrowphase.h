@@ -135,6 +135,7 @@ struct COAL_DLLAPI GJKSolver {
         epa(0, EPA_DEFAULT_TOLERANCE),
         epa_max_iterations(EPA_DEFAULT_MAX_ITERATIONS),
         epa_tolerance(EPA_DEFAULT_TOLERANCE) {}
+  COAL_COMPILER_DIAGNOSTIC_POP
 
   /// @brief Constructor from a DistanceRequest
   ///
