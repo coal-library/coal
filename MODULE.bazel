@@ -1,0 +1,37 @@
+module(
+    name = "coal",
+    version = "3.0.4",
+    compatibility_level = 1,
+)
+
+bazel_dep(name = "rules_cc", version = "0.2.25")
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "bazel_skylib", version = "1.9.2")
+
+# Linear algebra.
+bazel_dep(name = "eigen", version = "3.4.1.bcr.1")
+
+# Mesh loading (required).
+bazel_dep(name = "assimp", version = "6.0.5")
+
+# Boost pieces actually used by the core library (see coal_HAS_* flags
+# below for the ones that are only needed when an optional feature is
+# turned on).
+bazel_dep(name = "boost.serialization", version = "1.90.0.bcr.1")
+bazel_dep(name = "boost.filesystem", version = "1.90.0.bcr.1")
+bazel_dep(name = "boost.asio", version = "1.90.0.bcr.1")
+bazel_dep(name = "boost.iostreams", version = "1.90.0.bcr.2")
+bazel_dep(name = "boost.math", version = "1.90.0.bcr.1")
+bazel_dep(name = "boost.core", version = "1.90.0.bcr.1")
+bazel_dep(name = "boost.assert", version = "1.90.0.bcr.1")
+
+# Optional dependencies. These are only pulled in (fetched) when the
+# corresponding coal_HAS_*/COAL_* bool_flag is flipped on; by default
+# every one of these features is OFF, mirroring the upstream CMake
+# defaults. Tracy and eigenpy (python bindings) are intentionally not
+# ported: see the COAL_BUILD_WITH_TRACY flag in BUILD.bazel, which is
+# kept for interface parity with the CMake build but is not wired to
+# an actual dependency.
+bazel_dep(name = "boost.log", version = "1.90.0.bcr.1")
+bazel_dep(name = "octomap", version = "1.10.0")
+bazel_dep(name = "qhull", version = "8.0.2.bcr.2")

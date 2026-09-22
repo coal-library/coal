@@ -1,0 +1,342 @@
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
+load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
+
+licenses(["notice"])  # BSD-3-Clause
+
+# ---------------------------------------------------------------------------
+# Build options
+#
+# These mirror the `option()`/`cmake_dependent_option()` declarations in the
+# top-level CMakeLists.txt / src/CMakeLists.txt. All of them default to OFF,
+# matching the upstream CMake defaults (octomap and qhull are opt-in there
+# too: octomap via auto-detection of an installed package, qhull via an
+# explicit option defaulting to FALSE).
+#
+# COAL_BUILD_WITH_TRACY is kept only for interface parity with the CMake
+# build: Tracy is not wired up to any dependency here, so flipping it on
+# will fail to build. eigenpy/python bindings are not ported at all (no
+# flag is exposed for them).
+# ---------------------------------------------------------------------------
+
+bool_flag(
+    name = "COAL_ENABLE_LOGGING",
+    build_setting_default = False,
+)
+
+bool_flag(
+    name = "COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL",
+    build_setting_default = False,
+)
+
+bool_flag(
+    name = "COAL_USE_FLOAT_PRECISION",
+    build_setting_default = False,
+)
+
+bool_flag(
+    name = "COAL_TURN_ASSERT_INTO_EXCEPTION",
+    build_setting_default = False,
+)
+
+bool_flag(
+    name = "COAL_BUILD_WITH_TRACY",
+    build_setting_default = False,
+)
+
+bool_flag(
+    name = "COAL_HAS_QHULL",
+    build_setting_default = False,
+)
+
+bool_flag(
+    name = "COAL_HAS_OCTOMAP",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "logging_enabled",
+    flag_values = {":COAL_ENABLE_LOGGING": "True"},
+)
+
+config_setting(
+    name = "hpp_fcl_compatibility_enabled",
+    flag_values = {":COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL": "True"},
+)
+
+config_setting(
+    name = "float_precision_enabled",
+    flag_values = {":COAL_USE_FLOAT_PRECISION": "True"},
+)
+
+config_setting(
+    name = "assert_into_exception_enabled",
+    flag_values = {":COAL_TURN_ASSERT_INTO_EXCEPTION": "True"},
+)
+
+config_setting(
+    name = "tracy_enabled",
+    flag_values = {":COAL_BUILD_WITH_TRACY": "True"},
+)
+
+config_setting(
+    name = "qhull_enabled",
+    flag_values = {":COAL_HAS_QHULL": "True"},
+)
+
+config_setting(
+    name = "octomap_enabled",
+    flag_values = {":COAL_HAS_OCTOMAP": "True"},
+)
+
+# ---------------------------------------------------------------------------
+# Generated headers
+#
+# These correspond to the config.hh/deprecated.hh/warning.hh headers that
+# jrl-cmakemodules' GENERATE_CONFIGURATION_HEADER()/header.cmake macros
+# produce at configure time (see cmake/{config,deprecated,warning}.hh.cmake
+# and cmake/header.cmake). PACKAGE_CPPNAME for project "coal" is "COAL",
+# HEADER_DIR is "coal", and EXPORT_SYMBOL is "coal_EXPORTS".
+# ---------------------------------------------------------------------------
+
+expand_template(
+    name = "gen_config_hh",
+    out = "include/coal/config.hh",
+    substitutions = {
+        "@LIBRARY_NAME@": "COAL",
+        "@PROJECT_VERSION@": "3.0.4",
+        "@PROJECT_VERSION_MAJOR_CONFIG@": "3",
+        "@PROJECT_VERSION_MINOR_CONFIG@": "0",
+        "@PROJECT_VERSION_PATCH_CONFIG@": "4",
+        "@EXPORT_SYMBOL@": "coal_EXPORTS",
+    },
+    template = "cmake/config.hh.cmake",
+)
+
+expand_template(
+    name = "gen_deprecated_hh",
+    out = "include/coal/deprecated.hh",
+    substitutions = {
+        "@PACKAGE_CPPNAME@": "COAL",
+    },
+    template = "cmake/deprecated.hh.cmake",
+)
+
+expand_template(
+    name = "gen_tracy_hh",
+    out = "include/coal/tracy.hh",
+    substitutions = select({
+        ":tracy_enabled": {
+            "@LIBRARY_NAME@": "COAL",
+            "@DEFINE_TRACY_ENABLE@": "#define COAL_TRACY_ENABLE",
+        },
+        "//conditions:default": {
+            "@LIBRARY_NAME@": "COAL",
+            "@DEFINE_TRACY_ENABLE@": "",
+        },
+    }),
+    template = "cmake/tracy.hh.cmake",
+)
+
+expand_template(
+    name = "gen_warning_hh",
+    out = "include/coal/warning.hh",
+    substitutions = {
+        "@PACKAGE_CPPNAME@": "COAL",
+    },
+    template = "cmake/warning.hh.cmake",
+)
+
+# ---------------------------------------------------------------------------
+# coal core library
+# ---------------------------------------------------------------------------
+
+COAL_PUBLIC_HEADERS = glob(
+    [
+        "include/coal/**/*.h",
+        "include/coal/**/*.hh",
+        "include/coal/**/*.hxx",
+    ],
+    exclude = [
+        "include/coal/third_party/**",
+    ],
+) + [
+    ":gen_config_hh",
+    ":gen_deprecated_hh",
+    ":gen_tracy_hh",
+    ":gen_warning_hh",
+]
+
+HPP_FCL_COMPATIBILITY_HEADERS = glob([
+    "include/hpp/**/*.h",
+    "include/hpp/**/*.hh",
+    "include/hpp/**/*.hxx",
+    "include/hpp/**/*.hpp",
+])
+
+COAL_SOURCES = [
+    "src/collision.cpp",
+    "src/contact_patch.cpp",
+    "src/contact_patch/contact_patch_solver.cpp",
+    "src/contact_patch/contact_patch_simplifier.cpp",
+    "src/contact_patch/polygon_convex_hull.cpp",
+    "src/contact_patch_func_matrix.cpp",
+    "src/distance_func_matrix.cpp",
+    "src/collision_data.cpp",
+    "src/collision_node.cpp",
+    "src/collision_node.h",
+    "src/traits_traversal.h",
+    "src/broadphase/detail/morton-inl.h",
+    "src/BV/OBB.h",
+    "src/collision_object.cpp",
+    "src/BV/RSS.cpp",
+    "src/BV/AABB.cpp",
+    "src/BV/kIOS.cpp",
+    "src/BV/kDOP.cpp",
+    "src/BV/OBBRSS.cpp",
+    "src/BV/OBB.cpp",
+    "src/broadphase/default_broadphase_callbacks.cpp",
+    "src/broadphase/broadphase_dynamic_AABB_tree.cpp",
+    "src/broadphase/broadphase_dynamic_AABB_tree_array.cpp",
+    "src/broadphase/broadphase_bruteforce.cpp",
+    "src/broadphase/broadphase_collision_manager.cpp",
+    "src/broadphase/broadphase_SaP.cpp",
+    "src/broadphase/broadphase_SSaP.cpp",
+    "src/broadphase/broadphase_interval_tree.cpp",
+    "src/broadphase/detail/interval_tree.cpp",
+    "src/broadphase/detail/interval_tree_node.cpp",
+    "src/broadphase/detail/simple_interval.cpp",
+    "src/broadphase/detail/spatial_hash.cpp",
+    "src/broadphase/detail/morton.cpp",
+    "src/narrowphase/gjk.cpp",
+    "src/narrowphase/minkowski_difference.cpp",
+    "src/narrowphase/support_functions.cpp",
+    "src/narrowphase/details.h",
+    "src/shape/geometric_shapes.cpp",
+    "src/shape/geometric_shapes_utility.cpp",
+    "src/distance/box_halfspace.cpp",
+    "src/distance/box_plane.cpp",
+    "src/distance/box_sphere.cpp",
+    "src/distance/capsule_capsule.cpp",
+    "src/distance/capsule_halfspace.cpp",
+    "src/distance/capsule_plane.cpp",
+    "src/distance/cone_halfspace.cpp",
+    "src/distance/cone_plane.cpp",
+    "src/distance/cylinder_halfspace.cpp",
+    "src/distance/cylinder_plane.cpp",
+    "src/distance/sphere_sphere.cpp",
+    "src/distance/sphere_cylinder.cpp",
+    "src/distance/sphere_halfspace.cpp",
+    "src/distance/sphere_plane.cpp",
+    "src/distance/sphere_capsule.cpp",
+    "src/distance/ellipsoid_halfspace.cpp",
+    "src/distance/ellipsoid_plane.cpp",
+    "src/distance/convex_halfspace.cpp",
+    "src/distance/convex_plane.cpp",
+    "src/distance/triangle_halfspace.cpp",
+    "src/distance/triangle_plane.cpp",
+    "src/distance/triangle_triangle.cpp",
+    "src/distance/triangle_sphere.cpp",
+    "src/distance/halfspace_plane.cpp",
+    "src/distance/plane_plane.cpp",
+    "src/distance/halfspace_halfspace.cpp",
+    "src/intersect.cpp",
+    "src/math/transform.cpp",
+    "src/traversal/traversal_recurse.cpp",
+    "src/distance.cpp",
+    "src/BVH/BVH_utility.cpp",
+    "src/BVH/BV_fitter.cpp",
+    "src/BVH/BVH_model.cpp",
+    "src/BVH/BV_splitter.cpp",
+    "src/collision_func_matrix.cpp",
+    "src/collision_utility.cpp",
+    "src/mesh_loader/assimp.cpp",
+    "src/mesh_loader/loader.cpp",
+    "src/hfield.cpp",
+    "src/serialization/serialization.cpp",
+]
+
+cc_library(
+    name = "coal",
+    srcs = COAL_SOURCES + select({
+        ":octomap_enabled": ["src/octree.cpp"],
+        "//conditions:default": [],
+    }),
+    hdrs = COAL_PUBLIC_HEADERS + select({
+        ":hpp_fcl_compatibility_enabled": HPP_FCL_COMPATIBILITY_HEADERS,
+        "//conditions:default": [],
+    }),
+    copts = select({
+        "@platforms//os:windows": ["/bigobj"],
+        "//conditions:default": [],
+    }),
+    # These mirror the CMake build's `target_compile_definitions(coal PUBLIC
+    # ...)` calls: they leak into the public headers (e.g. COAL_USE_FLOAT_PRECISION
+    # selects the `Scalar` typedef in coal/data_types.h), so downstream
+    # consumers of this target must see them too.
+    defines = select({
+        "@platforms//os:windows": ["NOMINMAX"],
+        "//conditions:default": [],
+    }) + select({
+        ":logging_enabled": ["COAL_ENABLE_LOGGING", "BOOST_LOG_DYN_LINK"],
+        "//conditions:default": [],
+    }) + select({
+        ":float_precision_enabled": ["COAL_USE_FLOAT_PRECISION"],
+        "//conditions:default": [],
+    }) + select({
+        ":assert_into_exception_enabled": ["COAL_TURN_ASSERT_INTO_EXCEPTION"],
+        "//conditions:default": [],
+    }) + select({
+        ":hpp_fcl_compatibility_enabled": ["COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL"],
+        "//conditions:default": [],
+    }) + select({
+        ":octomap_enabled": [
+            "COAL_HAS_OCTOMAP",
+            "COAL_HAVE_OCTOMAP",
+        ],
+        "//conditions:default": [],
+    }),
+    includes = ["include"],
+    linkstatic = True,
+    # COAL_HAS_QHULL only gates a private .cpp implementation detail (see
+    # src/shape/geometric_shapes.cpp), so it stays private, matching the
+    # CMake build's `target_compile_definitions(coal PRIVATE COAL_HAS_QHULL)`.
+    local_defines = ["coal_EXPORTS"] + select({
+        ":qhull_enabled": ["COAL_HAS_QHULL"],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "@assimp",
+        "@boost.asio",
+        "@boost.core",
+        "@boost.filesystem",
+        "@boost.iostreams",
+        "@boost.math",
+        "@boost.serialization",
+        "@eigen",
+    ] + select({
+        ":logging_enabled": ["@boost.log"],
+        "//conditions:default": [],
+    }) + select({
+        ":qhull_enabled": [
+            "@qhull//:qhull_r",
+            "@qhull//:qhullcpp",
+        ],
+        "//conditions:default": [],
+    }) + select({
+        ":octomap_enabled": ["@octomap"],
+        "//conditions:default": [],
+    }),
+)
+
+# Alias kept for parity with the CMake build's `hpp-fcl`/`hpp-fcl::hpp-fcl`
+# targets (only meaningful once COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL is
+# turned on, but harmless as a plain alias otherwise).
+alias(
+    name = "hpp-fcl",
+    actual = ":coal",
+    visibility = ["//visibility:public"],
+)
