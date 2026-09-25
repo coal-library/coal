@@ -173,6 +173,14 @@ COAL_DLLAPI bool overlap(const Matrix3s& R0, const Vec3s& T0, const RSS& b1,
                          const RSS& b2, const CollisionRequest& request,
                          Scalar& sqrDistLowerBound);
 
+/// @brief Check collision between two RSSs, reusing precomputed
+/// R0.transpose() and -R0.transpose() * T0 for the configuration of b1.
+COAL_DLLAPI bool overlapPrecomputedRTranspose(const Matrix3s& R0_transpose,
+                                              const Vec3s& inv_T0,
+                                              const RSS& b1, const RSS& b2,
+                                              const CollisionRequest& request,
+                                              Scalar& sqrDistLowerBound);
+
 }  // namespace coal
 
 #endif

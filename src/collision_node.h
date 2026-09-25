@@ -40,14 +40,35 @@
 
 /// @cond INTERNAL
 
+#include <cmath>
+
 #include "coal/BVH/BVH_front.h"
 #include "coal/internal/traversal_node_base.h"
 #include "coal/internal/traversal_node_bvhs.h"
+#include "coal/internal/traversal_recurse.h"
 
 /// @brief collision and distance function on traversal nodes. these functions
 /// provide a higher level abstraction for collision functions provided in
 /// collision_func_matrix
 namespace coal {
+
+inline void checkResultLowerBound(const CollisionResult& result,
+                                  Scalar sqrDistLowerBound) {
+  COAL_UNUSED_VARIABLE(result);
+  const Scalar dummy_precision = std::sqrt(Eigen::NumTraits<Scalar>::epsilon());
+  COAL_UNUSED_VARIABLE(dummy_precision);
+  if (sqrDistLowerBound == 0) {
+    COAL_ASSERT(result.distance_lower_bound <= dummy_precision,
+                "Distance lower bound should not be positive.",
+                std::logic_error);
+  } else {
+    COAL_ASSERT(result.distance_lower_bound * result.distance_lower_bound -
+                        sqrDistLowerBound <
+                    dummy_precision,
+                "Distance lower bound and sqrDistLowerBound should coincide.",
+                std::logic_error);
+  }
+}
 
 /// collision on collision traversal node
 ///
@@ -57,17 +78,36 @@ namespace coal {
 /// @param front_list list of nodes visited by the query, can be used to
 ///        accelerate computation
 /// \todo should be COAL_LOCAL but used in unit test.
-COAL_DLLAPI void collide(CollisionTraversalNodeBase* node,
-                         const CollisionRequest& request,
-                         CollisionResult& result,
-                         BVHFrontList* front_list = NULL,
-                         bool recursive = true);
+template <typename Node>
+inline void collide(Node* node, const CollisionRequest& request,
+                    CollisionResult& result, BVHFrontList* front_list = nullptr,
+                    bool recursive = true) {
+  if (front_list && front_list->size() > 0) {
+    propagateBVHFrontListCollisionRecurse(node, request, result, front_list);
+  } else {
+    Scalar sqrDistLowerBound = 0;
+    if (recursive)
+      collisionRecurse(node, 0, 0, front_list, sqrDistLowerBound);
+    else
+      collisionNonRecurse(node, front_list, sqrDistLowerBound);
+    if (!std::isnan(sqrDistLowerBound))
+      checkResultLowerBound(result, sqrDistLowerBound);
+  }
+}
 
 /// @brief distance computation on distance traversal node; can use front list
 /// to accelerate \todo should be COAL_LOCAL but used in unit test.
-COAL_DLLAPI void distance(DistanceTraversalNodeBase* node,
-                          BVHFrontList* front_list = NULL,
-                          unsigned int qsize = 2);
+template <typename Node>
+inline void distance(Node* node, BVHFrontList* front_list = nullptr,
+                     unsigned int qsize = 2) {
+  node->preprocess();
+  if (qsize <= 2)
+    distanceRecurse(node, 0, 0, front_list);
+  else
+    distanceQueueRecurse(node, 0, 0, front_list, qsize);
+  node->postprocess();
+}
+
 }  // namespace coal
 
 /// @endcond

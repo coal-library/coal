@@ -143,19 +143,14 @@ void test_gjk_distance_triangle_triangle(
     TriangleP tri2(Q1_loc, Q2_loc, Q3_loc);
     Vec3s normal;
     const bool compute_penetration = true;
-    coal::DistanceRequest request(compute_penetration, compute_penetration);
-    coal::DistanceResult result;
 
     start = clock();
     // The specialized function TriangleP-TriangleP calls GJK to check for
     // collision and compute the witness points but it does not use EPA to
     // compute the penetration depth.
-    distance = coal::ShapeShapeDistance<TriangleP, TriangleP>(
-        &tri1, tf1, &tri2, tf2, &solver, request, result);
+    distance = solver.shapeDistance(tri1, tf1, tri2, tf2, compute_penetration,
+                                    p1, p2, normal);
     end = clock();
-    p1 = result.nearest_points[0];
-    p2 = result.nearest_points[1];
-    normal = result.normal;
     bool res = (distance <= 0);
     results[i].timeGjk = end - start;
     results[i].collision = res;
@@ -167,12 +162,8 @@ void test_gjk_distance_triangle_triangle(
       Scalar penetration_depth(-distance);
       assert(penetration_depth >= 0);
       tf2.setTranslation((penetration_depth + 10 - 4) * normal);
-      result.clear();
-      distance = coal::ShapeShapeDistance<TriangleP, TriangleP>(
-          &tri1, tf1, &tri2, tf2, &solver, request, result);
-      c1 = result.nearest_points[0];
-      c2 = result.nearest_points[1];
-      normal2 = result.normal;
+      distance = solver.shapeDistance(tri1, tf1, tri2, tf2, compute_penetration,
+                                      c1, c2, normal2);
       res = (distance <= 0);
       if (res) {
         std::cerr << "P1 = " << P1_loc.format(tuple) << std::endl;

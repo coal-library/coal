@@ -560,6 +560,8 @@ bool initialize(MeshCollisionTraversalNode<BV, 0>& node,
   node.RT.R.noalias() = tf1.getRotation().transpose() * tf2.getRotation();
   node.RT.T.noalias() = tf1.getRotation().transpose() *
                         (tf2.getTranslation() - tf1.getTranslation());
+  node.RT.R_transpose.noalias() = node.RT.R.transpose();
+  node.RT.inv_T.noalias() = -(node.RT.R_transpose * node.RT.T);
 
   return true;
 }
@@ -686,6 +688,8 @@ bool initialize(MeshDistanceTraversalNode<BV, 0>& node,
 
   relativeTransform(tf1.getRotation(), tf1.getTranslation(), tf2.getRotation(),
                     tf2.getTranslation(), node.RT.R, node.RT.T);
+  node.RT.R_transpose.noalias() = node.RT.R.transpose();
+  node.RT.inv_T.noalias() = -(node.RT.R_transpose * node.RT.T);
 
   COAL_COMPILER_DIAGNOSTIC_POP
 

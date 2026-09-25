@@ -43,7 +43,6 @@ set(
   contact_patch_func_matrix.cpp
   distance_func_matrix.cpp
   collision_data.cpp
-  collision_node.cpp
   collision_object.cpp
   BV/RSS.cpp
   BV/AABB.cpp
@@ -98,7 +97,6 @@ set(
   distance/halfspace_halfspace.cpp
   intersect.cpp
   math/transform.cpp
-  traversal/traversal_recurse.cpp
   distance.cpp
   BVH/BVH_utility.cpp
   BVH/BV_fitter.cpp
