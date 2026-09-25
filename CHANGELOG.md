@@ -51,6 +51,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Fix using NaN to initialize collision data (`Contact`, `CollisionResult`, `DistanceResult`). This prevents the absurd `Contact contact; contact == contact; // false` problem.
   - Fix NaNs coming from GJK/EPA when the algorithms (correctly) early stopped. NaNs indicate failure. In the case that GJK/EPA early stopped but ran fine, we set non-computed data to inf instead of NaN.
 - Fix `ContactPatchResult::swapObjects`: flip `ContactPatch::direction` along with the patch frame, and reflect every point of a patch instead of one of them, so `getNormal` reports the contact normal for shape-first queries against meshes and height fields ([#884](https://github.com/coal-library/coal/pull/884))
+- Fix `Box` support function. ([#895](https://github.com/coal-library/coal/pull/895))
 
 ### Changed
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))
