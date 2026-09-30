@@ -246,7 +246,7 @@ if __name__ == "__main__":
 
 ## Contribution
 
-If you want to ask a question, report a bug, request a new feature or contribute with a pull request, please follow the [contribution guideline](./development/contributing.md).
+If you want to ask a question, report a bug, request a new feature or contribute with a pull request, please follow the [contribution guideline](./CONTRIBUTING.md).
 
 ## Core-dev team
 
