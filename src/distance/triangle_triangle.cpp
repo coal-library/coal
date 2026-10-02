@@ -36,6 +36,7 @@
 
 #include "coal/shape/geometric_shapes.h"
 
+#include "coal/internal/intersect.h"
 #include "coal/internal/shape_shape_func.h"
 #include "../narrowphase/details.h"
 
@@ -48,10 +49,10 @@ template <>
 Scalar ShapeShapeDistance<TriangleP, TriangleP>(
     const CollisionGeometry* o1, const Transform3s& tf1,
     const CollisionGeometry* o2, const Transform3s& tf2,
-    const GJKSolver* solver, const bool, Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+    const GJKSolver* /*solver*/, const bool /*compute_signed_distance*/,
+    Vec3s& p1, Vec3s& p2, Vec3s& normal) {
   COAL_TRACY_ZONE_SCOPED_N(
       "coal::internal::ShapeShapeDistance<TriangleP, TriangleP>");
-  // Transform the triangles in world frame
   const TriangleP& s1 = static_cast<const TriangleP&>(*o1);
   const TriangleP t1(tf1.transform(s1.a), tf1.transform(s1.b),
                      tf1.transform(s1.c));
@@ -60,56 +61,19 @@ Scalar ShapeShapeDistance<TriangleP, TriangleP>(
   const TriangleP t2(tf2.transform(s2.a), tf2.transform(s2.b),
                      tf2.transform(s2.c));
 
-  // Reset GJK algorithm
-  //   We don't need to take into account swept-sphere radius in GJK iterations;
-  //   the result will be corrected after GJK terminates.
-  solver->minkowski_difference
-      .set<::coal::details::SupportOptions::NoSweptSphere>(&t1, &t2);
-  solver->gjk.reset(solver->gjk_max_iterations, solver->gjk_tolerance);
+  const Scalar d2 = TriangleDistance::sqrTriDistance(t1.a, t1.b, t1.c, t2.a,
+                                                     t2.b, t2.c, p1, p2);
 
-  // Get GJK initial guess
-  Vec3s guess;
-  if (solver->gjk_initial_guess == GJKInitialGuess::CachedGuess ||
-      solver->enable_cached_guess) {
-    guess = solver->cached_guess;
-  } else {
-    guess = (t1.a + t1.b + t1.c - t2.a - t2.b - t2.c) / 3;
+  if (d2 > 0) {
+    const Scalar d = sqrt(d2);
+    normal = (p2 - p1) / d;
+    return d;
   }
-  support_func_guess_t support_hint;
-  solver->epa.status =
-      details::EPA::DidNotRun;  // EPA is never called in this function
 
-  Vec3ps guess_ = guess.cast<SolverScalar>();
-  details::GJK::Status gjk_status =
-      solver->gjk.evaluate(solver->minkowski_difference, guess_, support_hint);
-
-  solver->cached_guess = solver->gjk.getGuessFromSimplex().cast<Scalar>();
-  solver->support_func_cached_guess = solver->gjk.support_hint;
-
-  // Retrieve witness points and normal
-  Vec3ps p1_, p2_, normal_;
-  solver->gjk.getWitnessPointsAndNormal(solver->minkowski_difference, p1_, p2_,
-                                        normal_);
-  p1 = p1_.cast<Scalar>();
-  p2 = p2_.cast<Scalar>();
-  normal = normal_.cast<Scalar>();
-  Scalar distance = Scalar(solver->gjk.distance);
-
-  if (gjk_status == details::GJK::Collision) {
-    Scalar penetrationDepth =
-        details::computePenetration(t1.a, t1.b, t1.c, t2.a, t2.b, t2.c, normal);
-    distance = -penetrationDepth;
-  } else {
-    // No collision
-    // TODO On degenerated case, the closest point may be wrong
-    // (i.e. an object face normal is colinear to gjk.ray
-    // assert (dist == (w0 - w1).norm());
-    assert(solver->gjk.ray.norm() > solver->gjk.getTolerance());
-  }
-  // assert(false && "should not reach this point");
-  // return false;
-
-  return distance;
+  Scalar signed_distance;
+  internal::computeTriangleTriangleContact(t1.a, t1.b, t1.c, t2.a, t2.b, t2.c,
+                                           signed_distance, p1, p2, normal);
+  return signed_distance;
 }
 }  // namespace internal
 

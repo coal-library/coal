@@ -46,13 +46,21 @@ enum { RelativeTransformationIsIdentity = 1 };
 namespace details {
 template <bool enabled>
 struct COAL_DLLAPI RelativeTransformation {
-  RelativeTransformation() : R(Matrix3s::Identity()) {}
+  RelativeTransformation()
+      : R(Matrix3s::Identity()),
+        T(Vec3s::Zero()),
+        R_transpose(Matrix3s::Identity()),
+        inv_T(Vec3s::Zero()) {}
 
   const Matrix3s& _R() const { return R; }
   const Vec3s& _T() const { return T; }
+  const Matrix3s& _RTranspose() const { return R_transpose; }
+  const Vec3s& _InvT() const { return inv_T; }
 
   Matrix3s R;
   Vec3s T;
+  Matrix3s R_transpose;
+  Vec3s inv_T;
 };
 
 template <>
@@ -61,6 +69,12 @@ struct COAL_DLLAPI RelativeTransformation<false> {
     COAL_THROW_PRETTY("should never reach this point", std::logic_error);
   }
   static const Vec3s& _T() {
+    COAL_THROW_PRETTY("should never reach this point", std::logic_error);
+  }
+  static const Matrix3s& _RTranspose() {
+    COAL_THROW_PRETTY("should never reach this point", std::logic_error);
+  }
+  static const Vec3s& _InvT() {
     COAL_THROW_PRETTY("should never reach this point", std::logic_error);
   }
 };

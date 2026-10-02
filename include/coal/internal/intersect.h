@@ -183,6 +183,31 @@ class COAL_DLLAPI TriangleDistance {
                                const Transform3s& tf, Vec3s& P, Vec3s& Q);
 };
 
+namespace internal {
+/// @brief Returns true if triangles P1P2P3 and Q1Q2Q3 share at least one point.
+bool triangleTriangleOverlap(const Vec3s& P1, const Vec3s& P2, const Vec3s& P3,
+                             const Vec3s& Q1, const Vec3s& Q2, const Vec3s& Q3,
+                             Scalar& sqrDistLowerBound);
+
+/// @brief Intersect segment AB with triangle PQR.
+/// @param[out] X  intersection point on the triangle if the segment pierces it.
+/// @return true if the open segment (t∈(0,1]) crosses the triangle interior,
+///         false if parallel, misses, or the segment lies in the triangle's
+///         plane (coplanar — caller handles that case separately).
+bool segmentTriangleIntersection(const Vec3s& A, const Vec3s& B, const Vec3s& P,
+                                 const Vec3s& Q, const Vec3s& R, Vec3s& X);
+
+/// @brief Compute penetration distance, normal, and witness points of two
+/// triangles in collision Normal is normal of triangle 1 (P1, P2, P3),
+/// penetration depth is the minimal distance (Q1, Q2, Q3) should be translated
+/// along the normal so that the triangles are collision free.
+void computeTriangleTriangleContact(const Vec3s& P1, const Vec3s& P2,
+                                    const Vec3s& P3, const Vec3s& Q1,
+                                    const Vec3s& Q2, const Vec3s& Q3,
+                                    Scalar& signed_distance, Vec3s& normal,
+                                    Vec3s& p1, Vec3s& p2);
+}  // namespace internal
+
 }  // namespace coal
 
 /// @endcond
