@@ -420,7 +420,7 @@ struct COAL_DLLAPI GJKSolver {
       // TODO On degenerated case, the closest point may be wrong
       // (i.e. an object face normal is colinear to gjk.ray
       // assert (dist == (w0 - w1).norm());
-      assert(this->gjk.ray.norm() > this->gjk.getTolerance());
+      COAL_ASSERT(this->gjk.ray.norm() > this->gjk.getTolerance());
     }
 
     return distance;
