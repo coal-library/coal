@@ -87,6 +87,9 @@ enum NODE_TYPE {
   GEOM_ELLIPSOID,
   HF_AABB,
   HF_OBBRSS,
+  /// @brief Custom shape type, used for user-defined shapes that extend
+  /// ShapeBase outside the Coal library. See ShapeBase::computeShapeSupport().
+  GEOM_CUSTOM,
   NODE_COUNT
 };
 
