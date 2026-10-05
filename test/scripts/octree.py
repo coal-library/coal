@@ -2,6 +2,7 @@
 
 import csv
 import os
+
 from gepetto.corbaserver import Client
 
 pos = list()

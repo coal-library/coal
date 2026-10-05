@@ -1,8 +1,8 @@
 import unittest
-from test_case import TestCase
-import coal
 
+import coal
 import numpy as np
+from test_case import TestCase
 
 
 def tetahedron():

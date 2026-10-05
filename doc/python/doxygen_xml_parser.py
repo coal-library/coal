@@ -1,11 +1,10 @@
 #!/usr/bin/python3
-# ruff: noqa: E501
 
-from __future__ import print_function
-from lxml import etree
-from os import path
-from xml_docstring import XmlDocString
 import sys
+from os import path
+
+from lxml import etree
+from xml_docstring import XmlDocString
 
 template_file_header = """#ifndef DOXYGEN_AUTODOC_{header_guard}
 #define DOXYGEN_AUTODOC_{header_guard}
@@ -140,7 +139,7 @@ def format_description(brief, detailed):
     return text
 
 
-class Reference(object):
+class Reference:
     def __init__(self, index, id=None, name=None):
         self.id = id
         self.name = name
@@ -200,7 +199,7 @@ class Reference(object):
 # Only for function as of now.
 class MemberDef(Reference):
     def __init__(self, index, memberdefxml, parent):
-        super(MemberDef, self).__init__(
+        super().__init__(
             index=index,
             id=memberdefxml.attrib["id"],
             name=memberdefxml.find("definition").text,
@@ -283,9 +282,7 @@ class MemberDef(Reference):
 
     def s_rettype(self):
         assert not self.special, (
-            "Member {} ({}) is a special function and no return type".format(
-                self.name, self.id
-            )
+            f"Member {self.name} ({self.id}) is a special function and no return type"
         )
         if len(self.parent.template_params) > 0:
             tplargs = (
@@ -318,7 +315,7 @@ class MemberDef(Reference):
     def s_argnamesstring(self):
         def getdeclname(i, declname):
             if declname is None or declname.text is None or declname.text.strip() == "":
-                return "arg{}".format(i)
+                return f"arg{i}"
             return declname.text.strip()
 
         arg = """boost::python::arg("{}")"""
@@ -339,7 +336,7 @@ class CompoundBase(Reference):
         self.filename = path.join(index.directory, compound.attrib["refid"] + ".xml")
         self.tree = etree.parse(self.filename)
         self.definition = self.tree.getroot().find("compounddef")
-        super(CompoundBase, self).__init__(
+        super().__init__(
             index,
             id=self.definition.attrib["id"],
             name=self.definition.find("compoundname").text,
@@ -348,7 +345,7 @@ class CompoundBase(Reference):
 
 class NamespaceCompound(CompoundBase):
     def __init__(self, *args):
-        super(NamespaceCompound, self).__init__(*args)
+        super().__init__(*args)
         self.typedefs = []
         self.enums = []
         self.static_funcs = []
@@ -404,7 +401,7 @@ class NamespaceCompound(CompoundBase):
 
 class ClassCompound(CompoundBase):
     def __init__(self, *args):
-        super(ClassCompound, self).__init__(*args)
+        super().__init__(*args)
         self.member_funcs = list()
         self.static_funcs = list()
         self.special_funcs = list()
@@ -525,9 +522,7 @@ class ClassCompound(CompoundBase):
             return
         if self.template_specialization:
             output.warn(
-                "Disable class {} because template argument are not resolved for templated class specialization.".format(
-                    self.name
-                )
+                f"Disable class {self.name} because template argument are not resolved for templated class specialization."
             )
             return
 
@@ -625,9 +620,7 @@ class ClassCompound(CompoundBase):
             )
             output.out(
                 template_member_func_doc.format(
-                    template=(
-                        "template <{}>\n".format(tplargs) if len(tplargs) > 0 else ""
-                    ),
+                    template=(f"template <{tplargs}>\n" if len(tplargs) > 0 else ""),
                     rettype=member.s_rettype(),
                     classname_prefix=classname_prefix,
                     argsstring=member.s_prototypeArgs(),
@@ -657,13 +650,11 @@ class ClassCompound(CompoundBase):
                 [
                     """boost::python::arg("self")""",
                 ]
-                + ["""boost::python::arg("arg{}")""".format(i) for i in range(n_args)]
+                + [f"""boost::python::arg("arg{i}")""" for i in range(n_args)]
             )
             output.out(
                 template_member_func_args.format(
-                    template=(
-                        "template <{}>\n".format(tplargs) if len(tplargs) > 0 else ""
-                    ),
+                    template=(f"template <{tplargs}>\n" if len(tplargs) > 0 else ""),
                     rettype=member.s_rettype(),
                     n=n_args + 1,
                     default_args=default_args,
@@ -775,9 +766,7 @@ class Index:
             )
             self.output.out(
                 template_static_func_doc.format(
-                    template=(
-                        "template <{}>\n".format(tplargs) if len(tplargs) > 0 else ""
-                    ),
+                    template=(f"template <{tplargs}>\n" if len(tplargs) > 0 else ""),
                     rettype=member.s_rettype(),
                     argsstring=member.s_prototypeArgs(),
                     body=body,
@@ -808,7 +797,7 @@ class Index:
         return self.references[id]
 
 
-class OutputStreams(object):
+class OutputStreams:
     def __init__(self, output_dir, warn, error, errorPrefix=""):
         self.output_dir = output_dir
         self._out = None

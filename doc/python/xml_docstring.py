@@ -1,4 +1,4 @@
-class XmlDocString(object):
+class XmlDocString:
     def __init__(self, index):
         self.index = index
         self.tags = {
