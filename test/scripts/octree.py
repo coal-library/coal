@@ -5,7 +5,7 @@ import os
 
 from gepetto.corbaserver import Client
 
-pos = list()
+pos = []
 with open("/home/florent/devel/hpp/src/hpp-fcl/build-rel/test/rob.octree", "r") as f:
     r = csv.reader(f, delimiter=",")
     for line in r:

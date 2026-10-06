@@ -104,14 +104,10 @@ def _templateParamToDict(param):
                 typetext += c.text
             if c.tail is not None:
                 typetext += c.tail
-        if typetext.startswith("typename") or typetext.startswith("class"):
-            if sys.version_info.major == 2:
-                s = typetext.split()
-                return {"type": s[0].strip(), "name": typetext[len(s[0]) :].strip()}
-            else:
-                s = typetext.split(maxsplit=1)
-                assert len(s) == 2
-                return {"type": s[0].strip(), "name": s[1].strip()}
+        if typetext.startswith(("typename", "class")):
+            s = typetext.split(maxsplit=1)
+            assert len(s) == 2
+            return {"type": s[0].strip(), "name": s[1].strip()}
         else:
             return {"type": type_.text, "name": ""}
     else:
@@ -162,9 +158,12 @@ class Reference:
                 refid = c.attrib["refid"]
                 if parentClass is not None and refid == parentClass.id:
                     t += " " + parentClass.name
-                    if c.tail is not None and c.tail.lstrip()[0] != "<":
-                        if tplargs is not None:
-                            t += tplargs
+                    if (
+                        c.tail is not None
+                        and c.tail.lstrip()[0] != "<"
+                        and tplargs is not None
+                    ):
+                        t += tplargs
                 elif (
                     parentClass is not None
                     and isinstance(parentClass, ClassCompound)
@@ -229,7 +228,7 @@ class MemberDef(Reference):
                 [_templateParamToDict(param) for param in tpl.iterchildren(tag="param")]
             )
         else:
-            self.template_params = tuple()
+            self.template_params = ()
 
     def prototypekey(self):
         prototype = (
@@ -246,7 +245,7 @@ class MemberDef(Reference):
         return prototype
 
     def s_prototypeArgs(self):
-        return "({0}){1}".format(self.s_args(), " const" if self.const else "")
+        return "({}){}".format(self.s_args(), " const" if self.const else "")
 
     def s_args(self):
         # If the class is templated, check if one of the argument is the class itself.
@@ -349,7 +348,7 @@ class NamespaceCompound(CompoundBase):
         self.typedefs = []
         self.enums = []
         self.static_funcs = []
-        self.template_params = tuple()
+        self.template_params = ()
 
         # Add references
         for section in self.definition.iterchildren("sectiondef"):
@@ -402,15 +401,15 @@ class NamespaceCompound(CompoundBase):
 class ClassCompound(CompoundBase):
     def __init__(self, *args):
         super().__init__(*args)
-        self.member_funcs = list()
-        self.static_funcs = list()
-        self.special_funcs = list()
-        self.attributes = list()
+        self.member_funcs = []
+        self.static_funcs = []
+        self.special_funcs = []
+        self.attributes = []
 
         self.struct = self.compound.attrib["kind"] == "struct"
         self.public = self.definition.attrib["prot"] == "public"
         self.template_specialization = self.name.find("<") > 0
-        self.typedef = dict()
+        self.typedef = {}
 
         # Handle templates
         self._templateParams(self.definition.find("templateparamlist"))
@@ -455,7 +454,7 @@ class ClassCompound(CompoundBase):
                 [_templateParamToDict(param) for param in tpl.iterchildren(tag="param")]
             )
         else:
-            self.template_params = tuple()
+            self.template_params = ()
 
     def _templateDecl(self):
         if not hasattr(self, "template_params") or len(self.template_params) == 0:
@@ -538,7 +537,7 @@ class ClassCompound(CompoundBase):
         self._writeClassDoc(output)
 
         # Group member function by prototype
-        member_funcs = dict()
+        member_funcs = {}
         for m in self.member_funcs:
             prototype = m.prototypekey()
             if prototype in member_funcs:
@@ -680,8 +679,8 @@ class Index:
         self.tree = etree.parse(input)
         self.directory = path.dirname(input)
         self.xml_docstring = XmlDocString(self)
-        self.compounds = list()
-        self.references = dict()
+        self.compounds = []
+        self.references = {}
         self.output = output
 
     def parseCompound(self):
@@ -709,9 +708,9 @@ class Index:
         self.output.open("functions.h")
 
         # Implement template specialization for static functions
-        static_funcs = dict()
-        prototypes = list()
-        includes = list()
+        static_funcs = {}
+        prototypes = []
+        includes = []
         for id in self.compounds:
             compound = self.references[id]
             for m in compound.static_funcs:
@@ -805,7 +804,7 @@ class OutputStreams:
         self._err = error
         self.errorPrefix = errorPrefix
 
-        self._created_files = dict()
+        self._created_files = {}
 
     def open(self, name):
         assert self._out is None, "You did not close the previous file"
@@ -821,11 +820,10 @@ class OutputStreams:
         else:
             import codecs
 
-            if sys.version_info >= (3,):
-                encoding = "utf-8"
-            else:
-                encoding = "latin1"
-            self._out = codecs.open(fullname, mode="w", encoding=encoding)
+            encoding = "utf-8"
+            self._out = codecs.open(  # noqa: SIM115
+                fullname, mode="w", encoding=encoding
+            )
             self._created_files[name] = self._out
 
             # Header
@@ -853,10 +851,7 @@ class OutputStreams:
         self._out = None
 
     def out(self, *args):
-        if sys.version_info >= (3,):
-            print(*args, file=self._out)
-        else:
-            print(" ".join(str(arg) for arg in args).decode("latin1"), file=self._out)
+        print(*args, file=self._out)
 
     def warn(self, *args):
         print(self.errorPrefix, *args, file=self._warn)

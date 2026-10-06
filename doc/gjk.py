@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import pdb
 import sys
 
 # ABC = AB^AC
@@ -330,13 +329,12 @@ def apply_test_values(cases, test_values):
 def max_number_of_tests(
     current_tests,
     cases,
-    test_values=[
-        None,
-    ]
-    * len(tests),
+    test_values=None,
     prevBestScore=float("inf"),
     prevScore=0,
 ):
+    if test_values is None:
+        test_values = [None] * len(tests)
     for test in current_tests:
         assert test_values[test] is None, "Test " + str(test) + " already performed"
 
@@ -411,14 +409,12 @@ def max_number_of_tests(
             score_if_f, order_if_f = prevScore, None
 
         currentScore = max(score_if_t, score_if_f)
-        if currentScore < bestScore:
-            if currentScore < currentBestScore:
-                bestScore = currentScore
-                bestOrder = {"test": test, "true": order_if_t, "false": order_if_f}
-                # pdb.set_trace()
-                currentBestScore = currentScore
-                if len(tests) == len(current_tests):
-                    print(f"New best score: {currentBestScore}")
+        if currentScore < bestScore and currentScore < currentBestScore:
+            bestScore = currentScore
+            bestOrder = {"test": test, "true": order_if_t, "false": order_if_f}
+            currentBestScore = currentScore
+            if len(tests) == len(current_tests):
+                print(f"New best score: {currentBestScore}")
 
     return bestScore, bestOrder
 
@@ -429,7 +425,9 @@ def printComments(order, indent, file):
             print(indent + "// " + comment, file=file)
 
 
-def printOrder(order, indent="", start=True, file=sys.stdout, curTests=[]):
+def printOrder(order, indent="", start=True, file=sys.stdout, curTests=None):
+    if curTests is None:
+        curTests = []
     if start:
         print(
             "bool GJK::projectTetrahedraOrigin(const Simplex& current, Simplex& next)",
@@ -618,7 +616,6 @@ def printOrder(order, indent="", start=True, file=sys.stdout, curTests=[]):
 def unit_tests():
     # a4, a5, a10, a11, a12
     cases = list(range(len(regions)))
-    pdb.set_trace()
     left_cases = apply_test_values(
         cases,
         test_values=[

@@ -15,7 +15,7 @@ class XmlDocString:
             "listitem": self.listitem,
         }
         self.unkwownTags = set()
-        self.unkwownReferences = dict()
+        self.unkwownReferences = {}
         self._linesep = '\\n"\n"'
 
         try:
@@ -80,14 +80,10 @@ class XmlDocString:
             if brief is not None:
                 self._newline()
             self.visit(detailled)
-        from sys import version_info
 
         self.writeErrors(output)
         self._clean()
-        if version_info[0] == 2:
-            return self._linesep.join(self.lines).encode("utf-8")
-        else:
-            return self._linesep.join(self.lines)
+        return self._linesep.join(self.lines)
 
     def visit(self, node):
         assert isinstance(node.tag, str)
