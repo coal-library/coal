@@ -1,6 +1,7 @@
 # Load "env.obj" and "rob.obj" in gepetto-gui
 
 import os
+
 from gepetto.corbaserver import Client
 
 path = None

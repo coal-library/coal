@@ -1,0 +1,3 @@
+[lint.per-file-ignores]
+# Ignore blind except in tests https://docs.astral.sh/ruff/rules/blind-except/
+"test/**" = ["BLE001"]

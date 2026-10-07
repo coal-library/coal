@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import pdb
 import sys
 
 # ABC = AB^AC
@@ -15,16 +14,16 @@ edge_fmt = "{j}a * {b}a_{c}a + {j}{b} * {c}a_aa - {j}{c} * {b}a_aa"
 plane_tests = ["C.dot (a_cross_b)", "D.dot(a_cross_c)", "-D.dot(a_cross_b)"]
 checks = (
     plane_tests
-    + [edge_fmt.format(**{"j": j, "b": "b", "c": "c"}) for j in ["b", "c"]]
-    + [edge_fmt.format(**{"j": j, "b": "c", "c": "d"}) for j in ["c", "d"]]
-    + [edge_fmt.format(**{"j": j, "b": "d", "c": "b"}) for j in ["d", "b"]]
-    + [segment_fmt.format(**{"j": j}) for j in ["b", "c", "d"]]
+    + [edge_fmt.format(j=j, b="b", c="c") for j in ["b", "c"]]
+    + [edge_fmt.format(j=j, b="c", c="d") for j in ["c", "d"]]
+    + [edge_fmt.format(j=j, b="d", c="b") for j in ["d", "b"]]
+    + [segment_fmt.format(j=j) for j in ["b", "c", "d"]]
 )
 checks_hr = (
     ["ABC.AO >= 0", "ACD.AO >= 0", "ADB.AO >= 0"]
-    + ["(ABC ^ {}).AO >= 0".format(n) for n in ["AB", "AC"]]
-    + ["(ACD ^ {}).AO >= 0".format(n) for n in ["AC", "AD"]]
-    + ["(ADB ^ {}).AO >= 0".format(n) for n in ["AD", "AB"]]
+    + [f"(ABC ^ {n}).AO >= 0" for n in ["AB", "AC"]]
+    + [f"(ACD ^ {n}).AO >= 0" for n in ["AC", "AD"]]
+    + [f"(ADB ^ {n}).AO >= 0" for n in ["AD", "AB"]]
     + ["AB.AO >= 0", "AC.AO >= 0", "AD.AO >= 0"]
 )
 
@@ -330,13 +329,12 @@ def apply_test_values(cases, test_values):
 def max_number_of_tests(
     current_tests,
     cases,
-    test_values=[
-        None,
-    ]
-    * len(tests),
+    test_values=None,
     prevBestScore=float("inf"),
     prevScore=0,
 ):
+    if test_values is None:
+        test_values = [None] * len(tests)
     for test in current_tests:
         assert test_values[test] is None, "Test " + str(test) + " already performed"
 
@@ -411,14 +409,12 @@ def max_number_of_tests(
             score_if_f, order_if_f = prevScore, None
 
         currentScore = max(score_if_t, score_if_f)
-        if currentScore < bestScore:
-            if currentScore < currentBestScore:
-                bestScore = currentScore
-                bestOrder = {"test": test, "true": order_if_t, "false": order_if_f}
-                # pdb.set_trace()
-                currentBestScore = currentScore
-                if len(tests) == len(current_tests):
-                    print("New best score: {}".format(currentBestScore))
+        if currentScore < bestScore and currentScore < currentBestScore:
+            bestScore = currentScore
+            bestOrder = {"test": test, "true": order_if_t, "false": order_if_f}
+            currentBestScore = currentScore
+            if len(tests) == len(current_tests):
+                print(f"New best score: {currentBestScore}")
 
     return bestScore, bestOrder
 
@@ -429,7 +425,9 @@ def printComments(order, indent, file):
             print(indent + "// " + comment, file=file)
 
 
-def printOrder(order, indent="", start=True, file=sys.stdout, curTests=[]):
+def printOrder(order, indent="", start=True, file=sys.stdout, curTests=None):
+    if curTests is None:
+        curTests = []
     if start:
         print(
             "bool GJK::projectTetrahedraOrigin(const Simplex& current, Simplex& next)",
@@ -443,8 +441,7 @@ def printOrder(order, indent="", start=True, file=sys.stdout, curTests=[]):
         print(indent + "const vertex_id_t a = 3, b = 2, c = 1, d = 0;", file=file)
         for v in "abcd":
             print(
-                indent
-                + "const Vec3s& {} (current.vertex[{}]->w);".format(v.upper(), v),
+                indent + f"const Vec3s& {v.upper()} (current.vertex[{v}]->w);",
                 file=file,
             )
         print(indent + "const Scalar aa = A.squaredNorm();".format(), file=file)
@@ -453,28 +450,26 @@ def printOrder(order, indent="", start=True, file=sys.stdout, curTests=[]):
                 if m <= v:
                     print(
                         indent
-                        + "const Scalar {0}{1}    = {2}.dot({3});".format(
-                            v, m, v.upper(), m.upper()
-                        ),
+                        + f"const Scalar {v}{m}    = {v.upper()}.dot({m.upper()});",
                         file=file,
                     )
                 else:
                     print(
-                        indent + "const Scalar& {0}{1}    = {1}{0};".format(v, m),
+                        indent + f"const Scalar& {v}{m}    = {m}{v};",
                         file=file,
                     )
-            print(indent + "const Scalar {0}a_aa = {0}a - aa;".format(v), file=file)
+            print(indent + f"const Scalar {v}a_aa = {v}a - aa;", file=file)
         for l0, l1 in zip("bcd", "cdb"):
             print(
-                indent + "const Scalar {0}a_{1}a = {0}a - {1}a;".format(l0, l1),
+                indent + f"const Scalar {l0}a_{l1}a = {l0}a - {l1}a;",
                 file=file,
             )
         for v in "bc":
             print(
-                indent + "const Vec3s a_cross_{0} = A.cross({1});".format(v, v.upper()),
+                indent + f"const Vec3s a_cross_{v} = A.cross({v.upper()});",
                 file=file,
             )
-        print("", file=file)
+        print(file=file)
         print("#define REGION_INSIDE()               " + indent + "\\", file=file)
         print(indent + "  ray.setZero();                      \\", file=file)
         print(indent + "  next.vertex[0] = current.vertex[d]; \\", file=file)
@@ -483,7 +478,7 @@ def printOrder(order, indent="", start=True, file=sys.stdout, curTests=[]):
         print(indent + "  next.vertex[3] = current.vertex[a]; \\", file=file)
         print(indent + "  next.rank=4;                        \\", file=file)
         print(indent + "  return true;", file=file)
-        print("", file=file)
+        print(file=file)
 
     if "case" in order:
         case = order["case"]
@@ -511,7 +506,7 @@ def printOrder(order, indent="", start=True, file=sys.stdout, curTests=[]):
                 indent
                 + "originToSegment "
                 "(current, a, {b}, A, {B}, {B}-A, -{b}a_aa, next, ray);".format(
-                    **{"b": B.lower(), "B": B}
+                    b=B.lower(), B=B
                 ),
                 file=file,
             )
@@ -525,11 +520,8 @@ def printOrder(order, indent="", start=True, file=sys.stdout, curTests=[]):
             else:
                 test = "-" + test
             print(
-                indent
-                + "originToTriangle "
-                "(current, a, {b}, {c}, ({B}-A).cross({C}-A), {t}, next, ray);".format(
-                    **{"b": B.lower(), "c": C.lower(), "B": B, "C": C, "t": test}
-                ),
+                indent + "originToTriangle "
+                f"(current, a, {B.lower()}, {C.lower()}, ({B}-A).cross({C}-A), {test}, next, ray);",
                 file=file,
             )
             toFree.remove(B.lower())
@@ -537,9 +529,7 @@ def printOrder(order, indent="", start=True, file=sys.stdout, curTests=[]):
         else:
             assert False, "Unknown region " + region
         for pt in toFree:
-            print(
-                indent + "free_v[nfree++] = current.vertex[{}];".format(pt), file=file
-            )
+            print(indent + f"free_v[nfree++] = current.vertex[{pt}];", file=file)
     else:
         assert "test" in order and "true" in order and "false" in order
         check = checks[order["test"]]
@@ -555,9 +545,7 @@ def printOrder(order, indent="", start=True, file=sys.stdout, curTests=[]):
             if order["false"] is None:
                 print(
                     indent
-                    + """assert(false && "Case {} should never happen.");""".format(
-                        check_hr
-                    )
+                    + f"""assert(false && "Case {check_hr} should never happen.");"""
                 )
             else:
                 print(
@@ -616,10 +604,10 @@ def printOrder(order, indent="", start=True, file=sys.stdout, curTests=[]):
                 file=file,
                 curTests=nextTests_f,
             )
-            print(indent + "}} // end of {}".format(check_hr), file=file)
+            print(indent + f"}} // end of {check_hr}", file=file)
 
     if start:
-        print("", file=file)
+        print(file=file)
         print("#undef REGION_INSIDE", file=file)
         print(indent + "return false;", file=file)
         print("}", file=file)
@@ -628,7 +616,6 @@ def printOrder(order, indent="", start=True, file=sys.stdout, curTests=[]):
 def unit_tests():
     # a4, a5, a10, a11, a12
     cases = list(range(len(regions)))
-    pdb.set_trace()
     left_cases = apply_test_values(
         cases,
         test_values=[

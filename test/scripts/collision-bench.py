@@ -32,7 +32,7 @@ type = [
     "or",
     "r",
 ]
-BVs = sorted(list(set([v[0] for v in request1[::Ntransforms]])))
+BVs = sorted({v[0] for v in request1[::Ntransforms]})
 xvals = [
     BVs.index(v[0]) + len(BVs) * v[2] + 3 * len(BVs) * v[1]
     for v in request1[::Ntransforms]
@@ -41,7 +41,7 @@ cases = [
     v[0] + " " + type[v[1]] + " " + splitMethods[v[2]] for v in request1[::Ntransforms]
 ]
 
-idx_reorder = sorted(list(range(len(xvals))), key=lambda i: xvals[i])
+idx_reorder = sorted(range(len(xvals)), key=lambda i: xvals[i])
 
 
 def reorder(v):

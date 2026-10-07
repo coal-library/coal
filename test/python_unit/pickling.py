@@ -1,9 +1,9 @@
-import unittest
-from test_case import TestCase
-import coal
-
 import pickle
+import unittest
+
+import coal
 import numpy as np
+from test_case import TestCase
 
 
 def tetahedron():
