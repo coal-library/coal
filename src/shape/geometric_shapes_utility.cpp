@@ -232,6 +232,17 @@ std::vector<Vec3s> getBoundVertices(const TriangleP& triangle,
   return result;
 }
 
+std::vector<Vec3s> getBoundVertices(const ShapeBase& s, const Transform3s& tf) {
+  AABB aabb;
+  computeBV<AABB, ShapeBase>(s, tf, aabb);
+  const Vec3s& lo = aabb.min_;
+  const Vec3s& hi = aabb.max_;
+  return {Vec3s(lo[0], lo[1], lo[2]), Vec3s(hi[0], lo[1], lo[2]),
+          Vec3s(lo[0], hi[1], lo[2]), Vec3s(hi[0], hi[1], lo[2]),
+          Vec3s(lo[0], lo[1], hi[2]), Vec3s(hi[0], lo[1], hi[2]),
+          Vec3s(lo[0], hi[1], hi[2]), Vec3s(hi[0], hi[1], hi[2])};
+}
+
 }  // namespace details
 
 Halfspace transform(const Halfspace& a, const Transform3s& tf) {
@@ -379,6 +390,25 @@ template <>
 void computeBV<AABB, ConvexBase16>(const ConvexBase16& s, const Transform3s& tf,
                                    AABB& bv) {
   computeAABBConvex(s, tf, bv);
+}
+
+template <>
+void computeBV<AABB, ShapeBase>(const ShapeBase& s, const Transform3s& tf,
+                                AABB& bv) {
+  // Use the precomputed local AABB with the rotated-AABB formula.
+  // Slightly conservative when aabb_local is not tight to the shape, but this
+  // is consistent with other computeBV<AABB, ...> specializations and
+  // CollisionObject::computeAABB().
+  const Matrix3s& R = tf.getRotation();
+  const Vec3s& T = tf.getTranslation();
+
+  const Vec3s half = (s.aabb_local.max_ - s.aabb_local.min_) * 0.5;
+
+  const Vec3s new_center = R * s.aabb_local.center() + T;
+  const Vec3s v_delta(R.cwiseAbs() * half);
+
+  bv.min_ = new_center - v_delta;
+  bv.max_ = new_center + v_delta;
 }
 
 template <>
