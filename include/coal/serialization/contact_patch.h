@@ -45,7 +45,7 @@ void serialize(Archive& ar, coal::ContactPatchRequest& request,
   size_t num_samples_curved_shapes = request.getNumSamplesCurvedShapes();
   Scalar patch_tolerance = request.getPatchTolerance();
   ar& make_nvp("num_samples_curved_shapes", num_samples_curved_shapes);
-  ar& make_nvp("patch_tolerance", num_samples_curved_shapes);
+  ar& make_nvp("patch_tolerance", patch_tolerance);
 
   if (Archive::is_loading::value) {
     request.setNumSamplesCurvedShapes(num_samples_curved_shapes);
