@@ -325,6 +325,186 @@ Project<Scalar>::projectTetrahedraOrigin(const Vec3& a, const Vec3& b,
   return res;
 }
 
+namespace internal {
+
+/// @brief SAT separating-axis helper.
+/// Returns true iff projections of {p1,p2,p3} and {q1,q2,q3} onto @p ax
+/// overlap (i.e., no separating gap exists on this axis).
+template <typename Vec3>
+inline bool project6(const Vec3& ax, const Vec3& p1, const Vec3& p2,
+                     const Vec3& p3, const Vec3& q1, const Vec3& q2,
+                     const Vec3& q3) {
+  using Scalar = typename Vec3::Scalar;
+  const Scalar P1 = ax.dot(p1), P2 = ax.dot(p2), P3 = ax.dot(p3);
+  const Scalar Q1 = ax.dot(q1), Q2 = ax.dot(q2), Q3 = ax.dot(q3);
+  const Scalar mn1 = std::min(P1, std::min(P2, P3));
+  const Scalar mx2 = std::max(Q1, std::max(Q2, Q3));
+  if (mn1 > mx2) return false;
+  const Scalar mx1 = std::max(P1, std::max(P2, P3));
+  const Scalar mn2 = std::min(Q1, std::min(Q2, Q3));
+  return mn2 <= mx1;
+}
+
+inline bool triangleTriangleOverlap(const Vec3s& P1, const Vec3s& P2,
+                                    const Vec3s& P3, const Vec3s& Q1,
+                                    const Vec3s& Q2, const Vec3s& Q3,
+                                    Scalar& sqrDistLowerBound) {
+  /// SAT-based triangle-triangle overlap test (boolean only).
+  ///
+  /// Adapted from FCL's Intersect<S>::intersect_Triangle
+  /// (Copyright Willow Garage / Open Source Robotics Foundation, BSD-2).
+  ///
+  /// Uses 17 separating axes: 2 face normals, 9 edge×edge cross-products, and
+  /// 3+3 edge×face-normal axes. The SAT correctly handles all configurations
+  /// including coplanar triangles — no special-case fallback is needed.
+  ///
+  /// Both triangles must be expressed in the same coordinate frame.
+  /// Returns true iff P1P2P3 and Q1Q2Q3 share at least one point.
+  /// On separation, sqrDistLowerBound is set to gap²/‖ax‖² for the first
+  /// separating axis found (a valid but potentially loose lower bound).
+
+  sqrDistLowerBound = 0;
+
+  // Translate so that P1 is at the origin; p1 becomes the zero vector.
+  const Vec3s p1 = Vec3s::Zero();
+  const Vec3s p2 = P2 - P1;
+  const Vec3s p3 = P3 - P1;
+  const Vec3s q1 = Q1 - P1;
+  const Vec3s q2 = Q2 - P1;
+  const Vec3s q3 = Q3 - P1;
+
+  const Vec3s f1 = q2 - q1;
+  const Vec3s f2 = q3 - q2;
+  const Vec3s f3 = q1 - q3;
+
+  // On the first separating axis found, capture gap²/‖ax‖² as a lower bound
+  // on the squared distance. For a unit axis u = ax/‖ax‖, the 1D separation
+  // gap_u = gap/‖ax‖ satisfies dist_3D ≥ gap_u, so gap_u² is valid.
+  auto checkAxis = [&](const Vec3s& ax) -> bool {
+    const Scalar P1p = ax.dot(p1), P2p = ax.dot(p2), P3p = ax.dot(p3);
+    const Scalar Q1p = ax.dot(q1), Q2p = ax.dot(q2), Q3p = ax.dot(q3);
+    const Scalar mn1 = std::min(P1p, std::min(P2p, P3p));
+    const Scalar mx2 = std::max(Q1p, std::max(Q2p, Q3p));
+    if (mn1 > mx2) {
+      const Scalar gap = mn1 - mx2;
+      sqrDistLowerBound = gap * gap / ax.squaredNorm();
+      return false;
+    }
+    const Scalar mx1 = std::max(P1p, std::max(P2p, P3p));
+    const Scalar mn2 = std::min(Q1p, std::min(Q2p, Q3p));
+    if (mn2 > mx1) {
+      const Scalar gap = mn2 - mx1;
+      sqrDistLowerBound = gap * gap / ax.squaredNorm();
+      return false;
+    }
+    return true;
+  };
+
+  const Vec3s e1 = p2;  // = p2 - p1  (p1 = 0)
+  if (!checkAxis(e1.cross(f1))) return false;
+  if (!checkAxis(e1.cross(f2))) return false;
+  if (!checkAxis(e1.cross(f3))) return false;
+
+  const Vec3s e2 = p3 - p2;
+  if (!checkAxis(e2.cross(f1))) return false;
+  if (!checkAxis(e2.cross(f2))) return false;
+  if (!checkAxis(e2.cross(f3))) return false;
+
+  const Vec3s e3 = -p3;  // = p1 - p3  (p1 = 0)
+  if (!checkAxis(e3.cross(f1))) return false;
+  if (!checkAxis(e3.cross(f2))) return false;
+  if (!checkAxis(e3.cross(f3))) return false;
+
+  const Vec3s n1 = e1.cross(e2);
+  if (!checkAxis(n1)) return false;
+
+  if (!checkAxis(e1.cross(n1))) return false;
+  if (!checkAxis(e2.cross(n1))) return false;
+  if (!checkAxis(e3.cross(n1))) return false;
+
+  const Vec3s m1 = f1.cross(f2);
+  if (!checkAxis(m1)) return false;
+
+  if (!checkAxis(f1.cross(m1))) return false;
+  if (!checkAxis(f2.cross(m1))) return false;
+  if (!checkAxis(f3.cross(m1))) return false;
+
+  return true;
+}
+
+inline bool segmentTriangleIntersection(const Vec3s& A, const Vec3s& B,
+                                        const Vec3s& P, const Vec3s& Q,
+                                        const Vec3s& R, Vec3s& X) {
+  using Scalar = typename Vec3s::Scalar;
+
+  const Vec3s AB = B - A;
+  const Vec3s N = (Q - P).cross(R - P);  // unnormalized triangle normal
+
+  const Scalar denom = N.dot(AB);
+  // Segment parallel (or nearly so) to the triangle's plane.
+  if (std::abs(denom) <= std::numeric_limits<Scalar>::epsilon() *
+                             (std::max)(N.norm() * AB.norm(), Scalar(1)))
+    return false;
+
+  const Scalar t = N.dot(P - A) / denom;
+  if (t < 0 || t > 1) return false;
+
+  X = A + t * AB;
+
+  // Inside-triangle test: X must be on the interior side of every directed
+  // edge (cross product with N must be non-negative).
+  if (N.dot((Q - P).cross(X - P)) < 0) return false;
+  if (N.dot((R - Q).cross(X - Q)) < 0) return false;
+  if (N.dot((P - R).cross(X - R)) < 0) return false;
+
+  return true;
+}
+
+inline void computeTriangleTriangleContact(const Vec3s& P1, const Vec3s& P2,
+                                           const Vec3s& P3, const Vec3s& Q1,
+                                           const Vec3s& Q2, const Vec3s& Q3,
+                                           Scalar& signed_distance,
+                                           Vec3s& normal, Vec3s& p1,
+                                           Vec3s& p2) {
+  // Normal from triangle 1's plane; penetration depth is an upper bound.
+  // Note: we make the assumption that the triangles are properly
+  // oriented, so the normal points outside of triangle 1 (this is
+  // coherent with the normal definiction in `Contact`, see
+  // `collision-data.h`).
+  normal = (P2 - P1).cross(P3 - P1).normalized();
+  Scalar depth1((P1 - Q1).dot(normal));
+  Scalar depth2((P1 - Q2).dot(normal));
+  Scalar depth3((P1 - Q3).dot(normal));
+  signed_distance = -std::max(depth1, std::max(depth2, depth3));
+
+  // Find a point in the intersection via edge-triangle sweep.
+  // For non-coplanar intersecting triangles the intersection is a
+  // segment; we collect all edge-piercing points and average them.
+  // For coplanar triangles (fast-path fallthrough) no edge pierces the
+  // other triangle's plane, so we fall back to the vertex average.
+  Vec3s P_sum = Vec3s::Zero();
+  int num_hits = 0;
+  auto testEdge = [&](const Vec3s& E0, const Vec3s& E1, const Vec3s& T0,
+                      const Vec3s& T1, const Vec3s& T2) {
+    Vec3s X;
+    if (segmentTriangleIntersection(E0, E1, T0, T1, T2, X)) {
+      P_sum += X;
+      ++num_hits;
+    }
+  };
+  testEdge(P1, P2, Q1, Q2, Q3);
+  testEdge(P2, P3, Q1, Q2, Q3);
+  testEdge(P3, P1, Q1, Q2, Q3);
+  testEdge(Q1, Q2, P1, P2, P3);
+  testEdge(Q2, Q3, P1, P2, P3);
+  testEdge(Q3, Q1, P1, P2, P3);
+  if (num_hits > 0)
+    p1 = p2 = P_sum / num_hits;
+  else
+    p1 = p2 = (P1 + P2 + P3 + Q1 + Q2 + Q3) / 6;
+}
+}  // namespace internal
+
 }  // namespace coal
 
 #endif  // COAL_INTERSECT_HXX

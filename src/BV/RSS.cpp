@@ -757,6 +757,22 @@ bool overlap(const Matrix3s& R0, const Vec3s& T0, const RSS& b1, const RSS& b2,
   return false;
 }
 
+bool overlapPrecomputedRTranspose(const Matrix3s& R0_transpose,
+                                  const Vec3s& inv_T0, const RSS& b1,
+                                  const RSS& b2,
+                                  const CollisionRequest& request,
+                                  Scalar& sqrDistLowerBound) {
+  Vec3s Ttemp(R0_transpose * b2.Tr + inv_T0 - b1.Tr);
+  Vec3s T(b1.axes.transpose() * Ttemp);
+  Matrix3s R(b1.axes.transpose() * R0_transpose * b2.axes);
+
+  Scalar dist = rectDistance(R, T, b1.length, b2.length) - b1.radius -
+                b2.radius - request.security_margin;
+  if (dist <= 0) return true;
+  sqrDistLowerBound = dist * dist;
+  return false;
+}
+
 bool RSS::contain(const Vec3s& p) const {
   Vec3s local_p = p - Tr;
   // FIXME: Vec3s proj (axes.transpose() * local_p);
