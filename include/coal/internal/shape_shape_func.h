@@ -186,7 +186,7 @@ std::size_t ShapeShapeCollide(const CollisionGeometry* o1,
 // +------------+-----+--------+---------+------+----------+-------+------------+----------+-----------+--------+
 // |            | box | sphere | capsule | cone | cylinder | plane | half-space | triangle | ellipsoid | convex |
 // +------------+-----+--------+---------+------+----------+-------+------------+----------+-----------+--------+
-// | box        |  1  |   0    |    1    |   1  |    1     |   0   |      0     |    1     |    1      |    1   |
+// | box        |  1  |   0    |    0    |   1  |    1     |   0   |      0     |    1     |    1      |    1   |
 // +------------+-----+--------+---------+------+----------+-------+------------+----------+-----------+--------+
 // | sphere     |/////|   0    |    0    |   1  |    0     |   0   |      0     |    0     |    1      |    1   |
 // +------------+-----+--------+---------+------+----------+-------+------------+----------+-----------+--------+
@@ -208,8 +208,8 @@ std::size_t ShapeShapeCollide(const CollisionGeometry* o1,
 // +------------+-----+--------+---------+------+----------+-------+------------+----------+-----------+--------+
 //
 // Number of pairs: 55
-//   - Specialized: 26
-//   - GJK:         29
+//   - Specialized: 27
+//   - GJK:         28
 // clang-format on
 
 #define SHAPE_SHAPE_DISTANCE_SPECIALIZATION(T1, T2)                            \
@@ -279,6 +279,7 @@ std::size_t ShapeShapeCollide(const CollisionGeometry* o1,
     return result.min_distance;                                                \
   }
 
+SHAPE_SHAPE_DISTANCE_SPECIALIZATION(Box, Capsule)
 SHAPE_SHAPE_DISTANCE_SPECIALIZATION(Box, Halfspace)
 SHAPE_SHAPE_DISTANCE_SPECIALIZATION(Box, Plane)
 SHAPE_SHAPE_DISTANCE_SPECIALIZATION(Box, Sphere)
