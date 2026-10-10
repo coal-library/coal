@@ -139,17 +139,17 @@ unsigned recurseBuildMesh(const coal::Vec3s& scale, const aiScene* scene,
       aiFace& face = input_mesh->mFaces[j];
       assert(face.mNumIndices == 3 && "The size of the face is not valid.");
       tv.triangles_.push_back(
-          coal::Triangle32(vertices_offset + face.mIndices[0],
-                           vertices_offset + face.mIndices[1],
-                           vertices_offset + face.mIndices[2]));
+          coal::Triangle32(vertices_offset + nbVertices + face.mIndices[0],
+                           vertices_offset + nbVertices + face.mIndices[1],
+                           vertices_offset + nbVertices + face.mIndices[2]));
     }
 
     nbVertices += input_mesh->mNumVertices;
   }
 
   for (uint32_t i = 0; i < node->mNumChildren; ++i) {
-    nbVertices +=
-        recurseBuildMesh(scale, scene, node->mChildren[i], nbVertices, tv);
+    nbVertices += recurseBuildMesh(scale, scene, node->mChildren[i],
+                                   vertices_offset + nbVertices, tv);
   }
 
   return nbVertices;

@@ -51,6 +51,7 @@
 #include "coal/mesh_loader/loader.h"
 #include "utility.h"
 #include <iostream>
+#include <set>
 
 using namespace coal;
 
@@ -371,6 +372,26 @@ BOOST_AUTO_TEST_CASE(load_illformated_mesh) {
 
   MeshLoader loader;
   BOOST_CHECK_NO_THROW(loader.load(filename));
+}
+
+BOOST_AUTO_TEST_CASE(load_multi_mesh_node) {
+  boost::filesystem::path path(TEST_RESOURCES_DIR);
+  const std::string filename = (path / "multi_mesh_node.dae").string();
+
+  MeshLoader loader;
+  BVHModelPtr_t model = loader.load(filename);
+  BOOST_REQUIRE(model != nullptr);
+  BOOST_CHECK_EQUAL(model->num_vertices, 6);
+  BOOST_CHECK_EQUAL(model->num_tris, 2);
+
+  std::set<unsigned int> referenced_vertices;
+  for (unsigned int i = 0; i < model->num_tris; ++i) {
+    const Triangle32& tri = (*model->tri_indices)[i];
+    for (int j = 0; j < 3; ++j) {
+      referenced_vertices.insert(tri[j]);
+    }
+  }
+  BOOST_CHECK_EQUAL(referenced_vertices.size(), (size_t)model->num_vertices);
 }
 
 BOOST_AUTO_TEST_CASE(test_convex) {
