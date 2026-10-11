@@ -56,6 +56,7 @@ if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
   add_coal_test(capsule_box_1 capsule_box_1.cpp)
   add_coal_test(capsule_box_2 capsule_box_2.cpp)
   add_coal_test(capsule_box_distance capsule_box_distance.cpp)
+  add_coal_test(capsule_box_contact_patch capsule_box_contact_patch.cpp)
   add_coal_test(obb obb.cpp)
   add_coal_test(convex convex.cpp)
 
