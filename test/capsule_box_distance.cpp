@@ -20,6 +20,9 @@ const Scalar tol = Scalar(100) * std::sqrt(Eigen::NumTraits<Scalar>::epsilon());
 // Normals of the GJK/EPA reference are less accurate than its distances.
 const Scalar normal_tol =
     Scalar(20) * std::cbrt(Eigen::NumTraits<Scalar>::epsilon());
+// Checks that do not depend on GJK/EPA are tight in both precisions. In float,
+// GJK/EPA is off by up to 1e-2 on deep penetrations, hence the loose tol above.
+const Scalar witness_tol = Scalar(400) * Eigen::NumTraits<Scalar>::epsilon();
 
 struct Witness {
   Scalar distance;
@@ -53,13 +56,28 @@ void checkWitness(const Box& box, const Transform3s& tf_box,
                   const Capsule& capsule, const Transform3s& tf_capsule,
                   const Witness& w) {
   // w.p1 is on the box, w.p2 on the capsule, normal from box to capsule.
-  BOOST_CHECK_SMALL(w.normal.norm() - 1, tol);
-  BOOST_CHECK(((w.p2 - w.p1) - w.distance * w.normal).isZero(tol));
-  BOOST_CHECK_SMALL(boxSignedDistance(box, tf_box.inverseTransform(w.p1)), tol);
+  BOOST_CHECK_SMALL(w.normal.norm() - 1, witness_tol);
+  BOOST_CHECK(((w.p2 - w.p1) - w.distance * w.normal).isZero(witness_tol));
+  BOOST_CHECK_SMALL(boxSignedDistance(box, tf_box.inverseTransform(w.p1)),
+                    witness_tol);
   BOOST_CHECK_SMALL(
       distanceToCapsuleSegment(capsule, tf_capsule.inverseTransform(w.p2)) -
           capsule.radius,
-      tol);
+      witness_tol);
+
+  // The normal separates the shapes by the returned distance: the gap between
+  // their supports along it equals the distance. As the signed distance is the
+  // largest such gap over all directions, this bounds it from below, and, when
+  // separated, the witness points bound it from above.
+  const Vec3s& n = w.normal;
+  const Scalar box_support =
+      n.dot(tf_box.getTranslation()) +
+      (tf_box.getRotation().transpose() * n).cwiseAbs().dot(box.halfSide);
+  const Scalar capsule_support =
+      n.dot(tf_capsule.getTranslation()) -
+      capsule.halfLength * std::abs(n.dot(tf_capsule.getRotation().col(2))) -
+      capsule.radius;
+  BOOST_CHECK_SMALL(capsule_support - box_support - w.distance, witness_tol);
 }
 
 }  // namespace
@@ -100,9 +118,8 @@ BOOST_AUTO_TEST_CASE(capsule_box_matches_gjk_epa) {
       continue;
 
     BOOST_CHECK_SMALL(w.distance - ref.distance, tol);
-    // The normal is unique unless the shapes are (nearly) touching or the
-    // segment is deep enough for several separating directions to tie.
-    if (w.distance > tol || (w.distance < -tol && w.distance > -capsule.radius))
+    // The normal is unique unless the shapes are (nearly) touching.
+    if (std::abs(w.distance) > tol)
       BOOST_CHECK_SMALL((w.normal - ref.normal).norm(), normal_tol);
     if (w.distance < 0) ++num_penetrating;
 
