@@ -17,6 +17,9 @@ using Vec4s = Eigen::Matrix<Scalar, 4, 1>;
 namespace {
 
 const Scalar tol = Scalar(100) * std::sqrt(Eigen::NumTraits<Scalar>::epsilon());
+// Normals of the GJK/EPA reference are less accurate than its distances.
+const Scalar normal_tol =
+    Scalar(20) * std::cbrt(Eigen::NumTraits<Scalar>::epsilon());
 
 ContactPatch computePatch(const Box& box, const Transform3s& tf_box,
                           const Capsule& capsule,
@@ -139,11 +142,11 @@ BOOST_AUTO_TEST_CASE(patch_matches_gjk_epa_normal) {
     ++num_compared;
 
     BOOST_CHECK_EQUAL(patch.size(), expected.size());
-    BOOST_CHECK(patch.getNormal().isApprox(expected.getNormal(), Scalar(1e-4)));
+    BOOST_CHECK(patch.getNormal().isApprox(expected.getNormal(), normal_tol));
     BOOST_CHECK_SMALL(
         patch.penetration_depth - expected.penetration_depth, tol);
     for (size_t j = 0; j < expected.size(); ++j)
-      BOOST_CHECK(hasPoint(patch, expected.getPoint(j), Scalar(1e-4)));
+      BOOST_CHECK(hasPoint(patch, expected.getPoint(j), normal_tol));
     if (patch.size() == 2) ++num_two_points;
   }
   BOOST_CHECK(num_compared > num_tests / 10);

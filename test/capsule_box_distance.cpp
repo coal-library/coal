@@ -17,6 +17,9 @@ using Vec4s = Eigen::Matrix<Scalar, 4, 1>;
 namespace {
 
 const Scalar tol = Scalar(100) * std::sqrt(Eigen::NumTraits<Scalar>::epsilon());
+// Normals of the GJK/EPA reference are less accurate than its distances.
+const Scalar normal_tol =
+    Scalar(20) * std::cbrt(Eigen::NumTraits<Scalar>::epsilon());
 
 struct Witness {
   Scalar distance;
@@ -100,7 +103,7 @@ BOOST_AUTO_TEST_CASE(capsule_box_matches_gjk_epa) {
     // The normal is unique unless the shapes are (nearly) touching or the
     // segment is deep enough for several separating directions to tie.
     if (w.distance > tol || (w.distance < -tol && w.distance > -capsule.radius))
-      BOOST_CHECK_SMALL((w.normal - ref.normal).norm(), Scalar(1e-4));
+      BOOST_CHECK_SMALL((w.normal - ref.normal).norm(), normal_tol);
     if (w.distance < 0) ++num_penetrating;
 
     // The reversed pair returns the same witness points, swapped, and the
