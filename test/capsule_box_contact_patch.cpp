@@ -21,14 +21,13 @@ const Scalar tol = Scalar(100) * std::sqrt(Eigen::NumTraits<Scalar>::epsilon());
 const Scalar normal_tol =
     Scalar(20) * std::cbrt(Eigen::NumTraits<Scalar>::epsilon());
 
-ContactPatch computePatch(const Box& box, const Transform3s& tf_box,
-                          const Capsule& capsule,
-                          const Transform3s& tf_capsule,
+template <typename S1, typename S2>
+ContactPatch computePatch(const S1& s1, const Transform3s& tf1, const S2& s2,
+                          const Transform3s& tf2,
                           const CollisionResult& result) {
   const ContactPatchRequest request;
   ContactPatchResult patch_result(request);
-  computeContactPatch(&box, tf_box, &capsule, tf_capsule, result, request,
-                      patch_result);
+  computeContactPatch(&s1, tf1, &s2, tf2, result, request, patch_result);
   BOOST_REQUIRE_EQUAL(patch_result.numContactPatches(), 1);
   return patch_result.getContactPatch(0);
 }
@@ -97,6 +96,7 @@ BOOST_AUTO_TEST_CASE(patch_matches_gjk_epa_normal) {
   const int num_tests = 5000;
   int num_compared = 0;
   int num_two_points = 0;
+  int num_deep = 0;
   for (int i = 0; i < num_tests; ++i) {
     const Box box(Scalar(0.5 + U(rng)), Scalar(0.5 + U(rng)),
                   Scalar(0.5 + U(rng)));
@@ -104,16 +104,9 @@ BOOST_AUTO_TEST_CASE(patch_matches_gjk_epa_normal) {
     const Transform3s tf_box(
         Quats(Vec4s(Vec4s::Random()).normalized()).toRotationMatrix(),
         Vec3s::Random());
-    // Place the capsule close to the box surface to get shallow contacts.
-    Vec3s dir = Vec3s::Random().normalized();
     const Transform3s tf_capsule(
         Quats(Vec4s(Vec4s::Random()).normalized()).toRotationMatrix(),
         tf_box.getTranslation() + Scalar(0.7) * Vec3s::Random());
-
-    CollisionRequest request(CollisionRequestFlag::CONTACT, 1);
-    CollisionResult result;
-    collide(&box, tf_box, &capsule, tf_capsule, request, result);
-    if (!result.isCollision()) continue;
 
     Vec3s p1, p2, normal;
     const Scalar distance = solver.shapeDistance(box, tf_box, capsule,
@@ -122,33 +115,52 @@ BOOST_AUTO_TEST_CASE(patch_matches_gjk_epa_normal) {
     if (solver.gjk.status == details::GJK::Failed ||
         !(solver.epa.status & details::EPA::Valid))
       continue;
-    // Skip configurations where the penetration normal is not unique.
-    if (distance > -tol || distance < -capsule.radius) continue;
-
-    CollisionResult reference;
-    Contact contact = result.getContact(0);
-    contact.normal = normal;
-    contact.nearest_points[0] = p1;
-    contact.nearest_points[1] = p2;
-    contact.pos = Scalar(0.5) * (p1 + p2);
-    contact.penetration_depth = distance;
-    reference.addContact(contact);
-    reference.distance_lower_bound = distance;
-
-    const ContactPatch patch =
-        computePatch(box, tf_box, capsule, tf_capsule, result);
-    const ContactPatch expected =
-        computePatch(box, tf_box, capsule, tf_capsule, reference);
+    // Skip configurations where the normal is not unique: shapes nearly
+    // touching, or segment touching the box (where, in float, GJK may also
+    // stop without running EPA on a penetrating segment).
+    if (distance > -tol || std::abs(distance + capsule.radius) < tol) continue;
     ++num_compared;
+    if (distance < -capsule.radius) ++num_deep;
 
-    BOOST_CHECK_EQUAL(patch.size(), expected.size());
-    BOOST_CHECK(patch.getNormal().isApprox(expected.getNormal(), normal_tol));
-    BOOST_CHECK_SMALL(
-        patch.penetration_depth - expected.penetration_depth, tol);
-    for (size_t j = 0; j < expected.size(); ++j)
-      BOOST_CHECK(hasPoint(patch, expected.getPoint(j), normal_tol));
-    if (patch.size() == 2) ++num_two_points;
+    // The patch depends on the order of the shapes: compare in both orders.
+    for (const bool box_first : {true, false}) {
+      CollisionRequest request(CollisionRequestFlag::CONTACT, 1);
+      CollisionResult result;
+      if (box_first)
+        collide(&box, tf_box, &capsule, tf_capsule, request, result);
+      else
+        collide(&capsule, tf_capsule, &box, tf_box, request, result);
+      BOOST_REQUIRE(result.isCollision());
+
+      // Same contact, with the normal and witness points of GJK/EPA.
+      CollisionResult reference;
+      Contact contact = result.getContact(0);
+      contact.normal = box_first ? normal : Vec3s(-normal);
+      contact.nearest_points[0] = box_first ? p1 : p2;
+      contact.nearest_points[1] = box_first ? p2 : p1;
+      contact.pos = Scalar(0.5) * (p1 + p2);
+      contact.penetration_depth = distance;
+      reference.addContact(contact);
+      reference.distance_lower_bound = distance;
+
+      const ContactPatch patch =
+          box_first ? computePatch(box, tf_box, capsule, tf_capsule, result)
+                    : computePatch(capsule, tf_capsule, box, tf_box, result);
+      const ContactPatch expected =
+          box_first
+              ? computePatch(box, tf_box, capsule, tf_capsule, reference)
+              : computePatch(capsule, tf_capsule, box, tf_box, reference);
+
+      BOOST_CHECK_EQUAL(patch.size(), expected.size());
+      BOOST_CHECK(patch.getNormal().isApprox(expected.getNormal(), normal_tol));
+      BOOST_CHECK_SMALL(patch.penetration_depth - expected.penetration_depth,
+                        tol);
+      for (size_t j = 0; j < expected.size(); ++j)
+        BOOST_CHECK(hasPoint(patch, expected.getPoint(j), normal_tol));
+      if (patch.size() == 2) ++num_two_points;
+    }
   }
   BOOST_CHECK(num_compared > num_tests / 10);
   BOOST_CHECK(num_two_points > 0);
+  BOOST_CHECK(num_deep > 0);
 }
