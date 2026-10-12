@@ -109,9 +109,8 @@ BOOST_AUTO_TEST_CASE(patch_matches_gjk_epa_normal) {
         tf_box.getTranslation() + Scalar(0.7) * Vec3s::Random());
 
     Vec3s p1, p2, normal;
-    const Scalar distance = solver.shapeDistance(box, tf_box, capsule,
-                                                 tf_capsule, true, p1, p2,
-                                                 normal);
+    const Scalar distance = solver.shapeDistance(
+        box, tf_box, capsule, tf_capsule, true, p1, p2, normal);
     if (solver.gjk.status == details::GJK::Failed ||
         !(solver.epa.status & details::EPA::Valid))
       continue;
@@ -147,9 +146,8 @@ BOOST_AUTO_TEST_CASE(patch_matches_gjk_epa_normal) {
           box_first ? computePatch(box, tf_box, capsule, tf_capsule, result)
                     : computePatch(capsule, tf_capsule, box, tf_box, result);
       const ContactPatch expected =
-          box_first
-              ? computePatch(box, tf_box, capsule, tf_capsule, reference)
-              : computePatch(capsule, tf_capsule, box, tf_box, reference);
+          box_first ? computePatch(box, tf_box, capsule, tf_capsule, reference)
+                    : computePatch(capsule, tf_capsule, box, tf_box, reference);
 
       BOOST_CHECK_EQUAL(patch.size(), expected.size());
       BOOST_CHECK(patch.getNormal().isApprox(expected.getNormal(), normal_tol));
