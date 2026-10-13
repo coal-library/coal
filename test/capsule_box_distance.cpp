@@ -1,7 +1,9 @@
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 #define BOOST_TEST_MODULE COAL_CAPSULE_BOX_DISTANCE
 #include <boost/test/included/unit_test.hpp>
 
-#include <cmath>
 #include <random>
 
 #include "coal/collision.h"
