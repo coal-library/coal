@@ -567,8 +567,27 @@ inline Scalar boxCapsuleDistance(const Box& b, const Transform3s& tfb,
   const Scalar segment_distance = normal.norm();
   Scalar dist;
   if (segment_distance > dummy_precision) {
-    normal /= segment_distance;
+    // At a minimizer inside the segment, the normal is orthogonal to it, and
+    // it is exactly zero along the axes where ps is not clamped. As a
+    // difference of nearly coincident points, ps - pb loses the orthogonality
+    // when the segment almost touches a box edge or vertex: restore it with a
+    // direction that keeps those zeros.
+    if (t > -1 && t < 1) {
+      const Vec3s h_clamped = (normal.array() != 0).select(h, Vec3s::Zero());
+      const Scalar hh_clamped = h_clamped.squaredNorm();
+      if (hh_clamped > 0) {
+        const Vec3s corrected =
+            normal - (normal.dot(h_clamped) / hh_clamped) * h_clamped;
+        // Only remove rounding errors: when pb is on a face, h_clamped is
+        // parallel to the normal and the correction would cancel it.
+        if (corrected.squaredNorm() > normal.squaredNorm() / 4)
+          normal = corrected;
+      }
+    }
+    normal.normalize();
     dist = segment_distance - radius;
+    // pb + dist * normal would leave the capsule surface after the correction.
+    pc = ps - radius * normal;
   } else {
     // The segment intersects the box: find the separating axis of minimal
     // overlap. Face axes are tested first and kept on ties.
@@ -634,9 +653,11 @@ inline Scalar boxCapsuleDistance(const Box& b, const Transform3s& tfb,
       pb[edge] =
           std::clamp<Scalar>(w[edge] + he * t_closest, -e[edge], e[edge]);
     }
+    pc = pb + dist * normal;
   }
 
   pb = tfb.transform(pb);
+  pc = tfb.transform(pc);
   normal = Rb * normal;
 
   const Scalar ssrb = b.getSweptSphereRadius();
@@ -644,7 +665,6 @@ inline Scalar boxCapsuleDistance(const Box& b, const Transform3s& tfb,
     pb += ssrb * normal;
     dist -= ssrb;
   }
-  pc = pb + dist * normal;
 
   return dist;
 }
