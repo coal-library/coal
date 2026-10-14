@@ -37,6 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix contact counting in octree collision detection with ShapeShapeCollide ([#746](https://github.com/coal-library/coal/pull/746))
 - Fix sqrDistLowerBound in octree traversal with height field ([#753](https://github.com/coal-library/coal/pull/753))
 - Fix contact patch computation by enforcing CCW construction of support sets ([#772](https://github.com/coal-library/coal/pull/772))
+- Fix the segment-segment determinant formula in the contact patch solver, which returned wrong points for crossing edges ([#906](https://github.com/coal-library/coal/issues/906))
 - Remove pixi 0.57 warnings ([#774](https://github.com/coal-library/coal/pull/774))
 - Fix nanobind bindings' stub file ([#781](https://github.com/coal-library/coal/pull/781#event-20983199417))
 - Remove Windows warnings when building benchmakrs ([789](https://github.com/coal-library/coal/pull/789))
