@@ -47,6 +47,9 @@
 #include "coal/internal/tools.h"
 #include "coal/shape/geometric_shape_to_BVH_model.h"
 #include "coal/internal/shape_shape_func.h"
+#include "coal/internal/BV_fitter.h"
+#include "coal/shape/geometric_shapes_utility.h"
+#include "coal/BV/OBBRSS.h"
 
 using namespace coal;
 
@@ -231,6 +234,70 @@ BOOST_AUTO_TEST_CASE(cone_to_bvh) {
   BVHModel<OBB> bvh;
   generateBVHModel(bvh, shape, Transform3s(), 10, 10);
   generateBVHModel(bvh, shape, Transform3s(), 50);
+}
+
+Scalar uniform(Scalar a, Scalar b) {
+  return a + (b - a) * Scalar(rand()) / Scalar(RAND_MAX);
+}
+
+Scalar rssVolume(const RSS& rss) {
+  const Scalar r = rss.radius, pi = boost::math::constants::pi<Scalar>();
+  return 2 * r * rss.length[0] * rss.length[1] +
+         pi * r * r * (rss.length[0] + rss.length[1]) + 4 * pi * r * r * r / 3;
+}
+
+// The closed-form OBBRSS of a shape contains the shape (points given in its
+// frame by sample) and is not larger than the fit of its bounding vertices,
+// up to the precision of the fit (same volume for boxes).
+template <typename S, typename Sample>
+void checkShapeOBBRSS(const S& shape, Sample sample) {
+  for (int i = 0; i < 50; ++i) {
+    Transform3s tf;
+    generateRandomTransform(extents, tf);
+    OBBRSS bv;
+    computeBV(shape, tf, bv);
+    for (int j = 0; j < 200; ++j) {
+      Vec3s p = tf.transform(Scalar(1 - 1e-9) * sample());
+      BOOST_CHECK(bv.obb.contain(p));
+      BOOST_CHECK(bv.rss.contain(p));
+    }
+    std::vector<Vec3s> vertices = details::getBoundVertices(shape, tf);
+    OBBRSS fitted;
+    fit(vertices.data(), (unsigned int)vertices.size(), fitted);
+    BOOST_CHECK(rssVolume(bv.rss) <= rssVolume(fitted.rss) * (1 + 1e-6));
+  }
+}
+
+BOOST_AUTO_TEST_CASE(shape_obbrss) {
+  const Scalar pi = boost::math::constants::pi<Scalar>();
+  auto ball = [] {
+    Vec3s u(uniform(-1, 1), uniform(-1, 1), uniform(-1, 1));
+    return Vec3s(u.normalized() * std::cbrt(uniform(0, 1)));
+  };
+  auto disk = [pi](Scalar r, Scalar z) {
+    Scalar a = uniform(0, 2 * pi), d = r * std::sqrt(uniform(0, 1));
+    return Vec3s(d * std::cos(a), d * std::sin(a), z);
+  };
+  for (int i = 0; i < 20; ++i) {
+    Box box(uniform(0.01, 2), uniform(0.01, 2), uniform(0.01, 2));
+    checkShapeOBBRSS(box, [&box] {
+      Vec3s u(uniform(-1, 1), uniform(-1, 1), uniform(-1, 1));
+      u[rand() % 3] = rand() % 2 ? 1 : -1;  // on a face
+      return Vec3s(u.cwiseProduct(box.halfSide));
+    });
+    Sphere sphere(uniform(0.01, 2));
+    checkShapeOBBRSS(sphere, [&] { return Vec3s(sphere.radius * ball()); });
+    Capsule capsule(uniform(0.01, 1), uniform(0.01, 2));
+    checkShapeOBBRSS(capsule, [&] {
+      return Vec3s(capsule.radius * ball() +
+                   Vec3s(0, 0, uniform(-1, 1) * capsule.halfLength));
+    });
+    Cylinder cylinder(uniform(0.01, 1), uniform(0.01, 2));
+    checkShapeOBBRSS(cylinder, [&] {
+      return disk(cylinder.radius,
+                  uniform(-cylinder.halfLength, cylinder.halfLength));
+    });
+  }
 }
 
 BOOST_AUTO_TEST_CASE(collide_spheresphere) {
