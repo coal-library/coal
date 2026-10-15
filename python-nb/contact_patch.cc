@@ -7,6 +7,7 @@
 
 #include "serializable.hh"
 #include "pickle.hh"
+#include "copyable.hh"
 
 #include "fwd.h"
 #include <nanobind/operators.h>
@@ -34,9 +35,11 @@ void exposeContactPatchAPI(nb::module_& m) {
       .DEF_CLASS_FUNC(ContactPatch, clear)
       .DEF_CLASS_FUNC(ContactPatch, isSame)
       .def(nb::self == nb::self)
+      .def(python::v2::CopyableVisitor<ContactPatch>())
       .def(python::v2::PickleVisitor<ContactPatch>());
 
   nb::bind_vector<std::vector<ContactPatch>>(m, "StdVec_ContactPatch")
+      .def(python::v2::CopyableVisitor<std::vector<ContactPatch>>())
       .def(python::v2::PickleVisitor<std::vector<ContactPatch>>());
 
   nb::class_<ContactPatchRequest>(m, "ContactPatchRequest")
@@ -52,10 +55,12 @@ void exposeContactPatchAPI(nb::module_& m) {
       .DEF_CLASS_FUNC(ContactPatchRequest, getPatchTolerance)
       .DEF_CLASS_FUNC(ContactPatchRequest, setPatchTolerance)
       .def(nb::self == nb::self)
+      .def(python::v2::CopyableVisitor<ContactPatchRequest>())
       .def(python::v2::PickleVisitor<ContactPatchRequest>());
 
   nb::bind_vector<std::vector<ContactPatchRequest>>(
       m, "StdVec_ContactPatchRequest")
+      .def(python::v2::CopyableVisitor<std::vector<ContactPatchRequest>>())
       .def(python::v2::PickleVisitor<std::vector<ContactPatchRequest>>());
 
   nb::class_<ContactPatchResult>(m, "ContactPatchResult")
@@ -68,10 +73,12 @@ void exposeContactPatchAPI(nb::module_& m) {
       .DEF_CLASS_FUNC(ContactPatchResult, set)
       .DEF_CLASS_FUNC(ContactPatchResult, check)
       .def(nb::self == nb::self)
+      .def(python::v2::CopyableVisitor<ContactPatchResult>())
       .def(python::v2::PickleVisitor<ContactPatchResult>());
 
   nb::bind_vector<std::vector<ContactPatchResult>>(m,
                                                    "StdVec_ContactPatchResult")
+      .def(python::v2::CopyableVisitor<std::vector<ContactPatchResult>>())
       .def(python::v2::PickleVisitor<std::vector<ContactPatchResult>>());
 
   nb::class_<ComputeContactPatch>(m, "ComputeContactPatch")

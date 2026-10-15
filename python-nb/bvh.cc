@@ -5,6 +5,7 @@
 #include "coal/shape/convex.h"
 
 #include "pickle.hh"
+#include "copyable.hh"
 #include "serializable.hh"
 
 #include "fwd.h"
@@ -27,6 +28,7 @@ void exposeBVHModel(nb::module_& m, const char* name) {
       .DEF_CLASS_FUNC(BVHType, makeParentRelative)
       .DEF_CLASS_FUNC(BVHType, memUsage)
       .def("clone", &BVHType::clone, nb::rv_policy::take_ownership)
+      .def(python::v2::CopyableVisitor<BVHType>())
       .def(python::v2::PickleVisitor<BVHType>())
       .def(python::v2::SerializableVisitor<BVHType>());
 }

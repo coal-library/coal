@@ -9,6 +9,7 @@
 #include "coal/serialization/convex.h"
 
 #include "pickle.hh"
+#include "copyable.hh"
 #include "serializable.hh"
 
 #include "fwd.h"
@@ -119,7 +120,8 @@ void exposeConvexBase(nb::module_& m, const std::string& classname) {
           },
           "points"_a, "keepTri"_a, "qhullCommand"_a = nb::none(),
           nb::rv_policy::take_ownership)
-      .def("clone", &ConvexBaseType::clone, nb::rv_policy::take_ownership);
+      .def("clone", &ConvexBaseType::clone, nb::rv_policy::take_ownership)
+      .def(python::v2::CopyableVisitor<ConvexBaseType>());
 }
 
 template <typename PolygonT>
@@ -161,6 +163,7 @@ void exposeConvex(nb::module_& m, const std::string& classname) {
             return (*convex.polygons)[i];
           },
           "index"_a, "Retrieve the polygon given by its index.")
+      .def(python::v2::CopyableVisitor<ConvexType>())
       .def(python::v2::PickleVisitor<ConvexType>())
       .def(python::v2::SerializableVisitor<ConvexType>())
       .def(nanoeigenpy::IdVisitor());
@@ -178,6 +181,7 @@ void exposeShapes(nb::module_& m) {
       .def(nb::init<const Vec3s&>(), "side_"_a)
       .DEF_RW_CLASS_ATTRIB(Box, halfSide)
       .def("clone", &Box::clone, nb::rv_policy::take_ownership)
+      .def(python::v2::CopyableVisitor<Box>())
       .def(python::v2::PickleVisitor<Box>())
       .def(python::v2::SerializableVisitor<Box>())
       .def(nanoeigenpy::IdVisitor());
@@ -189,6 +193,7 @@ void exposeShapes(nb::module_& m) {
       .DEF_RW_CLASS_ATTRIB(Capsule, radius)
       .DEF_RW_CLASS_ATTRIB(Capsule, halfLength)
       .def("clone", &Capsule::clone, nb::rv_policy::take_ownership)
+      .def(python::v2::CopyableVisitor<Capsule>())
       .def(python::v2::PickleVisitor<Capsule>())
       .def(python::v2::SerializableVisitor<Capsule>())
       .def(nanoeigenpy::IdVisitor());
@@ -200,6 +205,7 @@ void exposeShapes(nb::module_& m) {
       .DEF_RW_CLASS_ATTRIB(Cone, radius)
       .DEF_RW_CLASS_ATTRIB(Cone, halfLength)
       .def("clone", &Cone::clone, nb::rv_policy::take_ownership)
+      .def(python::v2::CopyableVisitor<Cone>())
       .def(python::v2::PickleVisitor<Cone>())
       .def(python::v2::SerializableVisitor<Cone>())
       .def(nanoeigenpy::IdVisitor());
@@ -211,6 +217,7 @@ void exposeShapes(nb::module_& m) {
       .DEF_RW_CLASS_ATTRIB(Cylinder, radius)
       .DEF_RW_CLASS_ATTRIB(Cylinder, halfLength)
       .def("clone", &Cylinder::clone, nb::rv_policy::take_ownership)
+      .def(python::v2::CopyableVisitor<Cylinder>())
       .def(python::v2::PickleVisitor<Cylinder>())
       .def(python::v2::SerializableVisitor<Cylinder>())
       .def(nanoeigenpy::IdVisitor());
@@ -224,6 +231,7 @@ void exposeShapes(nb::module_& m) {
       .DEF_RW_CLASS_ATTRIB(Halfspace, n)
       .DEF_RW_CLASS_ATTRIB(Halfspace, d)
       .def("clone", &Halfspace::clone, nb::rv_policy::take_ownership)
+      .def(python::v2::CopyableVisitor<Halfspace>())
       .def(python::v2::PickleVisitor<Halfspace>())
       .def(python::v2::SerializableVisitor<Halfspace>())
       .def(nanoeigenpy::IdVisitor());
@@ -237,6 +245,7 @@ void exposeShapes(nb::module_& m) {
       .DEF_RW_CLASS_ATTRIB(Plane, n)
       .DEF_RW_CLASS_ATTRIB(Plane, d)
       .def("clone", &Plane::clone, nb::rv_policy::take_ownership)
+      .def(python::v2::CopyableVisitor<Plane>())
       .def(python::v2::PickleVisitor<Plane>())
       .def(python::v2::SerializableVisitor<Plane>())
       .def(nanoeigenpy::IdVisitor());
@@ -247,6 +256,7 @@ void exposeShapes(nb::module_& m) {
       .def(nb::init<const Sphere&>(), "other_"_a)
       .DEF_RW_CLASS_ATTRIB(Sphere, radius)
       .def("clone", &Sphere::clone, nb::rv_policy::take_ownership)
+      .def(python::v2::CopyableVisitor<Sphere>())
       .def(python::v2::PickleVisitor<Sphere>())
       .def(python::v2::SerializableVisitor<Sphere>())
       .def(nanoeigenpy::IdVisitor());
@@ -258,6 +268,7 @@ void exposeShapes(nb::module_& m) {
       .def(nb::init<const Ellipsoid&>(), "other_"_a)
       .DEF_RW_CLASS_ATTRIB(Ellipsoid, radii)
       .def("clone", &Ellipsoid::clone, nb::rv_policy::take_ownership)
+      .def(python::v2::CopyableVisitor<Ellipsoid>())
       .def(python::v2::PickleVisitor<Ellipsoid>())
       .def(python::v2::SerializableVisitor<Ellipsoid>())
       .def(nanoeigenpy::IdVisitor());
@@ -271,6 +282,7 @@ void exposeShapes(nb::module_& m) {
       .DEF_RW_CLASS_ATTRIB(TriangleP, b)
       .DEF_RW_CLASS_ATTRIB(TriangleP, c)
       .def("clone", &TriangleP::clone, nb::rv_policy::take_ownership)
+      .def(python::v2::CopyableVisitor<TriangleP>())
       .def(python::v2::PickleVisitor<TriangleP>())
       .def(python::v2::SerializableVisitor<TriangleP>())
       .def(nanoeigenpy::IdVisitor());
