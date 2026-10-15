@@ -553,37 +553,22 @@ static void boxRSS(const Vec3s& h, const Matrix3s& R, const Vec3s& T, RSS& bv) {
   bv.radius = h[i2];
 }
 
-/// Volume of an RSS: rectangle of side lengths a, b inflated by r.
-static Scalar rssVolume(Scalar a, Scalar b, Scalar r) {
-  return 2 * r * a * b + Scalar(M_PI) * r * r * (a + b) +
-         Scalar(4. / 3 * M_PI) * r * r * r;
-}
-
 /// RSS of a cylinder around z with radius r and half length l: the smallest of
 /// a segment along z inflated by r, and a square of half side a in the xy plane
 /// inflated by sqrt((r - a)^2 + l^2), for a = r and a = r - l.
 static void revolutionRSS(Scalar r, Scalar l, const Transform3s& tf, RSS& bv) {
   const Matrix3s& R = tf.getRotation();
   const Vec3s& T = tf.getTranslation();
-  Scalar best = rssVolume(2 * l, 0, r), side = -1, radius = r;
+  segmentRSS(T, R.col(2), R.col(0), l, r, bv);
   for (Scalar a : {r, r - l}) {
     if (a < 0) continue;
-    Scalar rho = std::sqrt((r - a) * (r - a) + l * l);
-    Scalar volume = rssVolume(2 * a, 2 * a, rho);
-    if (volume < best) {
-      best = volume;
-      side = a;
-      radius = rho;
-    }
+    RSS square;
+    square.axes = R;
+    square.Tr = T - a * (R.col(0) + R.col(1));
+    square.length[0] = square.length[1] = 2 * a;
+    square.radius = std::sqrt((r - a) * (r - a) + l * l);
+    if (square.volume() < bv.volume()) bv = square;
   }
-  if (side < 0) {
-    segmentRSS(T, R.col(2), R.col(0), l, r, bv);
-    return;
-  }
-  bv.axes = R;
-  bv.Tr = T - side * (R.col(0) + R.col(1));
-  bv.length[0] = bv.length[1] = 2 * side;
-  bv.radius = radius;
 }
 
 template <>

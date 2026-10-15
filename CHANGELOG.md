@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Boost::thread
 
 ### Fixed
+- Fix `RSS::volume`, which missed the half cylinders along the rectangle edges and counted the sphere caps as `4 pi r^3` ([#909](https://github.com/coal-library/coal/pull/909))
 - Fix doc parsing via doxygen scripts ([#678](https://github.com/coal-library/coal/pull/678) [#699](https://github.com/coal-library/coal/pull/699))
 - Correctly calculate AABB for pruned octrees ([#741](https://github.com/coal-library/coal/pull/741))
 - Fix contact counting in octree collision detection with ShapeShapeCollide ([#746](https://github.com/coal-library/coal/pull/746))
