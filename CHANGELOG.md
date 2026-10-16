@@ -40,8 +40,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix sqrDistLowerBound in octree traversal with height field ([#753](https://github.com/coal-library/coal/pull/753))
 - Fix contact patch computation by enforcing CCW construction of support sets ([#772](https://github.com/coal-library/coal/pull/772))
 - Fix the segment-segment determinant formula in the contact patch solver, which returned wrong points for crossing edges ([#906](https://github.com/coal-library/coal/issues/906))
-- Fix compiler warnings emitted by public headers (deprecated fields in `GJKSolver` and `CollisionRequest`, `-Wdeprecated-copy`, `-Wsign-conversion` in the broadphase hierarchy trees)
-- Add a copy assignment operator to `details::EPA`, consistent with its copy constructor: the implicit one left the polytope pointing into the faces of the copied EPA
 - Remove pixi 0.57 warnings ([#774](https://github.com/coal-library/coal/pull/774))
 - Fix nanobind bindings' stub file ([#781](https://github.com/coal-library/coal/pull/781#event-20983199417))
 - Remove Windows warnings when building benchmakrs ([789](https://github.com/coal-library/coal/pull/789))
@@ -58,6 +56,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix `ContactPatchResult::swapObjects`: flip `ContactPatch::direction` along with the patch frame, and reflect every point of a patch instead of one of them, so `getNormal` reports the contact normal for shape-first queries against meshes and height fields ([#884](https://github.com/coal-library/coal/pull/884))
 - Fix `Box` support function. ([#895](https://github.com/coal-library/coal/pull/895))
 - Fix serialization typo in `ContactPatchRequest` ([#901](https://github.com/coal-library/coal/pull/901))
+- Fix various compiler warnings:
+  - Fix compiler warnings emitted by public headers (deprecated fields in `GJKSolver` and `CollisionRequest`, `-Wdeprecated-copy`, `-Wsign-conversion` in the broadphase hierarchy trees)
+  - Add a copy assignment operator to `details::EPA`, consistent with its copy constructor: the implicit one left the polytope pointing into the faces of the copied EPA
 
 ### Changed
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))
