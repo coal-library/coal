@@ -110,11 +110,22 @@ class TestCopy(TestCase):
             coal.Box(1.0, 2.0, 3.0), lambda b: b.halfSide, set_half_side
         )
 
-        # The copy constructor of a Convex shares its points: the copy must not.
-        def move_point(convex):
-            convex.points(0)[:] = [5.0, 5.0, 5.0]
+    def test_convex(self):
+        # Copies use the copy constructor, which shares the points of a Convex.
+        convex = tetahedron()
+        for copier in (lambda o: o.copy(), copy.copy, copy.deepcopy):
+            other = copier(convex)
+            self.assertIs(type(other), type(convex))
+            self.assertTrue(other == convex)
+            other.points(0)[:] = [5.0, 5.0, 5.0]
+            self.assertTrue(np.array_equal(convex.points(0), [5.0, 5.0, 5.0]))
+            convex.points(0)[:] = [0.0, 0.0, 0.0]
 
-        self.assertIndependentCopies(tetahedron(), lambda c: c.points(0), move_point)
+        # clone() is the deep copy.
+        other = convex.clone()
+        self.assertIs(type(other), type(convex))
+        other.points(0)[:] = [5.0, 5.0, 5.0]
+        self.assertTrue(np.array_equal(convex.points(0), [0.0, 0.0, 0.0]))
 
     def test_transform(self):
         def set_translation(transform):
