@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- nanobind: add `copy()`, `__copy__` and `__deepcopy__` to the value classes (requests, results, contacts, shapes, transforms, bounding volumes, BVH models, height fields, octrees and `StdVec_*` containers), bound to the C++ copy constructor. The copies of a `Convex` share its points: use `clone()` for a deep copy. ([#911](https://github.com/coal-library/coal/pull/911))
+- nanobind: add `copy()`, `__copy__` and `__deepcopy__` to the value classes (requests, results, contacts, shapes, transforms, bounding volumes, BVH models, height fields, octrees and `StdVec_*` containers), `copy()` and `__copy__` use the C++ copy constructor, `__deepcopy__` uses `clone()` when available (deep copy of geometries, e.g. a `Convex` and its points). ([#911](https://github.com/coal-library/coal/pull/911))
 - nanobind : add fixed to allow pinocchio's binding portage to nanobind ([#893] (https://github.com/coal-library/coal/pull/893))
 - broadphase: add functional API for collision and distance callbacks ([#724](https://github.com/coal-library/coal/pull/724))
 - Added a second set of Python bindings based on nanobind ([#659](https://github.com/coal-library/coal/pull/659))

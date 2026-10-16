@@ -111,9 +111,10 @@ class TestCopy(TestCase):
         )
 
     def test_convex(self):
-        # Copies use the copy constructor, which shares the points of a Convex.
+        # copy() and copy.copy use the copy constructor, which shares the points of
+        # a Convex. copy.deepcopy and clone() deep copy them.
         convex = tetahedron()
-        for copier in (lambda o: o.copy(), copy.copy, copy.deepcopy):
+        for copier in (lambda o: o.copy(), copy.copy):
             other = copier(convex)
             self.assertIs(type(other), type(convex))
             self.assertTrue(other == convex)
@@ -121,11 +122,12 @@ class TestCopy(TestCase):
             self.assertTrue(np.array_equal(convex.points(0), [5.0, 5.0, 5.0]))
             convex.points(0)[:] = [0.0, 0.0, 0.0]
 
-        # clone() is the deep copy.
-        other = convex.clone()
-        self.assertIs(type(other), type(convex))
-        other.points(0)[:] = [5.0, 5.0, 5.0]
-        self.assertTrue(np.array_equal(convex.points(0), [0.0, 0.0, 0.0]))
+        for copier in (copy.deepcopy, lambda o: o.clone()):
+            other = copier(convex)
+            self.assertIs(type(other), type(convex))
+            self.assertTrue(other == convex)
+            other.points(0)[:] = [5.0, 5.0, 5.0]
+            self.assertTrue(np.array_equal(convex.points(0), [0.0, 0.0, 0.0]))
 
     def test_transform(self):
         def set_translation(transform):
