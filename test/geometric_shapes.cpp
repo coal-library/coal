@@ -4161,7 +4161,7 @@ void checkShapeOBBRSS(const S& shape, Sample sample) {
     std::vector<Vec3s> vertices = details::getBoundVertices(shape, tf);
     OBBRSS fitted;
     fit(vertices.data(), (unsigned int)vertices.size(), fitted);
-    if (std::is_same<S, Box>::value)
+    if constexpr (std::is_same_v<S, Box>)
       BOOST_CHECK_CLOSE(bv.rss.volume(), fitted.rss.volume(), 1e-4);
     else
       BOOST_CHECK(bv.rss.volume() <= fitted.rss.volume() * (1 + 1e-6));
