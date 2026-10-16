@@ -165,6 +165,38 @@ COAL_DLLAPI void computeBV<OBB, Halfspace>(const Halfspace& s,
                                            const Transform3s& tf, OBB& bv);
 
 template <>
+COAL_DLLAPI void computeBV<RSS, Box>(const Box& s, const Transform3s& tf,
+                                     RSS& bv);
+
+template <>
+COAL_DLLAPI void computeBV<OBBRSS, Box>(const Box& s, const Transform3s& tf,
+                                        OBBRSS& bv);
+
+template <>
+COAL_DLLAPI void computeBV<RSS, Sphere>(const Sphere& s, const Transform3s& tf,
+                                        RSS& bv);
+
+template <>
+COAL_DLLAPI void computeBV<OBBRSS, Sphere>(const Sphere& s,
+                                           const Transform3s& tf, OBBRSS& bv);
+
+template <>
+COAL_DLLAPI void computeBV<RSS, Capsule>(const Capsule& s,
+                                         const Transform3s& tf, RSS& bv);
+
+template <>
+COAL_DLLAPI void computeBV<OBBRSS, Capsule>(const Capsule& s,
+                                            const Transform3s& tf, OBBRSS& bv);
+
+template <>
+COAL_DLLAPI void computeBV<RSS, Cylinder>(const Cylinder& s,
+                                          const Transform3s& tf, RSS& bv);
+
+template <>
+COAL_DLLAPI void computeBV<OBBRSS, Cylinder>(const Cylinder& s,
+                                             const Transform3s& tf, OBBRSS& bv);
+
+template <>
 COAL_DLLAPI void computeBV<RSS, Halfspace>(const Halfspace& s,
                                            const Transform3s& tf, RSS& bv);
 

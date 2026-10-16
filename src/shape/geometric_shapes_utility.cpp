@@ -525,6 +525,119 @@ void computeBV<OBB, Cylinder>(const Cylinder& s, const Transform3s& tf,
   bv.extent << s.radius, s.radius, s.halfLength;
 }
 
+/// RSS of a segment of half length l along axis a, inflated by r.
+static void segmentRSS(const Vec3s& T, const Vec3s& a, const Vec3s& b, Scalar l,
+                       Scalar r, RSS& bv) {
+  bv.axes.col(0) = a;
+  bv.axes.col(1) = b;
+  bv.axes.col(2) = a.cross(b);
+  bv.Tr = T - l * a;
+  bv.length[0] = 2 * l;
+  bv.length[1] = 0;
+  bv.radius = r;
+}
+
+/// RSS of an axis-aligned box of half extents h in frame (R, T): the two
+/// largest extents span the rectangle, the smallest is the radius.
+static void boxRSS(const Vec3s& h, const Matrix3s& R, const Vec3s& T, RSS& bv) {
+  int i0 = 0, i1 = 1, i2 = 2;
+  if (h[i0] < h[i1]) std::swap(i0, i1);
+  if (h[i1] < h[i2]) std::swap(i1, i2);
+  if (h[i0] < h[i1]) std::swap(i0, i1);
+  bv.axes.col(0) = R.col(i0);
+  bv.axes.col(1) = R.col(i1);
+  bv.axes.col(2) = R.col(i0).cross(R.col(i1));
+  bv.Tr = T - h[i0] * R.col(i0) - h[i1] * R.col(i1);
+  bv.length[0] = 2 * h[i0];
+  bv.length[1] = 2 * h[i1];
+  bv.radius = h[i2];
+}
+
+/// RSS of a cylinder around z with radius r and half length l: the smallest of
+/// a segment along z inflated by r, and a square of half side a in the xy plane
+/// inflated by sqrt((r - a)^2 + l^2), for a = r and a = r - l.
+static void revolutionRSS(Scalar r, Scalar l, const Transform3s& tf, RSS& bv) {
+  const Matrix3s& R = tf.getRotation();
+  const Vec3s& T = tf.getTranslation();
+  segmentRSS(T, R.col(2), R.col(0), l, r, bv);
+  for (Scalar a : {r, r - l}) {
+    if (a < 0) continue;
+    RSS square;
+    square.axes = R;
+    square.Tr = T - a * (R.col(0) + R.col(1));
+    square.length[0] = square.length[1] = 2 * a;
+    square.radius = std::sqrt((r - a) * (r - a) + l * l);
+    if (square.volume() < bv.volume()) bv = square;
+  }
+}
+
+template <>
+void computeBV<RSS, Box>(const Box& s, const Transform3s& tf, RSS& bv) {
+  if (s.getSweptSphereRadius() > 0) {
+    COAL_THROW_PRETTY("Swept-sphere radius not yet supported.",
+                      std::runtime_error);
+  }
+  boxRSS(s.halfSide, tf.getRotation(), tf.getTranslation(), bv);
+}
+
+template <>
+void computeBV<RSS, Sphere>(const Sphere& s, const Transform3s& tf, RSS& bv) {
+  if (s.getSweptSphereRadius() > 0) {
+    COAL_THROW_PRETTY("Swept-sphere radius not yet supported.",
+                      std::runtime_error);
+  }
+  segmentRSS(tf.getTranslation(), Vec3s::UnitX(), Vec3s::UnitY(), 0, s.radius,
+             bv);
+}
+
+template <>
+void computeBV<RSS, Capsule>(const Capsule& s, const Transform3s& tf, RSS& bv) {
+  if (s.getSweptSphereRadius() > 0) {
+    COAL_THROW_PRETTY("Swept-sphere radius not yet supported.",
+                      std::runtime_error);
+  }
+  const Matrix3s& R = tf.getRotation();
+  segmentRSS(tf.getTranslation(), R.col(2), R.col(0), s.halfLength, s.radius,
+             bv);
+}
+
+template <>
+void computeBV<RSS, Cylinder>(const Cylinder& s, const Transform3s& tf,
+                              RSS& bv) {
+  if (s.getSweptSphereRadius() > 0) {
+    COAL_THROW_PRETTY("Swept-sphere radius not yet supported.",
+                      std::runtime_error);
+  }
+  revolutionRSS(s.radius, s.halfLength, tf, bv);
+}
+
+template <>
+void computeBV<OBBRSS, Box>(const Box& s, const Transform3s& tf, OBBRSS& bv) {
+  computeBV<OBB, Box>(s, tf, bv.obb);
+  computeBV<RSS, Box>(s, tf, bv.rss);
+}
+
+template <>
+void computeBV<OBBRSS, Sphere>(const Sphere& s, const Transform3s& tf,
+                               OBBRSS& bv) {
+  computeBV<OBB, Sphere>(s, tf, bv.obb);
+  computeBV<RSS, Sphere>(s, tf, bv.rss);
+}
+
+template <>
+void computeBV<OBBRSS, Capsule>(const Capsule& s, const Transform3s& tf,
+                                OBBRSS& bv) {
+  computeBV<OBB, Capsule>(s, tf, bv.obb);
+  computeBV<RSS, Capsule>(s, tf, bv.rss);
+}
+
+template <>
+void computeBV<OBBRSS, Cylinder>(const Cylinder& s, const Transform3s& tf,
+                                 OBBRSS& bv) {
+  computeBV<OBB, Cylinder>(s, tf, bv.obb);
+  computeBV<RSS, Cylinder>(s, tf, bv.rss);
+}
+
 template <typename IndexType>
 void computeOBBConvex(const ConvexBaseTpl<IndexType>& s, const Transform3s& tf,
                       OBB& bv) {
