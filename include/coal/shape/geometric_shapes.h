@@ -782,8 +782,7 @@ class ConvexBaseTpl : public ShapeBase {
   /// constructor.
   ConvexBaseTpl& operator=(const ConvexBaseTpl& other);
 
-  /// @brief Clone (deep copy).
-  COAL_DEPRECATED_MESSAGE(Use deepcopy instead.)
+  /// @brief Clone (deep copy). Same as deepcopy.
   virtual ConvexBaseTpl* clone() const override { return this->deepcopy(); }
 
   /// @brief Deep copy of the ConvexBaseTpl.
