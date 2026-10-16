@@ -502,7 +502,8 @@ inline Scalar boxSphereDistance(const Box& b, const Transform3s& tfb,
 ///   segment point at t to the box is convex and C1 in t, and its derivative
 ///   is piecewise linear between the (at most 6) values of t where the segment
 ///   crosses a slab of the box. The minimizer is found exactly by locating the
-///   sign change of the derivative over these breakpoints.
+///   sign change of the derivative over these breakpoints. When the segment
+///   is parallel to a face or an edge, the middle of the minimizers is kept.
 /// - Otherwise, the penetration depth of the segment is the minimal overlap
 ///   over the separating axes of a segment and a box: the 3 face normals of
 ///   the box and the cross products of the segment direction with the 3 edge
@@ -561,18 +562,43 @@ inline Scalar boxCapsuleDistance(const Box& b, const Transform3s& tfb,
   }
 
   // All quantities below are expressed in the box frame until the end.
-  const Vec3s ps(c0 + t * h);
+  Vec3s ps(c0 + t * h);
   pb = ps.cwiseMax(-e).cwiseMin(e);
   normal = ps - pb;
-  const Scalar segment_distance = normal.norm();
+  Scalar segment_distance = normal.norm();
   Scalar dist;
   if (segment_distance > dummy_precision) {
-    // At a minimizer inside the segment, the normal is orthogonal to it, and
-    // it is exactly zero along the axes where ps is not clamped. As a
-    // difference of nearly coincident points, ps - pb loses the orthogonality
-    // when the segment almost touches a box edge or vertex: restore it with a
-    // direction that keeps those zeros.
-    if (t > -1 && t < 1) {
+    // Part [t0, t1] of the segment along which the coordinates that are not
+    // clamped at ps stay inside their slab of the box.
+    Scalar t0 = -1, t1 = 1;
+    Scalar hh_clamped_axes = 0;
+    for (int i = 0; i < 3; ++i) {
+      if (std::abs(normal[i]) > dummy_precision) {
+        hh_clamped_axes += h[i] * h[i];
+      } else if (h[i] != 0) {
+        Scalar ta = (-e[i] - c0[i]) / h[i];
+        Scalar tb = (e[i] - c0[i]) / h[i];
+        if (ta > tb) std::swap(ta, tb);
+        t0 = (std::max)(t0, ta);
+        t1 = (std::min)(t1, tb);
+      }
+    }
+    if (t0 < t1 && 2 * std::sqrt(hh_clamped_axes) <= dummy_precision) {
+      // Segment parallel to a face or an edge: the clamped coordinates vary by
+      // less than dummy_precision along the whole segment, so all the points of
+      // this part are closest to the box. Take the middle one, as for a
+      // penetrating segment parallel to a face.
+      t = (t0 + t1) / 2;
+      ps = c0 + t * h;
+      pb = ps.cwiseMax(-e).cwiseMin(e);
+      normal = ps - pb;
+      segment_distance = normal.norm();
+    } else if (t > -1 && t < 1) {
+      // At a minimizer inside the segment, the normal is orthogonal to it, and
+      // it is exactly zero along the axes where ps is not clamped. As a
+      // difference of nearly coincident points, ps - pb loses the
+      // orthogonality when the segment almost touches a box edge or vertex:
+      // restore it with a direction that keeps those zeros.
       const Vec3s h_clamped = (normal.array() != 0).select(h, Vec3s::Zero());
       const Scalar hh_clamped = h_clamped.squaredNorm();
       if (hh_clamped > 0) {

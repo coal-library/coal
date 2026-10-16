@@ -174,6 +174,40 @@ BOOST_AUTO_TEST_CASE(capsule_box_segment_parallel_to_face) {
   BOOST_CHECK(w.p1.isApprox(Vec3s(Scalar(0.25), Scalar(0.4), Scalar(1))));
 }
 
+BOOST_AUTO_TEST_CASE(capsule_box_segment_parallel_witness_continuous) {
+  const Box box(2, 2, 2);
+  const Capsule capsule(Scalar(0.5), 4);
+  const Quats along_x =
+      makeQuat(std::sqrt(Scalar(2)) / 2, 0, std::sqrt(Scalar(2)) / 2, 0);
+  // Capsule lying along x, its segment from x = -0.5 to x = 3.5: the part of
+  // the segment facing the box is x in [-0.5, 1]. Whether the segment is below
+  // or above the face (or the edge), the witness points lie in the middle of
+  // this part, so that they do not jump when the segment crosses the face.
+  for (const Scalar height :
+       {Scalar(-0.2), Scalar(-0.01), Scalar(0.01), Scalar(0.2), Scalar(0.8)}) {
+    // Segment parallel to the top face, at height above it.
+    const Transform3s tf_face(along_x,
+                              Vec3s(Scalar(1.5), Scalar(0.4), 1 + height));
+    const Witness w_face = specialized(box, Transform3s(), capsule, tf_face);
+    checkWitness(box, Transform3s(), capsule, tf_face, w_face);
+    BOOST_CHECK_SMALL(w_face.distance - (height - capsule.radius), tol);
+    BOOST_CHECK(w_face.normal.isApprox(Vec3s::UnitZ()));
+    BOOST_CHECK(
+        w_face.p1.isApprox(Vec3s(Scalar(0.25), Scalar(0.4), Scalar(1))));
+
+    // Segment parallel to the edge {y = 1, z = 1}, at height from it.
+    if (height < 0) continue;
+    const Scalar offset = height / std::sqrt(Scalar(2));
+    const Transform3s tf_edge(along_x,
+                              Vec3s(Scalar(1.5), 1 + offset, 1 + offset));
+    const Witness w_edge = specialized(box, Transform3s(), capsule, tf_edge);
+    checkWitness(box, Transform3s(), capsule, tf_edge, w_edge);
+    BOOST_CHECK_SMALL(w_edge.distance - (height - capsule.radius), tol);
+    BOOST_CHECK(w_edge.normal.isApprox(Vec3s(0, 1, 1).normalized()));
+    BOOST_CHECK(w_edge.p1.isApprox(Vec3s(Scalar(0.25), 1, 1)));
+  }
+}
+
 BOOST_AUTO_TEST_CASE(capsule_box_edge_separating_axis) {
   const Box box(2, 2, 2);
   const Capsule capsule(Scalar(0.1), 10);
