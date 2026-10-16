@@ -56,19 +56,19 @@ void fit(Vec3s* ps, unsigned int n, BV& bv) {
 }
 
 template <>
-void fit<OBB>(Vec3s* ps, unsigned int n, OBB& bv);
+COAL_DLLAPI void fit<OBB>(Vec3s* ps, unsigned int n, OBB& bv);
 
 template <>
-void fit<RSS>(Vec3s* ps, unsigned int n, RSS& bv);
+COAL_DLLAPI void fit<RSS>(Vec3s* ps, unsigned int n, RSS& bv);
 
 template <>
-void fit<kIOS>(Vec3s* ps, unsigned int n, kIOS& bv);
+COAL_DLLAPI void fit<kIOS>(Vec3s* ps, unsigned int n, kIOS& bv);
 
 template <>
-void fit<OBBRSS>(Vec3s* ps, unsigned int n, OBBRSS& bv);
+COAL_DLLAPI void fit<OBBRSS>(Vec3s* ps, unsigned int n, OBBRSS& bv);
 
 template <>
-void fit<AABB>(Vec3s* ps, unsigned int n, AABB& bv);
+COAL_DLLAPI void fit<AABB>(Vec3s* ps, unsigned int n, AABB& bv);
 
 /// @brief The class for the default algorithm fitting a bounding volume to a
 /// set of points
