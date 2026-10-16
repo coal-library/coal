@@ -254,6 +254,9 @@ class COAL_DLLAPI HeightField : public CollisionGeometry {
         bvs(other.bvs),
         num_bvs(other.num_bvs) {}
 
+  /// @brief Copy assignment operator
+  HeightField& operator=(const HeightField& other) = default;
+
   /// @brief Returns a const reference of the grid along the X direction.
   const VecXs& getXGrid() const { return x_grid; }
   /// @brief Returns a const reference of the grid along the Y direction.
