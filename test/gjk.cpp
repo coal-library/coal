@@ -500,3 +500,65 @@ BOOST_AUTO_TEST_CASE(triangle_capsule) {
   test_gjk_triangle_capsule(Vec3s(Scalar(-0.5), Scalar(-0.01), 0), true, true,
                             Vec3s(0, 1, 0), Vec3s(Scalar(0.5), 0, 0));
 }
+
+BOOST_AUTO_TEST_CASE(epa_copy) {
+  using namespace coal;
+  // Two boxes penetrating each other by 0.5 along the x axis.
+  Box box0(1, 1, 1), box1(1, 1, 1);
+  Transform3s tf0, tf1;
+  tf1.setTranslation(Vec3s(Scalar(0.5), Scalar(0.1), Scalar(0.2)));
+  details::MinkowskiDiff shape;
+  shape.set<details::SupportOptions::NoSweptSphere>(&box0, &box1, tf0, tf1);
+
+  details::GJK gjk(128, SolverScalar(1e-6));
+  BOOST_REQUIRE_EQUAL(gjk.evaluate(shape, Vec3ps(1, 0, 0)),
+                      details::GJK::Collision);
+  details::EPA epa(64, SolverScalar(1e-6));
+  const details::EPA::Status status = epa.evaluate(gjk, Vec3ps(1, 0, 0));
+  BOOST_REQUIRE(status & details::EPA::Valid);
+  BOOST_CHECK_CLOSE(epa.depth, 0.5, 1e-4);
+  EIGEN_VECTOR_IS_APPROX(epa.normal, Vec3ps(1, 0, 0), 1e-6);
+  BOOST_REQUIRE(epa.getNumFaces() > 0);
+  const SolverScalar depth = epa.depth;
+  const Vec3ps normal = epa.normal;
+  const size_t num_faces = epa.getNumFaces();
+
+  // A copy has the parameters of the copied EPA, but not the state of its last
+  // run: it does not refer to the polytope of the copied EPA.
+  auto check_is_reset_copy_of = [](const details::EPA& copy,
+                                   const details::EPA& other) {
+    BOOST_CHECK_EQUAL(copy.getNumMaxIterations(), other.getNumMaxIterations());
+    BOOST_CHECK_EQUAL(copy.getTolerance(), other.getTolerance());
+    BOOST_CHECK_EQUAL(copy.getNumMaxVertices(), other.getNumMaxVertices());
+    BOOST_CHECK_EQUAL(copy.getNumMaxFaces(), other.getNumMaxFaces());
+    BOOST_CHECK_EQUAL(copy.status, details::EPA::DidNotRun);
+    BOOST_CHECK_EQUAL(copy.getNumFaces(), 0);
+    BOOST_CHECK_EQUAL(copy.getNumVertices(), 0);
+    BOOST_CHECK_EQUAL(copy.getNumIterations(), 0);
+    BOOST_CHECK(copy.closest_face == nullptr);
+  };
+
+  details::EPA epa_constructed(epa);
+  check_is_reset_copy_of(epa_constructed, epa);
+
+  details::EPA epa_assigned(0, SolverScalar(1e-3));
+  epa_assigned = epa;
+  check_is_reset_copy_of(epa_assigned, epa);
+
+  const details::EPA& epa_assigned_ref = epa_assigned;
+  epa_assigned = epa_assigned_ref;
+  check_is_reset_copy_of(epa_assigned, epa);
+
+  // The copies run on their own storage and leave the copied EPA untouched.
+  for (details::EPA* copy : {&epa_constructed, &epa_assigned}) {
+    BOOST_REQUIRE_EQUAL(gjk.evaluate(shape, Vec3ps(1, 0, 0)),
+                        details::GJK::Collision);
+    BOOST_CHECK_EQUAL(copy->evaluate(gjk, Vec3ps(1, 0, 0)), status);
+    BOOST_CHECK_EQUAL(copy->depth, depth);
+    EIGEN_VECTOR_IS_APPROX(copy->normal, normal, 1e-12);
+    BOOST_CHECK_EQUAL(copy->getNumFaces(), num_faces);
+  }
+  BOOST_CHECK_EQUAL(epa.status, status);
+  BOOST_CHECK_EQUAL(epa.depth, depth);
+  BOOST_CHECK_EQUAL(epa.getNumFaces(), num_faces);
+}
