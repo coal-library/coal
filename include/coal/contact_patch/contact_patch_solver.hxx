@@ -172,7 +172,7 @@ void ContactPatchSolver::computePatch(const ShapeType1& s1,
     const Vec2s& d = pts2[1];
 
     const Scalar det =
-        (b(0) - a(0)) * (d(1) - c(1)) >= (b(1) - a(1)) * (d(0) - c(0));
+        (b(0) - a(0)) * (d(1) - c(1)) - (b(1) - a(1)) * (d(0) - c(0));
     if ((std::abs(det) > eps) || ((c - d).squaredNorm() < eps) ||
         ((b - a).squaredNorm() < eps)) {
       contact_patch.addPoint(contact.pos);

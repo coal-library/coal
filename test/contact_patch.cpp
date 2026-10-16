@@ -1104,6 +1104,102 @@ BOOST_AUTO_TEST_CASE(edge_case_vertex_vertex) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(edge_case_segment_segment_crossing) {
+  // This case covers the segment-segment edge case of contact patches when the
+  // segments cross. Two tetrahedrons make contact on one of their edge.
+  const size_t expected_size = 1;
+  const Vec3s expected_cp(0, 0.5, 0);
+  const Scalar tol = Scalar(1e-6);
+
+  const Transform3s tf1;  // identity
+  const Transform3s tf2;  // identity
+
+  const size_t num_max_contact = 1;
+  const CollisionRequest col_req(CollisionRequestFlag::CONTACT,
+                                 num_max_contact);
+  CollisionResult col_res;
+  const ContactPatchRequest patch_req;
+  ContactPatchResult patch_res(patch_req);
+
+  {
+    // Case 1 - Segment-Segment contact, crossing edges
+    auto pts1 = std::make_shared<std::vector<Vec3s>>(
+        std::vector<Vec3s>{Vec3s(-1, 0, Scalar(-0.2)), Vec3s(0, 0, 0),
+                           Vec3s(0, 1, 0), Vec3s(-1, -1, -1)});
+    auto tris1 = std::make_shared<std::vector<Triangle32>>(
+        std::vector<Triangle32>{Triangle32(0, 1, 2), Triangle32(0, 2, 3),
+                                Triangle32(0, 3, 1), Triangle32(2, 1, 3)});
+    ConvexTpl<Triangle32> tetra1(pts1, 4, tris1, 4);
+
+    auto pts2 = std::make_shared<std::vector<Vec3s>>(
+        std::vector<Vec3s>{Vec3s(-0.5, 0, 0), Vec3s(0.5, 1, 0),
+                           Vec3s(0, -0.5, 0.5), Vec3s(0, 1.5, 1)});
+    auto tris2 = std::make_shared<std::vector<Triangle32>>(
+        std::vector<Triangle32>{Triangle32(0, 1, 2), Triangle32(0, 2, 3),
+                                Triangle32(0, 3, 1), Triangle32(2, 1, 3)});
+    ConvexTpl<Triangle32> tetra2(pts2, 4, tris2, 4);
+
+    col_res.clear();
+    coal::collide(&tetra1, tf1, &tetra2, tf2, col_req, col_res);
+    BOOST_CHECK(col_res.isCollision());
+    patch_res.clear();
+    coal::computeContactPatch(&tetra1, tf1, &tetra2, tf2, col_res, patch_req,
+                              patch_res);
+    BOOST_REQUIRE(patch_res.numContactPatches() == 1);
+
+    const Contact& contact = col_res.getContact(0);
+
+    ContactPatch expected(expected_size);
+    expected.tf.rotation() =
+        constructOrthonormalBasisFromVector(contact.normal);
+    expected.tf.translation() = contact.pos;
+    expected.penetration_depth = contact.penetration_depth;
+    expected.addPoint(expected_cp);
+
+    const ContactPatch& contact_patch = patch_res.getContactPatch(0);
+    BOOST_CHECK(expected.isSame(contact_patch, tol));
+  }
+
+  {
+    // Case 2 - Segment-Segment contact, mirrored crossing edges
+    auto pts1 = std::make_shared<std::vector<Vec3s>>(
+        std::vector<Vec3s>{Vec3s(-1, 0, Scalar(-0.2)), Vec3s(0, 0, 0),
+                           Vec3s(0, 1, 0), Vec3s(-1, -1, -1)});
+    auto tris1 = std::make_shared<std::vector<Triangle32>>(
+        std::vector<Triangle32>{Triangle32(0, 1, 2), Triangle32(0, 2, 3),
+                                Triangle32(0, 3, 1), Triangle32(2, 1, 3)});
+    ConvexTpl<Triangle32> tetra1(pts1, 4, tris1, 4);
+
+    auto pts2 = std::make_shared<std::vector<Vec3s>>(
+        std::vector<Vec3s>{Vec3s(0.5, 0, 0), Vec3s(-0.5, 1, 0),
+                           Vec3s(0, -0.5, 0.5), Vec3s(0, 1.5, 1)});
+    auto tris2 = std::make_shared<std::vector<Triangle32>>(
+        std::vector<Triangle32>{Triangle32(0, 1, 2), Triangle32(0, 2, 3),
+                                Triangle32(0, 3, 1), Triangle32(2, 1, 3)});
+    ConvexTpl<Triangle32> tetra2(pts2, 4, tris2, 4);
+
+    col_res.clear();
+    coal::collide(&tetra1, tf1, &tetra2, tf2, col_req, col_res);
+    BOOST_CHECK(col_res.isCollision());
+    patch_res.clear();
+    coal::computeContactPatch(&tetra1, tf1, &tetra2, tf2, col_res, patch_req,
+                              patch_res);
+    BOOST_REQUIRE(patch_res.numContactPatches() == 1);
+
+    const Contact& contact = col_res.getContact(0);
+
+    ContactPatch expected(expected_size);
+    expected.tf.rotation() =
+        constructOrthonormalBasisFromVector(contact.normal);
+    expected.tf.translation() = contact.pos;
+    expected.penetration_depth = contact.penetration_depth;
+    expected.addPoint(expected_cp);
+
+    const ContactPatch& contact_patch = patch_res.getContactPatch(0);
+    BOOST_CHECK(expected.isSame(contact_patch, tol));
+  }
+}
+
 BOOST_AUTO_TEST_CASE(edge_case_segment_face) {
   // This case covers the segment-face edge case of contact patches.
   // Two tetrahedrons make contact on one of their segment/face respectively.
