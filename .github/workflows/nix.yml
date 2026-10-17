@@ -22,7 +22,7 @@ jobs:
           name: gepetto
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - run: nix flake check -L
-      - run: nix build -L ".#${{ matrix.extends }}"
+      - run: nix build -L ".#${{ matrix.extends }}" -j 1 --cores 4
   check:
     if: always()
     name: check-macos-linux-nix

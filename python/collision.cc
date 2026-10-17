@@ -45,6 +45,7 @@ COAL_COMPILER_DIAGNOSTIC_POP
 #include "deprecation.hh"
 #include "serializable.hh"
 #include "printable.hh"
+#include "pickle.hh"
 
 #ifdef COAL_HAS_DOXYGEN_AUTODOC
 #include "doxygen_autodoc/functions.h"
@@ -167,6 +168,8 @@ void exposeCollisionAPI() {
         .DEF_RW_CLASS_ATTRIB(CollisionRequest, security_margin)
         .DEF_RW_CLASS_ATTRIB(CollisionRequest, break_distance)
         .DEF_RW_CLASS_ATTRIB(CollisionRequest, distance_upper_bound)
+        .def(self == self)
+        .def_pickle(PickleObject<CollisionRequest>())
         .def(SerializableVisitor<CollisionRequest>())
         .def(PrintableVisitor<CollisionRequest>());
   }
@@ -174,7 +177,9 @@ void exposeCollisionAPI() {
   if (!eigenpy::register_symbolic_link_to_registered_type<
           std::vector<CollisionRequest> >()) {
     class_<std::vector<CollisionRequest> >("StdVec_CollisionRequest")
-        .def(vector_indexing_suite<std::vector<CollisionRequest> >());
+        .def(vector_indexing_suite<std::vector<CollisionRequest> >())
+        .def(self == self)
+        .def_pickle(PickleObject<std::vector<CollisionRequest> >());
   }
   COAL_COMPILER_DIAGNOSTIC_POP
 
@@ -208,6 +213,7 @@ void exposeCollisionAPI() {
         .DEF_RW_CLASS_ATTRIB(Contact, penetration_depth)
         .def(self == self)
         .def(self != self)
+        .def_pickle(PickleObject<Contact>())
         .def(SerializableVisitor<Contact>())
         .def(PrintableVisitor<Contact>());
   }
@@ -215,7 +221,9 @@ void exposeCollisionAPI() {
   if (!eigenpy::register_symbolic_link_to_registered_type<
           std::vector<Contact> >()) {
     class_<std::vector<Contact> >("StdVec_Contact")
-        .def(vector_indexing_suite<std::vector<Contact> >());
+        .def(vector_indexing_suite<std::vector<Contact> >())
+        .def(self == self)
+        .def_pickle(PickleObject<std::vector<Contact> >());
   }
 
   if (!eigenpy::register_symbolic_link_to_registered_type<QueryResult>()) {
@@ -249,6 +257,8 @@ void exposeCollisionAPI() {
              return_internal_reference<>())
 
         .DEF_RW_CLASS_ATTRIB(CollisionResult, distance_lower_bound)
+        .def(self == self)
+        .def_pickle(PickleObject<CollisionResult>())
         .def(SerializableVisitor<CollisionResult>())
         .def(PrintableVisitor<CollisionResult>());
   }
@@ -256,7 +266,9 @@ void exposeCollisionAPI() {
   if (!eigenpy::register_symbolic_link_to_registered_type<
           std::vector<CollisionResult> >()) {
     class_<std::vector<CollisionResult> >("StdVec_CollisionResult")
-        .def(vector_indexing_suite<std::vector<CollisionResult> >());
+        .def(vector_indexing_suite<std::vector<CollisionResult> >())
+        .def(self == self)
+        .def_pickle(PickleObject<std::vector<CollisionResult> >());
   }
 
   doxygen::def("collide",

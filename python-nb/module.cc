@@ -2,6 +2,7 @@
 
 #include "coal/config.hh"
 #include "coal/mesh_loader/loader.h"
+#include "coal/BVH/BVH_model.h"
 
 #include "fwd.h"
 

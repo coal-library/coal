@@ -1,4 +1,4 @@
-# ruff: noqa: F401, F403
+# ruff: noqa: F401
 
 # On Windows, if coal.dll is not in the same directory than
 # the .pyd, it will not be loaded.
@@ -11,7 +11,7 @@
 #  - https://stackoverflow.com/questions/65334494/python-c-extension-packaging-dll-along-with-pyd
 # More resources on https://github.com/diffpy/pyobjcryst/issues/33
 try:
-    from .coal_pywrap_nb import *  # noqa
+    from .coal_pywrap_nb import *
     from .coal_pywrap_nb import __version__
 except ImportError:
     import platform
@@ -22,7 +22,7 @@ except ImportError:
         with build_directory_manager() as dll_dir_manager:
             for p in get_dll_paths():
                 dll_dir_manager.add_dll_directory(p)
-            from .coal_pywrap_nb import *  # noqa
-            from .coal_pywrap_nb import __version__  # noqa
+            from .coal_pywrap_nb import *
+            from .coal_pywrap_nb import __version__
     else:
         raise

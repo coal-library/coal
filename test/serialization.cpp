@@ -361,6 +361,21 @@ BOOST_AUTO_TEST_CASE(test_collision_data) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(test_contact_patch_request) {
+  const ContactPatchRequest default_request;
+  const ContactPatchRequest request(
+      default_request.max_num_patch + 2,
+      default_request.getNumSamplesCurvedShapes() + 5,
+      default_request.getPatchTolerance() * 10);
+  BOOST_CHECK(request.max_num_patch != default_request.max_num_patch);
+  BOOST_CHECK(request.getNumSamplesCurvedShapes() !=
+              default_request.getNumSamplesCurvedShapes());
+  BOOST_CHECK(request.getPatchTolerance() !=
+              default_request.getPatchTolerance());
+
+  test_serialization(request);
+}
+
 template <typename T>
 void checkEqualStdVector(const std::vector<T>& v1, const std::vector<T>& v2) {
   BOOST_CHECK(v1.size() == v2.size());

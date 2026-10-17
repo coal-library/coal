@@ -45,6 +45,7 @@ COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
 #include "deprecation.hh"
 COAL_COMPILER_DIAGNOSTIC_POP
 
+#include "pickle.hh"
 #include "serializable.hh"
 #include "printable.hh"
 
@@ -110,6 +111,8 @@ void exposeDistanceAPI() {
         .DEF_RW_CLASS_ATTRIB(DistanceRequest, enable_signed_distance)
         .DEF_RW_CLASS_ATTRIB(DistanceRequest, rel_err)
         .DEF_RW_CLASS_ATTRIB(DistanceRequest, abs_err)
+        .def(self == self)
+        .def_pickle(PickleObject<DistanceRequest>())
         .def(SerializableVisitor<DistanceRequest>())
         .def(PrintableVisitor<DistanceRequest>());
   }
@@ -118,7 +121,9 @@ void exposeDistanceAPI() {
   if (!eigenpy::register_symbolic_link_to_registered_type<
           std::vector<DistanceRequest> >()) {
     class_<std::vector<DistanceRequest> >("StdVec_DistanceRequest")
-        .def(vector_indexing_suite<std::vector<DistanceRequest> >());
+        .def(vector_indexing_suite<std::vector<DistanceRequest> >())
+        .def(self == self)
+        .def_pickle(PickleObject<std::vector<DistanceRequest> >());
   }
 
   if (!eigenpy::register_symbolic_link_to_registered_type<DistanceResult>()) {
@@ -140,6 +145,8 @@ void exposeDistanceAPI() {
 
         .def("clear", &DistanceResult::clear,
              doxygen::member_func_doc(&DistanceResult::clear))
+        .def(self == self)
+        .def_pickle(PickleObject<DistanceResult>())
         .def(SerializableVisitor<DistanceResult>())
         .def(PrintableVisitor<DistanceResult>());
   }
@@ -147,7 +154,9 @@ void exposeDistanceAPI() {
   if (!eigenpy::register_symbolic_link_to_registered_type<
           std::vector<DistanceResult> >()) {
     class_<std::vector<DistanceResult> >("StdVec_DistanceResult")
-        .def(vector_indexing_suite<std::vector<DistanceResult> >());
+        .def(vector_indexing_suite<std::vector<DistanceResult> >())
+        .def(self == self)
+        .def_pickle(PickleObject<std::vector<DistanceResult> >());
   }
 
   doxygen::def(

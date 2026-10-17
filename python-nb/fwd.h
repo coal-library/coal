@@ -6,6 +6,8 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/eigen/dense.h>
 #include <nanobind/stl/bind_vector.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/shared_ptr.h>
 
 #include <nanoeigenpy/fwd.hpp>
 

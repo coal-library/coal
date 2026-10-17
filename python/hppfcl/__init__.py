@@ -5,5 +5,5 @@ warnings.warn(
 )
 
 from coal import Transform3s as Transform3f  # noqa
-from coal import *  # noqa
+from coal import *
 from coal import __raw_version__, __version__  # noqa

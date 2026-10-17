@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- nanobind : add fixed to allow pinocchio's binding portage to nanobind ([#893] (https://github.com/coal-library/coal/pull/893))
 - broadphase: add functional API for collision and distance callbacks ([#724](https://github.com/coal-library/coal/pull/724))
 - Added a second set of Python bindings based on nanobind ([#659](https://github.com/coal-library/coal/pull/659))
 - ROS: jrl_cmakemodules dependency + kilted CI ([#769](https://github.com/coal-library/coal/pull/769))
@@ -22,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added `resolveReferences` method to `Contact` and `DistanceResult` to remap the `o1/o2` pointers (typically after serialization/deserialization) ([855](https://github.com/coal-library/coal/pull/855)).
 - Added copy constructors to `Contact::Contact(const Contact& other, const CollisionGeometry* new_o1, const CollisionGeometry* new_o2)` and `DistanceResult::DistanceResult(const DistanceResult& other, const CollisionGeometry* new_o1, const CollisionGeometry* new_o2)` to allow copying a `Contact` or `DistanceResult` while remapping the `o1/o2` pointers to new geometries. This is typically useful in the context of deep-copying ([#856](https://github.com/coal-library/coal/pull/820)).
 - Added the `COAL_EQUAL_OPERATOR_CHECK` macro. This macro can be overridden at compile time, extremely practial for debugging serialization for example. ([#859](https://github.com/coal-library/coal/pull/859))
+- Closed-form `computeBV<RSS, S>` and `computeBV<OBBRSS, S>` for `Box`, `Sphere`, `Capsule` and `Cylinder`, instead of fitting the shape bounding vertices at each mesh–shape collision ([#909](https://github.com/coal-library/coal/pull/909))
 
 ### Removed
 - Remove direct dependency to ([#744](https://github.com/coal-library/coal/pull/744)):
@@ -31,11 +33,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Boost::thread
 
 ### Fixed
+- Fix `RSS::volume`, which missed the half cylinders along the rectangle edges and counted the sphere caps as `4 pi r^3` ([#909](https://github.com/coal-library/coal/pull/909))
 - Fix doc parsing via doxygen scripts ([#678](https://github.com/coal-library/coal/pull/678) [#699](https://github.com/coal-library/coal/pull/699))
 - Correctly calculate AABB for pruned octrees ([#741](https://github.com/coal-library/coal/pull/741))
 - Fix contact counting in octree collision detection with ShapeShapeCollide ([#746](https://github.com/coal-library/coal/pull/746))
 - Fix sqrDistLowerBound in octree traversal with height field ([#753](https://github.com/coal-library/coal/pull/753))
 - Fix contact patch computation by enforcing CCW construction of support sets ([#772](https://github.com/coal-library/coal/pull/772))
+- Fix the segment-segment determinant formula in the contact patch solver, which returned wrong points for crossing edges ([#906](https://github.com/coal-library/coal/issues/906))
 - Remove pixi 0.57 warnings ([#774](https://github.com/coal-library/coal/pull/774))
 - Fix nanobind bindings' stub file ([#781](https://github.com/coal-library/coal/pull/781#event-20983199417))
 - Remove Windows warnings when building benchmakrs ([789](https://github.com/coal-library/coal/pull/789))
@@ -50,6 +54,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Fix using NaN to initialize collision data (`Contact`, `CollisionResult`, `DistanceResult`). This prevents the absurd `Contact contact; contact == contact; // false` problem.
   - Fix NaNs coming from GJK/EPA when the algorithms (correctly) early stopped. NaNs indicate failure. In the case that GJK/EPA early stopped but ran fine, we set non-computed data to inf instead of NaN.
 - Octree contacts no longer report an undefined-behaviour `b1`/`b2`. The value was computed as `node - tree->getRoot()`, a pointer subtraction between two unrelated heap allocations, so it was undefined behaviour and could be an arbitrary signed offset. Octree contacts and distance results now report `coal::octreeNodeHandle`, a well-defined non-negative handle with the same meaning the field has carried since the node pointer was folded into `Contact`: unique per node and stable while the node lives, but not a cell index ([#886](https://github.com/coal-library/coal/pull/886))
+- Fix `ContactPatchResult::swapObjects`: flip `ContactPatch::direction` along with the patch frame, and reflect every point of a patch instead of one of them, so `getNormal` reports the contact normal for shape-first queries against meshes and height fields ([#884](https://github.com/coal-library/coal/pull/884))
+- Fix `Box` support function. ([#895](https://github.com/coal-library/coal/pull/895))
+- Fix serialization typo in `ContactPatchRequest` ([#901](https://github.com/coal-library/coal/pull/901))
 
 ### Changed
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))

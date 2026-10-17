@@ -47,7 +47,7 @@ def displayShape(gui, name, geom, color=(0.9, 0.9, 0.9, 1.0)):
         gui.setLightingMode(name, "OFF")
         return True
     else:
-        msg = "Unsupported geometry type for %s (%s)" % (name, type(geom))
+        msg = f"Unsupported geometry type for {name} ({type(geom)})"
         warnings.warn(msg, category=UserWarning, stacklevel=2)
         return False
 

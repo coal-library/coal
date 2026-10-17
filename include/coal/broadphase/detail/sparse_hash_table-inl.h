@@ -80,7 +80,7 @@ std::vector<Data> SparseHashTable<Key, Data, HashFnc, TableT>::query(
     typename Table::const_iterator p = table_.find(index);
     if (p != table_.end()) {
       std::copy((*p).second.begin(), (*p).second.end(),
-                std ::inserter(result, result.end()));
+                std::inserter(result, result.end()));
     }
   }
 

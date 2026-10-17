@@ -141,8 +141,7 @@ void getShapeSupport(const Box* box, const Vec3s& dir, Vec3s& support,
                      int& /*unused*/, ShapeSupportData& /*unused*/) {
   // The inflate value is simply to make the specialized functions with box
   // have a preferred side for edge cases.
-  static const Scalar inflate =
-      (dir.array() == 0).any() ? 1 + Scalar(1e-10) : 1;
+  const Scalar inflate = (dir.array() == 0).any() ? 1 + Scalar(1e-10) : 1;
   static const Scalar dummy_precision =
       Eigen::NumTraits<Scalar>::dummy_precision();
   Vec3s support1 = (dir.array() > dummy_precision).select(box->halfSide, 0);
@@ -223,7 +222,7 @@ void getShapeSupport(const Cone* cone, const Vec3s& dir, Vec3s& support,
   // The cone radius is, for -h < z < h, (h - z) * r / (2*h)
   // The inflate value is simply to make the specialized functions with cone
   // have a preferred side for edge cases.
-  static const Scalar inflate = 1 + Scalar(1e-10);
+  constexpr Scalar inflate = 1 + Scalar(1e-10);
   Scalar h = cone->halfLength;
   Scalar r = cone->radius;
 
@@ -272,7 +271,7 @@ void getShapeSupport(const Cylinder* cylinder, const Vec3s& dir, Vec3s& support,
 
   // The inflate value is simply to make the specialized functions with cylinder
   // have a preferred side for edge cases.
-  static const Scalar inflate = 1 + Scalar(1e-10);
+  constexpr Scalar inflate = 1 + Scalar(1e-10);
   Scalar half_h = cylinder->halfLength;
   Scalar r = cylinder->radius;
 

@@ -57,7 +57,7 @@ plt.legend(loc="lower right")
 if interactive:
     plt.show()
 else:
-    import os.path as path
+    from os import path
 
     dir_path = path.dirname(path.realpath(__file__))
     plt.savefig(

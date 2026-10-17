@@ -3,10 +3,13 @@
 #include "coal/fwd.hh"
 #include "coal/contact_patch.h"
 #include "coal/serialization/collision_data.h"
+#include "coal/serialization/contact_patch.h"
 
 #include "serializable.hh"
+#include "pickle.hh"
 
 #include "fwd.h"
+#include <nanobind/operators.h>
 
 using namespace coal;
 using namespace nb::literals;
@@ -29,9 +32,12 @@ void exposeContactPatchAPI(nb::module_& m) {
       .DEF_CLASS_FUNC(ContactPatch, getPointShape1)
       .DEF_CLASS_FUNC(ContactPatch, getPointShape2)
       .DEF_CLASS_FUNC(ContactPatch, clear)
-      .DEF_CLASS_FUNC(ContactPatch, isSame);
+      .DEF_CLASS_FUNC(ContactPatch, isSame)
+      .def(nb::self == nb::self)
+      .def(python::v2::PickleVisitor<ContactPatch>());
 
-  nb::bind_vector<std::vector<ContactPatch>>(m, "StdVec_ContactPatch");
+  nb::bind_vector<std::vector<ContactPatch>>(m, "StdVec_ContactPatch")
+      .def(python::v2::PickleVisitor<std::vector<ContactPatch>>());
 
   nb::class_<ContactPatchRequest>(m, "ContactPatchRequest")
       .def(nb::init<size_t, size_t, Scalar>(), "max_num_patch"_a = 1,
@@ -44,23 +50,29 @@ void exposeContactPatchAPI(nb::module_& m) {
       .DEF_CLASS_FUNC(ContactPatchRequest, getNumSamplesCurvedShapes)
       .DEF_CLASS_FUNC(ContactPatchRequest, setNumSamplesCurvedShapes)
       .DEF_CLASS_FUNC(ContactPatchRequest, getPatchTolerance)
-      .DEF_CLASS_FUNC(ContactPatchRequest, setPatchTolerance);
+      .DEF_CLASS_FUNC(ContactPatchRequest, setPatchTolerance)
+      .def(nb::self == nb::self)
+      .def(python::v2::PickleVisitor<ContactPatchRequest>());
 
   nb::bind_vector<std::vector<ContactPatchRequest>>(
-      m, "StdVec_ContactPatchRequest");
+      m, "StdVec_ContactPatchRequest")
+      .def(python::v2::PickleVisitor<std::vector<ContactPatchRequest>>());
 
   nb::class_<ContactPatchResult>(m, "ContactPatchResult")
-      .def(nb::init<ContactPatchRequest>(), "request"_a = 12)
+      .def(nb::init<ContactPatchRequest>(), "request"_a = ContactPatchRequest())
       .DEF_CLASS_FUNC(ContactPatchResult, numContactPatches)
       .DEF_CLASS_FUNC(ContactPatchResult, getUnusedContactPatch)
       .def("getContactPatch", &ContactPatchResult::getContactPatch,
            nb::rv_policy::copy)
       .DEF_CLASS_FUNC(ContactPatchResult, clear)
       .DEF_CLASS_FUNC(ContactPatchResult, set)
-      .DEF_CLASS_FUNC(ContactPatchResult, check);
+      .DEF_CLASS_FUNC(ContactPatchResult, check)
+      .def(nb::self == nb::self)
+      .def(python::v2::PickleVisitor<ContactPatchResult>());
 
   nb::bind_vector<std::vector<ContactPatchResult>>(m,
-                                                   "StdVec_ContactPatchResult");
+                                                   "StdVec_ContactPatchResult")
+      .def(python::v2::PickleVisitor<std::vector<ContactPatchResult>>());
 
   nb::class_<ComputeContactPatch>(m, "ComputeContactPatch")
       .def(nb::init<const CollisionGeometry*, const CollisionGeometry*>(),

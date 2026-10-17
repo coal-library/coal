@@ -1,7 +1,8 @@
 import unittest
-from test_case import TestCase
+
 import coal
 import numpy as np
+from test_case import TestCase
 
 
 class TestGeometricShapes(TestCase):
