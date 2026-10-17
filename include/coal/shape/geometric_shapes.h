@@ -127,6 +127,8 @@ class COAL_DLLAPI TriangleP : public ShapeBase {
   TriangleP(const TriangleP& other)
       : ShapeBase(other), a(other.a), b(other.b), c(other.c) {}
 
+  TriangleP& operator=(const TriangleP& other) = default;
+
   /// @brief Clone *this into a new TriangleP
   virtual TriangleP* clone() const override { return new TriangleP(*this); };
 
@@ -262,6 +264,8 @@ class COAL_DLLAPI Sphere : public ShapeBase {
 
   Sphere(const Sphere& other) : ShapeBase(other), radius(other.radius) {}
 
+  Sphere& operator=(const Sphere& other) = default;
+
   /// @brief Clone *this into a new Sphere
   virtual Sphere* clone() const override { return new Sphere(*this); };
 
@@ -330,6 +334,8 @@ class COAL_DLLAPI Ellipsoid : public ShapeBase {
   explicit Ellipsoid(const Vec3s& radii) : radii(radii) {}
 
   Ellipsoid(const Ellipsoid& other) : ShapeBase(other), radii(other.radii) {}
+
+  Ellipsoid& operator=(const Ellipsoid& other) = default;
 
   /// @brief Clone *this into a new Ellipsoid
   virtual Ellipsoid* clone() const override { return new Ellipsoid(*this); };
@@ -411,6 +417,8 @@ class COAL_DLLAPI Capsule : public ShapeBase {
 
   Capsule(const Capsule& other)
       : ShapeBase(other), radius(other.radius), halfLength(other.halfLength) {}
+
+  Capsule& operator=(const Capsule& other) = default;
 
   /// @brief Clone *this into a new Capsule
   virtual Capsule* clone() const override { return new Capsule(*this); };
@@ -499,6 +507,8 @@ class COAL_DLLAPI Cone : public ShapeBase {
 
   Cone(const Cone& other)
       : ShapeBase(other), radius(other.radius), halfLength(other.halfLength) {}
+
+  Cone& operator=(const Cone& other) = default;
 
   /// @brief Clone *this into a new Cone
   virtual Cone* clone() const override { return new Cone(*this); };
@@ -772,8 +782,7 @@ class ConvexBaseTpl : public ShapeBase {
   /// constructor.
   ConvexBaseTpl& operator=(const ConvexBaseTpl& other);
 
-  /// @brief Clone (deep copy).
-  COAL_DEPRECATED_MESSAGE(Use deepcopy instead.)
+  /// @brief Clone (deep copy). Same as deepcopy.
   virtual ConvexBaseTpl* clone() const override { return this->deepcopy(); }
 
   /// @brief Deep copy of the ConvexBaseTpl.

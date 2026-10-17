@@ -370,12 +370,30 @@ struct COAL_DLLAPI EPA {
 
   /// @brief Copy constructor of EPA.
   /// Mostly needed for the copy constructor of `GJKSolver`.
+  /// The parameters and the storage size are copied, but not the state of the
+  /// last run: the copy is reset, as after a call to \ref reset.
   EPA(const EPA& other)
       : max_iterations(other.max_iterations),
         tolerance(other.tolerance),
         sv_store(other.sv_store),
         fc_store(other.fc_store) {
     initialize();
+  }
+
+  /// @brief Copy assignment operator of EPA, see the copy constructor.
+  /// The implicit one would leave the polytope of `this` pointing into the
+  /// faces of `other`.
+  /// @note There is no move constructor or move assignment operator: moving
+  /// falls back to copying, which keeps the moved-from object valid.
+  EPA& operator=(const EPA& other) {
+    if (this == &other) return *this;
+
+    max_iterations = other.max_iterations;
+    tolerance = other.tolerance;
+    sv_store = other.sv_store;
+    fc_store = other.fc_store;
+    initialize();
+    return *this;
   }
 
   /// @brief Get the max number of iterations of EPA.

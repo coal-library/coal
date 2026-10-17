@@ -8,6 +8,7 @@ set(
 )
 
 if(COAL_PYTHON_NANOBIND)
+  list(APPEND ${PROJECT_NAME}_PYTHON_TESTS copying)
   set(PYTHON_BINDINGS_BINARY_DIR "python-nb")
 else()
   set(PYTHON_BINDINGS_BINARY_DIR "python")

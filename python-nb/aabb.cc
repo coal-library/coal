@@ -6,6 +6,7 @@
 #include "coal/serialization/AABB.h"
 
 #include "pickle.hh"
+#include "copyable.hh"
 #include "serializable.hh"
 
 #include "fwd.h"
@@ -98,6 +99,7 @@ void exposeAABB(nb::module_& m) {
           },
           nb::rv_policy::reference_internal)
 
+      .def(python::v2::CopyableVisitor<AABB>())
       .def(python::v2::PickleVisitor<AABB>())
       .def(python::v2::SerializableVisitor<AABB>())
       .def(nanoeigenpy::IdVisitor());

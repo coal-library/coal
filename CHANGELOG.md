@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- nanobind: add `copy()`, `__copy__` and `__deepcopy__` to the value classes (requests, results, contacts, shapes, transforms, bounding volumes, BVH models, height fields, octrees and `StdVec_*` containers), `copy()` and `__copy__` use the C++ copy constructor, `__deepcopy__` uses `clone()` when available (deep copy of geometries, e.g. a `Convex` and its points). ([#911](https://github.com/coal-library/coal/pull/911))
 - nanobind : add fixed to allow pinocchio's binding portage to nanobind ([#893] (https://github.com/coal-library/coal/pull/893))
 - broadphase: add functional API for collision and distance callbacks ([#724](https://github.com/coal-library/coal/pull/724))
 - Added a second set of Python bindings based on nanobind ([#659](https://github.com/coal-library/coal/pull/659))
@@ -24,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added copy constructors to `Contact::Contact(const Contact& other, const CollisionGeometry* new_o1, const CollisionGeometry* new_o2)` and `DistanceResult::DistanceResult(const DistanceResult& other, const CollisionGeometry* new_o1, const CollisionGeometry* new_o2)` to allow copying a `Contact` or `DistanceResult` while remapping the `o1/o2` pointers to new geometries. This is typically useful in the context of deep-copying ([#856](https://github.com/coal-library/coal/pull/820)).
 - Added the `COAL_EQUAL_OPERATOR_CHECK` macro. This macro can be overridden at compile time, extremely practial for debugging serialization for example. ([#859](https://github.com/coal-library/coal/pull/859))
 - Added a specialized, exact capsule-box distance replacing GJK/EPA for this pair (about 10x faster) ([#905](https://github.com/coal-library/coal/pull/905)).
+- Closed-form `computeBV<RSS, S>` and `computeBV<OBBRSS, S>` for `Box`, `Sphere`, `Capsule` and `Cylinder`, instead of fitting the shape bounding vertices at each mesh–shape collision ([#909](https://github.com/coal-library/coal/pull/909))
 
 ### Removed
 - Remove direct dependency to ([#744](https://github.com/coal-library/coal/pull/744)):
@@ -33,6 +35,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Boost::thread
 
 ### Fixed
+- Fix `RSS::volume`, which missed the half cylinders along the rectangle edges and counted the sphere caps as `4 pi r^3` ([#909](https://github.com/coal-library/coal/pull/909))
+- Remove the deprecation of `ConvexBase::clone` and `Convex::clone`, which override the `CollisionGeometry::clone` virtual method and deep copy like `deepcopy` ([#911](https://github.com/coal-library/coal/pull/911))
 - Fix doc parsing via doxygen scripts ([#678](https://github.com/coal-library/coal/pull/678) [#699](https://github.com/coal-library/coal/pull/699))
 - Correctly calculate AABB for pruned octrees ([#741](https://github.com/coal-library/coal/pull/741))
 - Fix contact counting in octree collision detection with ShapeShapeCollide ([#746](https://github.com/coal-library/coal/pull/746))
@@ -55,6 +59,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix `ContactPatchResult::swapObjects`: flip `ContactPatch::direction` along with the patch frame, and reflect every point of a patch instead of one of them, so `getNormal` reports the contact normal for shape-first queries against meshes and height fields ([#884](https://github.com/coal-library/coal/pull/884))
 - Fix `Box` support function. ([#895](https://github.com/coal-library/coal/pull/895))
 - Fix serialization typo in `ContactPatchRequest` ([#901](https://github.com/coal-library/coal/pull/901))
+- Fix various compiler warnings ([#913](https://github.com/coal-library/coal/pull/913/changes)):
+  - Fix compiler warnings emitted by public headers (deprecated fields in `GJKSolver` and `CollisionRequest`, `-Wdeprecated-copy`, `-Wsign-conversion` in the broadphase hierarchy trees)
+  - Add a copy assignment operator to `details::EPA`, consistent with its copy constructor: the implicit one left the polytope pointing into the faces of the copied EPA
 
 ### Changed
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))

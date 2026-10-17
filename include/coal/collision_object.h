@@ -106,6 +106,9 @@ class COAL_DLLAPI CollisionGeometry {
   /// \brief Copy constructor
   CollisionGeometry(const CollisionGeometry& other) = default;
 
+  /// \brief Copy assignment operator
+  CollisionGeometry& operator=(const CollisionGeometry& other) = default;
+
   virtual ~CollisionGeometry() {}
 
   /// @brief Clone *this into a new CollisionGeometry
