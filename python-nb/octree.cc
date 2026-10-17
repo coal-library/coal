@@ -3,6 +3,8 @@
 #include "coal/fwd.hh"
 #include "coal/octree.h"
 
+#include "copyable.hh"
+
 #include "fwd.h"
 
 using namespace coal;
@@ -17,6 +19,7 @@ void exposeOctree(nb::module_& m) {
   nb::class_<OcTree, CollisionGeometry>(m, "OcTree")
       .def(nb::init<Scalar>(), "resolution"_a)
       .def("clone", &OcTree::clone, nb::rv_policy::take_ownership)
+      .def(python::v2::CopyableVisitor<OcTree>())
       .def("getTreeDepth", &OcTree::getTreeDepth)
       .def("size", &OcTree::size)
       .def("getResolution", &OcTree::getResolution)

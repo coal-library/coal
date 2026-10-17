@@ -9,6 +9,7 @@ COAL_COMPILER_DIAGNOSTIC_POP
 
 #include "serializable.hh"
 #include "pickle.hh"
+#include "copyable.hh"
 
 #include "fwd.h"
 #include <nanobind/operators.h>
@@ -27,7 +28,8 @@ void exposeCollisionAPI(nb::module_& m) {
       .def_ro("wall", &CPUTimes::wall, "wall time in micro seconds (us)")
       .def_ro("user", &CPUTimes::user, "user time in micro seconds (us)")
       .def_ro("system", &CPUTimes::system, "system time in micro seconds (us)")
-      .def("clear", &CPUTimes::clear, "Reset the time values.");
+      .def("clear", &CPUTimes::clear, "Reset the time values.")
+      .def(python::v2::CopyableVisitor<CPUTimes>());
 
   COAL_COMPILER_DIAGNOSTIC_PUSH
   COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
@@ -52,7 +54,8 @@ void exposeCollisionAPI(nb::module_& m) {
       .DEF_RW_CLASS_ATTRIB(QueryRequest, epa_max_iterations)
       .DEF_RW_CLASS_ATTRIB(QueryRequest, epa_tolerance)
       .DEF_RW_CLASS_ATTRIB(QueryRequest, enable_timings)
-      .DEF_CLASS_FUNC(QueryRequest, updateGuess);
+      .DEF_CLASS_FUNC(QueryRequest, updateGuess)
+      .def(python::v2::CopyableVisitor<QueryRequest>());
   COAL_COMPILER_DIAGNOSTIC_POP
 
   COAL_COMPILER_DIAGNOSTIC_PUSH
@@ -75,10 +78,12 @@ void exposeCollisionAPI(nb::module_& m) {
       .DEF_RW_CLASS_ATTRIB(CollisionRequest, break_distance)
       .DEF_RW_CLASS_ATTRIB(CollisionRequest, distance_upper_bound)
       .def(nb::self == nb::self)
+      .def(python::v2::CopyableVisitor<CollisionRequest>())
       .def(python::v2::PickleVisitor<CollisionRequest>())
       .def(python::v2::SerializableVisitor<CollisionRequest>());
 
   nb::bind_vector<std::vector<CollisionRequest>>(m, "StdVec_CollisionRequest")
+      .def(python::v2::CopyableVisitor<std::vector<CollisionRequest>>())
       .def(python::v2::PickleVisitor<std::vector<CollisionRequest>>());
   COAL_COMPILER_DIAGNOSTIC_POP
 
@@ -111,15 +116,18 @@ void exposeCollisionAPI(nb::module_& m) {
       .DEF_RW_CLASS_ATTRIB(Contact, penetration_depth)
       .def(nb::self == nb::self)
       .def(nb::self != nb::self)
+      .def(python::v2::CopyableVisitor<Contact>())
       .def(python::v2::PickleVisitor<Contact>());
 
   nb::bind_vector<std::vector<Contact>>(m, "StdVec_Contact")
+      .def(python::v2::CopyableVisitor<std::vector<Contact>>())
       .def(python::v2::PickleVisitor<std::vector<Contact>>());
 
   nb::class_<QueryResult>(m, "QueryResult")
       .DEF_RW_CLASS_ATTRIB(QueryResult, cached_gjk_guess)
       .DEF_RW_CLASS_ATTRIB(QueryResult, cached_support_func_guess)
-      .DEF_RW_CLASS_ATTRIB(QueryResult, timings);
+      .DEF_RW_CLASS_ATTRIB(QueryResult, timings)
+      .def(python::v2::CopyableVisitor<QueryResult>());
 
   nb::class_<CollisionResult, QueryResult>(m, "CollisionResult")
       .def(nb::init<>())
@@ -140,10 +148,12 @@ void exposeCollisionAPI(nb::module_& m) {
           nb::rv_policy::reference_internal)
       .DEF_RW_CLASS_ATTRIB(CollisionResult, distance_lower_bound)
       .def(nb::self == nb::self)
+      .def(python::v2::CopyableVisitor<CollisionResult>())
       .def(python::v2::PickleVisitor<CollisionResult>())
       .def(python::v2::SerializableVisitor<CollisionResult>());
 
   nb::bind_vector<std::vector<CollisionResult>>(m, "StdVec_CollisionResult")
+      .def(python::v2::CopyableVisitor<std::vector<CollisionResult>>())
       .def(python::v2::PickleVisitor<std::vector<CollisionResult>>());
 
   m.def(
