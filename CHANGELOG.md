@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added copy constructors to `Contact::Contact(const Contact& other, const CollisionGeometry* new_o1, const CollisionGeometry* new_o2)` and `DistanceResult::DistanceResult(const DistanceResult& other, const CollisionGeometry* new_o1, const CollisionGeometry* new_o2)` to allow copying a `Contact` or `DistanceResult` while remapping the `o1/o2` pointers to new geometries. This is typically useful in the context of deep-copying ([#856](https://github.com/coal-library/coal/pull/820)).
 - Added the `COAL_EQUAL_OPERATOR_CHECK` macro. This macro can be overridden at compile time, extremely practial for debugging serialization for example. ([#859](https://github.com/coal-library/coal/pull/859))
 - Added a specialized, exact capsule-box distance replacing GJK/EPA for this pair (about 10x faster) ([#905](https://github.com/coal-library/coal/pull/905)).
+- Closed-form `computeBV<RSS, S>` and `computeBV<OBBRSS, S>` for `Box`, `Sphere`, `Capsule` and `Cylinder`, instead of fitting the shape bounding vertices at each mesh–shape collision ([#909](https://github.com/coal-library/coal/pull/909))
 
 ### Removed
 - Remove direct dependency to ([#744](https://github.com/coal-library/coal/pull/744)):
@@ -33,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Boost::thread
 
 ### Fixed
+- Fix `RSS::volume`, which missed the half cylinders along the rectangle edges and counted the sphere caps as `4 pi r^3` ([#909](https://github.com/coal-library/coal/pull/909))
 - Fix doc parsing via doxygen scripts ([#678](https://github.com/coal-library/coal/pull/678) [#699](https://github.com/coal-library/coal/pull/699))
 - Correctly calculate AABB for pruned octrees ([#741](https://github.com/coal-library/coal/pull/741))
 - Fix contact counting in octree collision detection with ShapeShapeCollide ([#746](https://github.com/coal-library/coal/pull/746))

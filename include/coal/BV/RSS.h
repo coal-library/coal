@@ -139,9 +139,10 @@ struct COAL_DLLAPI RSS {
 
   /// @brief Volume of the RSS
   inline Scalar volume() const {
-    return (length[0] * length[1] * 2 * radius +
-            4 * boost::math::constants::pi<Scalar>() * radius * radius *
-                radius);
+    const Scalar pi = boost::math::constants::pi<Scalar>();
+    return 2 * radius * length[0] * length[1] +
+           pi * radius * radius * (length[0] + length[1]) +
+           4 * pi * radius * radius * radius / 3;
   }
 
   /// @brief Check collision between two RSS and return the overlap part.
