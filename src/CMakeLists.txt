@@ -70,6 +70,7 @@ set(
   narrowphase/details.h
   shape/geometric_shapes.cpp
   shape/geometric_shapes_utility.cpp
+  distance/box_capsule.cpp
   distance/box_halfspace.cpp
   distance/box_plane.cpp
   distance/box_sphere.cpp
