@@ -506,6 +506,12 @@ struct COAL_DLLAPI CollisionRequest : QueryRequest {
         security_margin(0),
         break_distance(Scalar(1e-3)),
         distance_upper_bound((std::numeric_limits<Scalar>::max)()) {}
+
+  /// @brief Copy constructor.
+  CollisionRequest(const CollisionRequest& other) = default;
+
+  /// @brief Copy assignment operator.
+  CollisionRequest& operator=(const CollisionRequest& other) = default;
   COAL_COMPILER_DIAGNOSTIC_POP
 
   bool isSatisfied(const CollisionResult& result) const;

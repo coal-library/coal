@@ -556,14 +556,16 @@ typename HierarchyTree<BV>::Node* HierarchyTree<BV>::mortonRecurse_0(
           std::lower_bound(lbeg, lend, &dummy, SortByMorton());
 
       if (lcenter == lbeg) {
-        uint32_t split2 = split | (1 << (bits - 1));
+        uint32_t split2 = split | (uint32_t(1) << (bits - 1));
         return mortonRecurse_0(lbeg, lend, split2, bits - 1);
       } else if (lcenter == lend) {
-        uint32_t split1 = (split & (~(1 << bits))) | (1 << (bits - 1));
+        uint32_t split1 =
+            (split & (~(uint32_t(1) << bits))) | (uint32_t(1) << (bits - 1));
         return mortonRecurse_0(lbeg, lend, split1, bits - 1);
       } else {
-        uint32_t split1 = (split & (~(1 << bits))) | (1 << (bits - 1));
-        uint32_t split2 = split | (1 << (bits - 1));
+        uint32_t split1 =
+            (split & (~(uint32_t(1) << bits))) | (uint32_t(1) << (bits - 1));
+        uint32_t split2 = split | (uint32_t(1) << (bits - 1));
 
         Node* child1 = mortonRecurse_0(lbeg, lcenter, split1, bits - 1);
         Node* child2 = mortonRecurse_0(lcenter, lend, split2, bits - 1);
@@ -596,14 +598,16 @@ typename HierarchyTree<BV>::Node* HierarchyTree<BV>::mortonRecurse_1(
           std::lower_bound(lbeg, lend, &dummy, SortByMorton());
 
       if (lcenter == lbeg) {
-        uint32_t split2 = split | (1 << (bits - 1));
+        uint32_t split2 = split | (uint32_t(1) << (bits - 1));
         return mortonRecurse_1(lbeg, lend, split2, bits - 1);
       } else if (lcenter == lend) {
-        uint32_t split1 = (split & (~(1 << bits))) | (1 << (bits - 1));
+        uint32_t split1 =
+            (split & (~(uint32_t(1) << bits))) | (uint32_t(1) << (bits - 1));
         return mortonRecurse_1(lbeg, lend, split1, bits - 1);
       } else {
-        uint32_t split1 = (split & (~(1 << bits))) | (1 << (bits - 1));
-        uint32_t split2 = split | (1 << (bits - 1));
+        uint32_t split1 =
+            (split & (~(uint32_t(1) << bits))) | (uint32_t(1) << (bits - 1));
+        uint32_t split2 = split | (uint32_t(1) << (bits - 1));
 
         Node* child1 = mortonRecurse_1(lbeg, lcenter, split1, bits - 1);
         Node* child2 = mortonRecurse_1(lcenter, lend, split2, bits - 1);

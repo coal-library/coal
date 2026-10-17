@@ -94,6 +94,9 @@ class COAL_DLLAPI OcTree : public CollisionGeometry {
         occupancy_threshold(other.occupancy_threshold),
         free_threshold(other.free_threshold) {}
 
+  /// \brief Copy assignment operator
+  OcTree& operator=(const OcTree& other) = default;
+
   /// \brief Clone *this into a new Octree
   OcTree* clone() const override { return new OcTree(*this); }
 

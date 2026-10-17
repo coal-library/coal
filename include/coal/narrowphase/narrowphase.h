@@ -163,12 +163,15 @@ struct COAL_DLLAPI GJKSolver {
     // ---------------------
     // GJK settings
     this->gjk_initial_guess = request.gjk_initial_guess;
+    COAL_COMPILER_DIAGNOSTIC_PUSH
+    COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
     this->enable_cached_guess = request.enable_cached_gjk_guess;
     if (this->gjk_initial_guess == GJKInitialGuess::CachedGuess ||
         this->enable_cached_guess) {
       this->cached_guess = request.cached_gjk_guess;
       this->support_func_cached_guess = request.cached_support_func_guess;
     }
+    COAL_COMPILER_DIAGNOSTIC_POP
     this->gjk_max_iterations = request.gjk_max_iterations;
     this->gjk_tolerance = request.gjk_tolerance;
     // For distance computation, we don't want GJK to early stop
@@ -215,12 +218,15 @@ struct COAL_DLLAPI GJKSolver {
     // ---------------------
     // GJK settings
     this->gjk_initial_guess = request.gjk_initial_guess;
+    COAL_COMPILER_DIAGNOSTIC_PUSH
+    COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
     this->enable_cached_guess = request.enable_cached_gjk_guess;
     if (this->gjk_initial_guess == GJKInitialGuess::CachedGuess ||
         this->enable_cached_guess) {
       this->cached_guess = request.cached_gjk_guess;
       this->support_func_cached_guess = request.cached_support_func_guess;
     }
+    COAL_COMPILER_DIAGNOSTIC_POP
     this->gjk_tolerance = request.gjk_tolerance;
     this->gjk_max_iterations = request.gjk_max_iterations;
     // The distance upper bound should be at least greater to the requested
@@ -244,11 +250,14 @@ struct COAL_DLLAPI GJKSolver {
     this->epa.status = details::EPA::Status::DidNotRun;
   }
 
+  COAL_COMPILER_DIAGNOSTIC_PUSH
+  COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
   /// @brief Copy constructor
   GJKSolver(const GJKSolver& other) = default;
 
-  COAL_COMPILER_DIAGNOSTIC_PUSH
-  COAL_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
+  /// @brief Copy assignment operator
+  GJKSolver& operator=(const GJKSolver& other) = default;
+
   bool operator==(const GJKSolver& other) const {
     COAL_EQUAL_OPERATOR_CHECK(this->enable_cached_guess ==
                               other.enable_cached_guess);
