@@ -291,6 +291,7 @@ In addition to the core dev team, the following people have also been involved i
 -   [Lars Berscheid](https://github.com/pantor): code cleanups
 -   Akseppal: bug fixes
 -   [Victor Engmark](https://github.com/l0b0): maintenance fixes
+-   [Meghana Kankipati](https://github.com/Megaa177): bug fixes
 -   [Sean Curtis](https://github.com/SeanCurtis-TRI) (Toyota Research Institute): code cleanups
 -   [Jonas Breuling](https://www.inm.uni-stuttgart.de/en/institut/employees/Breuling/): bug fix in contact_patch_solver
 -   [Paul Sardin](https://github.com/psardin001): closed-form shape bounding volumes
