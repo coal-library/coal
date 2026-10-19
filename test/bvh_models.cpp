@@ -374,12 +374,7 @@ BOOST_AUTO_TEST_CASE(load_illformated_mesh) {
   BOOST_CHECK_NO_THROW(loader.load(filename));
 }
 
-BOOST_AUTO_TEST_CASE(load_multi_mesh_node) {
-  boost::filesystem::path path(TEST_RESOURCES_DIR);
-  const std::string filename = (path / "multi_mesh_node.dae").string();
-
-  MeshLoader loader;
-  BVHModelPtr_t model = loader.load(filename);
+void checkMeshVerticesAndTriangles(const BVHModelPtr_t& model) {
   BOOST_REQUIRE(model != nullptr);
   BOOST_CHECK_EQUAL(model->num_vertices, 6);
   BOOST_CHECK_EQUAL(model->num_tris, 2);
@@ -392,6 +387,37 @@ BOOST_AUTO_TEST_CASE(load_multi_mesh_node) {
     }
   }
   BOOST_CHECK_EQUAL(referenced_vertices.size(), (size_t)model->num_vertices);
+
+  // Assert expected vertex positions for each triangle
+  // geom-1: (0,0,0), (1,0,0), (0,1,0)
+  const Triangle32& tri0 = (*model->tri_indices)[0];
+  BOOST_CHECK((*model->vertices)[tri0[0]].isApprox(Vec3s(0, 0, 0)));
+  BOOST_CHECK((*model->vertices)[tri0[1]].isApprox(Vec3s(1, 0, 0)));
+  BOOST_CHECK((*model->vertices)[tri0[2]].isApprox(Vec3s(0, 1, 0)));
+
+  // geom-2: (1,1,0), (2,1,0), (1,2,0)
+  const Triangle32& tri1 = (*model->tri_indices)[1];
+  BOOST_CHECK((*model->vertices)[tri1[0]].isApprox(Vec3s(1, 1, 0)));
+  BOOST_CHECK((*model->vertices)[tri1[1]].isApprox(Vec3s(2, 1, 0)));
+  BOOST_CHECK((*model->vertices)[tri1[2]].isApprox(Vec3s(1, 2, 0)));
+}
+
+BOOST_AUTO_TEST_CASE(load_multi_mesh_node) {
+  boost::filesystem::path path(TEST_RESOURCES_DIR);
+  const std::string filename = (path / "multi_mesh_node.dae").string();
+
+  MeshLoader loader;
+  BVHModelPtr_t model = loader.load(filename);
+  checkMeshVerticesAndTriangles(model);
+}
+
+BOOST_AUTO_TEST_CASE(load_nested_mesh_node) {
+  boost::filesystem::path path(TEST_RESOURCES_DIR);
+  const std::string filename = (path / "nested_mesh_node.dae").string();
+
+  MeshLoader loader;
+  BVHModelPtr_t model = loader.load(filename);
+  checkMeshVerticesAndTriangles(model);
 }
 
 BOOST_AUTO_TEST_CASE(test_convex) {
