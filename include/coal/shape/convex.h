@@ -92,8 +92,7 @@ class ConvexTpl : public ConvexBaseTpl<typename PolygonT::IndexType> {
   /// pointers but does not deep clones the data).
   ConvexTpl& operator=(const ConvexTpl& other);
 
-  // Clone (deep copy).
-  COAL_DEPRECATED_MESSAGE(Use deepcopy instead.)
+  /// @brief Clone (deep copy). Same as deepcopy.
   ConvexTpl* clone() const override { return this->deepcopy(); };
 
   // Deep copy of a Convex.

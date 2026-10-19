@@ -6,6 +6,7 @@
 
 #include "serializable.hh"
 #include "pickle.hh"
+#include "copyable.hh"
 
 #include "fwd.h"
 #include <nanobind/operators.h>
@@ -32,11 +33,13 @@ void exposeDistanceAPI(nb::module_& m) {
       .DEF_RW_CLASS_ATTRIB(DistanceRequest, rel_err)
       .DEF_RW_CLASS_ATTRIB(DistanceRequest, abs_err)
       .def(nb::self == nb::self)
+      .def(python::v2::CopyableVisitor<DistanceRequest>())
       .def(python::v2::PickleVisitor<DistanceRequest>())
       .def(python::v2::SerializableVisitor<DistanceRequest>());
   COAL_COMPILER_DIAGNOSTIC_POP
 
   nb::bind_vector<std::vector<DistanceRequest>>(m, "StdVec_DistanceRequest")
+      .def(python::v2::CopyableVisitor<std::vector<DistanceRequest>>())
       .def(python::v2::PickleVisitor<std::vector<DistanceRequest>>());
 
   nb::class_<DistanceResult, QueryResult>(m, "DistanceResult")
@@ -58,10 +61,12 @@ void exposeDistanceAPI(nb::module_& m) {
       .DEF_RW_CLASS_ATTRIB(DistanceResult, b2)
       .def("clear", &DistanceResult::clear)
       .def(nb::self == nb::self)
+      .def(python::v2::CopyableVisitor<DistanceResult>())
       .def(python::v2::PickleVisitor<DistanceResult>())
       .def(python::v2::SerializableVisitor<DistanceResult>());
 
   nb::bind_vector<std::vector<DistanceResult>>(m, "StdVec_DistanceResult")
+      .def(python::v2::CopyableVisitor<std::vector<DistanceResult>>())
       .def(python::v2::PickleVisitor<std::vector<DistanceResult>>());
 
   m.def(
