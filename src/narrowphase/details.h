@@ -39,6 +39,9 @@
 #ifndef COAL_SRC_NARROWPHASE_DETAILS_H
 #define COAL_SRC_NARROWPHASE_DETAILS_H
 
+#include <algorithm>
+#include <limits>
+
 #include "coal/internal/traversal_node_setup.h"
 #include "coal/narrowphase/narrowphase.h"
 
@@ -487,6 +490,206 @@ inline Scalar boxSphereDistance(const Box& b, const Transform3s& tfb,
     pb += ssrb * normal;
     ps -= ssrs * normal;
     dist -= (ssrb + ssrs);
+  }
+
+  return dist;
+}
+
+/// @brief Exact signed distance between a box and a capsule.
+///
+/// The capsule segment is expressed in the box frame as c + t h, t in [-1, 1].
+/// - If the segment does not intersect the box, the squared distance from the
+///   segment point at t to the box is convex and C1 in t, and its derivative
+///   is piecewise linear between the (at most 6) values of t where the segment
+///   crosses a slab of the box. The minimizer is found exactly by locating the
+///   sign change of the derivative over these breakpoints. When the segment
+///   is parallel to a face or an edge, the middle of the minimizers is kept.
+/// - Otherwise, the penetration depth of the segment is the minimal overlap
+///   over the separating axes of a segment and a box: the 3 face normals of
+///   the box and the cross products of the segment direction with the 3 edge
+///   directions of the box.
+///
+/// @param pb the witness point on the box surface.
+/// @param pc the witness point on the capsule surface.
+/// @param normal pointing from box to capsule.
+/// @return the distance between the two shapes (negative if penetration).
+inline Scalar boxCapsuleDistance(const Box& b, const Transform3s& tfb,
+                                 const Capsule& c, const Transform3s& tfc,
+                                 Vec3s& pb, Vec3s& pc, Vec3s& normal) {
+  static const Scalar dummy_precision =
+      Eigen::NumTraits<Scalar>::dummy_precision();
+  const Matrix3s& Rb = tfb.getRotation();
+  const Vec3s& e = b.halfSide;
+  const Scalar radius = c.radius + c.getSweptSphereRadius();
+
+  const Vec3s c0(Rb.transpose() *
+                 (tfc.getTranslation() - tfb.getTranslation()));
+  const Vec3s h(c.halfLength * (Rb.transpose() * tfc.getRotation().col(2)));
+
+  // Half the derivative w.r.t. t of the squared distance to the box.
+  auto slope = [&](const Scalar t) {
+    const Vec3s p = c0 + t * h;
+    return h.dot(p - p.cwiseMax(-e).cwiseMin(e));
+  };
+
+  Scalar t = -1;
+  Scalar t_prev = -1;
+  Scalar slope_prev = slope(t_prev);
+  if (slope_prev < 0) {
+    Scalar breakpoints[7];
+    int n_breakpoints = 0;
+    for (int i = 0; i < 3; ++i) {
+      if (h[i] == 0) continue;
+      for (const Scalar side : {-e[i], e[i]}) {
+        const Scalar tb = (side - c0[i]) / h[i];
+        if (tb > -1 && tb < 1) breakpoints[n_breakpoints++] = tb;
+      }
+    }
+    breakpoints[n_breakpoints++] = 1;
+    std::sort(breakpoints, breakpoints + n_breakpoints);
+
+    t = 1;
+    for (int k = 0; k < n_breakpoints; ++k) {
+      const Scalar slope_k = slope(breakpoints[k]);
+      if (slope_k >= 0) {
+        t = t_prev +
+            (breakpoints[k] - t_prev) * slope_prev / (slope_prev - slope_k);
+        break;
+      }
+      t_prev = breakpoints[k];
+      slope_prev = slope_k;
+    }
+  }
+
+  // All quantities below are expressed in the box frame until the end.
+  Vec3s ps(c0 + t * h);
+  pb = ps.cwiseMax(-e).cwiseMin(e);
+  normal = ps - pb;
+  Scalar segment_distance = normal.norm();
+  Scalar dist;
+  if (segment_distance > dummy_precision) {
+    // Part [t0, t1] of the segment along which the coordinates that are not
+    // clamped at ps stay inside their slab of the box.
+    Scalar t0 = -1, t1 = 1;
+    Scalar hh_clamped_axes = 0;
+    for (int i = 0; i < 3; ++i) {
+      if (std::abs(normal[i]) > dummy_precision) {
+        hh_clamped_axes += h[i] * h[i];
+      } else if (h[i] != 0) {
+        Scalar ta = (-e[i] - c0[i]) / h[i];
+        Scalar tb = (e[i] - c0[i]) / h[i];
+        if (ta > tb) std::swap(ta, tb);
+        t0 = (std::max)(t0, ta);
+        t1 = (std::min)(t1, tb);
+      }
+    }
+    if (t0 < t1 && 2 * std::sqrt(hh_clamped_axes) <= dummy_precision) {
+      // Segment parallel to a face or an edge: the clamped coordinates vary by
+      // less than dummy_precision along the whole segment, so all the points of
+      // this part are closest to the box. Take the middle one, as for a
+      // penetrating segment parallel to a face.
+      t = (t0 + t1) / 2;
+      ps = c0 + t * h;
+      pb = ps.cwiseMax(-e).cwiseMin(e);
+      normal = ps - pb;
+      segment_distance = normal.norm();
+    } else if (t > -1 && t < 1) {
+      // At a minimizer inside the segment, the normal is orthogonal to it, and
+      // it is exactly zero along the axes where ps is not clamped. As a
+      // difference of nearly coincident points, ps - pb loses the
+      // orthogonality when the segment almost touches a box edge or vertex:
+      // restore it with a direction that keeps those zeros.
+      const Vec3s h_clamped = (normal.array() != 0).select(h, Vec3s::Zero());
+      const Scalar hh_clamped = h_clamped.squaredNorm();
+      if (hh_clamped > 0) {
+        const Vec3s corrected =
+            normal - (normal.dot(h_clamped) / hh_clamped) * h_clamped;
+        // Only remove rounding errors: when pb is on a face, h_clamped is
+        // parallel to the normal and the correction would cancel it.
+        if (corrected.squaredNorm() > normal.squaredNorm() / 4)
+          normal = corrected;
+      }
+    }
+    normal.normalize();
+    dist = segment_distance - radius;
+    // pb + dist * normal would leave the capsule surface after the correction.
+    pc = ps - radius * normal;
+  } else {
+    // The segment intersects the box: find the separating axis of minimal
+    // overlap. Face axes are tested first and kept on ties.
+    Scalar depth = (std::numeric_limits<Scalar>::max)();
+    int face = -1, edge = -1;
+    for (int k = 0; k < 3; ++k) {
+      const Scalar overlap = e[k] + std::abs(h[k]) - std::abs(c0[k]);
+      if (overlap < depth) {
+        depth = overlap;
+        face = k;
+      }
+    }
+    normal = (c0[face] >= 0 ? 1 : -1) * Vec3s::Unit(face);
+
+    const Scalar h_norm = h.norm();
+    for (int j = 0; j < 3; ++j) {
+      Vec3s axis = h.cross(Vec3s::Unit(j));
+      const Scalar axis_norm = axis.norm();
+      if (axis_norm <= dummy_precision * h_norm) continue;
+      axis /= axis_norm;
+      const Scalar proj = c0.dot(axis);
+      const Scalar overlap = e.dot(axis.cwiseAbs()) - std::abs(proj);
+      if (overlap < depth - dummy_precision) {
+        depth = overlap;
+        edge = j;
+        normal = (proj >= 0 ? 1 : -1) * axis;
+      }
+    }
+    dist = -depth - radius;
+
+    if (edge < 0) {
+      // Deepest point of the part of the segment that lies above the face.
+      Scalar t0 = -1, t1 = 1;
+      for (int i = 0; i < 3; ++i) {
+        if (i == face || h[i] == 0) continue;
+        Scalar ta = (-e[i] - c0[i]) / h[i];
+        Scalar tb = (e[i] - c0[i]) / h[i];
+        if (ta > tb) std::swap(ta, tb);
+        t0 = (std::max)(t0, ta);
+        t1 = (std::min)(t1, tb);
+      }
+      if (t0 > t1) t0 = t1 = t;
+      const Scalar h_along_normal = normal[face] * h[face];
+      Scalar t_deepest;
+      if (std::abs(h_along_normal) * (t1 - t0) <= dummy_precision)
+        t_deepest = (t0 + t1) / 2;  // segment parallel to the face
+      else
+        t_deepest = h_along_normal > 0 ? t0 : t1;
+      pb = (c0 + t_deepest * h).cwiseMax(-e).cwiseMin(e);
+      pb[face] = normal[face] * e[face];
+    } else {
+      // Closest points between the segment and the box edge supporting the
+      // normal.
+      Vec3s q;
+      for (int i = 0; i < 3; ++i) q[i] = normal[i] >= 0 ? e[i] : -e[i];
+      q[edge] = 0;
+      const Vec3s w(c0 - q);
+      const Scalar hh = h.squaredNorm();
+      const Scalar he = h[edge];
+      const Scalar t_closest =
+          std::clamp<Scalar>((he * w[edge] - h.dot(w)) / (hh - he * he), -1, 1);
+      pb = q;
+      pb[edge] =
+          std::clamp<Scalar>(w[edge] + he * t_closest, -e[edge], e[edge]);
+    }
+    pc = pb + dist * normal;
+  }
+
+  pb = tfb.transform(pb);
+  pc = tfb.transform(pc);
+  normal = Rb * normal;
+
+  const Scalar ssrb = b.getSweptSphereRadius();
+  if (ssrb > 0) {
+    pb += ssrb * normal;
+    dist -= ssrb;
   }
 
   return dist;
