@@ -26,6 +26,19 @@ class TestMainAPI(TestCase):
 
         self.assertTrue(coal.distance(capsule, M1, capsule, M2, req, res) > 0)
 
+    def test_collision_object_type_tags(self):
+        # CollisionObject caches the geometry's type tags rather than
+        # forwarding to it, so the setter has to refresh them.
+        box = coal.Box(1.0, 2.0, 3.0)
+        obj = coal.CollisionObject(box)
+        self.assertEqual(obj.getObjectType(), coal.OBJECT_TYPE.OT_GEOM)
+        self.assertEqual(obj.getNodeType(), coal.NODE_TYPE.GEOM_BOX)
+
+        sphere = coal.Sphere(1.0)
+        obj.setCollisionGeometry(sphere)
+        self.assertEqual(obj.getObjectType(), coal.OBJECT_TYPE.OT_GEOM)
+        self.assertEqual(obj.getNodeType(), coal.NODE_TYPE.GEOM_SPHERE)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -251,18 +251,25 @@ bool distanceRecurse(DynamicAABBTreeCollisionManager::DynamicAABBNode* root1,
 //==============================================================================
 bool leafCollide(CollisionObject* o1, CollisionObject* o2,
                  CollisionCallBackBase* callback) {
-  if ((o1->getNodeType() == GEOM_HALFSPACE ||
-       o1->getNodeType() == GEOM_PLANE) &&
-      (o2->getNodeType() == GEOM_HALFSPACE ||
-       o2->getNodeType() == GEOM_PLANE)) {
+  // This runs for every leaf-leaf pair the traversal reaches, and
+  // CollisionObject::getNodeType() forwards to a virtual on CollisionGeometry,
+  // so query each object's type once rather than on every branch below.
+  const NODE_TYPE node_type1 = o1->getNodeType();
+  const NODE_TYPE node_type2 = o2->getNodeType();
+  const bool is_planar1 =
+      node_type1 == GEOM_HALFSPACE || node_type1 == GEOM_PLANE;
+  const bool is_planar2 =
+      node_type2 == GEOM_HALFSPACE || node_type2 == GEOM_PLANE;
+
+  if (is_planar1 && is_planar2) {
     // Halfspace-plane / Halfspace-plane collision, there is no need to check
     // AABBs. We can directly use the callback.
     return (*callback)(o1, o2);
   }
 
   bool overlap = false;
-  if (o1->getNodeType() == GEOM_HALFSPACE || o1->getNodeType() == GEOM_PLANE) {
-    if (o1->getNodeType() == GEOM_HALFSPACE) {
+  if (is_planar1) {
+    if (node_type1 == GEOM_HALFSPACE) {
       const auto& halfspace =
           static_cast<const Halfspace&>(*(o1->collisionGeometryPtr()));
       overlap = o2->getAABB().overlap(transform(halfspace, o1->getTransform()));
@@ -272,9 +279,8 @@ bool leafCollide(CollisionObject* o1, CollisionObject* o2,
       overlap = o2->getAABB().overlap(transform(plane, o1->getTransform()));
     }
   }  //
-  else if (o2->getNodeType() == GEOM_HALFSPACE ||
-           o2->getNodeType() == GEOM_PLANE) {
-    if (o2->getNodeType() == GEOM_HALFSPACE) {
+  else if (is_planar2) {
+    if (node_type2 == GEOM_HALFSPACE) {
       const auto& halfspace =
           static_cast<const Halfspace&>(*(o2->collisionGeometryPtr()));
       overlap = o1->getAABB().overlap(transform(halfspace, o2->getTransform()));
@@ -333,15 +339,10 @@ bool collisionRecurse(DynamicAABBTreeCollisionManager::DynamicAABBNode* root,
     return leafCollide(leaf, query, callback);
   }
 
-  // Create a temporary node, attached to no tree.
-  // This allows to reuse the `nodeCollide` function, which only checks for
-  // overlap between the AABBs of two nodes.
-  DynamicAABBTreeCollisionManager::DynamicAABBNode query_node;
-  query_node.data = query;
-  query_node.bv = query->getAABB();
-  query_node.parent = nullptr;
-  query_node.children[1] = nullptr;
-  if (!nodeCollide(root, &query_node)) {
+  // nodeCollide() only checks for overlap between the AABBs of two nodes, so
+  // compare against the query's AABB directly rather than materializing a
+  // throwaway node for it at every level of the recursion.
+  if (!root->bv.overlap(query->getAABB())) {
     return false;
   }
 
