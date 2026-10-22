@@ -254,10 +254,13 @@ class COAL_DLLAPI CollisionObject {
   ~CollisionObject() {}
 
   /// @brief get the type of the object
-  OBJECT_TYPE getObjectType() const { return cgeom->getObjectType(); }
+  /// @note This cached value is updated when ever this object's geometry is
+  /// changed (i.e., setCollisionGeometry() and construction).
+  OBJECT_TYPE getObjectType() const { return object_type; }
 
   /// @brief get the node type
-  NODE_TYPE getNodeType() const { return cgeom->getNodeType(); }
+  /// @note See getObjectType() for why this is cached.
+  NODE_TYPE getNodeType() const { return node_type; }
 
   /// @brief get the AABB in world space
   const AABB& getAABB() const { return aabb; }
@@ -352,10 +355,20 @@ class COAL_DLLAPI CollisionObject {
     if (cgeom) {
       if (compute_local_aabb) cgeom->computeLocalAABB();
       computeAABB();
+      object_type = cgeom->getObjectType();
+      node_type = cgeom->getNodeType();
+    } else {
+      object_type = OT_UNKNOWN;
+      node_type = BV_UNKNOWN;
     }
   }
 
   shared_ptr<CollisionGeometry> cgeom;
+
+  /// @brief Type tags copied from `cgeom` to support object/node type queries
+  /// without virtual dispatch. Maintained solely by init().
+  OBJECT_TYPE object_type{OT_UNKNOWN};
+  NODE_TYPE node_type{BV_UNKNOWN};
 
   Transform3s t;
 
