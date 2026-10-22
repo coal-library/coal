@@ -63,6 +63,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix various compiler warnings ([#913](https://github.com/coal-library/coal/pull/913/changes)):
   - Fix compiler warnings emitted by public headers (deprecated fields in `GJKSolver` and `CollisionRequest`, `-Wdeprecated-copy`, `-Wsign-conversion` in the broadphase hierarchy trees)
   - Add a copy assignment operator to `details::EPA`, consistent with its copy constructor: the implicit one left the polytope pointing into the faces of the copied EPA
+- Improve performance of `DynamicAABBTreeCollisionManager` ([#914](https://github.com/coal-library/coal/pull/914))
 
 ### Changed
 - Float precision ([#665](https://github.com/coal-library/coal/pull/665))

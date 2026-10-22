@@ -802,8 +802,14 @@ void exposeCollisionObject() {
 
         .DEF_CLASS_FUNC(CollisionObject, isIdentityTransform)
         .DEF_CLASS_FUNC(CollisionObject, setIdentityTransform)
-        .DEF_CLASS_FUNC2(CollisionObject, setCollisionGeometry,
-                         (bp::with_custodian_and_ward_postcall<1, 2>()))
+        // Not DEF_CLASS_FUNC2: Boost.Python cannot see the C++ default for
+        // compute_local_aabb, so it has to be spelled out here to match the
+        // nanobind binding (and the three constructors above).
+        .def("setCollisionGeometry", &CollisionObject::setCollisionGeometry,
+             (bp::arg("self"), bp::arg("cgeom"),
+              bp::arg("compute_local_aabb") = true),
+             doxygen::member_func_doc(&CollisionObject::setCollisionGeometry),
+             bp::with_custodian_and_ward_postcall<1, 2>())
 
         .def(dv::member_func(
             "collisionGeometry",
