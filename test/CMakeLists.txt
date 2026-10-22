@@ -59,6 +59,7 @@ if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
   add_coal_test(capsule_box_contact_patch capsule_box_contact_patch.cpp)
   add_coal_test(obb obb.cpp)
   add_coal_test(convex convex.cpp)
+  add_coal_test(collision_object collision_object.cpp)
 
   add_coal_test(bvh_models bvh_models.cpp)
   add_coal_test(collision_node_asserts collision_node_asserts.cpp)
