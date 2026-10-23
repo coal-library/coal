@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added the `COAL_EQUAL_OPERATOR_CHECK` macro. This macro can be overridden at compile time, extremely practial for debugging serialization for example. ([#859](https://github.com/coal-library/coal/pull/859))
 - Added a specialized, exact capsule-box distance replacing GJK/EPA for this pair (about 10x faster) ([#905](https://github.com/coal-library/coal/pull/905)).
 - Closed-form `computeBV<RSS, S>` and `computeBV<OBBRSS, S>` for `Box`, `Sphere`, `Capsule` and `Cylinder`, instead of fitting the shape bounding vertices at each mesh–shape collision ([#909](https://github.com/coal-library/coal/pull/909))
+- Add `GEOM_CUSTOM` node type for user-defined shapes ([#822](https://github.com/coal-library/coal/pull/822))
+  - Custom shapes override `ShapeBase::computeShapeSupport()` (and `getNodeType()`) to participate in GJK/EPA queries; the default implementation delegates to the built-in support functions for built-in shapes
 
 ### Removed
 - Remove direct dependency to ([#744](https://github.com/coal-library/coal/pull/744)):
