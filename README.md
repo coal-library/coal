@@ -295,6 +295,7 @@ In addition to the core dev team, the following people have also been involved i
 -   [Sean Curtis](https://github.com/SeanCurtis-TRI) (Toyota Research Institute): code cleanups
 -   [Jonas Breuling](https://www.inm.uni-stuttgart.de/en/institut/employees/Breuling/): bug fix in contact_patch_solver
 -   [Paul Sardin](https://github.com/psardin001): closed-form shape bounding volumes
+-   [Mike Danielczuk](https://github.com/mjd3) (Ambi Robotics): specialized shape-shape distance fixes
 
 If you have participated in the development of **coal**, please add your name and contribution to this list.
 
