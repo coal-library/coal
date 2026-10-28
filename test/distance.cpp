@@ -45,6 +45,10 @@
 #include "coal/internal/traversal_node_setup.h"
 #include "../src/collision_node.h"
 #include "coal/internal/BV_splitter.h"
+#include "coal/broadphase/broadphase_dynamic_AABB_tree.h"
+#include "coal/broadphase/default_broadphase_callbacks.h"
+#include "coal/distance.h"
+#include "coal/shape/convex.h"
 
 #include "utility.h"
 #include "fcl_resources/config.h"
@@ -600,4 +604,96 @@ bool collide_Test_OBB(const Transform3s& tf,
     return true;
   else
     return false;
+}
+
+// Specialized (non-GJK) shape pairs must merge into a shared DistanceResult
+// with the same min semantics as the GJK path (DistanceResult::update).
+BOOST_AUTO_TEST_CASE(specialized_shape_distance_keeps_minimum) {
+  const Box box(0.2, 0.2, 0.2);
+  const Sphere sphere(0.05);
+  const Transform3s identity;
+  Transform3s tf_near;
+  tf_near.setTranslation(Vec3s(0.3, 0., 0.));
+  Transform3s tf_far;
+  tf_far.setTranslation(Vec3s(1., 0., 0.));
+
+  DistanceRequest request;
+  DistanceResult result;
+  const Scalar d_near =
+      distance(&box, identity, &sphere, tf_near, request, result);
+  const Vec3s p_near0 = result.nearest_points[0];
+  const Vec3s p_near1 = result.nearest_points[1];
+  const Scalar d_far =
+      distance(&box, identity, &sphere, tf_far, request, result);
+
+  BOOST_CHECK_CLOSE(d_near, 0.15, 1e-6);
+  BOOST_CHECK_CLOSE(d_far, 0.85, 1e-6);
+  BOOST_CHECK_EQUAL(result.min_distance, d_near);
+  BOOST_CHECK(result.nearest_points[0] == p_near0);
+  BOOST_CHECK(result.nearest_points[1] == p_near1);
+}
+
+// A broadphase query where the specialized sphere-sphere pair is evaluated
+// after the closer GJK sphere-convex pair must keep the convex's distance.
+BOOST_AUTO_TEST_CASE(broadphase_distance_specialized_pair_keeps_minimum) {
+  std::shared_ptr<std::vector<Vec3s>> points(new std::vector<Vec3s>(
+      {Vec3s(0.01, 0., 0.), Vec3s(0.02, 0.01, 0.), Vec3s(0.03, 0., 0.)}));
+  std::shared_ptr<std::vector<Triangle32>> triangles(
+      new std::vector<Triangle32>({Triangle32(0, 1, 2)}));
+  const std::shared_ptr<Convex<Triangle32>> convex(
+      new Convex<Triangle32>(points, 3, triangles, 1));
+  const std::shared_ptr<Sphere> sphere(new Sphere(0.01));
+
+  CollisionObject convex_obj(convex);
+  convex_obj.setTranslation(Vec3s(1., 0., 0.));
+  CollisionObject sphere_obj(sphere);
+  sphere_obj.setTranslation(Vec3s(-1., 0., 0.));
+  CollisionObject query(sphere);
+
+  // The registration order makes the sphere-sphere pair come last.
+  DynamicAABBTreeCollisionManager manager;
+  manager.registerObject(&sphere_obj);
+  manager.registerObject(&convex_obj);
+  manager.setup();
+
+  for (const Scalar x : {Scalar(2), Scalar(-2)}) {
+    query.setTranslation(Vec3s(x, 0., 0.));
+    DistanceResult expected;
+    for (CollisionObject* obj : {&sphere_obj, &convex_obj}) {
+      DistanceResult r;
+      distance(&query, obj, DistanceRequest(), r);
+      expected.update(r);
+    }
+
+    DistanceCallBackDefault callback;
+    manager.distance(&query, &callback);
+    BOOST_CHECK_CLOSE(callback.data.result.min_distance, expected.min_distance,
+                      1e-6);
+    BOOST_CHECK_CLOSE(callback.data.result.min_distance, x > 0 ? 0.96 : 0.98,
+                      1e-6);
+  }
+}
+
+// Specialized shape pairs must honor DistanceRequest::enable_signed_distance:
+// when it is off, min_distance is never negative.
+BOOST_AUTO_TEST_CASE(specialized_shape_distance_unsigned) {
+  const Box box(0.2, 0.2, 0.2);
+  const Sphere sphere(0.1);
+  const Transform3s identity;
+  Transform3s tf_penetrating;
+  tf_penetrating.setTranslation(Vec3s(0.15, 0., 0.));
+
+  DistanceRequest signed_request;
+  DistanceResult signed_result;
+  distance(&box, identity, &sphere, tf_penetrating, signed_request,
+           signed_result);
+  BOOST_CHECK_CLOSE(signed_result.min_distance, -0.05, 1e-6);
+
+  DistanceRequest unsigned_request;
+  unsigned_request.enable_signed_distance = false;
+  DistanceResult unsigned_result;
+  const Scalar d = distance(&box, identity, &sphere, tf_penetrating,
+                            unsigned_request, unsigned_result);
+  BOOST_CHECK_EQUAL(d, Scalar(0));
+  BOOST_CHECK_EQUAL(unsigned_result.min_distance, Scalar(0));
 }
