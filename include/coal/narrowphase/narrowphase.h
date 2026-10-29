@@ -40,6 +40,7 @@
 #ifndef COAL_NARROWPHASE_H
 #define COAL_NARROWPHASE_H
 
+#include <cmath>
 #include <limits>
 
 #include "coal/narrowphase/gjk.h"
@@ -229,11 +230,14 @@ struct COAL_DLLAPI GJKSolver {
     COAL_COMPILER_DIAGNOSTIC_POP
     this->gjk_tolerance = request.gjk_tolerance;
     this->gjk_max_iterations = request.gjk_max_iterations;
-    // The distance upper bound should be at least greater to the requested
-    // security margin. Otherwise, we will likely miss some collisions.
+    // The distance upper bound should be at least the distance below which the
+    // collision functions register a contact. Otherwise, GJK early-stops on
+    // shapes in collision and its witness points and normal are meaningless.
     this->distance_upper_bound =
-        (std::max)(Scalar(0), (std::max)(request.distance_upper_bound,
-                                         request.security_margin));
+        (std::max)(Scalar(0),
+                   (std::max)(request.distance_upper_bound,
+                              request.security_margin +
+                                  request.collision_distance_threshold));
     this->gjk_variant = request.gjk_variant;
     this->gjk_convergence_criterion = request.gjk_convergence_criterion;
     this->gjk_convergence_criterion_type =
@@ -495,6 +499,13 @@ struct COAL_DLLAPI GJKSolver {
                     "The distance should be bigger than GJK's "
                     "`distance_upper_bound`.",
                     std::logic_error);
+        // An early stop proves the distance above `distance_upper_bound`.
+        // Enforce it against rounding errors, so that the collision functions
+        // never take these witness points and normal for a contact.
+        distance =
+            (std::max)(distance,
+                       std::nextafter(this->distance_upper_bound,
+                                      std::numeric_limits<Scalar>::infinity()));
         break;
       case details::GJK::NoCollision:
         //
