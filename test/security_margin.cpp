@@ -510,3 +510,62 @@ BOOST_AUTO_TEST_CASE(sphere_box) {
   test_shape_shape(*b1.get(), tf1, *s2.get(), tf2_collision, tol);
   test_shape_shape(box_convex, tf1, *s2.get(), tf2_collision, tol);
 }
+
+// GJK early-stops as soon as it proves the distance above
+// `distance_upper_bound`, and the collision functions register a contact up to
+// `security_margin + collision_distance_threshold`. Between the two, a contact
+// was built from the placeholders of an early stop (normal at DBL_MAX).
+// Data from a simulation: a cylinder against a convex, with
+// distance_upper_bound = security_margin = 0 and the GJK guess cached from the
+// previous step.
+#ifdef COAL_HAS_QHULL
+BOOST_AUTO_TEST_CASE(early_stop_within_collision_distance_threshold) {
+  const Cylinder cylinder(Scalar(0.00475), Scalar(2 * 0.00975));
+  Matrix3s R1;
+  R1 << -2.220446049250313e-16, 1.0000000000000002, 0.0,  //
+      -1.0000000000000002, -2.220446049250313e-16, 0.0,   //
+      0.0, 0.0, 1.0;
+  const Transform3s tf1(
+      R1, Vec3s(0.644559564, -0.030044192400000017, 0.02398013223));
+
+  std::shared_ptr<std::vector<Vec3s>> points(new std::vector<Vec3s>({
+      Vec3s(0.046375, 0.00757772228, 0.015),
+      Vec3s(0.0481618095, 0.00448287736, 0.015),
+      Vec3s(0.0481618095, 0.00448287736, 0.005),
+      Vec3s(0.046375, 0.00757772228, 0.005),
+      Vec3s(0.0462671226, 0.00258819045, 0.005),
+      Vec3s(0.0431722777, 0.004375, 0.005),
+      Vec3s(0.0431722777, 0.004375, 0.015),
+      Vec3s(0.0462671226, 0.00258819045, 0.015),
+  }));
+  const std::unique_ptr<ConvexBase32> convex(
+      ConvexBase32::convexHull(points, 8, false, NULL));
+  Matrix3s R2;
+  R2 << -0.942218055883911, -0.3349404191567146, 0.006328568674450093,  //
+      0.3342530662571469, -0.9412098876665993, -0.04897790375590779,    //
+      0.022361191024590513, -0.044032521773706874, 0.9987798126525235;
+  const Transform3s tf2(R2, Vec3s(0.6923012889989508, -0.04651300446098569,
+                                  0.017245576511945117));
+
+  CollisionRequest request(CONTACT, 1);
+  request.security_margin = 0;
+  request.distance_upper_bound = 0;
+  request.gjk_initial_guess = GJKInitialGuess::CachedGuess;
+  request.cached_gjk_guess = Vec3s(
+      -1.0912578686695962e-06, -5.185811964742814e-07, 1.3122487436508545e-12);
+  request.cached_support_func_guess = support_func_guess_t(0, 2);
+
+  CollisionResult result;
+  collide(&cylinder, tf1, convex.get(), tf2, request, result);
+  // The shapes touch: a contact is optional, but it must carry valid contact
+  // information.
+  for (size_t i = 0; i < result.numContacts(); ++i) {
+    const Contact& contact = result.getContact(i);
+    BOOST_CHECK(contact.normal.allFinite());
+    BOOST_CHECK(contact.pos.allFinite());
+    BOOST_CHECK(std::isfinite(contact.penetration_depth));
+    BOOST_CHECK_SMALL(contact.normal.norm() - 1, Scalar(1e-8));
+    BOOST_CHECK_SMALL(contact.penetration_depth, Scalar(1e-6));
+  }
+}
+#endif  // COAL_HAS_QHULL
