@@ -481,6 +481,9 @@ struct COAL_DLLAPI CollisionRequest : QueryRequest {
   ///
   /// @remarks Consequently, the closest points might be incorrect, but allows
   /// to save computational resources.
+  /// @note GJK never early-stops below `security_margin +
+  /// collision_distance_threshold`, the distance below which a contact is
+  /// registered.
   Scalar distance_upper_bound;
 
   /// @brief Constructor from a flag and a maximal number of contacts.
