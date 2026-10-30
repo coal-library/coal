@@ -36,7 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 - Fix vertex index offsets in MeshLoader for scene nodes containing multiple meshes ([#910](https://github.com/coal-library/coal/pull/910))
-- Fix contacts made of GJK's early-stop placeholders (normal at `DBL_MAX`, point at infinity) when GJK early-stopped at a distance between `security_margin` and `security_margin + collision_distance_threshold`: GJK now early-stops only above the latter.
+- Fix contacts made of GJK's early-stop placeholders (normal at `DBL_MAX`, point at infinity) when GJK early-stopped at a distance between `security_margin` and `security_margin + collision_distance_threshold`: GJK now early-stops only above the latter ([#915](https://github.com/coal-library/coal/pull/915))
 - Fix `RSS::volume`, which missed the half cylinders along the rectangle edges and counted the sphere caps as `4 pi r^3` ([#909](https://github.com/coal-library/coal/pull/909))
 - Remove the deprecation of `ConvexBase::clone` and `Convex::clone`, which override the `CollisionGeometry::clone` virtual method and deep copy like `deepcopy` ([#911](https://github.com/coal-library/coal/pull/911))
 - Fix doc parsing via doxygen scripts ([#678](https://github.com/coal-library/coal/pull/678) [#699](https://github.com/coal-library/coal/pull/699))

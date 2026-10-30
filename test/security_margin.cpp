@@ -518,7 +518,6 @@ BOOST_AUTO_TEST_CASE(sphere_box) {
 // Data from a simulation: a cylinder against a convex, with
 // distance_upper_bound = security_margin = 0 and the GJK guess cached from the
 // previous step.
-#ifdef COAL_HAS_QHULL
 BOOST_AUTO_TEST_CASE(early_stop_within_collision_distance_threshold) {
   const Cylinder cylinder(Scalar(0.00475), Scalar(2 * 0.00975));
   Matrix3s R1;
@@ -528,18 +527,39 @@ BOOST_AUTO_TEST_CASE(early_stop_within_collision_distance_threshold) {
   const Transform3s tf1(
       R1, Vec3s(0.644559564, -0.030044192400000017, 0.02398013223));
 
-  std::shared_ptr<std::vector<Vec3s>> points(new std::vector<Vec3s>({
-      Vec3s(0.046375, 0.00757772228, 0.015),
-      Vec3s(0.0481618095, 0.00448287736, 0.015),
-      Vec3s(0.0481618095, 0.00448287736, 0.005),
+  // Convex hull of the points
+  //   (0.046375, 0.00757772228, 0.015), (0.0481618095, 0.00448287736, 0.015),
+  //   (0.0481618095, 0.00448287736, 0.005), (0.046375, 0.00757772228, 0.005),
+  //   (0.0462671226, 0.00258819045, 0.005), (0.0431722777, 0.004375, 0.005),
+  //   (0.0431722777, 0.004375, 0.015), (0.0462671226, 0.00258819045, 0.015)
+  // computed by `ConvexBase32::convexHull(points, 8, true, NULL)`, so that
+  // the test does not need Qhull.
+  auto points = std::make_shared<std::vector<Vec3s>>(std::vector<Vec3s>{
       Vec3s(0.046375, 0.00757772228, 0.005),
-      Vec3s(0.0462671226, 0.00258819045, 0.005),
-      Vec3s(0.0431722777, 0.004375, 0.005),
       Vec3s(0.0431722777, 0.004375, 0.015),
+      Vec3s(0.0431722777, 0.004375, 0.005),
+      Vec3s(0.046375, 0.00757772228, 0.015),
+      Vec3s(0.0481618095, 0.00448287736, 0.005),
+      Vec3s(0.0481618095, 0.00448287736, 0.015),
+      Vec3s(0.0462671226, 0.00258819045, 0.005),
       Vec3s(0.0462671226, 0.00258819045, 0.015),
-  }));
-  const std::unique_ptr<ConvexBase32> convex(
-      ConvexBase32::convexHull(points, 8, false, NULL));
+  });
+  auto triangles =
+      std::make_shared<std::vector<Triangle32>>(std::vector<Triangle32>{
+          Triangle32(1, 0, 2),
+          Triangle32(0, 1, 3),
+          Triangle32(4, 0, 5),
+          Triangle32(0, 3, 5),
+          Triangle32(6, 0, 4),
+          Triangle32(0, 6, 2),
+          Triangle32(3, 7, 5),
+          Triangle32(1, 7, 3),
+          Triangle32(7, 4, 5),
+          Triangle32(7, 6, 4),
+          Triangle32(7, 1, 2),
+          Triangle32(6, 7, 2),
+      });
+  const ConvexTpl<Triangle32> convex(points, 8, triangles, 12);
   Matrix3s R2;
   R2 << -0.942218055883911, -0.3349404191567146, 0.006328568674450093,  //
       0.3342530662571469, -0.9412098876665993, -0.04897790375590779,    //
@@ -556,7 +576,7 @@ BOOST_AUTO_TEST_CASE(early_stop_within_collision_distance_threshold) {
   request.cached_support_func_guess = support_func_guess_t(0, 2);
 
   CollisionResult result;
-  collide(&cylinder, tf1, convex.get(), tf2, request, result);
+  collide(&cylinder, tf1, &convex, tf2, request, result);
   // The shapes touch: a contact is optional, but it must carry valid contact
   // information.
   for (size_t i = 0; i < result.numContacts(); ++i) {
@@ -568,4 +588,3 @@ BOOST_AUTO_TEST_CASE(early_stop_within_collision_distance_threshold) {
     BOOST_CHECK_SMALL(contact.penetration_depth, Scalar(1e-6));
   }
 }
-#endif  // COAL_HAS_QHULL
