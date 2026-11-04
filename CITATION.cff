@@ -1,19 +1,21 @@
 cff-version: 1.2.0
-message: "Thanks for using Coal. Please use the following metadata to cite us in your documents."
+message: >
+  Thanks for using Coal.
+  Please use the following metadata to cite us in your documents.
 authors:
-  - family-names: Pan
-    given-names: Jia
-  - family-names: Chitta
-    given-names: Sachin
-  - family-names: Manocha
-    given-names: Dinesh
-  - family-names: Mirabel
-    given-names: Joseph
-  - family-names: Carpentier
-    given-names: Justin
-    orcid: "https://orcid.org/0000-0001-6585-2894"
-  - family-names: Montaut
-    given-names: Louis
+- family-names: Pan
+  given-names: Jia
+- family-names: Chitta
+  given-names: Sachin
+- family-names: Manocha
+  given-names: Dinesh
+- family-names: Mirabel
+  given-names: Joseph
+- family-names: Carpentier
+  given-names: Justin
+  orcid: "https://orcid.org/0000-0001-6585-2894"
+- family-names: Montaut
+  given-names: Louis
 title: "Coal - An extension of the Flexible Collision Library"
 abstract: "An extension of the Flexible Collision Library"
 version: 3.0.4
