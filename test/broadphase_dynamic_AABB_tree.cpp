@@ -41,7 +41,10 @@
 
 // #include "coal/data_types.h"
 #include "coal/shape/geometric_shapes.h"
+#include "coal/shape/convex.h"
 #include "coal/broadphase/broadphase_dynamic_AABB_tree.h"
+#include "coal/broadphase/default_broadphase_callbacks.h"
+#include "coal/distance.h"
 
 #include <iostream>
 #include <memory>
@@ -139,5 +142,47 @@ BOOST_AUTO_TEST_CASE(DynamicAABBTreeCollisionManager_class) {
   for (int count = 0; count < 8; ++count) {
     dynamic_tree.update();
     dynamic_tree.distance(&callback);
+  }
+}
+
+// A broadphase query where the specialized sphere-sphere pair is evaluated
+// after the closer GJK sphere-convex pair must keep the convex's distance.
+// Regression test for https://github.com/coal-library/coal/pull/885.
+BOOST_AUTO_TEST_CASE(broadphase_distance_specialized_pair_keeps_minimum) {
+  const auto points = std::make_shared<std::vector<Vec3s>>(std::vector<Vec3s>{
+      Vec3s(0.01, 0., 0.), Vec3s(0.02, 0.01, 0.), Vec3s(0.03, 0., 0.)});
+  const auto triangles = std::make_shared<std::vector<Triangle32>>(
+      std::vector<Triangle32>{Triangle32(0, 1, 2)});
+  const auto convex =
+      std::make_shared<Convex<Triangle32>>(points, 3, triangles, 1);
+  const auto sphere = std::make_shared<Sphere>(0.01);
+
+  CollisionObject convex_obj(convex);
+  convex_obj.setTranslation(Vec3s(1., 0., 0.));
+  CollisionObject sphere_obj(sphere);
+  sphere_obj.setTranslation(Vec3s(-1., 0., 0.));
+  CollisionObject query(sphere);
+
+  // The registration order makes the sphere-sphere pair come last.
+  DynamicAABBTreeCollisionManager manager;
+  manager.registerObject(&sphere_obj);
+  manager.registerObject(&convex_obj);
+  manager.setup();
+
+  for (const Scalar x : {Scalar(2), Scalar(-2)}) {
+    query.setTranslation(Vec3s(x, 0., 0.));
+    DistanceResult expected;
+    for (CollisionObject* obj : {&sphere_obj, &convex_obj}) {
+      DistanceResult r;
+      distance(&query, obj, DistanceRequest(), r);
+      expected.update(r);
+    }
+
+    DistanceCallBackDefault callback;
+    manager.distance(&query, &callback);
+    BOOST_CHECK_CLOSE(callback.data.result.min_distance, expected.min_distance,
+                      1e-6);
+    BOOST_CHECK_CLOSE(callback.data.result.min_distance, x > 0 ? 0.96 : 0.98,
+                      1e-6);
   }
 }
