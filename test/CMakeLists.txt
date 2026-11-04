@@ -80,7 +80,6 @@ if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
 
   # Broadphase
   add_coal_test(broadphase broadphase.cpp)
-  set_tests_properties(${PROJECT_NAME}-broadphase PROPERTIES WILL_FAIL TRUE)
   add_coal_test(broadphase_dynamic_AABB_tree broadphase_dynamic_AABB_tree.cpp)
   add_coal_test(broadphase_collision_1 broadphase_collision_1.cpp)
   add_coal_test(broadphase_collision_2 broadphase_collision_2.cpp)
