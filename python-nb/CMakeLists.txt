@@ -1,6 +1,7 @@
 set(
   coal_pywrap_nb_HEADERS
   broadphase/broadphase_callbacks_collision_manager.hh
+  copyable.hh
   fwd.h
   pickle.hh
   serializable.hh
