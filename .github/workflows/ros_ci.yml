@@ -48,7 +48,11 @@ jobs:
 
           # ROS2 Rolling Ridley
           - ROS_DISTRO: rolling
-            os: Ubuntu 24.04 (Noble)
+            os: Ubuntu 26.04 (Resolute)
+
+          # ROS2 Lyrical Luth (May 2026 - May 2031)
+          - ROS_DISTRO: lyrical
+            os: Ubuntu 26.04 (Resolute)
     env:
       CMAKE_ARGS: -DBUILD_PYTHON_INTERFACE=ON -DCOAL_BUILD_TESTS=ON -DCOAL_BUILD_BENCHMARKS=ON
       VERBOSE_OUTPUT: true
