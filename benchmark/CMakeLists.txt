@@ -10,3 +10,4 @@ endfunction()
 
 coal_add_benchmark(bvh_collision_distance)
 coal_add_benchmark(obb)
+coal_add_benchmark(distances)
