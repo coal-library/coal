@@ -29,6 +29,7 @@ nanoeigenpy = ">=0.3.0"
 assimp = ">=5.4"
 graphviz = "*"
 jrl-cmakemodules = ">=2.1.0"
+benchmark = ">=1.9.4"
 
 [package]
 name = { workspace = true }
@@ -117,6 +118,7 @@ configure = { cmd = [
   "-DENABLE_PYTHON_DOXYGEN_AUTODOC=ON",
   "-DCOAL_BUILD_WITH_OCTOMAP=$COAL_BUILD_WITH_OCTOMAP",
   "-DCOAL_HAS_QHULL=$COAL_HAS_QHULL",
+  "-DCOAL_BUILD_BENCHMARKS=$COAL_BUILD_BENCHMARKS",
   "-DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL=ON",
 ] }
 build = { cmd = "cmake --build build", depends-on = ["configure"] }

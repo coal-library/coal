@@ -5,4 +5,3 @@ endfunction()
 
 coal_add_benchmark(obb)
 coal_add_benchmark(profiling)
-coal_add_benchmark(benchmark)

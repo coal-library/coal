@@ -51,7 +51,7 @@ jrl_option(
   FALLBACK OFF
 )
 jrl_option(BUILD_TESTING "Build the tests" ON)
-jrl_option(COAL_BUILD_BENCHMARKS "Build the benchmarks" ON)
+jrl_option(COAL_BUILD_BENCHMARKS "Build the benchmarks" OFF)
 jrl_option(
   COAL_TURN_ASSERT_INTO_EXCEPTION
   "Turn some critical Coal asserts to exception."
@@ -125,6 +125,10 @@ endif()
 
 if(BUILD_TESTING)
   jrl_find_package(Boost CONFIG REQUIRED COMPONENTS unit_test_framework)
+endif()
+
+if(COAL_BUILD_BENCHMARKS)
+  jrl_find_package(benchmark CONFIG REQUIRED EXPECTED_TARGETS benchmark::benchmark)
 endif()
 
 if(BUILD_PYTHON_INTERFACE AND COAL_PYTHON_NANOBIND)
@@ -637,10 +641,19 @@ if(BUILD_PYTHON_INTERFACE AND NOT COAL_PYTHON_NANOBIND)
   add_subdirectory(python)
 endif()
 
+if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
+  add_subdirectory(utility)
+endif()
+
 if(BUILD_TESTING)
   message(STATUS "[coal] Building tests.")
   enable_testing()
   add_subdirectory(test)
+endif()
+
+if(COAL_BUILD_BENCHMARKS)
+  message(STATUS "[coal] Building benchmarks.")
+  add_subdirectory(benchmark)
 endif()
 
 if(COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL AND NOT BUILD_STANDALONE_PYTHON_INTERFACE)
