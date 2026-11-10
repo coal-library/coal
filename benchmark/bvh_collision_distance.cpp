@@ -11,43 +11,39 @@
 // useful, but WITHOUT ANY WARRANTY; without even the implied warranty
 // of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // General Lesser Public License for more details.  You should have
-// received a copy of the GNU Lesser General Public License along with
+// received a copy of the GNU General Lesser Public License along with
 // Coal. If not, see <http://www.gnu.org/licenses/>.
 
-#include <boost/filesystem.hpp>
+#include <benchmark/benchmark.h>
 
-#include "coal/internal/traversal_node_setup.h"
-#include "coal/internal/traversal_node_bvhs.h"
-#include "../src/collision_node.h"
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <random>
+#include <string>
+#include <vector>
+
+#include "coal/BV/BV.h"
+#include "coal/BVH/BVH_model.h"
+#include "coal/collision_data.h"
+#include "coal/data_types.h"
 #include "coal/internal/BV_splitter.h"
-
+#include "coal/internal/traversal_node_bvhs.h"
+#include "coal/internal/traversal_node_setup.h"
+#include "coal/math/transform.h"
+#include "coal/mesh_loader/assimp.h"
+#include "../src/collision_node.h"
 #include "utility.h"
-
-#define RUN_CASE(BV, tf, models, split) \
-  run<BV>(tf, models, split, #BV " - " #split ":\t")
 
 using namespace coal;
 
-bool verbose = false;
-Scalar DELTA = Scalar(0.001);
+namespace {
 
-template <typename BV>
-void makeModel(const std::vector<Vec3s>& vertices,
-               const std::vector<Triangle32>& triangles,
-               SplitMethodType split_method, BVHModel<BV>& model);
-
-template <typename BV, typename TraversalNode>
-double distance(const std::vector<Transform3s>& tf, const BVHModel<BV>& m1,
-                const BVHModel<BV>& m2, bool verbose);
-
-template <typename BV, typename TraversalNode>
-double collide(const std::vector<Transform3s>& tf, const BVHModel<BV>& m1,
-               const BVHModel<BV>& m2, bool verbose);
-
-template <typename BV>
-double run(const std::vector<Transform3s>& tf,
-           const BVHModel<BV> (&models)[2][3], int split_method,
-           const char* sm_name);
+// Number of generated transformation
+const std::size_t num_transforms = 10000;
+// Transformation range
+const Scalar extent = Scalar(3000.0);
 
 template <typename BV>
 struct traits {};
@@ -67,7 +63,6 @@ struct traits<kIOS> {
 template <>
 struct traits<OBB> {
   typedef MeshCollisionTraversalNodeOBB CollisionTraversalNode;
-  // typedef MeshDistanceTraversalNodeOBB  DistanceTraversalNode;
 };
 
 template <>
@@ -76,156 +71,124 @@ struct traits<OBBRSS> {
   typedef MeshDistanceTraversalNodeOBBRSS DistanceTraversalNode;
 };
 
+// 2D vector with mesh as first dimension and split strategy as second one.
 template <typename BV>
-void makeModel(const std::vector<Vec3s>& vertices,
-               const std::vector<Triangle32>& triangles,
-               SplitMethodType split_method, BVHModel<BV>& model) {
-  model.bv_splitter.reset(new BVSplitter<BV>(split_method));
-  model.bv_splitter.reset(new BVSplitter<BV>(split_method));
+using Models = std::array<std::array<shared_ptr<BVHModel<BV>>, 3>, 2>;
 
-  model.beginModel();
-  model.addSubModel(vertices, triangles);
-  model.endModel();
-}
-
-template <typename BV, typename TraversalNode>
-double distance(const std::vector<Transform3s>& tf, const BVHModel<BV>& m1,
-                const BVHModel<BV>& m2, bool verbose) {
-  Transform3s pose2;
-
-  DistanceResult local_result;
-  DistanceRequest request(true);
-  TraversalNode node;
-
-  node.enable_statistics = verbose;
-
-  BenchTimer timer;
-  timer.start();
-
-  for (std::size_t i = 0; i < tf.size(); ++i) {
-    if (!initialize(node, m1, tf[i], m2, pose2, request, local_result))
-      std::cout << "initialize error" << std::endl;
-
-    distance(&node, NULL);
-  }
-  return timer.getElapsedTimeInMicroSec();
-}
-
-template <typename BV, typename TraversalNode>
-double collide(const std::vector<Transform3s>& tf, const BVHModel<BV>& m1,
-               const BVHModel<BV>& m2, bool verbose) {
-  Transform3s pose2;
-
-  CollisionResult local_result;
-  CollisionRequest request;
-  TraversalNode node(request);
-
-  node.enable_statistics = verbose;
-
-  BenchTimer timer;
-  timer.start();
-
-  for (std::size_t i = 0; i < tf.size(); ++i) {
-    bool success(initialize(node, m1, tf[i], m2, pose2, local_result));
-    (void)success;
-    assert(success);
-
-    CollisionResult result;
-    collide(&node, request, result);
-  }
-
-  return timer.getElapsedTimeInMicroSec();
-}
-
+// Load all models in a static variable to avoid reloading
+// them for each benchmarks.
 template <typename BV>
-double run(const std::vector<Transform3s>& tf,
-           const BVHModel<BV> (&models)[2][3], int split_method,
-           const char* prefix) {
-  double col = collide<BV, typename traits<BV>::CollisionTraversalNode>(
-      tf, models[0][split_method], models[1][split_method], verbose);
-  double dist = distance<BV, typename traits<BV>::DistanceTraversalNode>(
-      tf, models[0][split_method], models[1][split_method], verbose);
+const Models<BV>& get_models() {
+  static const Models<BV> models = [] {
+    const std::array<std::string, 2> resources = {
+        TEST_RESOURCES_DIR "/env.obj", TEST_RESOURCES_DIR "/rob.obj"};
 
-  std::cout << prefix << " (" << col << ", " << dist << ")\n";
-  return col + dist;
+    Models<BV> models;
+    for (std::size_t mesh = 0; mesh < models.size(); ++mesh) {
+      for (int split_method = 0; split_method < 3; ++split_method) {
+        shared_ptr<BVHModel<BV>> model = std::make_shared<BVHModel<BV>>();
+        model->bv_splitter =
+            std::make_shared<BVSplitter<BV>>(SplitMethodType(split_method));
+        loadPolyhedronFromResource<BV>(resources[mesh], Vec3s::Ones(), model);
+        models[mesh][split_method] = model;
+      }
+    }
+    return models;
+  }();
+  return models;
 }
 
-template <>
-double run<OBB>(const std::vector<Transform3s>& tf,
-                const BVHModel<OBB> (&models)[2][3], int split_method,
-                const char* prefix) {
-  double col = collide<OBB, traits<OBB>::CollisionTraversalNode>(
-      tf, models[0][split_method], models[1][split_method], verbose);
-  double dist = 0;
-
-  std::cout << prefix << " (\t" << col << ", \tNaN)\n";
-  return col + dist;
+// Generate random transformation in a static variable
+// to avoid reloading them
+const std::vector<Transform3s>& get_transforms() {
+  static const std::vector<Transform3s> transforms = [] {
+    std::vector<Transform3s> ret_transforms;
+    Scalar extents_6d[] = {-extent, -extent, -extent, extent, extent, extent};
+    generateRandomTransforms(extents_6d, ret_transforms, num_transforms);
+    return ret_transforms;
+  }();
+  return transforms;
 }
 
-int main(int, char*[]) {
-  std::vector<Vec3s> p1, p2;
-  std::vector<Triangle32> t1, t2;
-  boost::filesystem::path path(TEST_RESOURCES_DIR);
-  loadOBJFile((path / "env.obj").string().c_str(), p1, t1);
-  loadOBJFile((path / "rob.obj").string().c_str(), p2, t2);
+// Collision benchmark with custom node traversal
+template <typename BV, SplitMethodType SplitMethod>
+void run_collision(benchmark::State& state) {
+  const Models<BV>& models = get_models<BV>();
+  const BVHModel<BV>& o1 = *models[0][int(SplitMethod)];
+  const BVHModel<BV>& o2 = *models[1][int(SplitMethod)];
+  const std::vector<Transform3s>& transforms = get_transforms();
 
-  // Make models
-  BVHModel<RSS> ms_rss[2][3];
-  makeModel(p1, t1, SPLIT_METHOD_MEAN, ms_rss[0][SPLIT_METHOD_MEAN]);
-  makeModel(p1, t1, SPLIT_METHOD_BV_CENTER, ms_rss[0][SPLIT_METHOD_BV_CENTER]);
-  makeModel(p1, t1, SPLIT_METHOD_MEDIAN, ms_rss[0][SPLIT_METHOD_MEDIAN]);
-  makeModel(p2, t2, SPLIT_METHOD_MEAN, ms_rss[1][SPLIT_METHOD_MEAN]);
-  makeModel(p2, t2, SPLIT_METHOD_BV_CENTER, ms_rss[1][SPLIT_METHOD_BV_CENTER]);
-  makeModel(p2, t2, SPLIT_METHOD_MEDIAN, ms_rss[1][SPLIT_METHOD_MEDIAN]);
+  const Transform3s tf2 = Transform3s::Identity();
 
-  BVHModel<kIOS> ms_kios[2][3];
-  makeModel(p1, t1, SPLIT_METHOD_MEAN, ms_kios[0][SPLIT_METHOD_MEAN]);
-  makeModel(p1, t1, SPLIT_METHOD_BV_CENTER, ms_kios[0][SPLIT_METHOD_BV_CENTER]);
-  makeModel(p1, t1, SPLIT_METHOD_MEDIAN, ms_kios[0][SPLIT_METHOD_MEDIAN]);
-  makeModel(p2, t2, SPLIT_METHOD_MEAN, ms_kios[1][SPLIT_METHOD_MEAN]);
-  makeModel(p2, t2, SPLIT_METHOD_BV_CENTER, ms_kios[1][SPLIT_METHOD_BV_CENTER]);
-  makeModel(p2, t2, SPLIT_METHOD_MEDIAN, ms_kios[1][SPLIT_METHOD_MEDIAN]);
+  const CollisionRequest request;
+  typename traits<BV>::CollisionTraversalNode node(request);
+  CollisionResult result;
 
-  BVHModel<OBB> ms_obb[2][3];
-  makeModel(p1, t1, SPLIT_METHOD_MEAN, ms_obb[0][SPLIT_METHOD_MEAN]);
-  makeModel(p1, t1, SPLIT_METHOD_BV_CENTER, ms_obb[0][SPLIT_METHOD_BV_CENTER]);
-  makeModel(p1, t1, SPLIT_METHOD_MEDIAN, ms_obb[0][SPLIT_METHOD_MEDIAN]);
-  makeModel(p2, t2, SPLIT_METHOD_MEAN, ms_obb[1][SPLIT_METHOD_MEAN]);
-  makeModel(p2, t2, SPLIT_METHOD_BV_CENTER, ms_obb[1][SPLIT_METHOD_BV_CENTER]);
-  makeModel(p2, t2, SPLIT_METHOD_MEDIAN, ms_obb[1][SPLIT_METHOD_MEDIAN]);
+  for (auto _ : state) {
+    result.clear();
 
-  BVHModel<OBBRSS> ms_obbrss[2][3];
-  makeModel(p1, t1, SPLIT_METHOD_MEAN, ms_obbrss[0][SPLIT_METHOD_MEAN]);
-  makeModel(p1, t1, SPLIT_METHOD_BV_CENTER,
-            ms_obbrss[0][SPLIT_METHOD_BV_CENTER]);
-  makeModel(p1, t1, SPLIT_METHOD_MEDIAN, ms_obbrss[0][SPLIT_METHOD_MEDIAN]);
-  makeModel(p2, t2, SPLIT_METHOD_MEAN, ms_obbrss[1][SPLIT_METHOD_MEAN]);
-  makeModel(p2, t2, SPLIT_METHOD_BV_CENTER,
-            ms_obbrss[1][SPLIT_METHOD_BV_CENTER]);
-  makeModel(p2, t2, SPLIT_METHOD_MEDIAN, ms_obbrss[1][SPLIT_METHOD_MEDIAN]);
+    for (const Transform3s& tf1 : transforms) {
+      initialize(node, o1, tf1, o2, tf2, result);
+      collide(&node, request, result);
+    }
+  }
 
-  std::vector<Transform3s> transforms;  // t0
-  Scalar extents[] = {-3000, -3000, -3000, 3000, 3000, 3000};
-  std::size_t n = 10000;
-
-  generateRandomTransforms(extents, transforms, n);
-  double total_time = 0;
-
-  total_time += RUN_CASE(RSS, transforms, ms_rss, SPLIT_METHOD_MEAN);
-  total_time += RUN_CASE(RSS, transforms, ms_rss, SPLIT_METHOD_BV_CENTER);
-  total_time += RUN_CASE(RSS, transforms, ms_rss, SPLIT_METHOD_MEDIAN);
-
-  total_time += RUN_CASE(kIOS, transforms, ms_kios, SPLIT_METHOD_MEAN);
-  total_time += RUN_CASE(kIOS, transforms, ms_kios, SPLIT_METHOD_BV_CENTER);
-  total_time += RUN_CASE(kIOS, transforms, ms_kios, SPLIT_METHOD_MEDIAN);
-
-  total_time += RUN_CASE(OBB, transforms, ms_obb, SPLIT_METHOD_MEAN);
-  total_time += RUN_CASE(OBB, transforms, ms_obb, SPLIT_METHOD_BV_CENTER);
-  total_time += RUN_CASE(OBB, transforms, ms_obb, SPLIT_METHOD_MEDIAN);
-
-  total_time += RUN_CASE(OBBRSS, transforms, ms_obbrss, SPLIT_METHOD_MEAN);
-  total_time += RUN_CASE(OBBRSS, transforms, ms_obbrss, SPLIT_METHOD_BV_CENTER);
-  total_time += RUN_CASE(OBBRSS, transforms, ms_obbrss, SPLIT_METHOD_MEDIAN);
-
-  std::cout << "\n\nTotal time: " << total_time << std::endl;
+  state.SetItemsProcessed(state.iterations() *
+                          static_cast<std::int64_t>(num_transforms));
 }
+
+// Distance benchmark with custom node traversal
+template <typename BV, SplitMethodType SplitMethod>
+void run_distance(benchmark::State& state) {
+  const Models<BV>& models = get_models<BV>();
+  const BVHModel<BV>& o1 = *models[0][int(SplitMethod)];
+  const BVHModel<BV>& o2 = *models[1][int(SplitMethod)];
+  const std::vector<Transform3s>& transforms = get_transforms();
+
+  const Transform3s tf2 = Transform3s::Identity();
+
+  const DistanceRequest request(true);
+  typename traits<BV>::DistanceTraversalNode node;
+  DistanceResult result;
+
+  for (auto _ : state) {
+    result.clear();
+
+    for (const Transform3s& tf1 : transforms) {
+      initialize(node, o1, tf1, o2, tf2, request, result);
+      distance(&node, nullptr);
+    }
+  }
+
+  state.SetItemsProcessed(state.iterations() *
+                          static_cast<std::int64_t>(num_transforms));
+}
+
+}  // namespace
+
+BENCHMARK(run_collision<RSS, SPLIT_METHOD_MEAN>);
+BENCHMARK(run_collision<RSS, SPLIT_METHOD_BV_CENTER>);
+BENCHMARK(run_collision<RSS, SPLIT_METHOD_MEDIAN>);
+BENCHMARK(run_distance<RSS, SPLIT_METHOD_MEAN>);
+BENCHMARK(run_distance<RSS, SPLIT_METHOD_BV_CENTER>);
+BENCHMARK(run_distance<RSS, SPLIT_METHOD_MEDIAN>);
+
+BENCHMARK(run_collision<kIOS, SPLIT_METHOD_MEAN>);
+BENCHMARK(run_collision<kIOS, SPLIT_METHOD_BV_CENTER>);
+BENCHMARK(run_collision<kIOS, SPLIT_METHOD_MEDIAN>);
+BENCHMARK(run_distance<kIOS, SPLIT_METHOD_MEAN>);
+BENCHMARK(run_distance<kIOS, SPLIT_METHOD_BV_CENTER>);
+BENCHMARK(run_distance<kIOS, SPLIT_METHOD_MEDIAN>);
+
+BENCHMARK(run_collision<OBB, SPLIT_METHOD_MEAN>);
+BENCHMARK(run_collision<OBB, SPLIT_METHOD_BV_CENTER>);
+BENCHMARK(run_collision<OBB, SPLIT_METHOD_MEDIAN>);
+
+BENCHMARK(run_collision<OBBRSS, SPLIT_METHOD_MEAN>);
+BENCHMARK(run_collision<OBBRSS, SPLIT_METHOD_BV_CENTER>);
+BENCHMARK(run_collision<OBBRSS, SPLIT_METHOD_MEDIAN>);
+BENCHMARK(run_distance<OBBRSS, SPLIT_METHOD_MEAN>);
+BENCHMARK(run_distance<OBBRSS, SPLIT_METHOD_BV_CENTER>);
+BENCHMARK(run_distance<OBBRSS, SPLIT_METHOD_MEDIAN>);
+
+BENCHMARK_MAIN();
