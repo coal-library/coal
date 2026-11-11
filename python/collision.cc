@@ -168,6 +168,7 @@ void exposeCollisionAPI() {
         .DEF_RW_CLASS_ATTRIB(CollisionRequest, security_margin)
         .DEF_RW_CLASS_ATTRIB(CollisionRequest, break_distance)
         .DEF_RW_CLASS_ATTRIB(CollisionRequest, distance_upper_bound)
+        .DEF_RW_CLASS_ATTRIB(CollisionRequest, test_leaf_bv)
         .def(self == self)
         .def_pickle(PickleObject<CollisionRequest>())
         .def(SerializableVisitor<CollisionRequest>())

@@ -486,6 +486,15 @@ struct COAL_DLLAPI CollisionRequest : QueryRequest {
   /// registered.
   Scalar distance_upper_bound;
 
+  /// @brief Whether the collision traversal tests the bounding volumes of a
+  /// leaf pair before the narrow-phase test on that pair, and skips the pair
+  /// when they are disjoint (as it does for inner nodes).
+  /// Defaults to false: a leaf pair goes straight to the narrow phase.
+  /// Requires security_margin >= 0: the traversal throws
+  /// std::invalid_argument otherwise, because the bounding-volume test does
+  /// not bound the distance to collision for a negative margin.
+  bool test_leaf_bv;
+
   /// @brief Constructor from a flag and a maximal number of contacts.
   ///
   /// @param[in] flag Collision request flag
@@ -499,7 +508,8 @@ struct COAL_DLLAPI CollisionRequest : QueryRequest {
         enable_distance_lower_bound(flag & DISTANCE_LOWER_BOUND),
         security_margin(0),
         break_distance(Scalar(1e-3)),
-        distance_upper_bound((std::numeric_limits<Scalar>::max)()) {}
+        distance_upper_bound((std::numeric_limits<Scalar>::max)()),
+        test_leaf_bv(false) {}
 
   /// @brief Default constructor.
   CollisionRequest()
@@ -508,7 +518,8 @@ struct COAL_DLLAPI CollisionRequest : QueryRequest {
         enable_distance_lower_bound(false),
         security_margin(0),
         break_distance(Scalar(1e-3)),
-        distance_upper_bound((std::numeric_limits<Scalar>::max)()) {}
+        distance_upper_bound((std::numeric_limits<Scalar>::max)()),
+        test_leaf_bv(false) {}
 
   /// @brief Copy constructor.
   CollisionRequest(const CollisionRequest& other) = default;
@@ -534,6 +545,7 @@ struct COAL_DLLAPI CollisionRequest : QueryRequest {
     COAL_EQUAL_OPERATOR_CHECK(break_distance == other.break_distance);
     COAL_EQUAL_OPERATOR_CHECK(distance_upper_bound ==
                               other.distance_upper_bound);
+    COAL_EQUAL_OPERATOR_CHECK(test_leaf_bv == other.test_leaf_bv);
     COAL_COMPILER_DIAGNOSTIC_POP
 
     return true;
@@ -553,6 +565,7 @@ struct COAL_DLLAPI CollisionRequest : QueryRequest {
     os << prefix << "  security_margin: " << security_margin << ",\n";
     os << prefix << "  break_distance: " << break_distance << ",\n";
     os << prefix << "  distance_upper_bound: " << distance_upper_bound << ",\n";
+    os << prefix << "  test_leaf_bv: " << test_leaf_bv << ",\n";
   }
 
   /// \copydoc disp
