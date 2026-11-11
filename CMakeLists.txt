@@ -318,6 +318,7 @@ set(
   include/coal/internal/traversal_node_setup.h
   include/coal/internal/traversal_node_shapes.h
   include/coal/internal/traversal_recurse.h
+  include/coal/internal/traversal_stats.h
   include/coal/internal/traversal.h
   include/coal/serialization/fwd.h
   include/coal/serialization/serializer.h

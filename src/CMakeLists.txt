@@ -100,6 +100,7 @@ set(
   intersect.cpp
   math/transform.cpp
   traversal/traversal_recurse.cpp
+  traversal/traversal_stats.cpp
   distance.cpp
   BVH/BVH_utility.cpp
   BVH/BV_fitter.cpp
