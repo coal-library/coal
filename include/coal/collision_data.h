@@ -1436,6 +1436,26 @@ struct COAL_DLLAPI DistanceRequest : QueryRequest {
   Scalar rel_err;  // relative error, between 0 and 1
   Scalar abs_err;  // absolute error
 
+  /// @brief upper bound on the distance the caller needs.
+  /// Default: the largest scalar, which disables the bound and leaves the
+  /// query unchanged.
+  /// With a smaller value, a query between a mesh and a shape first tests the
+  /// distance of the mesh's root bounding volume: when it is at least the
+  /// bound, the query returns and the result is left untouched. Otherwise
+  /// `DistanceResult::min_distance` starts at the bound (never above the
+  /// minimum the result already holds), so the traversal skips every subtree
+  /// whose bounding-volume distance is at least the bound, and only triangles
+  /// closer than the bound are reported. If none is, `min_distance` is the
+  /// bound and `DistanceResult::b1` is `DistanceResult::NONE`.
+  /// @note Bounding-volume distances are lower bounds on the distance of every
+  /// triangle beneath them, so no triangle closer than the bound is skipped.
+  /// On a penetrating pair, bounding-volume distances are clamped at 0, so the
+  /// traversal stops at the first penetrating triangle it reaches: the
+  /// returned depth is that triangle's, not necessarily the deepest.
+  /// @note Read by the mesh-shape distance query only; it is not passed to
+  /// the narrow-phase solver. A NaN bound is refused.
+  Scalar distance_upper_bound;
+
   /// \param enable_nearest_points_ enables the nearest points computation.
   /// \param enable_signed_distance_ allows to compute the penetration depth
   /// \param rel_err_
@@ -1448,7 +1468,8 @@ struct COAL_DLLAPI DistanceRequest : QueryRequest {
       : enable_nearest_points(enable_nearest_points_),
         enable_signed_distance(enable_signed_distance_),
         rel_err(rel_err_),
-        abs_err(abs_err_) {}
+        abs_err(abs_err_),
+        distance_upper_bound((std::numeric_limits<Scalar>::max)()) {}
   COAL_COMPILER_DIAGNOSTIC_POP
 
   bool isSatisfied(const DistanceResult& result) const;
@@ -1472,6 +1493,8 @@ struct COAL_DLLAPI DistanceRequest : QueryRequest {
                               other.enable_signed_distance);
     COAL_EQUAL_OPERATOR_CHECK(rel_err == other.rel_err);
     COAL_EQUAL_OPERATOR_CHECK(abs_err == other.abs_err);
+    COAL_EQUAL_OPERATOR_CHECK(distance_upper_bound ==
+                              other.distance_upper_bound);
     COAL_COMPILER_DIAGNOSTIC_POP
 
     return true;
@@ -1490,6 +1513,8 @@ struct COAL_DLLAPI DistanceRequest : QueryRequest {
        << ",\n";
     os << prefix << "  rel_err: " << rel_err << ",\n";
     os << prefix << "  abs_err: " << abs_err << ",\n";
+    os << prefix << "  distance_upper_bound: " << distance_upper_bound
+       << ",\n";
   }
 
   /// \copydoc disp

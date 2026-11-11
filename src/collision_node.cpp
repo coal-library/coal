@@ -35,6 +35,10 @@
 
 /** \author Jia Pan */
 
+#include <algorithm>
+#include <cmath>
+#include <limits>
+
 #include <../src/collision_node.h>
 #include "coal/internal/traversal_recurse.h"
 
@@ -84,6 +88,28 @@ void distance(DistanceTraversalNodeBase* node, BVHFrontList* front_list,
   else
     distanceQueueRecurse(node, 0, 0, front_list, qsize);
 
+  node->postprocess();
+}
+
+void boundedDistance(DistanceTraversalNodeBase* node) {
+  const Scalar bound = node->request.distance_upper_bound;
+  if (std::isnan(bound)) {
+    COAL_THROW_PRETTY("DistanceRequest::distance_upper_bound is NaN.",
+                      std::invalid_argument);
+  }
+  if (bound >= (std::numeric_limits<Scalar>::max)()) {
+    distance(node);
+    return;
+  }
+
+  DistanceResult& result = *(node->result);
+  const Scalar start = (std::min)(bound, result.min_distance);
+  if (node->BVDistanceLowerBound(0, 0) >= start) return;
+
+  // Seeding the minimum replaces the preprocess step: every subtree whose
+  // bounding-volume distance is at least the bound is skipped by canStop.
+  result.min_distance = start;
+  distanceRecurse(node, 0, 0, NULL);
   node->postprocess();
 }
 
