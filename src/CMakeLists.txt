@@ -100,6 +100,7 @@ set(
   intersect.cpp
   math/transform.cpp
   traversal/traversal_recurse.cpp
+  traversal/traversal_stats.cpp
   distance.cpp
   BVH/BVH_utility.cpp
   BVH/BV_fitter.cpp
@@ -200,6 +201,10 @@ endif()
 if(COAL_BUILD_WITH_TRACY)
   target_compile_definitions(${LIBRARY_NAME} PUBLIC COAL_TRACY_ENABLE)
   target_link_libraries(${LIBRARY_NAME} PUBLIC Tracy::TracyClient)
+endif()
+
+if(COAL_ENABLE_TRAVERSAL_STATS)
+  target_compile_definitions(${LIBRARY_NAME} PUBLIC COAL_ENABLE_TRAVERSAL_STATS)
 endif()
 
 if(WIN32)

@@ -45,6 +45,7 @@
 #include "coal/narrowphase/narrowphase.h"
 #include "coal/shape/geometric_shapes_utility.h"
 #include "coal/internal/traversal_node_base.h"
+#include "coal/traversal_stats.h"
 #include "coal/internal/traversal.h"
 #include "coal/BVH/BVH_model.h"
 #include "coal/internal/shape_shape_func.h"
@@ -119,6 +120,7 @@ class MeshShapeCollisionTraversalNode
   bool BVDisjoints(unsigned int b1, unsigned int /*b2*/,
                    Scalar& sqrDistLowerBound) const {
     if (this->enable_statistics) this->num_bv_tests++;
+    COAL_TRAVERSAL_STATS_INC(box_tests);
     bool disjoint;
     if (RTIsIdentity)
       disjoint = !this->model1->getBV(b1).bv.overlap(
@@ -138,6 +140,7 @@ class MeshShapeCollisionTraversalNode
   void leafCollides(unsigned int b1, unsigned int /*b2*/,
                     Scalar& sqrDistLowerBound) const {
     if (this->enable_statistics) this->num_leaf_tests++;
+    COAL_TRAVERSAL_STATS_INC(leaf_tests);
     const BVNode<BV>& node = this->model1->getBV(b1);
 
     int primitive_id = node.primitiveId();
@@ -227,6 +230,7 @@ class BVHShapeDistanceTraversalNode : public DistanceTraversalNodeBase {
 
   /// @brief BV culling test in one BVTT node
   Scalar BVDistanceLowerBound(unsigned int b1, unsigned int /*b2*/) const {
+    COAL_TRAVERSAL_STATS_INC(box_tests);
     return model1->getBV(b1).bv.distance(model2_bv);
   }
 
@@ -299,6 +303,7 @@ class MeshShapeDistanceTraversalNode
   /// @brief Distance testing between leaves (one triangle and one shape)
   void leafComputeDistance(unsigned int b1, unsigned int /*b2*/) const {
     if (this->enable_statistics) this->num_leaf_tests++;
+    COAL_TRAVERSAL_STATS_INC(leaf_tests);
 
     const BVNode<BV>& node = this->model1->getBV(b1);
 
@@ -345,6 +350,7 @@ void meshShapeDistanceOrientedNodeleafComputeDistance(
     bool enable_statistics, int& num_leaf_tests, const DistanceRequest& request,
     DistanceResult& result) {
   if (enable_statistics) num_leaf_tests++;
+  COAL_TRAVERSAL_STATS_INC(leaf_tests);
 
   const BVNode<BV>& node = model1->getBV(b1);
   int primitive_id = node.primitiveId();
@@ -368,6 +374,7 @@ static inline void distancePreprocessOrientedNode(
     int init_tri_id, const S& model2, const Transform3s& tf1,
     const Transform3s& tf2, const GJKSolver* nsolver,
     const DistanceRequest& request, DistanceResult& result) {
+  COAL_TRAVERSAL_STATS_INC(leaf_tests);
   const Triangle32& tri_id = tri_indices[init_tri_id];
   const TriangleP tri(vertices[tri_id[0]], vertices[tri_id[1]],
                       vertices[tri_id[2]]);
@@ -403,6 +410,7 @@ class MeshShapeDistanceTraversalNodeRSS
 
   Scalar BVDistanceLowerBound(unsigned int b1, unsigned int /*b2*/) const {
     if (this->enable_statistics) this->num_bv_tests++;
+    COAL_TRAVERSAL_STATS_INC(box_tests);
     return distance(this->tf1.getRotation(), this->tf1.getTranslation(),
                     this->model2_bv, this->model1->getBV(b1).bv);
   }
@@ -433,6 +441,7 @@ class MeshShapeDistanceTraversalNodekIOS
 
   Scalar BVDistanceLowerBound(unsigned int b1, unsigned int /*b2*/) const {
     if (this->enable_statistics) this->num_bv_tests++;
+    COAL_TRAVERSAL_STATS_INC(box_tests);
     return distance(this->tf1.getRotation(), this->tf1.getTranslation(),
                     this->model2_bv, this->model1->getBV(b1).bv);
   }
@@ -463,6 +472,7 @@ class MeshShapeDistanceTraversalNodeOBBRSS
 
   Scalar BVDistanceLowerBound(unsigned int b1, unsigned int /*b2*/) const {
     if (this->enable_statistics) this->num_bv_tests++;
+    COAL_TRAVERSAL_STATS_INC(box_tests);
     return distance(this->tf1.getRotation(), this->tf1.getTranslation(),
                     this->model2_bv, this->model1->getBV(b1).bv);
   }
