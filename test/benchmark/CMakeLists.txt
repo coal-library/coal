@@ -3,5 +3,4 @@ function(coal_add_benchmark name)
   target_link_libraries(coal-benchmark-${name} PRIVATE coal-tests-utility coal-tests-resources)
 endfunction()
 
-coal_add_benchmark(obb)
 coal_add_benchmark(profiling)

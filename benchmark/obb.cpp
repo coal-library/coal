@@ -2,7 +2,7 @@
  * Software License Agreement (BSD License)
  *
  *  Copyright (c) 2014-2016, CNRS-LAAS
- *  Copyright (c) 2023, Inria
+ *  Copyright (c) 2023-2026, Inria
  *  Author: Florent Lamiraux
  *  All rights reserved.
  *
@@ -34,41 +34,47 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
+#include <benchmark/benchmark.h>
 
-#include <chrono>
+#include <cassert>
+#include <cmath>
+#include <cstddef>
+#include <vector>
 
-#include "coal/narrowphase/narrowphase.h"
-
-#include "../src/BV/OBB.h"
-#include "coal/internal/shape_shape_func.h"
-#include "utility.h"
+#include "coal/collision_data.h"
+#include "coal/data_types.h"
+#include "coal/math/transform.h"
 
 using namespace coal;
 
-void randomOBBs(Vec3s& a, Vec3s& b, Scalar extentNorm) {
-  // Extent norm is between 0 and extentNorm on each axis
-  // a = (Vec3s::Ones()+Vec3s::Random()) * extentNorm / (2*sqrt(3));
-  // b = (Vec3s::Ones()+Vec3s::Random()) * extentNorm / (2*sqrt(3));
+namespace {
 
-  a = extentNorm * Vec3s::Random().cwiseAbs().normalized();
-  b = extentNorm * Vec3s::Random().cwiseAbs().normalized();
+// Number of random OBB and number of random transform per OBB
+const std::size_t num_random_obb = 100;
+const std::size_t num_transforms_per_obb = 100;
+
+// Extent norm is between 0 and extent_norm on each axis
+const Scalar extent_norm = Scalar(1.);
+
+const CollisionRequest request;
+const Scalar break_distance = request.break_distance + request.security_margin;
+const Scalar break_distance2 = break_distance * break_distance;
+
+typedef bool (*SeparatingAxisTest)(const Matrix3s& B, const Vec3s& T,
+                                   const Vec3s& a, const Vec3s& b,
+                                   const Scalar& breakDistance2,
+                                   Scalar& squaredLowerBoundDistance);
+
+void randomOBBs(Vec3s& a, Vec3s& b) {
+  a = extent_norm * Vec3s::Random().cwiseAbs().normalized();
+  b = extent_norm * Vec3s::Random().cwiseAbs().normalized();
 }
 
-void randomTransform(Matrix3s& B, Vec3s& T, const Vec3s& a, const Vec3s& b,
-                     const Scalar extentNorm) {
-  // TODO Should we scale T to a and b norm ?
-  (void)a;
-  (void)b;
-  (void)extentNorm;
-
-  Scalar N = a.norm() + b.norm();
+void randomTransform(Matrix3s& B, Vec3s& T, const Vec3s& a, const Vec3s& b) {
   // A translation of norm N ensures there is no collision.
   // Set translation to be between 0 and 2 * N;
-  T = (Vec3s::Random() / sqrt(3)) * 1.5 * N;
-  // T.setZero();
+  Scalar N = a.norm() + b.norm();
+  T = (Vec3s::Random() / std::sqrt(3)) * 1.5 * N;
 
   Quats q;
   q.coeffs().setRandom();
@@ -76,74 +82,69 @@ void randomTransform(Matrix3s& B, Vec3s& T, const Vec3s& a, const Vec3s& b,
   B = q;
 }
 
-#define NB_METHODS 7
-#define MANUAL_PRODUCT 1
+// Half extents of the OBBs and the transform of B with respect to A.
+struct ObbCase {
+  Matrix3s B;  ///< Orientation
+  Vec3s T;     ///< Translation
+  Vec3s a;     ///< Half dimension of the first box
+  Vec3s b;     ///< Half dimension of the second box
+};
 
-#if MANUAL_PRODUCT
-#define PRODUCT(M33, v3) \
-  (M33.col(0) * v3[0] + M33.col(1) * v3[1] + M33.col(2) * v3[2])
-#else
-#define PRODUCT(M33, v3) (M33 * v3)
-#endif
-
-typedef std::chrono::high_resolution_clock clock_type;
-typedef clock_type::duration duration_type;
-
-const char* sep = ",\t";
-const Scalar eps = Scalar(1.5e-7);
-
-const Eigen::IOFormat py_fmt(Eigen::FullPrecision, 0,
-                             ", ",   // Coeff separator
-                             ",\n",  // Row separator
-                             "(",    // row prefix
-                             ",)",   // row suffix
-                             "( ",   // mat prefix
-                             ", )"   // mat suffix
-);
-
-namespace obbDisjoint_impls {
-/// @return true if OBB are disjoint.
-bool distance(const Matrix3s& B, const Vec3s& T, const Vec3s& a, const Vec3s& b,
-              Scalar& distance) {
-  GJKSolver gjk;
-  Box ba(2 * a), bb(2 * b);
-  Transform3s tfa, tfb(B, T);
-
-  Vec3s p1, p2, normal;
-  bool compute_penetration = true;
-  distance =
-      gjk.shapeDistance(ba, tfa, bb, tfb, compute_penetration, p1, p2, normal);
-  return (distance > gjk.getDistancePrecision(compute_penetration));
+// Generate the random cases in a static variable to avoid regenerating them
+// for each benchmark.
+const std::vector<ObbCase>& get_cases() {
+  static const std::vector<ObbCase> cases = [] {
+    std::vector<ObbCase> cases;
+    cases.reserve(num_random_obb * num_transforms_per_obb);
+    for (std::size_t iobb = 0; iobb < num_random_obb; ++iobb) {
+      ObbCase obb;
+      randomOBBs(obb.a, obb.b);
+      for (std::size_t itf = 0; itf < num_transforms_per_obb; ++itf) {
+        randomTransform(obb.B, obb.T, obb.a, obb.b);
+        cases.push_back(obb);
+      }
+    }
+    return cases;
+  }();
+  return cases;
 }
 
-inline Scalar _computeDistanceForCase1(const Vec3s& T, const Vec3s& a,
-                                       const Vec3s& b, const Matrix3s& Bf) {
+namespace obbDisjoint_impls {
+
+typedef Scalar (*Case1Fn)(const Vec3s& T, const Vec3s& a, const Vec3s& b,
+                          const Matrix3s& Bf);
+typedef Scalar (*Case2Fn)(const Matrix3s& B, const Vec3s& T, const Vec3s& a,
+                          const Vec3s& b, const Matrix3s& Bf);
+
+// Corner of the b axis aligned bounding box the closest to the origin
+inline Scalar _computeDistanceForCase1_ManualProduct(const Vec3s& T,
+                                                     const Vec3s& a,
+                                                     const Vec3s& b,
+                                                     const Matrix3s& Bf) {
   Vec3s AABB_corner;
-  /* This seems to be slower
- AABB_corner.noalias() = T.cwiseAbs () - a;
- AABB_corner.noalias() -= PRODUCT(Bf,b);
- /*/
-#if MANUAL_PRODUCT
   AABB_corner.noalias() = T.cwiseAbs() - a;
   AABB_corner.noalias() -= Bf.col(0) * b[0];
   AABB_corner.noalias() -= Bf.col(1) * b[1];
   AABB_corner.noalias() -= Bf.col(2) * b[2];
-#else
-  AABB_corner.noalias() = T.cwiseAbs() - Bf * b - a;
-#endif
-  // */
   return AABB_corner.array().max(Scalar(0)).matrix().squaredNorm();
 }
 
-inline Scalar _computeDistanceForCase2(const Matrix3s& B, const Vec3s& T,
-                                       const Vec3s& a, const Vec3s& b,
-                                       const Matrix3s& Bf) {
-  /*
-  Vec3s AABB_corner(PRODUCT(B.transpose(), T).cwiseAbs() - b);
-  AABB_corner.noalias() -= PRODUCT(Bf.transpose(), a);
-  return AABB_corner.array().max(Scalar(0)).matrix().squaredNorm ();
-  /*/
-#if MANUAL_PRODUCT
+// Same as _computeDistanceForCase1_ManualProduct, with the Eigen product
+inline Scalar _computeDistanceForCase1_EigenProduct(const Vec3s& T,
+                                                    const Vec3s& a,
+                                                    const Vec3s& b,
+                                                    const Matrix3s& Bf) {
+  Vec3s AABB_corner;
+  AABB_corner.noalias() = T.cwiseAbs() - Bf * b - a;
+  return AABB_corner.array().max(Scalar(0)).matrix().squaredNorm();
+}
+
+// | B^T T | - b - Bf^T a
+inline Scalar _computeDistanceForCase2_ManualProduct(const Matrix3s& B,
+                                                     const Vec3s& T,
+                                                     const Vec3s& a,
+                                                     const Vec3s& b,
+                                                     const Matrix3s& Bf) {
   Scalar s, t = 0;
   s = std::abs(B.col(0).dot(T)) - Bf.col(0).dot(a) - b[0];
   if (s > 0) t += s * s;
@@ -152,80 +153,31 @@ inline Scalar _computeDistanceForCase2(const Matrix3s& B, const Vec3s& T,
   s = std::abs(B.col(2).dot(T)) - Bf.col(2).dot(a) - b[2];
   if (s > 0) t += s * s;
   return t;
-#else
-  Vec3s AABB_corner((B.transpose() * T).cwiseAbs() - Bf.transpose() * a - b);
-  return AABB_corner.array().max(Scalar(0)).matrix().squaredNorm();
-#endif
-  // */
 }
 
-int separatingAxisId(const Matrix3s& B, const Vec3s& T, const Vec3s& a,
-                     const Vec3s& b, const Scalar& breakDistance2,
-                     Scalar& squaredLowerBoundDistance) {
-  int id = 0;
-
-  Matrix3s Bf(B.cwiseAbs());
-
-  // Corner of b axis aligned bounding box the closest to the origin
-  squaredLowerBoundDistance = _computeDistanceForCase1(T, a, b, Bf);
-  if (squaredLowerBoundDistance > breakDistance2) return id;
-  ++id;
-
-  // | B^T T| - b - Bf^T a
-  squaredLowerBoundDistance = _computeDistanceForCase2(B, T, a, b, Bf);
-  if (squaredLowerBoundDistance > breakDistance2) return id;
-  ++id;
-
-  int ja = 1, ka = 2, jb = 1, kb = 2;
-  for (int ia = 0; ia < 3; ++ia) {
-    for (int ib = 0; ib < 3; ++ib) {
-      const Scalar s = T[ka] * B(ja, ib) - T[ja] * B(ka, ib);
-
-      const Scalar diff = fabs(s) - (a[ja] * Bf(ka, ib) + a[ka] * Bf(ja, ib) +
-                                     b[jb] * Bf(ia, kb) + b[kb] * Bf(ia, jb));
-      // We need to divide by the norm || Aia x Bib ||
-      // As ||Aia|| = ||Bib|| = 1, (Aia | Bib)^2  = cosine^2
-      if (diff > 0) {
-        Scalar sinus2 = 1 - Bf(ia, ib) * Bf(ia, ib);
-        if (sinus2 > 1e-6) {
-          squaredLowerBoundDistance = diff * diff / sinus2;
-          if (squaredLowerBoundDistance > breakDistance2) {
-            return id;
-          }
-        }
-        /* // or
-           Scalar sinus2 = 1 - Bf (ia,ib) * Bf (ia,ib);
-           squaredLowerBoundDistance = diff * diff;
-           if (squaredLowerBoundDistance > breakDistance2 * sinus2) {
-           squaredLowerBoundDistance /= sinus2;
-           return true;
-           }
-        // */
-      }
-      ++id;
-
-      jb = kb;
-      kb = ib;
-    }
-    ja = ka;
-    ka = ia;
-  }
-
-  return id;
+// Same as _computeDistanceForCase2_ManualProduct, with the Eigen product
+inline Scalar _computeDistanceForCase2_EigenProduct(const Matrix3s& B,
+                                                    const Vec3s& T,
+                                                    const Vec3s& a,
+                                                    const Vec3s& b,
+                                                    const Matrix3s& Bf) {
+  Vec3s AABB_corner((B.transpose() * T).cwiseAbs() - Bf.transpose() * a - b);
+  return AABB_corner.array().max(Scalar(0)).matrix().squaredNorm();
 }
 
 // ------------------------ 0 --------------------------------------
+template <Case1Fn Case1, Case2Fn Case2>
 bool withRuntimeLoop(const Matrix3s& B, const Vec3s& T, const Vec3s& a,
                      const Vec3s& b, const Scalar& breakDistance2,
                      Scalar& squaredLowerBoundDistance) {
   Matrix3s Bf(B.cwiseAbs());
 
   // Corner of b axis aligned bounding box the closest to the origin
-  squaredLowerBoundDistance = _computeDistanceForCase1(T, a, b, Bf);
+  squaredLowerBoundDistance = Case1(T, a, b, Bf);
   if (squaredLowerBoundDistance > breakDistance2) return true;
 
   // | B^T T| - b - Bf^T a
-  squaredLowerBoundDistance = _computeDistanceForCase2(B, T, a, b, Bf);
+  squaredLowerBoundDistance = Case2(B, T, a, b, Bf);
   if (squaredLowerBoundDistance > breakDistance2) return true;
 
   int ja = 1, ka = 2, jb = 1, kb = 2;
@@ -456,6 +408,7 @@ bool withManualLoopUnrolling_1(const Matrix3s& B, const Vec3s& T,
 }
 
 // ------------------------ 2 --------------------------------------
+template <Case1Fn Case1, Case2Fn Case2>
 bool withManualLoopUnrolling_2(const Matrix3s& B, const Vec3s& T,
                                const Vec3s& a, const Vec3s& b,
                                const Scalar& breakDistance2,
@@ -463,10 +416,10 @@ bool withManualLoopUnrolling_2(const Matrix3s& B, const Vec3s& T,
   Matrix3s Bf(B.cwiseAbs());
 
   // Corner of b axis aligned bounding box the closest to the origin
-  squaredLowerBoundDistance = _computeDistanceForCase1(T, a, b, Bf);
+  squaredLowerBoundDistance = Case1(T, a, b, Bf);
   if (squaredLowerBoundDistance > breakDistance2) return true;
 
-  squaredLowerBoundDistance = _computeDistanceForCase2(B, T, a, b, Bf);
+  squaredLowerBoundDistance = Case2(B, T, a, b, Bf);
   if (squaredLowerBoundDistance > breakDistance2) return true;
 
   // A0 x B0
@@ -667,6 +620,7 @@ struct loop_case_1 {
   }
 };
 
+template <Case1Fn Case1, Case2Fn Case2>
 bool withTemplateLoopUnrolling_1(const Matrix3s& B, const Vec3s& T,
                                  const Vec3s& a, const Vec3s& b,
                                  const Scalar& breakDistance2,
@@ -674,10 +628,10 @@ bool withTemplateLoopUnrolling_1(const Matrix3s& B, const Vec3s& T,
   Matrix3s Bf(B.cwiseAbs());
 
   // Corner of b axis aligned bounding box the closest to the origin
-  squaredLowerBoundDistance = _computeDistanceForCase1(T, a, b, Bf);
+  squaredLowerBoundDistance = Case1(T, a, b, Bf);
   if (squaredLowerBoundDistance > breakDistance2) return true;
 
-  squaredLowerBoundDistance = _computeDistanceForCase2(B, T, a, b, Bf);
+  squaredLowerBoundDistance = Case2(B, T, a, b, Bf);
   if (squaredLowerBoundDistance > breakDistance2) return true;
 
   // Ai x Bj
@@ -747,6 +701,7 @@ struct loop_case_2 {
   }
 };
 
+template <Case1Fn Case1, Case2Fn Case2>
 bool withPartialTemplateLoopUnrolling_1(const Matrix3s& B, const Vec3s& T,
                                         const Vec3s& a, const Vec3s& b,
                                         const Scalar& breakDistance2,
@@ -754,10 +709,10 @@ bool withPartialTemplateLoopUnrolling_1(const Matrix3s& B, const Vec3s& T,
   Matrix3s Bf(B.cwiseAbs());
 
   // Corner of b axis aligned bounding box the closest to the origin
-  squaredLowerBoundDistance = _computeDistanceForCase1(T, a, b, Bf);
+  squaredLowerBoundDistance = Case1(T, a, b, Bf);
   if (squaredLowerBoundDistance > breakDistance2) return true;
 
-  squaredLowerBoundDistance = _computeDistanceForCase2(B, T, a, b, Bf);
+  squaredLowerBoundDistance = Case2(B, T, a, b, Bf);
   if (squaredLowerBoundDistance > breakDistance2) return true;
 
   // Ai x Bj
@@ -1132,200 +1087,102 @@ bool originalWithNoLowerBound(const Matrix3s& B, const Vec3s& T, const Vec3s& a,
 }
 }  // namespace obbDisjoint_impls
 
-struct BenchmarkResult {
-  /// The test ID:
-  /// - 0-10 identifies a separating axes.
-  /// - 11 means no separatins axes could be found. (distance should be <= 0)
-  int ifId;
-  Scalar distance;
-  Scalar squaredLowerBoundDistance;
-  duration_type duration[NB_METHODS];
-  bool failure;
+using obbDisjoint_impls::_computeDistanceForCase1_EigenProduct;
+using obbDisjoint_impls::_computeDistanceForCase1_ManualProduct;
+using obbDisjoint_impls::_computeDistanceForCase2_EigenProduct;
+using obbDisjoint_impls::_computeDistanceForCase2_ManualProduct;
 
-  static std::ostream& headers(std::ostream& os) {
-    const std::string unit = " (us)";
-    os << "separating axis" << sep << "distance lower bound" << sep
-       << "distance" << sep << "failure" << sep << "Runtime Loop" << unit << sep
-       << "Manual Loop Unrolling 1" << unit << sep << "Manual Loop Unrolling 2"
-       << unit << sep << "Template Unrolling" << unit << sep
-       << "Partial Template Unrolling" << unit << sep << "Original (LowerBound)"
-       << unit << sep << "Original (NoLowerBound)" << unit;
-    return os;
-  }
+// Run the benchmark for the given separating axis test implementation
+template <SeparatingAxisTest test>
+void run(benchmark::State& state) {
+  const std::vector<ObbCase>& cases = get_cases();
 
-  std::ostream& print(std::ostream& os) const {
-    os << ifId << sep << std::sqrt(squaredLowerBoundDistance) << sep << distance
-       << sep << failure;
-    for (int i = 0; i < NB_METHODS; ++i)
-      os << sep
-         << static_cast<double>(
-                std::chrono::duration_cast<std::chrono::nanoseconds>(
-                    duration[i])
-                    .count()) *
-                1e-3;
-    return os;
-  }
-};
-
-std::ostream& operator<<(std::ostream& os, const BenchmarkResult& br) {
-  return br.print(os);
-}
-
-BenchmarkResult benchmark_obb_case(const Matrix3s& B, const Vec3s& T,
-                                   const Vec3s& a, const Vec3s& b,
-                                   const CollisionRequest& request,
-                                   std::size_t N) {
-  const Scalar breakDistance(request.break_distance + request.security_margin);
-  const Scalar breakDistance2 = breakDistance * breakDistance;
-
-  BenchmarkResult result;
-  // First determine which axis provide the answer
-  result.ifId = obbDisjoint_impls::separatingAxisId(
-      B, T, a, b, breakDistance2, result.squaredLowerBoundDistance);
-  bool disjoint = obbDisjoint_impls::distance(B, T, a, b, result.distance);
-  assert(0 <= result.ifId && result.ifId <= 11);
-
-  // Sanity check
-  result.failure = true;
-  bool overlap = (result.ifId == 11);
-  Scalar dist_thr = request.break_distance + request.security_margin;
-  if (!overlap && result.distance <= 0) {
-    std::cerr << "Failure: negative distance for disjoint OBBs.";
-  } else if (!overlap && result.squaredLowerBoundDistance < 0) {
-    std::cerr << "Failure: negative distance lower bound.";
-  } else if (!overlap && eps < std::sqrt(result.squaredLowerBoundDistance) -
-                                   result.distance) {
-    std::cerr << "Failure: distance is inferior to its lower bound (diff = "
-              << std::sqrt(result.squaredLowerBoundDistance) - result.distance
-              << ").";
-  } else if (overlap != !disjoint && result.distance >= dist_thr - eps) {
-    std::cerr << "Failure: overlapping test and distance query mismatch.";
-  } else if (overlap && result.distance >= dist_thr - eps) {
-    std::cerr << "Failure: positive distance for overlapping OBBs.";
-  } else {
-    result.failure = false;
-  }
-  if (result.failure) {
-    std::cerr << "\nR = " << Quats(B).coeffs().transpose().format(py_fmt)
-              << "\nT = " << T.transpose().format(py_fmt)
-              << "\na = " << a.transpose().format(py_fmt)
-              << "\nb = " << b.transpose().format(py_fmt)
-              << "\nresult = " << result << '\n'
-              << std::endl;
-  }
-
-  // Compute time
-  Scalar tmp;
-  clock_type::time_point start, end;
-
-  // ------------------------ 0 --------------------------------------
-  start = clock_type::now();
-  for (std::size_t i = 0; i < N; ++i)
-    obbDisjoint_impls::withRuntimeLoop(B, T, a, b, breakDistance2, tmp);
-  end = clock_type::now();
-  result.duration[0] = (end - start) / N;
-
-  // ------------------------ 1 --------------------------------------
-  start = clock_type::now();
-  for (std::size_t i = 0; i < N; ++i)
-    obbDisjoint_impls::withManualLoopUnrolling_1(B, T, a, b, breakDistance2,
-                                                 tmp);
-  end = clock_type::now();
-  result.duration[1] = (end - start) / N;
-
-  // ------------------------ 2 --------------------------------------
-  start = clock_type::now();
-  for (std::size_t i = 0; i < N; ++i)
-    obbDisjoint_impls::withManualLoopUnrolling_2(B, T, a, b, breakDistance2,
-                                                 tmp);
-  end = clock_type::now();
-  result.duration[2] = (end - start) / N;
-
-  // ------------------------ 3 --------------------------------------
-  start = clock_type::now();
-  for (std::size_t i = 0; i < N; ++i)
-    obbDisjoint_impls::withTemplateLoopUnrolling_1(B, T, a, b, breakDistance2,
-                                                   tmp);
-  end = clock_type::now();
-  result.duration[3] = (end - start) / N;
-
-  // ------------------------ 4 --------------------------------------
-  start = clock_type::now();
-  for (std::size_t i = 0; i < N; ++i)
-    obbDisjoint_impls::withPartialTemplateLoopUnrolling_1(B, T, a, b,
-                                                          breakDistance2, tmp);
-  end = clock_type::now();
-  result.duration[4] = (end - start) / N;
-
-  // ------------------------ 5 --------------------------------------
-  start = clock_type::now();
-  for (std::size_t i = 0; i < N; ++i)
-    obbDisjoint_impls::originalWithLowerBound(B, T, a, b, breakDistance2, tmp);
-  end = clock_type::now();
-  result.duration[5] = (end - start) / N;
-
-  // ------------------------ 6 --------------------------------------
-  start = clock_type::now();
-  // The 2 last arguments are unused.
-  for (std::size_t i = 0; i < N; ++i)
-    obbDisjoint_impls::originalWithNoLowerBound(B, T, a, b, breakDistance2,
-                                                tmp);
-  end = clock_type::now();
-  result.duration[6] = (end - start) / N;
-
-  return result;
-}
-
-std::size_t obb_overlap_and_lower_bound_distance(std::ostream* output) {
-  std::size_t nbFailure = 0;
-
-  // Create two OBBs axis
-  Vec3s a, b;
-  Matrix3s B;
-  Vec3s T;
-  CollisionRequest request;
-
-#ifndef NDEBUG  // if debug mode
-  static const size_t nbRandomOBB = 10;
-  static const size_t nbTransformPerOBB = 10;
-  static const size_t nbRunForTimeMeas = 10;
-#else
-  static const size_t nbRandomOBB = 100;
-  static const size_t nbTransformPerOBB = 100;
-  static const size_t nbRunForTimeMeas = 1000;
-#endif
-  static const Scalar extentNorm = 1.;
-
-  if (output != NULL) *output << BenchmarkResult::headers << '\n';
-
-  BenchmarkResult result;
-  for (std::size_t iobb = 0; iobb < nbRandomOBB; ++iobb) {
-    randomOBBs(a, b, extentNorm);
-    for (std::size_t itf = 0; itf < nbTransformPerOBB; ++itf) {
-      randomTransform(B, T, a, b, extentNorm);
-      result = benchmark_obb_case(B, T, a, b, request, nbRunForTimeMeas);
-      if (output != NULL) *output << result << '\n';
-      if (result.failure) nbFailure++;
+  Scalar squared_lower_bound_distance = 0;
+  for (auto _ : state) {
+    for (const ObbCase& obb : cases) {
+      bool disjoint = test(obb.B, obb.T, obb.a, obb.b, break_distance2,
+                           squared_lower_bound_distance);
+      benchmark::DoNotOptimize(disjoint);
     }
-  }
-  return nbFailure;
-}
-
-int main(int argc, char** argv) {
-  std::ostream* output = NULL;
-  if (argc > 1 && strcmp(argv[1], "--generate-output") == 0) {
-    output = &std::cout;
+    benchmark::DoNotOptimize(squared_lower_bound_distance);
   }
 
-  std::cout << "The benchmark real time measurements may be noisy and "
-               "will incur extra overhead."
-               "\nUse the following commands to turn ON:"
-               "\n\tsudo cpufreq-set --governor performance"
-               "\nor OFF:"
-               "\n\tsudo cpufreq-set --governor powersave"
-               "\n";
-
-  std::size_t nbFailure = obb_overlap_and_lower_bound_distance(output);
-  if (nbFailure > INT_MAX) return INT_MAX;
-  return (int)nbFailure;
+  state.SetItemsProcessed(state.iterations() *
+                          static_cast<std::int64_t>(cases.size()));
 }
+
+void withRuntimeLoop_ManualProduct(benchmark::State& state) {
+  run<obbDisjoint_impls::withRuntimeLoop<
+      _computeDistanceForCase1_ManualProduct,
+      _computeDistanceForCase2_ManualProduct>>(state);
+}
+
+void withRuntimeLoop_EigenProduct(benchmark::State& state) {
+  run<obbDisjoint_impls::withRuntimeLoop<
+      _computeDistanceForCase1_EigenProduct,
+      _computeDistanceForCase2_EigenProduct>>(state);
+}
+
+void withManualLoopUnrolling_1(benchmark::State& state) {
+  run<obbDisjoint_impls::withManualLoopUnrolling_1>(state);
+}
+
+void withManualLoopUnrolling_2_ManualProduct(benchmark::State& state) {
+  run<obbDisjoint_impls::withManualLoopUnrolling_2<
+      _computeDistanceForCase1_ManualProduct,
+      _computeDistanceForCase2_ManualProduct>>(state);
+}
+
+void withManualLoopUnrolling_2_EigenProduct(benchmark::State& state) {
+  run<obbDisjoint_impls::withManualLoopUnrolling_2<
+      _computeDistanceForCase1_EigenProduct,
+      _computeDistanceForCase2_EigenProduct>>(state);
+}
+
+void withTemplateLoopUnrolling_1_ManualProduct(benchmark::State& state) {
+  run<obbDisjoint_impls::withTemplateLoopUnrolling_1<
+      _computeDistanceForCase1_ManualProduct,
+      _computeDistanceForCase2_ManualProduct>>(state);
+}
+
+void withTemplateLoopUnrolling_1_EigenProduct(benchmark::State& state) {
+  run<obbDisjoint_impls::withTemplateLoopUnrolling_1<
+      _computeDistanceForCase1_EigenProduct,
+      _computeDistanceForCase2_EigenProduct>>(state);
+}
+
+void withPartialTemplateLoopUnrolling_1_ManualProduct(benchmark::State& state) {
+  run<obbDisjoint_impls::withPartialTemplateLoopUnrolling_1<
+      _computeDistanceForCase1_ManualProduct,
+      _computeDistanceForCase2_ManualProduct>>(state);
+}
+
+void withPartialTemplateLoopUnrolling_1_EigenProduct(benchmark::State& state) {
+  run<obbDisjoint_impls::withPartialTemplateLoopUnrolling_1<
+      _computeDistanceForCase1_EigenProduct,
+      _computeDistanceForCase2_EigenProduct>>(state);
+}
+
+void originalWithLowerBound(benchmark::State& state) {
+  run<obbDisjoint_impls::originalWithLowerBound>(state);
+}
+
+void originalWithNoLowerBound(benchmark::State& state) {
+  run<obbDisjoint_impls::originalWithNoLowerBound>(state);
+}
+
+}  // namespace
+
+BENCHMARK(withRuntimeLoop_ManualProduct);
+BENCHMARK(withRuntimeLoop_EigenProduct);
+BENCHMARK(withManualLoopUnrolling_1);
+BENCHMARK(withManualLoopUnrolling_2_ManualProduct);
+BENCHMARK(withManualLoopUnrolling_2_EigenProduct);
+BENCHMARK(withTemplateLoopUnrolling_1_ManualProduct);
+BENCHMARK(withTemplateLoopUnrolling_1_EigenProduct);
+BENCHMARK(withPartialTemplateLoopUnrolling_1_ManualProduct);
+BENCHMARK(withPartialTemplateLoopUnrolling_1_EigenProduct);
+BENCHMARK(originalWithLowerBound);
+BENCHMARK(originalWithNoLowerBound);
+
+BENCHMARK_MAIN();
