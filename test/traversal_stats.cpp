@@ -45,8 +45,8 @@ shared_ptr<BVHModel<OBBRSS> > gridMesh() {
   const Scalar step = 2 * GRID_HALF_WIDTH / GRID_CELLS;
   for (int i = 0; i <= GRID_CELLS; ++i)
     for (int j = 0; j <= GRID_CELLS; ++j)
-      vertices.push_back(Vec3s(-GRID_HALF_WIDTH + i * step,
-                               -GRID_HALF_WIDTH + j * step, 0));
+      vertices.push_back(
+          Vec3s(-GRID_HALF_WIDTH + i * step, -GRID_HALF_WIDTH + j * step, 0));
   const auto at = [](int i, int j) {
     return static_cast<Triangle32::IndexType>(i * (GRID_CELLS + 1) + j);
   };
@@ -73,8 +73,8 @@ shared_ptr<BVHModel<OBBRSS> > oneTriangleMesh() {
 }
 
 void collideGridWithBox(const shared_ptr<BVHModel<OBBRSS> >& mesh) {
-  const shared_ptr<Box> box(new Box(2 * BOX_HALF_EXTENT, 2 * BOX_HALF_EXTENT,
-                                    2 * BOX_HALF_EXTENT));
+  const shared_ptr<Box> box(
+      new Box(2 * BOX_HALF_EXTENT, 2 * BOX_HALF_EXTENT, 2 * BOX_HALF_EXTENT));
   CollisionObject o1(mesh, Transform3s());
   CollisionObject o2(box, Transform3s());
   CollisionRequest request;

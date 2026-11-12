@@ -40,7 +40,10 @@ if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
   add_coal_test(traversal_stats traversal_stats.cpp)
   # The per-thread isolation case runs a std::thread; glibc before 2.34 needs libpthread named explicitly.
   find_package(Threads REQUIRED)
-  target_link_libraries(${PROJECT_NAME}-traversal_stats PRIVATE Threads::Threads)
+  target_link_libraries(
+    ${PROJECT_NAME}-traversal_stats
+    PRIVATE Threads::Threads
+  )
   add_coal_test(security_margin security_margin.cpp)
   add_coal_test(geometric_shapes geometric_shapes.cpp)
   add_coal_test(shape_inflation shape_inflation.cpp)
