@@ -1,3 +1,37 @@
+/*
+ * Software License Agreement (BSD License)
+ *
+ *  Copyright (c) 2026, Jelle Feringa
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of Open Source Robotics Foundation nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #define BOOST_TEST_MODULE COAL_TRAVERSAL_STATS
 #include <boost/test/included/unit_test.hpp>
 
@@ -8,7 +42,7 @@
 #include "coal/BVH/BVH_model.h"
 #include "coal/collision.h"
 #include "coal/distance.h"
-#include "coal/internal/traversal_stats.h"
+#include "coal/traversal_stats.h"
 #include "coal/shape/geometric_shapes.h"
 
 using coal::Box;
@@ -38,6 +72,17 @@ constexpr Scalar BOX_HALF_EXTENT = 0.5;
 // Contacts asked for: more than the grid has triangles, so the request is
 // never satisfied early and the traversal visits every leaf.
 constexpr std::size_t MAX_CONTACTS = 1000;
+
+// The count a test expects for `n` traversal tests: `n` when Coal counts
+// (built with COAL_ENABLE_TRAVERSAL_STATS), zero otherwise.
+std::uint64_t counted(std::uint64_t n) {
+#ifdef COAL_ENABLE_TRAVERSAL_STATS
+  return n;
+#else
+  (void)n;
+  return 0;
+#endif
+}
 
 shared_ptr<BVHModel<OBBRSS> > gridMesh() {
   std::vector<Vec3s> vertices;
@@ -100,8 +145,8 @@ BOOST_AUTO_TEST_CASE(mesh_box_collide_counts_every_triangle) {
   coal::resetTraversalStats();
   collideGridWithBox(mesh);
 
-  BOOST_CHECK_EQUAL(coal::traversalStats().leaf_tests, n_tris);
-  BOOST_CHECK_EQUAL(coal::traversalStats().box_tests, n_tris - 1);
+  BOOST_CHECK_EQUAL(coal::traversalStats().leaf_tests, counted(n_tris));
+  BOOST_CHECK_EQUAL(coal::traversalStats().box_tests, counted(n_tris - 1));
 }
 
 // One-triangle mesh: one BV node, the root is a leaf. coal::distance runs
@@ -125,14 +170,13 @@ BOOST_AUTO_TEST_CASE(one_triangle_unbounded_distance_counts_preprocess) {
   coal::distance(&o1, &o2, request, result);
 
   BOOST_CHECK_CLOSE(result.min_distance, 4.9, 1e-6);
-  BOOST_CHECK_EQUAL(coal::traversalStats().leaf_tests, 2u);
+  BOOST_CHECK_EQUAL(coal::traversalStats().leaf_tests, counted(2));
   BOOST_CHECK_EQUAL(coal::traversalStats().box_tests, 0u);
 }
 
 BOOST_AUTO_TEST_CASE(reset_gives_zeros) {
-  collideGridWithBox(gridMesh());
-  BOOST_REQUIRE_GT(coal::traversalStats().leaf_tests, 0u);
-  BOOST_REQUIRE_GT(coal::traversalStats().box_tests, 0u);
+  coal::traversalStats().leaf_tests = 7;
+  coal::traversalStats().box_tests = 11;
 
   coal::resetTraversalStats();
 
@@ -140,12 +184,14 @@ BOOST_AUTO_TEST_CASE(reset_gives_zeros) {
   BOOST_CHECK_EQUAL(coal::traversalStats().box_tests, 0u);
 }
 
+// A worker thread counts its own traversal and leaves this thread's totals
+// alone.
 BOOST_AUTO_TEST_CASE(other_thread_leaves_this_thread_unchanged) {
   const shared_ptr<BVHModel<OBBRSS> > mesh = gridMesh();
+  const std::uint64_t n_tris = static_cast<std::uint64_t>(mesh->num_tris);
   coal::resetTraversalStats();
-  collideGridWithBox(mesh);
-  const coal::TraversalStats before = coal::traversalStats();
-  BOOST_REQUIRE_GT(before.leaf_tests, 0u);
+  coal::traversalStats().leaf_tests = 7;
+  coal::traversalStats().box_tests = 11;
 
   coal::TraversalStats other;
   std::thread worker([&mesh, &other]() {
@@ -155,8 +201,8 @@ BOOST_AUTO_TEST_CASE(other_thread_leaves_this_thread_unchanged) {
   });
   worker.join();
 
-  BOOST_CHECK_EQUAL(other.leaf_tests, before.leaf_tests);
-  BOOST_CHECK_EQUAL(other.box_tests, before.box_tests);
-  BOOST_CHECK_EQUAL(coal::traversalStats().leaf_tests, before.leaf_tests);
-  BOOST_CHECK_EQUAL(coal::traversalStats().box_tests, before.box_tests);
+  BOOST_CHECK_EQUAL(other.leaf_tests, counted(n_tris));
+  BOOST_CHECK_EQUAL(other.box_tests, counted(n_tris - 1));
+  BOOST_CHECK_EQUAL(coal::traversalStats().leaf_tests, 7u);
+  BOOST_CHECK_EQUAL(coal::traversalStats().box_tests, 11u);
 }

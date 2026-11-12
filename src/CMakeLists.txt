@@ -203,6 +203,10 @@ if(COAL_BUILD_WITH_TRACY)
   target_link_libraries(${LIBRARY_NAME} PUBLIC Tracy::TracyClient)
 endif()
 
+if(COAL_ENABLE_TRAVERSAL_STATS)
+  target_compile_definitions(${LIBRARY_NAME} PUBLIC COAL_ENABLE_TRAVERSAL_STATS)
+endif()
+
 if(WIN32)
   # There is an issue with MSVC 2017 and Eigen (due to std::aligned_storage).
   # See https://github.com/ceres-solver/ceres-solver/issues/481

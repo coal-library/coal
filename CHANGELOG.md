@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- Per-thread mesh-shape traversal counters `coal::traversalStats()` and `coal::resetTraversalStats()` (`coal/internal/traversal_stats.h`): leaf (triangle narrow-phase) and bounding-volume tests, counted independently of `enable_statistics`. ([#920](https://github.com/coal-library/coal/pull/920))
+- Per-thread mesh-shape traversal counters `coal::traversalStats()` and `coal::resetTraversalStats()` (`coal/traversal_stats.h`): leaf (triangle narrow-phase) and bounding-volume tests, counted independently of `enable_statistics`. Opt-in with the CMake option `COAL_ENABLE_TRAVERSAL_STATS` (default `OFF`, no counting code in the traversal). ([#920](https://github.com/coal-library/coal/pull/920))
 - nanobind: add `copy()`, `__copy__` and `__deepcopy__` to the value classes (requests, results, contacts, shapes, transforms, bounding volumes, BVH models, height fields, octrees and `StdVec_*` containers), `copy()` and `__copy__` use the C++ copy constructor, `__deepcopy__` uses `clone()` when available (deep copy of geometries, e.g. a `Convex` and its points). ([#911](https://github.com/coal-library/coal/pull/911))
 - nanobind : add fixed to allow pinocchio's binding portage to nanobind ([#893] (https://github.com/coal-library/coal/pull/893))
 - broadphase: add functional API for collision and distance callbacks ([#724](https://github.com/coal-library/coal/pull/724))
