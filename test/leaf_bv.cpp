@@ -132,8 +132,7 @@ std::pair<long, long> sweep(const S& shape, std::mt19937& rng) {
         const RequestArms arms(margin, max_contacts);
 
         CollisionResult r_built, r_tight, r_leaf, r_both;
-        coal::collide(&mesh, tf_mesh, &shape, tf_shape, arms.as_built,
-                      r_built);
+        coal::collide(&mesh, tf_mesh, &shape, tf_shape, arms.as_built, r_built);
         coal::collide(&mesh, tf_mesh, &shape, tf_shape, arms.tight_break,
                       r_tight);
         coal::collide(&mesh, tf_mesh, &shape, tf_shape, arms.leaf_bv, r_leaf);
@@ -146,21 +145,20 @@ std::pair<long, long> sweep(const S& shape, std::mt19937& rng) {
         // A pruned leaf contributes a bounding-volume bound, never larger
         // than the leaf's own distance to collision (up to GJK's tolerance).
         if (!r_built.isCollision()) {
-          BOOST_CHECK_LE(r_both.distance_lower_bound,
-                         r_built.distance_lower_bound +
-                             arms.as_built.gjk_tolerance);
+          BOOST_CHECK_LE(
+              r_both.distance_lower_bound,
+              r_built.distance_lower_bound + arms.as_built.gjk_tolerance);
         }
 
         if (max_contacts == ALL_CONTACTS) {
           CollisionResult c_built, c_both;
-          as_built_leaves +=
-              countedCollide(mesh, tf_mesh, shape, tf_shape, arms.as_built,
-                             c_built, true)
-                  .leaf_tests;
-          ablation_leaves += countedCollide(mesh, tf_mesh, shape, tf_shape,
-                                            arms.leaf_bv_tight_break, c_both,
-                                            true)
+          as_built_leaves += countedCollide(mesh, tf_mesh, shape, tf_shape,
+                                            arms.as_built, c_built, true)
                                  .leaf_tests;
+          ablation_leaves +=
+              countedCollide(mesh, tf_mesh, shape, tf_shape,
+                             arms.leaf_bv_tight_break, c_both, true)
+                  .leaf_tests;
           checkSameContacts(c_built, c_both);
           checkSameContacts(r_built, c_built);
         }
@@ -184,9 +182,8 @@ BOOST_AUTO_TEST_CASE(default_is_coal_as_released) {
   request.security_margin = Scalar(0.01);
   for (bool recursive : {true, false}) {
     CollisionResult result;
-    const LeafCounts counts = countedCollide(mesh, Transform3s(), box,
-                                             Transform3s(), request, result,
-                                             recursive);
+    const LeafCounts counts = countedCollide(
+        mesh, Transform3s(), box, Transform3s(), request, result, recursive);
     BOOST_CHECK_EQUAL(counts.leaf_tests, 2);
     BOOST_CHECK_EQUAL(counts.bv_tests, 1);
     BOOST_CHECK_EQUAL(result.numContacts(), 1);
@@ -200,13 +197,12 @@ BOOST_AUTO_TEST_CASE(one_triangle_outside_the_margin_is_pruned) {
 
   for (bool recursive : {true, false}) {
     CollisionResult r_built, r_both;
-    const LeafCounts built = countedCollide(mesh, Transform3s(), box,
-                                            Transform3s(), arms.as_built,
-                                            r_built, recursive);
-    const LeafCounts both = countedCollide(mesh, Transform3s(), box,
-                                           Transform3s(),
-                                           arms.leaf_bv_tight_break, r_both,
-                                           recursive);
+    const LeafCounts built =
+        countedCollide(mesh, Transform3s(), box, Transform3s(), arms.as_built,
+                       r_built, recursive);
+    const LeafCounts both =
+        countedCollide(mesh, Transform3s(), box, Transform3s(),
+                       arms.leaf_bv_tight_break, r_both, recursive);
     BOOST_CHECK_EQUAL(built.leaf_tests, 2);
     BOOST_CHECK_EQUAL(both.leaf_tests, 1);
     // Root plus both leaves.
@@ -230,16 +226,15 @@ BOOST_AUTO_TEST_CASE(pruned_leaves_keep_the_lower_bound_invariant) {
     CollisionResult r_built, r_both;
     countedCollide(mesh, Transform3s(), box, tf_box, arms.as_built, r_built,
                    recursive);
-    const LeafCounts both = countedCollide(mesh, Transform3s(), box, tf_box,
-                                           arms.leaf_bv_tight_break, r_both,
-                                           recursive);
+    const LeafCounts both =
+        countedCollide(mesh, Transform3s(), box, tf_box,
+                       arms.leaf_bv_tight_break, r_both, recursive);
     BOOST_CHECK(!r_built.isCollision());
     BOOST_CHECK(!r_both.isCollision());
     BOOST_CHECK_EQUAL(both.leaf_tests, 0);
     BOOST_CHECK_GT(r_both.distance_lower_bound, 0);
     BOOST_CHECK_LE(r_both.distance_lower_bound,
-                   r_built.distance_lower_bound +
-                       arms.as_built.gjk_tolerance);
+                   r_built.distance_lower_bound + arms.as_built.gjk_tolerance);
   }
 }
 
@@ -284,17 +279,16 @@ BOOST_AUTO_TEST_CASE(negative_margin_with_the_flag_is_refused) {
   // Released Coal's public mesh-vs-shape entry already refuses a negative
   // margin (src/collision_func_matrix.cpp), flag or not.
   CollisionResult result;
-  BOOST_CHECK_THROW(coal::collide(&mesh, Transform3s(), &box, Transform3s(),
-                                  request, result),
-                    std::invalid_argument);
+  BOOST_CHECK_THROW(
+      coal::collide(&mesh, Transform3s(), &box, Transform3s(), request, result),
+      std::invalid_argument);
 
   // Without the flag the traversal itself accepts a negative margin, as
   // released: the guard applies to the flag only.
   request.test_leaf_bv = false;
   for (bool recursive : {true, false}) {
     CollisionResult released;
-    BOOST_CHECK_NO_THROW(countedCollide(mesh, Transform3s(), box,
-                                        Transform3s(), request, released,
-                                        recursive));
+    BOOST_CHECK_NO_THROW(countedCollide(mesh, Transform3s(), box, Transform3s(),
+                                        request, released, recursive));
   }
 }
