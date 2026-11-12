@@ -49,8 +49,8 @@ std::shared_ptr<BVHModel<BV> > rippledGridMesh(int n) {
     for (int j = 0; j <= n; ++j) {
       const Scalar x = Scalar(-1) + Scalar(2 * i) / Scalar(n);
       const Scalar y = Scalar(-1) + Scalar(2 * j) / Scalar(n);
-      const Scalar z = Scalar(0.05) * std::sin(Scalar(3) * x) *
-                       std::cos(Scalar(2) * y);
+      const Scalar z =
+          Scalar(0.05) * std::sin(Scalar(3) * x) * std::cos(Scalar(2) * y);
       vertices.push_back(Vec3s(x, y, z));
     }
   }
@@ -307,9 +307,9 @@ BOOST_AUTO_TEST_CASE(grid_shape_first_call_order) {
         distance(&capsule, shape_tf, mesh.get(), Transform3s(),
                  DistanceRequest(), unbounded);
     DistanceResult bounded;
-    const Scalar d_bounded = distance(&capsule, shape_tf, mesh.get(),
-                                      Transform3s(), boundedRequest(kBound),
-                                      bounded);
+    const Scalar d_bounded =
+        distance(&capsule, shape_tf, mesh.get(), Transform3s(),
+                 boundedRequest(kBound), bounded);
     if (d_unbounded < kBound) {
       ++hits;
       BOOST_CHECK_EQUAL(d_bounded, d_unbounded);

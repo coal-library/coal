@@ -1513,8 +1513,7 @@ struct COAL_DLLAPI DistanceRequest : QueryRequest {
        << ",\n";
     os << prefix << "  rel_err: " << rel_err << ",\n";
     os << prefix << "  abs_err: " << abs_err << ",\n";
-    os << prefix << "  distance_upper_bound: " << distance_upper_bound
-       << ",\n";
+    os << prefix << "  distance_upper_bound: " << distance_upper_bound << ",\n";
   }
 
   /// \copydoc disp
