@@ -68,6 +68,20 @@ COAL_DLLAPI void collide(CollisionTraversalNodeBase* node,
 COAL_DLLAPI void distance(DistanceTraversalNodeBase* node,
                           BVHFrontList* front_list = NULL,
                           unsigned int qsize = 2);
+
+/// @brief distance computation on a mesh-shape distance traversal node,
+/// honouring DistanceRequest::distance_upper_bound of the node's request.
+///
+/// With the default bound (the largest scalar, or infinity) this is
+/// distance(node). With a finite bound, the root bounding volume is tested
+/// first through BVDistanceLowerBound(0, 0); when its distance is at least
+/// the bound (or the result's current minimum, if smaller), the node's result
+/// is left untouched. Otherwise the result's minimum distance starts at that
+/// value, the node's preprocess step is not run, and the traversal runs as in
+/// distance(node).
+/// @throws std::invalid_argument if the bound is NaN.
+/// \todo should be COAL_LOCAL but used in unit test.
+COAL_DLLAPI void boundedDistance(DistanceTraversalNodeBase* node);
 }  // namespace coal
 
 /// @endcond
