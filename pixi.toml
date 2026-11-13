@@ -159,6 +159,11 @@ tasks = { lint = { cmd = "pre-commit run --all" } }
 [feature.new-version]
 dependencies = { jrl-cmakemodules-scripts = "*" }
 
+# Plotting the benchmark results
+[feature.plot]
+dependencies = { bokeh = ">=3.6", python = "*" }
+tasks = { plot-distances = { cmd = "python benchmark/plot/distances.py" } }
+
 # QHull support
 [feature.qhull.target.win]
 dependencies = { qhull = ">=2020.2" }
@@ -236,6 +241,7 @@ default = { features = ["python-latest"], solve-group = "python-latest" }
 clang = { features = ["clang", "python-latest"] }
 lint = { features = ["lint"], no-default-feature = true }
 new-version = { features = ["new-version"], no-default-feature = true }
+plot = { features = ["plot"], no-default-feature = true }
 qhull = { features = ["qhull", "python-latest"], solve-group = "python-latest" }
 octomap = { features = [
   "octomap",
