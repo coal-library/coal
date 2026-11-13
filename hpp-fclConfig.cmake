@@ -7,7 +7,10 @@ if(NOT COAL_DISABLE_HPP_FCL_WARNINGS)
   )
 endif()
 
-find_package(coal REQUIRED)
+if(NOT TARGET coal::coal)
+  include(CMakeFindDependencyMacro)
+  find_dependency(coal REQUIRED)
+endif()
 
 if(NOT TARGET hpp-fcl::hpp-fcl)
   add_library(hpp-fcl::hpp-fcl INTERFACE IMPORTED)
