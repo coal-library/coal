@@ -9,10 +9,14 @@
 #include "coal/collision.h"
 #include "coal/distance.h"
 
-#include <cstdio>
+#include <algorithm>
+#include <cmath>
 #include <cstddef>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
+#include <tuple>
+#include <unordered_map>
 
 namespace coal {
 
@@ -501,6 +505,167 @@ ConvexTpl<Triangle32> constructPolytopeFromEllipsoid(
                                tris,  // triangles
                                20     // number of triangles
   );
+}
+
+namespace {
+
+/// Takes a point and projects it on the sphere of radius `scale`.
+Vec3s projectOnSphere(const Vec3s& point, Scalar scale) {
+  return scale / point.norm() * point;
+}
+
+struct pair_hash {
+  using Key = std::tuple<std::size_t, std::size_t>;
+  std::size_t operator()(const Key& k) const {
+    return std::get<0>(k) ^ std::get<1>(k);
+  }
+};
+
+/// Stores the middle point of each segment of the mesh, so that the two
+/// triangles sharing a segment only add one vertex when the mesh is subdivided.
+struct MiddlePointCache {
+  using Key = std::tuple<std::size_t, std::size_t>;
+
+  MiddlePointCache(std::vector<Vec3s>* points, Scalar radius)
+      : points(points), radius(radius) {}
+
+  std::size_t getMiddlePoint(std::size_t point1_index,
+                             std::size_t point2_index) {
+    const auto [min, max] = std::minmax(point1_index, point2_index);
+    const auto [it, emplaced] =
+        index_from_segment.try_emplace({min, max}, points->size());
+    if (emplaced) {
+      const Vec3s& p1 = (*points)[point1_index];
+      const Vec3s& p2 = (*points)[point2_index];
+      points->push_back(projectOnSphere((p1 + p2) * Scalar(0.5), radius));
+    }
+    return it->second;
+  }
+
+  std::unordered_map<Key, std::size_t, pair_hash> index_from_segment;
+  std::vector<Vec3s>* points;
+  Scalar radius;
+};
+
+}  // namespace
+
+Icosahedron Icosahedron::construct(Scalar scale) {
+  const Scalar PHI = (1 + std::sqrt(Scalar(5))) / 2;
+  Icosahedron ico;
+  ico.radius = scale;
+  ico.points.reserve(12);
+  ico.points.push_back(projectOnSphere(Vec3s(-1, PHI, 0), scale));
+  ico.points.push_back(projectOnSphere(Vec3s(1, PHI, 0), scale));
+  ico.points.push_back(projectOnSphere(Vec3s(-1, -PHI, 0), scale));
+  ico.points.push_back(projectOnSphere(Vec3s(1, -PHI, 0), scale));
+
+  ico.points.push_back(projectOnSphere(Vec3s(0, -1, PHI), scale));
+  ico.points.push_back(projectOnSphere(Vec3s(0, 1, PHI), scale));
+  ico.points.push_back(projectOnSphere(Vec3s(0, -1, -PHI), scale));
+  ico.points.push_back(projectOnSphere(Vec3s(0, 1, -PHI), scale));
+
+  ico.points.push_back(projectOnSphere(Vec3s(PHI, 0, -1), scale));
+  ico.points.push_back(projectOnSphere(Vec3s(PHI, 0, 1), scale));
+  ico.points.push_back(projectOnSphere(Vec3s(-PHI, 0, -1), scale));
+  ico.points.push_back(projectOnSphere(Vec3s(-PHI, 0, 1), scale));
+
+  ico.triangles.reserve(20);
+  ico.triangles.push_back({0, 11, 5});
+  ico.triangles.push_back({0, 5, 1});
+  ico.triangles.push_back({0, 1, 7});
+  ico.triangles.push_back({0, 7, 10});
+  ico.triangles.push_back({0, 10, 11});
+
+  ico.triangles.push_back({1, 5, 9});
+  ico.triangles.push_back({5, 11, 4});
+  ico.triangles.push_back({11, 10, 2});
+  ico.triangles.push_back({10, 7, 6});
+  ico.triangles.push_back({7, 1, 8});
+
+  ico.triangles.push_back({3, 9, 4});
+  ico.triangles.push_back({3, 4, 2});
+  ico.triangles.push_back({3, 2, 6});
+  ico.triangles.push_back({3, 6, 8});
+  ico.triangles.push_back({3, 8, 9});
+
+  ico.triangles.push_back({4, 9, 5});
+  ico.triangles.push_back({2, 4, 11});
+  ico.triangles.push_back({6, 2, 10});
+  ico.triangles.push_back({8, 6, 7});
+  ico.triangles.push_back({9, 8, 1});
+
+  return ico;
+}
+
+Icosahedron Icosahedron::subdivide(std::size_t num_subdiv) const {
+  Icosahedron ico(*this);
+
+  // Temporary buffer
+  std::vector<TriangleIndex> new_triangles;
+
+  // Reserve memory to avoid reallocation
+  std::size_t total_points_count = points.size();
+  std::size_t triangle_pow = 1;
+  for (std::size_t i = 0; i < num_subdiv; ++i) {
+    // 6 new points per 4 triangles
+    total_points_count += 6 * (triangle_pow * triangles.size()) / 4;
+    triangle_pow *= 4;
+  }
+  ico.points.reserve(total_points_count);
+  std::size_t total_triangle_count = triangle_pow * triangles.size();
+  new_triangles.reserve(total_triangle_count);
+  ico.triangles.reserve(total_triangle_count);
+
+  MiddlePointCache cache(&ico.points, ico.radius);
+
+  for (std::size_t step = 0; step < num_subdiv; ++step) {
+    new_triangles.clear();
+    for (const auto& tri : ico.triangles) {
+      std::size_t v1_index = cache.getMiddlePoint(tri[0], tri[1]);
+      std::size_t v2_index = cache.getMiddlePoint(tri[1], tri[2]);
+      std::size_t v3_index = cache.getMiddlePoint(tri[2], tri[0]);
+
+      new_triangles.push_back({tri[0], v1_index, v3_index});
+      new_triangles.push_back({tri[1], v2_index, v1_index});
+      new_triangles.push_back({tri[2], v3_index, v2_index});
+      new_triangles.push_back({v1_index, v2_index, v3_index});
+    }
+    std::swap(ico.triangles, new_triangles);
+  }
+  return ico;
+}
+
+const Icosahedron& IcosahedronDatabase::get(std::size_t num_subdiv) {
+  auto it = icosahedrons.find(num_subdiv);
+  if (it != icosahedrons.end()) {
+    return it->second;
+  }
+  return icosahedrons
+      .insert(
+          {num_subdiv, Icosahedron::construct(Scalar(1)).subdivide(num_subdiv)})
+      .first->second;
+}
+std::unordered_map<std::size_t, Icosahedron> IcosahedronDatabase::icosahedrons;
+
+ConvexTpl<Triangle32> makeIcosahedronConvex(std::size_t num_subdiv,
+                                            Scalar scale) {
+  const Icosahedron& ico = IcosahedronDatabase::get(num_subdiv);
+
+  auto pts(std::make_shared<std::vector<Vec3s>>(ico.points.size()));
+  for (std::size_t i = 0; i < ico.points.size(); ++i) {
+    (*pts)[i] = scale * ico.points[i];
+  }
+
+  auto tris(std::make_shared<std::vector<Triangle32>>(ico.triangles.size()));
+  for (std::size_t i = 0; i < ico.triangles.size(); ++i) {
+    const Icosahedron::TriangleIndex& triangle = ico.triangles[i];
+    (*tris)[i].set(Triangle32::IndexType(triangle[0]),
+                   Triangle32::IndexType(triangle[1]),
+                   Triangle32::IndexType(triangle[2]));
+  }
+
+  return ConvexTpl<Triangle32>(pts, unsigned(pts->size()), tris,
+                               unsigned(tris->size()));
 }
 
 Box makeRandomBox(Scalar min_size, Scalar max_size) {

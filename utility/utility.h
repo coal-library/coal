@@ -43,7 +43,11 @@
 #include "coal/collision_object.h"
 #include "coal/broadphase/default_broadphase_callbacks.h"
 #include "coal/shape/convex.h"
+#include <array>
 #include <chrono>
+#include <cstddef>
+#include <unordered_map>
+#include <vector>
 
 #ifdef COAL_HAS_OCTOMAP
 #include "coal/octree.h"
@@ -190,6 +194,51 @@ ConvexTpl<Quadrilateral32> buildBox(Scalar l, Scalar w, Scalar d);
 /// ellipsoid tranformation to each vertex of the icosahedron.
 ConvexTpl<Triangle32> constructPolytopeFromEllipsoid(
     const Ellipsoid& ellipsoid);
+
+/// @brief An icosahedron, optionally subdivided into an icosphere, i.e. a
+/// triangulated sphere whose vertices all lie on the sphere of radius `scale`.
+/// It is a convenient way of building convex shapes with a given number of
+/// vertices: an icosahedron has 12 vertices and 20 triangles, and each
+/// subdivision multiplies the number of triangles by 4 while keeping the
+/// triangles connected, so an icosphere with `n` subdivisions has
+/// 10 * 4^n + 2 vertices.
+/// For explanation, see:
+/// https://sinestesia.co/blog/tutorials/python-icospheres/
+class Icosahedron {
+ public:
+  using TriangleIndex = std::array<std::size_t, 3>;
+
+  /// Construct an icosahedron whose vertices lie on the sphere of radius
+  /// `scale`.
+  static Icosahedron construct(Scalar scale);
+
+  /// @brief Subdivide this icosahedron `num_subdiv` times and project the new
+  /// vertices onto the sphere of same radius.
+  /// The vertices of the original icosahedron are kept, so this object is left
+  /// untouched.
+  Icosahedron subdivide(std::size_t num_subdiv) const;
+
+  std::vector<Vec3s> points;
+  std::vector<TriangleIndex> triangles;
+  /// Radius of the sphere all the vertices lie on.
+  Scalar radius = Scalar(1);
+};
+
+/// @brief Cache of icosahedra, by number of subdivisions, to avoid building
+/// them again for each test or benchmark.
+class IcosahedronDatabase {
+ public:
+  /// @brief The unit icosphere with `num_subdiv` subdivisions.
+  static const Icosahedron& get(std::size_t num_subdiv);
+
+ protected:
+  static std::unordered_map<std::size_t, Icosahedron> icosahedrons;
+};
+
+/// @brief Builds the convex polytope of the icosphere with `num_subdiv`
+/// subdivisions and of radius `scale`.
+ConvexTpl<Triangle32> makeIcosahedronConvex(std::size_t num_subdiv,
+                                            Scalar scale = Scalar(1));
 
 Box makeRandomBox(Scalar min_size, Scalar max_size);
 

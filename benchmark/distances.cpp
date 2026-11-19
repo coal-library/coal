@@ -18,6 +18,9 @@
 
 using namespace coal;
 
+/// Convex polytope with 32-bit vertex indices, the default convex shape.
+using Convex32 = ConvexTpl<Triangle32>;
+
 namespace {
 
 const std::size_t num_transforms = 10000;
@@ -32,6 +35,7 @@ const Vec3s ellipsoid_radii(Scalar(0.5), Scalar(0.3), Scalar(0.2));
 const Vec3s triangle_a(Scalar(0.0), Scalar(0.0), Scalar(0.0));
 const Vec3s triangle_b(Scalar(1.0), Scalar(0.0), Scalar(0.0));
 const Vec3s triangle_c(Scalar(0.0), Scalar(1.0), Scalar(0.0));
+const Scalar convex_radius = Scalar(1.0);
 // Be sure to not generate shape in collision
 const Scalar closest_distance(5.);
 const Scalar farest_distance(10.);
@@ -91,6 +95,29 @@ const Plane& get_plane2() {
 const Halfspace& get_halfspace() {
   static const Halfspace halfspace(plane_normal, plane_offset1);
   return halfspace;
+}
+
+/// Convex polytopes approximating the sphere of radius `convex_radius`, with an
+/// increasing number of vertices.
+/// The icosphere of `n` subdivisions has 10 * 4^n + 2 vertices, so:
+/// - `convex0`: 12 vertices
+/// - `convex1`: 42 vertices
+/// - `convex4`: 2562 vertices
+/// convex0 will use the linear support function algorithm while convex 1 and 4
+/// will use the log version.
+const Convex32& get_convex0() {
+  static const Convex32 convex = makeIcosahedronConvex(0, convex_radius);
+  return convex;
+}
+
+const Convex32& get_convex1() {
+  static const Convex32 convex = makeIcosahedronConvex(1, convex_radius);
+  return convex;
+}
+
+const Convex32& get_convex4() {
+  static const Convex32 convex = makeIcosahedronConvex(4, convex_radius);
+  return convex;
 }
 
 /// Transforms of the second shape, with the first shape at the origin.
@@ -311,6 +338,102 @@ void box_cone_gjk(benchmark::State& state) {
   run(state, get_box(), get_cone(), gjk_distance<Box, Cone>);
 }
 
+void convex0_convex0_gjk(benchmark::State& state) {
+  run(state, get_convex0(), get_convex0(), gjk_distance<Convex32, Convex32>);
+}
+
+void convex1_convex1_gjk(benchmark::State& state) {
+  run(state, get_convex1(), get_convex1(), gjk_distance<Convex32, Convex32>);
+}
+
+void convex4_convex4_gjk(benchmark::State& state) {
+  run(state, get_convex4(), get_convex4(), gjk_distance<Convex32, Convex32>);
+}
+
+void convex0_sphere_gjk(benchmark::State& state) {
+  run(state, get_convex0(), get_sphere2(), gjk_distance<Convex32, Sphere>);
+}
+
+void convex1_sphere_gjk(benchmark::State& state) {
+  run(state, get_convex1(), get_sphere2(), gjk_distance<Convex32, Sphere>);
+}
+
+void convex4_sphere_gjk(benchmark::State& state) {
+  run(state, get_convex4(), get_sphere2(), gjk_distance<Convex32, Sphere>);
+}
+
+void convex0_box_gjk(benchmark::State& state) {
+  run(state, get_convex0(), get_box(), gjk_distance<Convex32, Box>);
+}
+
+void convex1_box_gjk(benchmark::State& state) {
+  run(state, get_convex1(), get_box(), gjk_distance<Convex32, Box>);
+}
+
+void convex4_box_gjk(benchmark::State& state) {
+  run(state, get_convex4(), get_box(), gjk_distance<Convex32, Box>);
+}
+
+void convex0_capsule_gjk(benchmark::State& state) {
+  run(state, get_convex0(), get_capsule(), gjk_distance<Convex32, Capsule>);
+}
+
+void convex1_capsule_gjk(benchmark::State& state) {
+  run(state, get_convex1(), get_capsule(), gjk_distance<Convex32, Capsule>);
+}
+
+void convex4_capsule_gjk(benchmark::State& state) {
+  run(state, get_convex4(), get_capsule(), gjk_distance<Convex32, Capsule>);
+}
+
+void convex0_cone_gjk(benchmark::State& state) {
+  run(state, get_convex0(), get_cone(), gjk_distance<Convex32, Cone>);
+}
+
+void convex1_cone_gjk(benchmark::State& state) {
+  run(state, get_convex1(), get_cone(), gjk_distance<Convex32, Cone>);
+}
+
+void convex4_cone_gjk(benchmark::State& state) {
+  run(state, get_convex4(), get_cone(), gjk_distance<Convex32, Cone>);
+}
+
+void convex0_cylinder_gjk(benchmark::State& state) {
+  run(state, get_convex0(), get_cylinder(), gjk_distance<Convex32, Cylinder>);
+}
+
+void convex1_cylinder_gjk(benchmark::State& state) {
+  run(state, get_convex1(), get_cylinder(), gjk_distance<Convex32, Cylinder>);
+}
+
+void convex4_cylinder_gjk(benchmark::State& state) {
+  run(state, get_convex4(), get_cylinder(), gjk_distance<Convex32, Cylinder>);
+}
+
+void convex0_ellipsoid_gjk(benchmark::State& state) {
+  run(state, get_convex0(), get_ellipsoid(), gjk_distance<Convex32, Ellipsoid>);
+}
+
+void convex1_ellipsoid_gjk(benchmark::State& state) {
+  run(state, get_convex1(), get_ellipsoid(), gjk_distance<Convex32, Ellipsoid>);
+}
+
+void convex4_ellipsoid_gjk(benchmark::State& state) {
+  run(state, get_convex4(), get_ellipsoid(), gjk_distance<Convex32, Ellipsoid>);
+}
+
+void convex0_triangle_gjk(benchmark::State& state) {
+  run(state, get_convex0(), get_triangle(), gjk_distance<Convex32, TriangleP>);
+}
+
+void convex1_triangle_gjk(benchmark::State& state) {
+  run(state, get_convex1(), get_triangle(), gjk_distance<Convex32, TriangleP>);
+}
+
+void convex4_triangle_gjk(benchmark::State& state) {
+  run(state, get_convex4(), get_triangle(), gjk_distance<Convex32, TriangleP>);
+}
+
 // Pairs with only the specialized implementation: Plane and Halfspace cannot
 // be handled by GJK.
 void plane_plane_specialized(benchmark::State& state) {
@@ -346,6 +469,21 @@ void plane_sphere_specialized(benchmark::State& state) {
 void plane_ellipsoid_specialized(benchmark::State& state) {
   run(state, get_plane1(), get_ellipsoid(),
       specialized_distance<Plane, Ellipsoid>);
+}
+
+void plane_convex0_specialized(benchmark::State& state) {
+  run(state, get_plane1(), get_convex0(),
+      specialized_distance<Plane, ConvexBase32>);
+}
+
+void plane_convex1_specialized(benchmark::State& state) {
+  run(state, get_plane1(), get_convex1(),
+      specialized_distance<Plane, ConvexBase32>);
+}
+
+void plane_convex4_specialized(benchmark::State& state) {
+  run(state, get_plane1(), get_convex4(),
+      specialized_distance<Plane, ConvexBase32>);
 }
 
 void halfspace_plane_specialized(benchmark::State& state) {
@@ -387,6 +525,21 @@ void halfspace_triangle_specialized(benchmark::State& state) {
       specialized_distance<Halfspace, TriangleP>);
 }
 
+void halfspace_convex0_specialized(benchmark::State& state) {
+  run(state, get_halfspace(), get_convex0(),
+      specialized_distance<Halfspace, ConvexBase32>);
+}
+
+void halfspace_convex1_specialized(benchmark::State& state) {
+  run(state, get_halfspace(), get_convex1(),
+      specialized_distance<Halfspace, ConvexBase32>);
+}
+
+void halfspace_convex4_specialized(benchmark::State& state) {
+  run(state, get_halfspace(), get_convex4(),
+      specialized_distance<Halfspace, ConvexBase32>);
+}
+
 }  // namespace
 
 // GJK
@@ -410,6 +563,33 @@ BENCHMARK(cone_cylinder_gjk);
 BENCHMARK(cone_ellipsoid_gjk);
 BENCHMARK(cone_sphere_gjk);
 BENCHMARK(cone_triangle_gjk);
+
+BENCHMARK(convex0_box_gjk);
+BENCHMARK(convex0_capsule_gjk);
+BENCHMARK(convex0_cone_gjk);
+BENCHMARK(convex0_convex0_gjk);
+BENCHMARK(convex0_cylinder_gjk);
+BENCHMARK(convex0_ellipsoid_gjk);
+BENCHMARK(convex0_sphere_gjk);
+BENCHMARK(convex0_triangle_gjk);
+
+BENCHMARK(convex1_box_gjk);
+BENCHMARK(convex1_capsule_gjk);
+BENCHMARK(convex1_cone_gjk);
+BENCHMARK(convex1_convex1_gjk);
+BENCHMARK(convex1_cylinder_gjk);
+BENCHMARK(convex1_ellipsoid_gjk);
+BENCHMARK(convex1_sphere_gjk);
+BENCHMARK(convex1_triangle_gjk);
+
+BENCHMARK(convex4_box_gjk);
+BENCHMARK(convex4_capsule_gjk);
+BENCHMARK(convex4_cone_gjk);
+BENCHMARK(convex4_convex4_gjk);
+BENCHMARK(convex4_cylinder_gjk);
+BENCHMARK(convex4_ellipsoid_gjk);
+BENCHMARK(convex4_sphere_gjk);
+BENCHMARK(convex4_triangle_gjk);
 
 BENCHMARK(cylinder_cylinder_gjk);
 BENCHMARK(cylinder_ellipsoid_gjk);
@@ -448,6 +628,9 @@ BENCHMARK(plane_cone_specialized);
 BENCHMARK(plane_cylinder_specialized);
 BENCHMARK(plane_sphere_specialized);
 BENCHMARK(plane_ellipsoid_specialized);
+BENCHMARK(plane_convex0_specialized);
+BENCHMARK(plane_convex1_specialized);
+BENCHMARK(plane_convex4_specialized);
 
 // Halfspace
 BENCHMARK(halfspace_plane_specialized);
@@ -458,5 +641,8 @@ BENCHMARK(halfspace_cylinder_specialized);
 BENCHMARK(halfspace_sphere_specialized);
 BENCHMARK(halfspace_ellipsoid_specialized);
 BENCHMARK(halfspace_triangle_specialized);
+BENCHMARK(halfspace_convex0_specialized);
+BENCHMARK(halfspace_convex1_specialized);
+BENCHMARK(halfspace_convex4_specialized);
 
 BENCHMARK_MAIN();
