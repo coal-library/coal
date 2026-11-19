@@ -5,10 +5,9 @@
 
 import warnings
 
+import coal
 import numpy as np
 from gepetto import Color
-
-import coal
 
 
 def applyConfiguration(gui, name, tf):

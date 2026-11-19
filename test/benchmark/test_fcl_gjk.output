@@ -1,9 +1,0 @@
-Result after running gjk in Release mode.
-
-nCol = 2840
-nDiff = 0
-Total time gjk: 20020
--- Collisions -------------------------
-Total time gjk: 5554
--- No collisions -------------------------
-Total time gjk: 14466

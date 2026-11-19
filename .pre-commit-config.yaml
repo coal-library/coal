@@ -20,7 +20,7 @@ repos:
   rev: v6.0.0
   hooks:
   - id: trailing-whitespace
-- repo: https://github.com/BlankSpruce/gersemi
-  rev: 0.26.1
+- repo: https://github.com/BlankSpruce/gersemi-pre-commit
+  rev: 0.28.0
   hooks:
     - id: gersemi

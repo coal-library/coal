@@ -8,3 +8,11 @@ __pycache__/
 # pixi environments
 .pixi
 *.egg-info
+
+install*/
+.pytest_cache/
+.ruff_cache
+.DS_Store
+compile_commands.json
+cmake-profiling.json
+*.conda
