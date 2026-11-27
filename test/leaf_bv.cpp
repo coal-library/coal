@@ -38,7 +38,6 @@
 #define BOOST_TEST_MODULE COAL_LEAF_BV
 #include <boost/test/included/unit_test.hpp>
 
-#include <random>
 #include <vector>
 
 #include "coal/BV/OBBRSS.h"
@@ -52,14 +51,14 @@
 #include "coal/internal/traversal_node_bvh_shape.h"
 #include "coal/internal/traversal_node_setup.h"
 
+#include "utility.h"
+
 using namespace coal;
 
 namespace {
 
-// Seed of the randomized sweep; fixed so that a failure is reproducible.
-constexpr std::uint32_t SWEEP_SEED = 20261111u;
-// Random shape poses per (shape, margin) pair.
-constexpr int SWEEP_POSES = 50;
+// Random poses of the sweep, used for every margin.
+constexpr std::size_t SWEEP_POSES = 50;
 // Large enough that no traversal of the sweep mesh stops early, so the full
 // contact set is compared.
 constexpr size_t ALL_CONTACTS = 100000;
@@ -124,26 +123,26 @@ void checkSameContacts(const CollisionResult& expected,
   }
 }
 
-Transform3s randomPose(std::mt19937& rng, Scalar half_range) {
-  std::uniform_real_distribution<Scalar> pos(-half_range, half_range);
-  std::normal_distribution<Scalar> gauss(0, 1);
-  Quats q(gauss(rng), gauss(rng), gauss(rng), gauss(rng));
-  q.normalize();
-  return Transform3s(q, Vec3s(pos(rng), pos(rng), pos(rng)));
-}
-
 /// Random poses of `shape` around a sphere mesh: the flag must not change the
 /// contacts. Returns the total leaf tests without and with the flag.
 template <typename S>
-std::pair<long, long> sweep(const S& shape, std::mt19937& rng) {
+std::pair<long, long> sweep(const S& shape) {
   BVHModel<OBBRSS> mesh;
   generateBVHModel(mesh, Sphere(0.3), Transform3s(), 12, 12);
 
+  // Translation ranges in metres: the mesh stays near the origin, the shape
+  // moves through and around it.
+  Scalar mesh_extents[] = {-0.05, -0.05, -0.05, 0.05, 0.05, 0.05};
+  Scalar shape_extents[] = {-0.7, -0.7, -0.7, 0.7, 0.7, 0.7};
+  std::vector<Transform3s> tf_meshes, tf_shapes;
+  generateRandomTransforms(mesh_extents, tf_meshes, SWEEP_POSES);
+  generateRandomTransforms(shape_extents, tf_shapes, SWEEP_POSES);
+
   long leaves_default = 0, leaves_flag = 0;
   for (Scalar margin : SWEEP_MARGINS) {
-    for (int k = 0; k < SWEEP_POSES; ++k) {
-      const Transform3s tf_mesh = randomPose(rng, 0.05);
-      const Transform3s tf_shape = randomPose(rng, 0.7);
+    for (std::size_t k = 0; k < SWEEP_POSES; ++k) {
+      const Transform3s& tf_mesh = tf_meshes[k];
+      const Transform3s& tf_shape = tf_shapes[k];
       CollisionResult r_default, r_flag;
       leaves_default +=
           countedCollide(mesh, tf_mesh, shape, tf_shape,
@@ -203,14 +202,14 @@ BOOST_AUTO_TEST_CASE(pruned_leaves_keep_the_lower_bound_invariant) {
     BOOST_CHECK(!r_flag.isCollision());
     BOOST_CHECK_EQUAL(flag.leaf_tests, 0);
     BOOST_CHECK_GT(r_flag.distance_lower_bound, 0);
-    BOOST_CHECK_LE(
-        r_flag.distance_lower_bound,
-        r_default.distance_lower_bound + request(0, 1, false).gjk_tolerance);
+    BOOST_CHECK_LE(r_flag.distance_lower_bound,
+                   r_default.distance_lower_bound + GJK_DEFAULT_TOLERANCE);
   }
 }
 
 BOOST_AUTO_TEST_CASE(negative_margin_with_the_flag_is_refused) {
-  // The leaf test bounds the distance to collision only for margins >= 0.
+  // For a negative margin the bounding-volume test is not conservative: it
+  // would skip leaf pairs that are in contact.
   const BVHModel<OBBRSS> mesh = twoTriangleMesh();
   const Box box(1, 1, 1);
   for (bool recursive : {true, false}) {
@@ -226,9 +225,8 @@ BOOST_AUTO_TEST_CASE(negative_margin_with_the_flag_is_refused) {
 }
 
 BOOST_AUTO_TEST_CASE(randomized_sweep_keeps_the_contacts) {
-  std::mt19937 rng(SWEEP_SEED);
-  const std::pair<long, long> box = sweep(Box(0.2, 0.3, 0.1), rng);
-  const std::pair<long, long> cyl = sweep(Cylinder(0.1, 0.4), rng);
+  const std::pair<long, long> box = sweep(Box(0.2, 0.3, 0.1));
+  const std::pair<long, long> cyl = sweep(Cylinder(0.1, 0.4));
   // Not vacuous: the flag skips leaves.
   BOOST_CHECK_LT(box.second, box.first);
   BOOST_CHECK_LT(cyl.second, cyl.first);

@@ -491,8 +491,9 @@ struct COAL_DLLAPI CollisionRequest : QueryRequest {
   /// when they are disjoint (as it does for inner nodes).
   /// Defaults to false: a leaf pair goes straight to the narrow phase.
   /// Requires security_margin >= 0: the traversal throws
-  /// std::invalid_argument otherwise, because the bounding-volume test does
-  /// not bound the distance to collision for a negative margin.
+  /// std::invalid_argument otherwise, because the bounding-volume test is not
+  /// conservative for a negative margin and would skip leaf pairs that are in
+  /// contact.
   bool test_leaf_bv;
 
   /// @brief Constructor from a flag and a maximal number of contacts.
