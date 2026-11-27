@@ -36,7 +36,6 @@
 /** \author Jia Pan */
 
 #include <algorithm>
-#include <cmath>
 #include <limits>
 
 #include <../src/collision_node.h>
@@ -93,10 +92,6 @@ void distance(DistanceTraversalNodeBase* node, BVHFrontList* front_list,
 
 void boundedDistance(DistanceTraversalNodeBase* node) {
   const Scalar bound = node->request.distance_upper_bound;
-  if (std::isnan(bound)) {
-    COAL_THROW_PRETTY("DistanceRequest::distance_upper_bound is NaN.",
-                      std::invalid_argument);
-  }
   if (bound >= (std::numeric_limits<Scalar>::max)()) {
     distance(node);
     return;

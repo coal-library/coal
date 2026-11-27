@@ -79,8 +79,6 @@ COAL_DLLAPI void distance(DistanceTraversalNodeBase* node,
 /// is left untouched. Otherwise the result's minimum distance starts at that
 /// value, the node's preprocess step is not run, and the traversal runs as in
 /// distance(node).
-/// @throws std::invalid_argument if the bound is NaN.
-/// \todo should be COAL_LOCAL but used in unit test.
 COAL_DLLAPI void boundedDistance(DistanceTraversalNodeBase* node);
 }  // namespace coal
 

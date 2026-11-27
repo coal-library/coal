@@ -1453,7 +1453,7 @@ struct COAL_DLLAPI DistanceRequest : QueryRequest {
   /// traversal stops at the first penetrating triangle it reaches: the
   /// returned depth is that triangle's, not necessarily the deepest.
   /// @note Read by the mesh-shape distance query only; it is not passed to
-  /// the narrow-phase solver. A NaN bound is refused.
+  /// the narrow-phase solver.
   Scalar distance_upper_bound;
 
   /// \param enable_nearest_points_ enables the nearest points computation.
