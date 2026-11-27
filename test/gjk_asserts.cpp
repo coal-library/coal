@@ -1,13 +1,12 @@
 #define BOOST_TEST_MODULE COAL_GJK_ASSERTS
 
 #include <boost/test/included/unit_test.hpp>
-#include <boost/math/constants/constants.hpp>
 #include "coal/BVH/BVH_model.h"
 #include "coal/collision.h"
 
 using namespace coal;
 
-constexpr CoalScalar pi = boost::math::constants::pi<CoalScalar>();
+constexpr CoalScalar pi = coal::constants::pi;
 
 double DegToRad(const double& deg) {
   static double degToRad = pi / 180.;

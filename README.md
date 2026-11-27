@@ -89,6 +89,19 @@ docker run --rm -it ghcr.io/coal-library/coal:devel
 
 You can find build instruction [here](./development/build.md).
 
+The C++ collision library accepts in-memory triangle meshes directly. Applications
+that supply their own mesh data and persistence can build it with Eigen alone:
+
+```sh
+cmake -S . -B build -DCOAL_ENABLE_MESH_LOADER=OFF -DCOAL_ENABLE_SERIALIZATION=OFF \
+  -DBUILD_PYTHON_INTERFACE=OFF -DBUILD_TESTING=OFF
+cmake --build build --target coal
+```
+
+Both feature options default to ON. File-based mesh loading uses Assimp and
+Boost.Filesystem. Archive support uses Boost.Serialization. Coal's own Python
+bindings use both features, and its native test suite uses Boost.Test.
+
 ## C++ example
 Both the C++ library and the python bindings can be installed as simply as `conda -c conda-forge install coal`.
 The `.so` library, include files and python bindings will then be installed under `$CONDA_PREFIX/lib`, `$CONDA_PREFIX/include` and `$CONDA_PREFIX/lib/python3.XX/site-packages`.

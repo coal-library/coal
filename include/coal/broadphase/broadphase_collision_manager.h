@@ -40,7 +40,6 @@
 
 #include <set>
 #include <vector>
-#include <boost/function.hpp>
 
 #include "coal/collision_object.h"
 #include "coal/broadphase/broadphase_callbacks.h"

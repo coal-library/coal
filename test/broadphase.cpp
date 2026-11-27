@@ -50,7 +50,6 @@
 #include <hash_map>
 #endif
 
-#include <boost/math/constants/constants.hpp>
 #include <iostream>
 #include <iomanip>
 

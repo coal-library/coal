@@ -74,6 +74,10 @@ typedef Eigen::Matrix<FCL_REAL, Eigen::Dynamic, Eigen::Dynamic> MatrixXf;
 #endif
 
 typedef double CoalScalar;
+namespace constants {
+constexpr CoalScalar pi = 3.141592653589793238462643383279502884;
+}  // namespace constants
+
 typedef Eigen::Matrix<CoalScalar, 3, 1> Vec3s;
 typedef Eigen::Matrix<CoalScalar, 2, 1> Vec2s;
 typedef Eigen::Matrix<CoalScalar, 6, 1> Vec6s;

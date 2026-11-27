@@ -50,7 +50,6 @@
 #include "coal/broadphase/detail/spatial_hash.h"
 #include "utility.h"
 
-#include <boost/math/constants/constants.hpp>
 
 #if USE_GOOGLEHASH
 #include <sparsehash/sparse_hash_map>
@@ -267,7 +266,7 @@ void broad_phase_duplicate_check_test(CoalScalar env_scale,
 
   // update the environment
   CoalScalar delta_angle_max =
-      10 / 360.0 * 2 * boost::math::constants::pi<CoalScalar>();
+      10 / 360.0 * 2 * coal::constants::pi;
   CoalScalar delta_trans_max = 0.01 * env_scale;
   for (size_t i = 0; i < env.size(); ++i) {
     CoalScalar rand_angle_x =
@@ -440,7 +439,7 @@ void broad_phase_update_collision_test(CoalScalar env_scale,
 
   // update the environment
   CoalScalar delta_angle_max =
-      10 / 360.0 * 2 * boost::math::constants::pi<CoalScalar>();
+      10 / 360.0 * 2 * coal::constants::pi;
   CoalScalar delta_trans_max = 0.01 * env_scale;
   for (size_t i = 0; i < env.size(); ++i) {
     CoalScalar rand_angle_x =

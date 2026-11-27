@@ -31,10 +31,8 @@ if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
 
   add_coal_test(math math.cpp)
 
-  add_coal_test(collision collision.cpp)
   add_coal_test(contact_patch contact_patch.cpp)
   add_coal_test(distance distance.cpp)
-  add_coal_test(swept_sphere_radius swept_sphere_radius.cpp)
   add_coal_test(normal_and_nearest_points normal_and_nearest_points.cpp)
   add_coal_test(distance_lower_bound distance_lower_bound.cpp)
   add_coal_test(security_margin security_margin.cpp)
@@ -55,11 +53,7 @@ if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
   add_coal_test(obb obb.cpp)
   add_coal_test(convex convex.cpp)
 
-  add_coal_test(bvh_models bvh_models.cpp)
   add_coal_test(collision_node_asserts collision_node_asserts.cpp)
-  add_coal_test(hfields hfields.cpp)
-
-  add_coal_test(profiling profiling.cpp)
 
   add_coal_test(gjk gjk.cpp)
   add_coal_test(accelerated_gjk accelerated_gjk.cpp)
@@ -68,7 +62,17 @@ if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
     add_coal_test(octree octree.cpp)
   endif(COAL_HAS_OCTOMAP)
 
-  add_coal_test(serialization serialization.cpp)
+  if(COAL_ENABLE_MESH_LOADER)
+    add_coal_test(collision collision.cpp)
+    add_coal_test(bvh_models bvh_models.cpp)
+    add_coal_test(hfields hfields.cpp)
+    add_coal_test(profiling profiling.cpp)
+  endif()
+
+  if(COAL_ENABLE_SERIALIZATION)
+    add_coal_test(swept_sphere_radius swept_sphere_radius.cpp)
+    add_coal_test(serialization serialization.cpp)
+  endif()
 
   # Broadphase
   add_coal_test(broadphase broadphase.cpp)

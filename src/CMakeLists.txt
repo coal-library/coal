@@ -105,11 +105,15 @@ set(
   BVH/BV_splitter.cpp
   collision_func_matrix.cpp
   collision_utility.cpp
-  mesh_loader/assimp.cpp
-  mesh_loader/loader.cpp
   hfield.cpp
-  serialization/serialization.cpp
 )
+
+if(COAL_ENABLE_MESH_LOADER)
+  list(APPEND ${LIBRARY_NAME}_SOURCES mesh_loader/assimp.cpp mesh_loader/loader.cpp)
+endif()
+if(COAL_ENABLE_SERIALIZATION)
+  list(APPEND ${LIBRARY_NAME}_SOURCES serialization/serialization.cpp)
+endif()
 
 if(COAL_HAS_OCTOMAP)
   list(APPEND ${LIBRARY_NAME}_SOURCES octree.cpp)
@@ -167,18 +171,19 @@ target_compile_definitions(${PROJECT_NAME} INTERFACE ${PUBLIC_DEFINITIONS})
 ADD_SOURCE_GROUP(${LIBRARY_NAME}_SOURCES)
 ADD_HEADER_GROUP(PROJECT_HEADERS_FULL_PATH)
 
-MODERNIZE_TARGET_LINK_LIBRARIES(
-  ${LIBRARY_NAME}
-  SCOPE PRIVATE
-  TARGETS assimp::assimp
-  LIBRARIES ${assimp_LIBRARIES}
-  INCLUDE_DIRS ${assimp_INCLUDE_DIR}
-)
-
-target_link_libraries(
-  ${LIBRARY_NAME}
-  PUBLIC Boost::serialization Boost::filesystem
-)
+if(COAL_ENABLE_MESH_LOADER)
+  MODERNIZE_TARGET_LINK_LIBRARIES(
+    ${LIBRARY_NAME}
+    SCOPE PRIVATE
+    TARGETS assimp::assimp
+    LIBRARIES ${assimp_LIBRARIES}
+    INCLUDE_DIRS ${assimp_INCLUDE_DIR}
+  )
+  target_link_libraries(${LIBRARY_NAME} PUBLIC Boost::filesystem)
+endif()
+if(COAL_ENABLE_SERIALIZATION)
+  target_link_libraries(${LIBRARY_NAME} PUBLIC Boost::serialization)
+endif()
 
 if(COAL_ENABLE_LOGGING)
   target_link_libraries(${LIBRARY_NAME} PUBLIC Boost::log)

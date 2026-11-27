@@ -64,6 +64,8 @@ option(
   "Turn some critical Coal asserts to exception."
   FALSE
 )
+option(COAL_ENABLE_MESH_LOADER "Build file-based mesh loading with Assimp." ON)
+option(COAL_ENABLE_SERIALIZATION "Build Boost archive support." ON)
 option(
   COAL_ENABLE_LOGGING
   "Activate logging for warnings or error messages. Turned on by default in Debug."
@@ -154,25 +156,35 @@ cmake_dependent_option(
 ADD_PROJECT_DEPENDENCY(Eigen3 REQUIRED PKG_CONFIG_REQUIRES "eigen3 >= 3.0.0")
 
 if(BUILD_PYTHON_INTERFACE)
+  if(NOT COAL_ENABLE_MESH_LOADER OR NOT COAL_ENABLE_SERIALIZATION)
+    message(FATAL_ERROR "The Coal Python interface requires COAL_ENABLE_MESH_LOADER and COAL_ENABLE_SERIALIZATION.")
+  endif()
   set(PYTHON_COMPONENTS Interpreter Development NumPy)
   FINDPYTHON(REQUIRED)
   ADD_PROJECT_PRIVATE_DEPENDENCY(eigenpy 2.9.2 REQUIRED)
 endif()
 
-# Required dependencies
-SET_BOOST_DEFAULT_OPTIONS()
-EXPORT_BOOST_DEFAULT_OPTIONS()
-ADD_PROJECT_DEPENDENCY(Boost REQUIRED COMPONENTS serialization filesystem)
+set(coal_boost_components)
+if(COAL_ENABLE_MESH_LOADER)
+  list(APPEND coal_boost_components filesystem)
+  find_package(assimp REQUIRED)
+endif()
+if(COAL_ENABLE_SERIALIZATION)
+  list(APPEND coal_boost_components serialization)
+endif()
 if(COAL_ENABLE_LOGGING)
-  ADD_PROJECT_DEPENDENCY(Boost REQUIRED COMPONENTS log)
+  list(APPEND coal_boost_components log)
+endif()
+if(coal_boost_components)
+  SET_BOOST_DEFAULT_OPTIONS()
+  EXPORT_BOOST_DEFAULT_OPTIONS()
+  ADD_PROJECT_DEPENDENCY(Boost REQUIRED COMPONENTS ${coal_boost_components})
 endif()
 
-if(Boost_VERSION_STRING VERSION_LESS 1.81)
-  # Default C++ version should be C++11
-  CHECK_MINIMAL_CXX_STANDARD(11 ENFORCE)
-else()
-  # Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)
+if(coal_boost_components AND Boost_VERSION_STRING VERSION_GREATER_EQUAL 1.81)
   CHECK_MINIMAL_CXX_STANDARD(14 ENFORCE)
+else()
+  CHECK_MINIMAL_CXX_STANDARD(11 ENFORCE)
 endif()
 
 # Optional dependencies
@@ -193,8 +205,6 @@ option(COAL_HAS_QHULL "use qhull library to compute convex hulls." FALSE)
 if(COAL_HAS_QHULL)
   find_package(Qhull REQUIRED COMPONENTS qhull_r qhullcpp)
 endif()
-
-find_package(assimp REQUIRED)
 
 set(
   ${PROJECT_NAME}_HEADERS
@@ -317,6 +327,16 @@ set(
   include/coal/serialization/triangle.h
   include/coal/timings.h
 )
+
+function(filter_optional_headers headers)
+  if(NOT COAL_ENABLE_MESH_LOADER)
+    list(FILTER ${headers} EXCLUDE REGEX "/mesh_loader/")
+  endif()
+  if(NOT COAL_ENABLE_SERIALIZATION)
+    list(FILTER ${headers} EXCLUDE REGEX "/serialization/")
+  endif()
+  set(${headers} "${${headers}}" PARENT_SCOPE)
+endfunction()
 
 if(
   COAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL
@@ -450,6 +470,7 @@ if(
     include/hpp/fcl/timings.h
     include/hpp/fcl/warning.hh
   )
+  filter_optional_headers(HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS)
   list(APPEND ${PROJECT_NAME}_HEADERS ${HPP_FCL_BACKWARD_COMPATIBILITY_HEADERS})
   if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
     HEADER_INSTALL(
@@ -468,6 +489,8 @@ if(COAL_HAS_OCTOMAP)
     include/coal/internal/traversal_node_octree.h
   )
 endif(COAL_HAS_OCTOMAP)
+
+filter_optional_headers(${PROJECT_NAME}_HEADERS)
 
 add_subdirectory(doc)
 if(NOT BUILD_STANDALONE_PYTHON_INTERFACE)
