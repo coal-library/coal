@@ -2,10 +2,18 @@
 // Copyright (c) 2026 Jelle Feringa
 //
 
+#include <eigenpy/eigenpy.hpp>
+
 #include "coal.hh"
 
 #include "coal/traversal_stats.h"
 
+#ifdef COAL_HAS_DOXYGEN_AUTODOC
+#include "doxygen_autodoc/functions.h"
+#include "doxygen_autodoc/coal/traversal_stats.h"
+#endif
+
+using namespace boost::python;
 using namespace coal;
 
 namespace {
@@ -15,26 +23,17 @@ TraversalStats traversalStatsCopy() { return traversalStats(); }
 }  // namespace
 
 void exposeTraversalStats() {
-  namespace bp = boost::python;
+  if (!eigenpy::register_symbolic_link_to_registered_type<TraversalStats>()) {
+    class_<TraversalStats>("TraversalStats",
+                           doxygen::class_doc<TraversalStats>(), no_init)
+        .DEF_RO_CLASS_ATTRIB(TraversalStats, leaf_tests)
+        .DEF_RO_CLASS_ATTRIB(TraversalStats, bv_tests);
+  }
 
-  bp::class_<TraversalStats>(
-      "TraversalStats",
-      "Per-thread totals of the mesh-against-shape traversal work. Counted "
-      "only when Coal is built with COAL_ENABLE_TRAVERSAL_STATS.",
-      bp::no_init)
-      .def_readonly("leaf_tests", &TraversalStats::leaf_tests,
-                    "Narrow-phase calls on one triangle against one shape.")
-      .def_readonly(
-          "bv_tests", &TraversalStats::bv_tests,
-          "Bounding-volume tests of a mesh BV against the shape's BV.");
-
-  bp::def("traversalStats", &traversalStatsCopy,
-          "A copy of the calling thread's totals.");
-
-  bp::def("resetTraversalStats", &resetTraversalStats,
-          "Set the calling thread's totals to zero.");
-
-  bp::def("traversalStatsEnabled", &traversalStatsEnabled,
-          "Whether the library was built with COAL_ENABLE_TRAVERSAL_STATS. "
-          "When False the totals stay zero.");
+  def("traversalStats", &traversalStatsCopy,
+      doxygen::member_func_doc(&traversalStats));
+  def("resetTraversalStats", &resetTraversalStats,
+      doxygen::member_func_doc(&resetTraversalStats));
+  def("traversalStatsEnabled", &traversalStatsEnabled,
+      doxygen::member_func_doc(&traversalStatsEnabled));
 }

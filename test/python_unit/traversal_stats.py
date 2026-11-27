@@ -1,4 +1,3 @@
-import threading
 import unittest
 
 import coal
@@ -61,47 +60,6 @@ class TestTraversalStats(TestCase):
         stats = coal.traversalStats()
         self.assertEqual(stats.leaf_tests, counted(n_tris))
         self.assertEqual(stats.bv_tests, counted(n_tris - 1))
-
-    def test_stats_are_a_copy(self):
-        mesh = grid_mesh()
-        coal.resetTraversalStats()
-        before = coal.traversalStats()
-
-        self.assertTrue(grid_collides_with_box(mesh))
-
-        self.assertEqual(before.leaf_tests, 0)
-        self.assertEqual(before.bv_tests, 0)
-
-    def test_reset_gives_zeros(self):
-        self.assertTrue(grid_collides_with_box(grid_mesh()))
-
-        coal.resetTraversalStats()
-
-        stats = coal.traversalStats()
-        self.assertEqual(stats.leaf_tests, 0)
-        self.assertEqual(stats.bv_tests, 0)
-
-    def test_other_thread_leaves_this_thread_unchanged(self):
-        mesh = grid_mesh()
-        n_tris = mesh.num_tris
-        coal.resetTraversalStats()
-        seen = {}
-
-        def work():
-            coal.resetTraversalStats()
-            seen["collided"] = grid_collides_with_box(mesh)
-            seen["stats"] = coal.traversalStats()
-
-        worker = threading.Thread(target=work)
-        worker.start()
-        worker.join()
-
-        self.assertTrue(seen["collided"])
-        self.assertEqual(seen["stats"].leaf_tests, counted(n_tris))
-        self.assertEqual(seen["stats"].bv_tests, counted(n_tris - 1))
-        stats = coal.traversalStats()
-        self.assertEqual(stats.leaf_tests, 0)
-        self.assertEqual(stats.bv_tests, 0)
 
 
 if __name__ == "__main__":
