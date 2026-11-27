@@ -131,6 +131,7 @@ set(
   distance.cc
   coal.cc
   gjk.cc
+  traversal-stats.cc
   broadphase/broadphase.cc
 )
 

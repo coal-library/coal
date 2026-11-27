@@ -98,6 +98,7 @@ BOOST_PYTHON_MODULE(coal_pywrap) {
   exposeContactPatchAPI();
   exposeDistanceAPI();
   exposeGJK();
+  exposeTraversalStats();
 #ifdef COAL_HAS_OCTOMAP
   exposeOctree();
 #endif

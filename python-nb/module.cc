@@ -74,6 +74,7 @@ void exposeCollisionAPI(nb::module_& m);
 void exposeContactPatchAPI(nb::module_& m);
 void exposeDistanceAPI(nb::module_& m);
 void exposeGJK(nb::module_& m);
+void exposeTraversalStats(nb::module_& m);
 #ifdef COAL_HAS_OCTOMAP
 void exposeOctree(nb::module_& m);
 #endif
@@ -88,6 +89,7 @@ NB_MODULE(COAL_PYTHON_LIBNAME, m) {
   exposeContactPatchAPI(m);
   exposeDistanceAPI(m);
   exposeGJK(m);
+  exposeTraversalStats(m);
   exposeMeshLoader(m);
 #ifdef COAL_HAS_OCTOMAP
   exposeOctree(m);

@@ -55,7 +55,7 @@ struct TraversalStats {
   std::uint64_t leaf_tests{0};
   /// One per bounding-volume test of a mesh BV against the shape's BV:
   /// `BVDisjoints` (collision) and `BVDistanceLowerBound` (distance).
-  std::uint64_t box_tests{0};
+  std::uint64_t bv_tests{0};
 };
 
 /// @brief The calling thread's totals.
@@ -66,6 +66,10 @@ COAL_DLLAPI TraversalStats& traversalStats();
 
 /// @brief Set the calling thread's totals to zero.
 COAL_DLLAPI void resetTraversalStats();
+
+/// @brief Whether the library was built with `COAL_ENABLE_TRAVERSAL_STATS`,
+/// that is whether the traversal counts. When false the totals stay zero.
+COAL_DLLAPI bool traversalStatsEnabled();
 
 }  // namespace coal
 

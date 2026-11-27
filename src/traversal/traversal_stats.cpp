@@ -46,4 +46,12 @@ TraversalStats& traversalStats() { return traversal_stats; }
 
 void resetTraversalStats() { traversal_stats = TraversalStats(); }
 
+bool traversalStatsEnabled() {
+#ifdef COAL_ENABLE_TRAVERSAL_STATS
+  return true;
+#else
+  return false;
+#endif
+}
+
 }  // namespace coal

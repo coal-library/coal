@@ -18,6 +18,8 @@ void exposeDistanceAPI();
 
 void exposeGJK();
 
+void exposeTraversalStats();
+
 #ifdef COAL_HAS_OCTOMAP
 void exposeOctree();
 #endif

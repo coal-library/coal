@@ -120,7 +120,7 @@ class MeshShapeCollisionTraversalNode
   bool BVDisjoints(unsigned int b1, unsigned int /*b2*/,
                    Scalar& sqrDistLowerBound) const {
     if (this->enable_statistics) this->num_bv_tests++;
-    COAL_TRAVERSAL_STATS_INC(box_tests);
+    COAL_TRAVERSAL_STATS_INC(bv_tests);
     bool disjoint;
     if (RTIsIdentity)
       disjoint = !this->model1->getBV(b1).bv.overlap(
@@ -230,7 +230,7 @@ class BVHShapeDistanceTraversalNode : public DistanceTraversalNodeBase {
 
   /// @brief BV culling test in one BVTT node
   Scalar BVDistanceLowerBound(unsigned int b1, unsigned int /*b2*/) const {
-    COAL_TRAVERSAL_STATS_INC(box_tests);
+    COAL_TRAVERSAL_STATS_INC(bv_tests);
     return model1->getBV(b1).bv.distance(model2_bv);
   }
 
@@ -410,7 +410,7 @@ class MeshShapeDistanceTraversalNodeRSS
 
   Scalar BVDistanceLowerBound(unsigned int b1, unsigned int /*b2*/) const {
     if (this->enable_statistics) this->num_bv_tests++;
-    COAL_TRAVERSAL_STATS_INC(box_tests);
+    COAL_TRAVERSAL_STATS_INC(bv_tests);
     return distance(this->tf1.getRotation(), this->tf1.getTranslation(),
                     this->model2_bv, this->model1->getBV(b1).bv);
   }
@@ -441,7 +441,7 @@ class MeshShapeDistanceTraversalNodekIOS
 
   Scalar BVDistanceLowerBound(unsigned int b1, unsigned int /*b2*/) const {
     if (this->enable_statistics) this->num_bv_tests++;
-    COAL_TRAVERSAL_STATS_INC(box_tests);
+    COAL_TRAVERSAL_STATS_INC(bv_tests);
     return distance(this->tf1.getRotation(), this->tf1.getTranslation(),
                     this->model2_bv, this->model1->getBV(b1).bv);
   }
@@ -472,7 +472,7 @@ class MeshShapeDistanceTraversalNodeOBBRSS
 
   Scalar BVDistanceLowerBound(unsigned int b1, unsigned int /*b2*/) const {
     if (this->enable_statistics) this->num_bv_tests++;
-    COAL_TRAVERSAL_STATS_INC(box_tests);
+    COAL_TRAVERSAL_STATS_INC(bv_tests);
     return distance(this->tf1.getRotation(), this->tf1.getTranslation(),
                     this->model2_bv, this->model1->getBV(b1).bv);
   }
