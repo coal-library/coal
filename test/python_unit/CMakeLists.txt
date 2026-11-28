@@ -5,6 +5,7 @@ set(
   collision
   collision_manager
   pickling
+  traversal_stats
 )
 
 if(COAL_PYTHON_NANOBIND)

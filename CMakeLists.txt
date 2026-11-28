@@ -80,6 +80,11 @@ option(
   "Build with tracy profiler for performance analysis"
   FALSE
 )
+option(
+  COAL_ENABLE_TRAVERSAL_STATS
+  "Count the leaf and bounding-volume tests of the mesh-shape traversals per thread"
+  FALSE
+)
 
 # Check if the submodule cmake have been initialized
 set(JRL_CMAKE_MODULES "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -343,6 +348,7 @@ set(
   include/coal/serialization/quadrilateral.h
   include/coal/serialization/triangle.h
   include/coal/timings.h
+  include/coal/traversal_stats.h
   include/coal/shared_ptr_comparison.h
 )
 

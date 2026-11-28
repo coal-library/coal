@@ -42,6 +42,7 @@ set(
   height_field.cc
   memory-footprint.cc
   shapes.cc
+  traversal-stats.cc
   module.cc
 )
 if(COAL_HAS_OCTOMAP)
