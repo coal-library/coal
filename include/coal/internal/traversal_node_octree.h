@@ -264,8 +264,7 @@ class COAL_DLLAPI OcTreeSolver {
             &box, box_tf, &s, tf2, this->solver,
             this->drequest->enable_signed_distance, p1, p2, normal);
 
-        this->dresult->update(distance, tree1, &s,
-                              (int)(root1 - tree1->getRoot()),
+        this->dresult->update(distance, tree1, &s, octreeNodeHandle(root1),
                               DistanceResult::NONE, p1, p2, normal);
 
         return drequest->isSatisfied(*dresult);
@@ -344,10 +343,9 @@ class COAL_DLLAPI OcTreeSolver {
       if (!contactNotAdded && ncontact == 1) {
         // Update contact information.
         const Contact& c = cresult->getContact(cresult->numContacts() - 1);
-        cresult->setContact(
-            cresult->numContacts() - 1,
-            Contact(tree1, c.o2, static_cast<int>(root1 - tree1->getRoot()),
-                    c.b2, c.pos, c.normal, c.penetration_depth));
+        cresult->setContact(cresult->numContacts() - 1,
+                            Contact(tree1, c.o2, octreeNodeHandle(root1), c.b2,
+                                    c.pos, c.normal, c.penetration_depth));
       }
 
       // no need to call `internal::updateDistanceLowerBoundFromLeaf` here
@@ -399,8 +397,7 @@ class COAL_DLLAPI OcTreeSolver {
             &box, box_tf, &tri, tf2, this->solver,
             this->drequest->enable_signed_distance, p1, p2, normal);
 
-        this->dresult->update(distance, tree1, tree2,
-                              (int)(root1 - tree1->getRoot()),
+        this->dresult->update(distance, tree1, tree2, octreeNodeHandle(root1),
                               static_cast<int>(primitive_id), p1, p2, normal);
 
         return this->drequest->isSatisfied(*dresult);
@@ -531,9 +528,9 @@ class COAL_DLLAPI OcTreeSolver {
 
       if (cresult->numContacts() < crequest->num_max_contacts) {
         if (distToCollision <= crequest->collision_distance_threshold) {
-          cresult->addContact(Contact(
-              tree1, tree2, (int)(root1 - tree1->getRoot()),
-              static_cast<int>(primitive_id), c1, c2, normal, distance));
+          cresult->addContact(Contact(tree1, tree2, octreeNodeHandle(root1),
+                                      static_cast<int>(primitive_id), c1, c2,
+                                      normal, distance));
         }
       }
       return crequest->isSatisfied(*cresult);
@@ -639,9 +636,9 @@ class COAL_DLLAPI OcTreeSolver {
         if (crequest->num_max_contacts > cresult->numContacts()) {
           if (normal_top.isApprox(normal) &&
               (collision || !hfield_witness_is_on_bin_side)) {
-            cresult->addContact(
-                Contact(tree1, tree2, (int)(root1 - tree1->getRoot()),
-                        (int)Contact::NONE, c1, c2, -normal, distance));
+            cresult->addContact(Contact(tree1, tree2, octreeNodeHandle(root1),
+                                        (int)Contact::NONE, c1, c2, -normal,
+                                        distance));
           }
         }
       } else {
@@ -763,8 +760,8 @@ class COAL_DLLAPI OcTreeSolver {
           if (normal_top.isApprox(normal) &&
               (collision || !hfield_witness_is_on_bin_side)) {
             cresult->addContact(Contact(tree1, tree2, (int)Contact::NONE,
-                                        (int)(root2 - tree2->getRoot()), c1, c2,
-                                        normal, distance));
+                                        octreeNodeHandle(root2), c1, c2, normal,
+                                        distance));
           }
         }
       } else {
@@ -835,9 +832,8 @@ class COAL_DLLAPI OcTreeSolver {
             &box1, box1_tf, &box2, box2_tf, this->solver,
             this->drequest->enable_signed_distance, p1, p2, normal);
 
-        this->dresult->update(distance, tree1, tree2,
-                              (int)(root1 - tree1->getRoot()),
-                              (int)(root2 - tree2->getRoot()), p1, p2, normal);
+        this->dresult->update(distance, tree1, tree2, octreeNodeHandle(root1),
+                              octreeNodeHandle(root2), p1, p2, normal);
 
         return drequest->isSatisfied(*dresult);
       } else
@@ -934,9 +930,8 @@ class COAL_DLLAPI OcTreeSolver {
           cresult->distance_lower_bound =
               sqrt(sqrDistLowerBound) - crequest->security_margin;
         if (cresult->numContacts() < crequest->num_max_contacts)
-          cresult->addContact(
-              Contact(tree1, tree2, static_cast<int>(root1 - tree1->getRoot()),
-                      static_cast<int>(root2 - tree2->getRoot())));
+          cresult->addContact(Contact(tree1, tree2, octreeNodeHandle(root1),
+                                      octreeNodeHandle(root2)));
         return crequest->isSatisfied(*cresult);
       }
     }
@@ -976,9 +971,8 @@ class COAL_DLLAPI OcTreeSolver {
       if (this->cresult->numContacts() < this->crequest->num_max_contacts) {
         if (distToCollision <= this->crequest->collision_distance_threshold)
           this->cresult->addContact(
-              Contact(tree1, tree2, static_cast<int>(root1 - tree1->getRoot()),
-                      static_cast<int>(root2 - tree2->getRoot()), c1, c2,
-                      normal, distance));
+              Contact(tree1, tree2, octreeNodeHandle(root1),
+                      octreeNodeHandle(root2), c1, c2, normal, distance));
       }
 
       return crequest->isSatisfied(*cresult);
