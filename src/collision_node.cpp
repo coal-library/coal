@@ -61,6 +61,12 @@ void checkResultLowerBound(const CollisionResult& result,
 void collide(CollisionTraversalNodeBase* node, const CollisionRequest& request,
              CollisionResult& result, BVHFrontList* front_list,
              bool recursive) {
+  if (request.test_leaf_bv && request.security_margin < 0)
+    COAL_THROW_PRETTY(
+        "CollisionRequest::test_leaf_bv requires security_margin >= 0 "
+        "(current value is "
+            << request.security_margin << ").",
+        std::invalid_argument);
   if (front_list && front_list->size() > 0) {
     propagateBVHFrontListCollisionRecurse(node, request, result, front_list);
   } else {

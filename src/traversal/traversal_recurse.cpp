@@ -49,7 +49,11 @@ void collisionRecurse(CollisionTraversalNodeBase* node, unsigned int b1,
   if (l1 && l2) {
     updateFrontList(front_list, b1, b2);
 
-    // if(node->BVDisjoints(b1, b2, sqrDistLowerBound)) return;
+    // Optional leaf bounding-volume test: a disjoint leaf pair is skipped and
+    // carries its bounding-volume bound, as an inner node does.
+    if (node->request.test_leaf_bv &&
+        node->BVDisjoints(b1, b2, sqrDistLowerBound))
+      return;
     node->leafCollides(b1, b2, sqrDistLowerBound);
     return;
   }
@@ -107,11 +111,11 @@ void collisionNonRecurse(CollisionTraversalNodeBase* node,
     if (la && lb) {
       updateFrontList(front_list, a, b);
 
-      // TODO should we test the BVs ?
-      // if(node->BVDijsoints(a, b, sdlb)) {
-      // if (sdlb < sqrDistLowerBound) sqrDistLowerBound = sdlb;
-      // continue;
-      //}
+      // Optional leaf bounding-volume test, as in collisionRecurse.
+      if (node->request.test_leaf_bv && node->BVDisjoints(a, b, sdlb)) {
+        if (sdlb < sqrDistLowerBound) sqrDistLowerBound = sdlb;
+        continue;
+      }
       node->leafCollides(a, b, sdlb);
       if (sdlb < sqrDistLowerBound) sqrDistLowerBound = sdlb;
       if (node->canStop() && !front_list) return;

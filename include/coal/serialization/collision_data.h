@@ -89,6 +89,7 @@ void serialize(Archive& ar, coal::CollisionRequest& collision_request,
   ar& make_nvp("security_margin", collision_request.security_margin);
   ar& make_nvp("break_distance", collision_request.break_distance);
   ar& make_nvp("distance_upper_bound", collision_request.distance_upper_bound);
+  ar& make_nvp("test_leaf_bv", collision_request.test_leaf_bv);
 }
 
 template <class Archive>

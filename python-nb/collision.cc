@@ -77,6 +77,7 @@ void exposeCollisionAPI(nb::module_& m) {
       .DEF_RW_CLASS_ATTRIB(CollisionRequest, security_margin)
       .DEF_RW_CLASS_ATTRIB(CollisionRequest, break_distance)
       .DEF_RW_CLASS_ATTRIB(CollisionRequest, distance_upper_bound)
+      .DEF_RW_CLASS_ATTRIB(CollisionRequest, test_leaf_bv)
       .def(nb::self == nb::self)
       .def(python::v2::CopyableVisitor<CollisionRequest>())
       .def(python::v2::PickleVisitor<CollisionRequest>())

@@ -299,6 +299,11 @@ BOOST_AUTO_TEST_CASE(test_collision_data) {
   CollisionRequest collision_request(CONTACT, 10);
   test_serialization(collision_request);
 
+  // The leaf bounding-volume test flag must survive a round trip.
+  CollisionRequest collision_request_leaf_bv(CONTACT, 10);
+  collision_request_leaf_bv.test_leaf_bv = true;
+  test_serialization(collision_request_leaf_bv);
+
   CollisionResult collision_result;
   collision_result.addContact(contact0);
   collision_result.addContact(contact1);
