@@ -46,6 +46,7 @@
 #include "coal/collision_object.h"
 #include "coal/data_types.h"
 #include "coal/shared_ptr_comparison.h"
+#include "coal/narrowphase/support_data.h"
 
 #ifdef COAL_HAS_QHULL
 namespace orgQhull {
@@ -85,6 +86,39 @@ class COAL_DLLAPI ShapeBase : public CollisionGeometry {
   /// @brief Get radius of sphere swept around the shape.
   /// This radius is always >= 0.
   Scalar getSweptSphereRadius() const { return this->m_swept_sphere_radius; }
+
+  /// @brief Compute the support point of this shape in the given direction,
+  /// i.e. a point of the shape which maximizes the dot product with dir.
+  /// The output support point is expressed in the local frame of the shape
+  /// and is the "core" support: it does not account for the swept-sphere
+  /// radius (e.g. Sphere returns the origin, Capsule returns a segment
+  /// endpoint — their radii live in Coal's swept-sphere accounting). Callers
+  /// who want the inflated surface point should use
+  /// details::getSupport<details::SupportOptions::WithSweptSphere> instead.
+  /// The default implementation delegates to the built-in support functions
+  /// for all built-in node types (unbounded shapes — Plane, Halfspace —
+  /// return zero) and throws std::logic_error for a shape reporting
+  /// GEOM_CUSTOM that did not override this method.
+  /// Override getNodeType() to return GEOM_CUSTOM and this method to enable
+  /// custom shapes to participate in GJK/EPA collision and distance
+  /// computations.
+  /// @param[in] dir support direction; may be non-unit-length. The support
+  /// point of a convex shape is invariant to the magnitude of dir; normalize
+  /// internally if your formula requires a unit direction (as the built-in
+  /// Cylinder does for its radial component).
+  /// @param[out] support the computed support point.
+  /// @param[in,out] hint warm-start hint (used mainly for convex shapes).
+  /// @param[in,out] data temporary data for support computation.
+  virtual void computeShapeSupport(const Vec3s& dir, Vec3s& support, int& hint,
+                                   details::ShapeSupportData& data) const;
+
+  /// @brief Whether the Nesterov normalize heuristic should be used
+  /// for this shape in GJK. Override for custom shapes if needed.
+  /// When wrapping another shape, delegate via
+  /// details::getNormalizeSupportDirection(&inner); the call resolves through
+  /// the inner shape's node type, so it terminates for any acyclic
+  /// delegation.
+  virtual bool needNesterovNormalizeHeuristic() const { return false; }
 
  protected:
   bool isEqual(const CollisionGeometry& _other) const override {
