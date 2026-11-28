@@ -97,7 +97,7 @@ struct COAL_LOCAL BVHShapeDistancer {
     const T_SH* obj2 = static_cast<const T_SH*>(o2);
 
     initialize(node, *obj1_tmp, tf1_tmp, *obj2, tf2, nsolver, request, result);
-    ::coal::distance(&node);
+    ::coal::boundedDistance(&node);
 
     delete obj1_tmp;
     return result.min_distance;
@@ -121,7 +121,7 @@ Scalar orientedBVHShapeDistance(const CollisionGeometry* o1,
   const T_SH* obj2 = static_cast<const T_SH*>(o2);
 
   initialize(node, *obj1, tf1, *obj2, tf2, nsolver, request, result);
-  ::coal::distance(&node);
+  ::coal::boundedDistance(&node);
 
   return result.min_distance;
 }

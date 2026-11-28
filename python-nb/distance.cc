@@ -32,6 +32,7 @@ void exposeDistanceAPI(nb::module_& m) {
       .DEF_RW_CLASS_ATTRIB(DistanceRequest, enable_signed_distance)
       .DEF_RW_CLASS_ATTRIB(DistanceRequest, rel_err)
       .DEF_RW_CLASS_ATTRIB(DistanceRequest, abs_err)
+      .DEF_RW_CLASS_ATTRIB(DistanceRequest, distance_upper_bound)
       .def(nb::self == nb::self)
       .def(python::v2::CopyableVisitor<DistanceRequest>())
       .def(python::v2::PickleVisitor<DistanceRequest>())

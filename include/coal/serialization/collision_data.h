@@ -135,6 +135,7 @@ void serialize(Archive& ar, coal::DistanceRequest& distance_request,
                distance_request.enable_signed_distance);
   ar& make_nvp("rel_err", distance_request.rel_err);
   ar& make_nvp("abs_err", distance_request.abs_err);
+  ar& make_nvp("distance_upper_bound", distance_request.distance_upper_bound);
 }
 
 template <class Archive>

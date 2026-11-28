@@ -312,6 +312,7 @@ BOOST_AUTO_TEST_CASE(test_collision_data) {
   });
 
   DistanceRequest distance_request(true, 1., 2.);
+  distance_request.distance_upper_bound = Scalar(0.25);
   test_serialization(distance_request);
 
   DistanceResult distance_result;
